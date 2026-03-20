@@ -10,19 +10,27 @@
   </decision>
   <decision id="D-internal-docs-001">
     <title>Where internal process documentation lives</title>
-    <summary>Business process docs stay internal: private Git repo (preferred for `.planning/workflows/`), optional admin-only Payload collections, or private Notion/Confluence. Public repo must not hold confidential playbooks; use a private repo or redact.</summary>
-    <impact>Sets expectation that CRM + website are separate from SOP storage; secrets never in git.</impact>
+    <summary>Repo may stay **public** for transparency if we avoid secrets and customer PII in commits. High-level `.planning/` is OK; detailed SOPs can move to private repo, Notion, or Payload admin-only collections. Customers only see public pages + appropriate forms—not internal quotes or ops tools.</summary>
+    <impact>Good-faith, pragmatic process writing; classify sensitive detail out of public git.</impact>
     <references>
       <file path=".planning/workflows/internal-docs-policy.md" />
     </references>
   </decision>
-  <decision id="D-crm-001" status="open">
-    <title>CRM / marketing hub: EngageBay vs HubSpot</title>
-    <summary>Open. Compare automation, email, deals, forms, API/webhooks, and cost. All staff use the **same CRM account (one org/tenant)**; users may use **different email domains**—CRMs invite by address, domain alignment not required. Integrate site/forms so contacts and pipeline are managed in CRM; Payload remains CMS for public content unless you duplicate lean copies.</summary>
-    <impact>Defines sync direction for contacts, sequences, and whether forms post to CRM first vs Payload; team onboarding via CRM invites regardless of @domain.</impact>
+  <decision id="D-crm-001">
+    <title>CRM: EngageBay (validate before production)</title>
+    <summary>Default choice **EngageBay** for one shared org, mixed user email domains, marketing + CRM. **Review** official API, webhooks, and trial limits in `engagebay-integration-review.md` before locking integrations. HubSpot remains a fallback if API/automation gaps block the roadmap.</summary>
+    <impact>Lead sync, sequences, and deals target EngageBay REST API from server-side routes; keys in env only.</impact>
     <references>
-      <file path=".planning/workflows/README.md" />
+      <file path=".planning/workflows/engagebay-integration-review.md" />
       <file path=".planning/workflows/crm-org-and-sync.md" />
+    </references>
+  </decision>
+  <decision id="D-quotes-001">
+    <title>Quote system: internal-only, feature-flagged</title>
+    <summary>Quotes capture job size, description, soiling level, and (later) economics (labor, materials, margin, Texas sales tax per CPA guidance). **Not** shown to customers until explicitly designed. Access restricted to allowlisted staff emails (bg/pb/de grimetime.local initially); implement with env flags `QUOTES_INTERNAL_ENABLED` + `QUOTES_INTERNAL_EMAILS`.</summary>
+    <impact>Public site stays trust + booking-style intake; internal admin surfaces built behind flags and Payload access control.</impact>
+    <references>
+      <file path=".planning/workflows/quote-system-and-texas-compliance.md" />
     </references>
   </decision>
   <decision id="D-vault-001" status="open">

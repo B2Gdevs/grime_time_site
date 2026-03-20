@@ -1,4 +1,4 @@
-# CRM: one org, shared management, mixed email domains
+# CRM: one org (EngageBay), shared management, mixed email domains
 
 **Owner:** TBD  
 **Last reviewed:** 2026-03-20  

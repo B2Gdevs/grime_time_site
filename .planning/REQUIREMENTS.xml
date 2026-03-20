@@ -8,13 +8,14 @@
 Grime Time is an **exterior cleaning** business. The site must support marketing, trust, and **operational workflows**: capturing leads, following up, coordinating the team, and (later) quoting. The team wants **one primary place to log in** to work, while still being able to **integrate** specialist tools (CRM, email, calendar, telephony) rather than rebuilding everything in-house.
 
 ## Product vision
+- **Transparency**: GitHub repo may stay **public**; do not commit secrets or customer PII. Planning is high-level and good-faith; pragmatic ops detail belongs in CRM or private docs when needed.
 - **Public face**: Professional landing and key pages on **Vercel**, content-managed, fast SEO.
 - **Operations hub**: Authenticated area (starting with **Payload CMS admin** and/or custom routes) where the team manages customers, sees intake, and follows documented workflows.
-- **Integrations-first**: Evaluate **EngageBay** vs **HubSpot** (and alternatives) for CRM/marketing automation; map sync boundaries, webhooks, and source of truth per entity (contact, deal, email thread).
+- **Integrations-first**: **EngageBay** as default CRM/marketing hub (validate API/automation in trial per `engagebay-integration-review.md`). Map sync boundaries, webhooks, and source of truth per entity (contact, deal, email thread). HubSpot remains fallback if gaps appear.
 - **Forms & CRM**: Lead forms on the site feed a defined pipeline; contacts must be trackable with follow-up discipline.
 - **Comms**: Path to **receive/manage emails** and tie them to contacts (tool-dependent).
 - **Scheduling**: Easy **calendar booking** for estimates or service (embed vs native — TBD).
-- **Calls / quotes intake**: Capture call-backs and quote requests; **full quoting engine is a later phase**.
+- **Calls / quotes intake**: Capture call-backs and quote requests; **quotes are internal** (feature-flagged, staff-only) until you choose to expose them. **Full quoting engine** (fees, labor/material, margin, Texas tax per CPA, forecasting) is planned in `quote-system-and-texas-compliance.md`.
 - **Team secrets (sensitive)**: Long-term need to **store and maintain passwords/API keys** for third-party tools in a **controlled, auditable** way. *Implementation options must be security-reviewed* (dedicated vault, encrypted fields, SSO, or external password manager with process). Not committed in this PRD—see open decisions.
 
 ## Technical direction (agreed for planning)
@@ -42,7 +43,7 @@ Use strong passwords in non-prod; rotate before production. Map real people and 
 1. **Planning & documentation** — PRD, roadmap, workflow outlines (`.planning/workflows/`), CRM comparison notes.
 2. **Landing experience** — Marketing landing + core pages via Payload layout builder blocks (hero, content, CTA, etc.).
 3. **Customer management baseline** — Payload collections/globals for contacts or leads aligned with how you’ll sync to CRM.
-4. **Workflow docs** — How a lead becomes a customer; where EngageBay/HubSpot fits; who owns each step.
+4. **Workflow docs** — How a lead becomes a customer; EngageBay touchpoints; who owns each step.
 
 ## Later scope (explicitly deferred)
 - Full **quoting** system (pricing rules, PDFs, approvals).
@@ -61,7 +62,7 @@ Use strong passwords in non-prod; rotate before production. Map real people and 
 
 ## Non-functional
 - **Security**: Principle of least privilege for admin users; secrets never in git; encryption at rest for any stored credentials if built in-app.
-- **Compliance**: If storing customer PII, document retention and CRM subprocessors when HubSpot/EngageBay is chosen.
+- **Compliance**: If storing customer PII, document retention and CRM subprocessors (EngageBay); **Texas sales tax and service taxability** for quotes/revenue — confirm with a CPA before encoding rates (see `quote-system-and-texas-compliance.md`).
 
 ## Open questions
 See `.planning/DECISIONS.xml` and phase 02 PLAN `questions` for CRM choice, vault approach, and booking mechanism.

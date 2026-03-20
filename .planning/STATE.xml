@@ -2,8 +2,8 @@
 <state>
   <agent-registry>
   </agent-registry>
-  <current-phase>02</current-phase>
-  <current-plan>02-01</current-plan>
+  <current-phase>03</current-phase>
+  <current-plan>03-01</current-plan>
   <status>in-progress</status>
-  <next-action>Fill CRM comparison + workflow runbooks; then scaffold Payload template with Supabase.</next-action>
+  <next-action>Deploy Payload app to Vercel; point POSTGRES_URL at Supabase; verify admin + seed.</next-action>
 </state>

@@ -13,7 +13,7 @@
     <goal>PRD, CRM/integration strategy, workflow docs, architecture notes (Payload + Supabase + Vercel).</goal>
     <requirements>REQ-02</requirements>
     <depends>01</depends>
-    <status>in-progress</status>
+    <status>complete</status>
     <plans>.planning/phases/02-product-planning/</plans>
   </phase>
   <phase id="03">
@@ -21,8 +21,8 @@
     <goal>Import or generate Payload with-vercel-website baseline; public landing + layout builder; deploy path on Vercel.</goal>
     <requirements>REQ-03</requirements>
     <depends>02</depends>
-    <status>planned</status>
-    <plans>TBD</plans>
+    <status>in-progress</status>
+    <plans>repo root `src/`</plans>
   </phase>
   <phase id="04">
     <title>Supabase + team access</title>
@@ -34,7 +34,7 @@
   </phase>
   <phase id="05">
     <title>Customers, forms &amp; ops integrations</title>
-    <goal>Lead forms, contact model, CRM sync path (EngageBay or HubSpot); email/calendar integration plan; lightweight call/quote intake.</goal>
+    <goal>Lead forms, contact model, EngageBay sync; email/calendar integration plan; lightweight call/quote intake.</goal>
     <requirements>REQ-05</requirements>
     <depends>04</depends>
     <status>planned</status>

@@ -54,7 +54,7 @@
     </task>
   </phase>
   <phase id="03">
-    <task id="03-01" agent-id="" status="planned">
+    <task id="03-01" agent-id="" status="done">
       <goal>Scaffold app from Payload with-vercel-website; verify layout builder and public routes.</goal>
       <keywords>payload,next,vercel</keywords>
       <commands>
@@ -77,8 +77,8 @@
         <command># POSTGRES_URL from Supabase dashboard</command>
       </commands>
     </task>
-    <task id="04-02" agent-id="" status="planned">
-      <goal>Seed initial users: bg@grimetime.local, pb@grimetime.local, de@grimetime.local (dev/staging).</goal>
+    <task id="04-02" agent-id="" status="done">
+      <goal>Seed initial users: bg@grimetime.local, pb@grimetime.local, de@grimetime.local (password changethis via seed; rotate in prod).</goal>
       <keywords>auth,users,seed</keywords>
       <commands>
         <command># Payload admin or seed script</command>
