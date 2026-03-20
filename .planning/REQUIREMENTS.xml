@@ -48,6 +48,17 @@ Use strong passwords in non-prod; rotate before production. Map real people and 
 - Full **quoting** system (pricing rules, PDFs, approvals).
 - Full **password vault** product feature — plan security model first; may start with process + external vault.
 
+## Internal business documentation
+- **Process docs** (playbooks, SOPs, who-does-what) must stay **off the public site** and out of public search indexes.
+- **Preferred:** Keep this repository **private**, or use a dedicated **private** repo for ops docs; see `.planning/workflows/internal-docs-policy.md`.
+- **Alternative:** Admin-only Payload collections for internal guides; or Notion/Confluence **private** workspace—still map “source of truth” in one place.
+- **Do not commit:** API keys, CRM tokens, customer exports, or credentials—use env vars and a password manager (see vault decision).
+
+## CRM: single org, mixed email domains
+- **One CRM account** for Grime Time: all staff who need CRM access are **invited users** in that same tenant (same subscription/org).
+- **Email domain does not need to match** (e.g. Gmail + Outlook + future `@grimetime.com` can all be in the same CRM org). Invite by address; assign roles in CRM admin.
+- **Integration:** Website forms and Payload should **sync** to the chosen CRM (API/webhook/automation)—define **source of truth** per field (usually CRM for contacts/pipeline). See `.planning/workflows/crm-org-and-sync.md`.
+
 ## Non-functional
 - **Security**: Principle of least privilege for admin users; secrets never in git; encryption at rest for any stored credentials if built in-app.
 - **Compliance**: If storing customer PII, document retention and CRM subprocessors when HubSpot/EngageBay is chosen.

@@ -45,6 +45,13 @@
         <command># see DECISIONS.xml</command>
       </commands>
     </task>
+    <task id="02-06" agent-id="" status="done">
+      <goal>Document internal-docs policy + CRM single-org / mixed-domain model (workflows/*.md, DECISIONS).</goal>
+      <keywords>internal-docs,crm,org</keywords>
+      <commands>
+        <command>cat .planning/workflows/internal-docs-policy.md</command>
+      </commands>
+    </task>
   </phase>
   <phase id="03">
     <task id="03-01" agent-id="" status="planned">

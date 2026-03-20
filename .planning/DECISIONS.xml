@@ -8,12 +8,21 @@
       <file path=".planning/REQUIREMENTS.xml" />
     </references>
   </decision>
+  <decision id="D-internal-docs-001">
+    <title>Where internal process documentation lives</title>
+    <summary>Business process docs stay internal: private Git repo (preferred for `.planning/workflows/`), optional admin-only Payload collections, or private Notion/Confluence. Public repo must not hold confidential playbooks; use a private repo or redact.</summary>
+    <impact>Sets expectation that CRM + website are separate from SOP storage; secrets never in git.</impact>
+    <references>
+      <file path=".planning/workflows/internal-docs-policy.md" />
+    </references>
+  </decision>
   <decision id="D-crm-001" status="open">
     <title>CRM / marketing hub: EngageBay vs HubSpot</title>
-    <summary>Open. Compare automation, email, deals, forms, API/webhooks, and cost for a small exterior-cleaning team. May integrate one as system of record for marketing while Payload remains public site + operational CMS.</summary>
-    <impact>Determines sync direction for contacts, email sequences, and whether forms post to CRM first or Payload first.</impact>
+    <summary>Open. Compare automation, email, deals, forms, API/webhooks, and cost. All staff use the **same CRM account (one org/tenant)**; users may use **different email domains**—CRMs invite by address, domain alignment not required. Integrate site/forms so contacts and pipeline are managed in CRM; Payload remains CMS for public content unless you duplicate lean copies.</summary>
+    <impact>Defines sync direction for contacts, sequences, and whether forms post to CRM first vs Payload; team onboarding via CRM invites regardless of @domain.</impact>
     <references>
       <file path=".planning/workflows/README.md" />
+      <file path=".planning/workflows/crm-org-and-sync.md" />
     </references>
   </decision>
   <decision id="D-vault-001" status="open">
