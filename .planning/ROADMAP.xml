@@ -2,15 +2,55 @@
 <roadmap>
   <phase id="01">
     <title>Foundation</title>
-    <goal>Planning files, repo hygiene, and initial site scaffold for grime_time_site.</goal>
+    <goal>Repo, RepoPlanner submodule, `.planning/` contract, pushed to `main`.</goal>
     <requirements>REQ-01</requirements>
     <depends></depends>
-    <status>in-progress</status>
+    <status>complete</status>
     <plans>.planning/phases/01-foundation/</plans>
   </phase>
+  <phase id="02">
+    <title>Product &amp; workflow planning</title>
+    <goal>PRD, CRM/integration strategy, workflow docs, architecture notes (Payload + Supabase + Vercel).</goal>
+    <requirements>REQ-02</requirements>
+    <depends>01</depends>
+    <status>in-progress</status>
+    <plans>.planning/phases/02-product-planning/</plans>
+  </phase>
+  <phase id="03">
+    <title>Landing &amp; Payload scaffold</title>
+    <goal>Import or generate Payload with-vercel-website baseline; public landing + layout builder; deploy path on Vercel.</goal>
+    <requirements>REQ-03</requirements>
+    <depends>02</depends>
+    <status>planned</status>
+    <plans>TBD</plans>
+  </phase>
+  <phase id="04">
+    <title>Supabase + team access</title>
+    <goal>Wire Postgres to Supabase; env for prod/dev; seed users bg@ / pb@ / de@ grimetime.local; auth verified.</goal>
+    <requirements>REQ-04</requirements>
+    <depends>03</depends>
+    <status>planned</status>
+    <plans>TBD</plans>
+  </phase>
+  <phase id="05">
+    <title>Customers, forms &amp; ops integrations</title>
+    <goal>Lead forms, contact model, CRM sync path (EngageBay or HubSpot); email/calendar integration plan; lightweight call/quote intake.</goal>
+    <requirements>REQ-05</requirements>
+    <depends>04</depends>
+    <status>planned</status>
+    <plans>TBD</plans>
+  </phase>
+  <phase id="06">
+    <title>Quoting &amp; advanced ops</title>
+    <goal>Quoting system; optional in-app credential vault if approved — after security design.</goal>
+    <requirements>REQ-06</requirements>
+    <depends>05</depends>
+    <status>planned</status>
+    <plans>TBD</plans>
+  </phase>
   <doc-flow>
-    <doc name="TASK-REGISTRY.xml">List tasks with keywords + statuses.</doc>
-    <doc name="STATE.xml">Current phase pointer + next action.</doc>
-    <doc name="templates/LOOP-DOC-TEMPLATE.xml">Reference template for planning.</doc>
+    <doc name="TASK-REGISTRY.xml">Tasks by phase.</doc>
+    <doc name="REQUIREMENTS.xml">PRD embedded markdown.</doc>
+    <doc name="workflows/README.md">Workflow runbook index.</doc>
   </doc-flow>
 </roadmap>

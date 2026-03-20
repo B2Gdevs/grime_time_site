@@ -1,6 +1,6 @@
 # grime_time_site
 
-Public site project for Grime Time. Planning lives under [`.planning/`](.planning/); tooling comes from the [RepoPlanner](https://github.com/MagicbornStudios/RepoPlanner) submodule.
+Public site project for **Grime Time** (exterior cleaning). **Stack (planned):** [Payload CMS](https://payloadcms.com/) with the [with-vercel-website](https://github.com/payloadcms/payload/tree/main/templates/with-vercel-website) template, **Supabase** Postgres, **Vercel** hosting. Planning and PRD live under [`.planning/`](.planning/); tooling comes from the [RepoPlanner](https://github.com/MagicbornStudios/RepoPlanner) submodule.
 
 ## Quick start
 

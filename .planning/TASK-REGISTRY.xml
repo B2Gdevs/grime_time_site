@@ -1,11 +1,112 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <task-registry>
   <phase id="01">
-    <task id="01-01" agent-id="" status="planned">
-      <goal>Establish Grime Time site structure, content model, and deployment.</goal>
-      <keywords>site,scaffold,deploy</keywords>
+    <task id="01-01" agent-id="" status="done">
+      <goal>Bootstrap repo, submodule, and `.planning/` contract on `main`.</goal>
+      <keywords>git,repo-planner</keywords>
       <commands>
         <command>npm run planning -- snapshot</command>
+      </commands>
+    </task>
+  </phase>
+  <phase id="02">
+    <task id="02-01" agent-id="" status="in-progress">
+      <goal>Maintain PRD + roadmap alignment (Payload template, Supabase PG, Vercel, three seed emails).</goal>
+      <keywords>prd,payload,supabase</keywords>
+      <commands>
+        <command>rg -n "Supabase|Payload|EngageBay|HubSpot" .planning/</command>
+      </commands>
+    </task>
+    <task id="02-02" agent-id="" status="planned">
+      <goal>Document EngageBay vs HubSpot: features, pricing, API/webhooks, fit for exterior-cleaning lead flow.</goal>
+      <keywords>crm,comparison,integrations</keywords>
+      <commands>
+        <command># capture notes in .planning/workflows/crm-and-integrations.md when ready</command>
+      </commands>
+    </task>
+    <task id="02-03" agent-id="" status="planned">
+      <goal>Draft workflow runbooks: lead-to-customer, team login &amp; tool access, CRM touchpoints.</goal>
+      <keywords>workflows,runbooks</keywords>
+      <commands>
+        <command>ls .planning/workflows/</command>
+      </commands>
+    </task>
+    <task id="02-04" agent-id="" status="planned">
+      <goal>Define &quot;single pane of glass&quot;: what lives in Payload admin vs external CRM/calendar; integration map.</goal>
+      <keywords>architecture,integrations</keywords>
+      <commands>
+        <command>npm run planning -- snapshot</command>
+      </commands>
+    </task>
+    <task id="02-05" agent-id="" status="planned">
+      <goal>Security framing for shared credentials (options: 1Password, vault patterns, Payload encrypted fields) — decision prep only.</goal>
+      <keywords>security,vault,secrets</keywords>
+      <commands>
+        <command># see DECISIONS.xml</command>
+      </commands>
+    </task>
+  </phase>
+  <phase id="03">
+    <task id="03-01" agent-id="" status="planned">
+      <goal>Scaffold app from Payload with-vercel-website; verify layout builder and public routes.</goal>
+      <keywords>payload,next,vercel</keywords>
+      <commands>
+        <command># follow template README after clone/generate</command>
+      </commands>
+    </task>
+    <task id="03-02" agent-id="" status="planned">
+      <goal>Public landing + core marketing pages for exterior cleaning brand.</goal>
+      <keywords>landing,seo,content</keywords>
+      <commands>
+        <command>npm run planning -- snapshot</command>
+      </commands>
+    </task>
+  </phase>
+  <phase id="04">
+    <task id="04-01" agent-id="" status="planned">
+      <goal>Connect Payload to Supabase Postgres (adapter + migrations); document env for local and Vercel.</goal>
+      <keywords>supabase,postgres,payload</keywords>
+      <commands>
+        <command># POSTGRES_URL from Supabase dashboard</command>
+      </commands>
+    </task>
+    <task id="04-02" agent-id="" status="planned">
+      <goal>Seed initial users: bg@grimetime.local, pb@grimetime.local, de@grimetime.local (dev/staging).</goal>
+      <keywords>auth,users,seed</keywords>
+      <commands>
+        <command># Payload admin or seed script</command>
+      </commands>
+    </task>
+  </phase>
+  <phase id="05">
+    <task id="05-01" agent-id="" status="planned">
+      <goal>Lead forms + contact storage; export/sync path toward chosen CRM.</goal>
+      <keywords>forms,crm,leads</keywords>
+      <commands>
+        <command>npm run planning -- snapshot</command>
+      </commands>
+    </task>
+    <task id="05-02" agent-id="" status="planned">
+      <goal>Calendar booking (embed Cal.com/Calendly or alternative) — integrate with contact record.</goal>
+      <keywords>booking,calendar</keywords>
+      <commands>
+        <command># TBD</command>
+      </commands>
+    </task>
+    <task id="05-03" agent-id="" status="planned">
+      <goal>Calls / quote requests intake (lightweight); email visibility plan.</goal>
+      <keywords>intake,calls,email</keywords>
+      <commands>
+        <command># TBD</command>
+      </commands>
+    </task>
+  </phase>
+  <phase id="06">
+    <task id="06-01" agent-id="" status="planned">
+      <goal>Quoting system (deferred — plan schema and milestones when phase 05 is stable).</goal>
+      <keywords>quotes,pricing,defer</keywords>
+      <commands>
+        <command># backlog</command>
       </commands>
     </task>
   </phase>

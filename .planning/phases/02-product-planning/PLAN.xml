@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phase-plan>
+  <meta>
+    <phase-id>02</phase-id>
+    <phase-name>Product, stack &amp; workflow planning</phase-name>
+    <date>2026-03-20</date>
+  </meta>
+  <purpose>Align on exterior-cleaning product vision, Payload + Supabase architecture, CRM/integration strategy, and near-term deliverables (landing + customer management + docs) before heavy build.</purpose>
+  <scope>In scope: PRD, roadmap tasks, CRM tool comparison (EngageBay vs HubSpot), integration map, workflow outlines, security framing for shared logins. Out of scope: full quoting engine, production credential vault implementation (plan only unless scoped).</scope>
+  <files>
+    <file path=".planning/REQUIREMENTS.xml">
+      <description>Canonical PRD and embedded markdown.</description>
+      <keywords>PRD,payload,supabase,crm</keywords>
+    </file>
+    <file path=".planning/workflows/README.md">
+      <description>Placeholder for workflow runbooks.</description>
+      <keywords>runbooks,process</keywords>
+    </file>
+  </files>
+  <keywords>
+    <keyword>PayloadCMS</keyword>
+    <keyword>Supabase</keyword>
+    <keyword>EngageBay</keyword>
+    <keyword>HubSpot</keyword>
+  </keywords>
+  <commands>
+    <command>npm run planning -- snapshot</command>
+  </commands>
+  <tasks>
+    <task id="prd-sync" owner="team">
+      <description>Keep REQUIREMENTS.xml PRD the single source for vision; link out to workflows/*.md.</description>
+      <status>in-progress</status>
+    </task>
+  </tasks>
+  <questions>
+    <question id="q-crm" status="open">Primary CRM/marketing hub: EngageBay, HubSpot, or hybrid + Payload as shell?</question>
+    <question id="q-vault" status="open">Where do shared passwords/API keys live long-term (1Password team, Supabase Vault, Payload encrypted fields, other)?</question>
+    <question id="q-booking" status="open">Calendar booking: embed (Cal.com, Calendly) vs native scheduling in Payload?</question>
+  </questions>
+  <decisions>
+  </decisions>
+  <requriements-suggestions>
+  </requriements-suggestions>
+</phase-plan>

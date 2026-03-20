@@ -1,3 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <decisions>
+  <decision id="D-stack-001">
+    <title>Payload + Supabase + Vercel</title>
+    <summary>Use Payload CMS (with-vercel-website template) on Vercel with PostgreSQL hosted on Supabase. Swap template DB env from Neon to Supabase connection string when implementing.</summary>
+    <impact>All schema and migrations target Postgres via Payload; Blob/storage may still use Vercel Blob or move to Supabase Storage in a later decision.</impact>
+    <references>
+      <file path=".planning/REQUIREMENTS.xml" />
+    </references>
+  </decision>
+  <decision id="D-crm-001" status="open">
+    <title>CRM / marketing hub: EngageBay vs HubSpot</title>
+    <summary>Open. Compare automation, email, deals, forms, API/webhooks, and cost for a small exterior-cleaning team. May integrate one as system of record for marketing while Payload remains public site + operational CMS.</summary>
+    <impact>Determines sync direction for contacts, email sequences, and whether forms post to CRM first or Payload first.</impact>
+    <references>
+      <file path=".planning/workflows/README.md" />
+    </references>
+  </decision>
+  <decision id="D-vault-001" status="open">
+    <title>Shared passwords and API keys for third-party tools</title>
+    <summary>Requirement acknowledged: team needs one place to view/maintain logins for other systems. Do not store plaintext in content collections without an encryption/security review. Options: team password manager (1Password/Bitwarden), Payload encrypted fields + RBAC, or dedicated secrets patterns.</summary>
+    <impact>May remain process + external tool for v1; in-app vault only after threat model.</impact>
+    <references>
+      <file path=".planning/REQUIREMENTS.xml" />
+    </references>
+  </decision>
 </decisions>

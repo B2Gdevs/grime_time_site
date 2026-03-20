@@ -5,7 +5,7 @@
     <phase-name>Foundation</phase-name>
     <date>2026-03-20</date>
   </meta>
-  <outcome>Stub — update when phase 01 completes.</outcome>
+  <outcome>Planning contract and RepoPlanner submodule on main; superseded by phase 02 product planning.</outcome>
   <files>
     <file path=".planning/">
       <description>Planning contract and templates in place.</description>
@@ -23,7 +23,7 @@
     <test>npm run planning -- setup checklist</test>
   </tests>
   <next>
-    <action>Choose stack and add phase 02 in ROADMAP once direction is clear.</action>
+    <action>Phase 02: PRD, Payload + Supabase + CRM planning (see ROADMAP.xml).</action>
   </next>
   <requriements-suggestions>
   </requriements-suggestions>

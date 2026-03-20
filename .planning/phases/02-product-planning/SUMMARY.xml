@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phase-summary>
+  <meta>
+    <phase-id>02</phase-id>
+    <phase-name>Product, stack &amp; workflow planning</phase-name>
+    <date>2026-03-20</date>
+  </meta>
+  <outcome>Stub — close when stack decisions and near-term scope are agreed (see DECISIONS.xml).</outcome>
+  <files>
+    <file path=".planning/REQUIREMENTS.xml">
+      <description>PRD updated for Payload, Supabase, CRM, and ops goals.</description>
+    </file>
+  </files>
+  <keywords>
+    <keyword>planning</keyword>
+  </keywords>
+  <commands>
+    <command>npm run planning -- snapshot</command>
+  </commands>
+  <decisions>
+  </decisions>
+  <tests>
+    <test>npm run planning -- setup checklist</test>
+  </tests>
+  <next>
+    <action>Phase 03: scaffold Payload with-vercel-website + Supabase Postgres URL; seed initial users.</action>
+  </next>
+  <requriements-suggestions>
+  </requriements-suggestions>
+</phase-summary>

@@ -2,21 +2,62 @@
 <planning-references>
   <doc>
     <path>PRD-grime-time-site.md</path>
-    <content><![CDATA[# Grime Time Site — PRD (stub)
+    <content><![CDATA[# Grime Time — product requirements (exterior cleaning)
 
-## Vision
-Public web presence for Grime Time. Flesh out audience, pages, and brand as the project grows.
+## Business context
+Grime Time is an **exterior cleaning** business. The site must support marketing, trust, and **operational workflows**: capturing leads, following up, coordinating the team, and (later) quoting. The team wants **one primary place to log in** to work, while still being able to **integrate** specialist tools (CRM, email, calendar, telephony) rather than rebuilding everything in-house.
 
-## Initial scope
-- Git repo with RepoPlanner submodule and `.planning/` contract (STATE, TASK-REGISTRY, ROADMAP).
-- Site implementation TBD (framework, hosting).
+## Product vision
+- **Public face**: Professional landing and key pages on **Vercel**, content-managed, fast SEO.
+- **Operations hub**: Authenticated area (starting with **Payload CMS admin** and/or custom routes) where the team manages customers, sees intake, and follows documented workflows.
+- **Integrations-first**: Evaluate **EngageBay** vs **HubSpot** (and alternatives) for CRM/marketing automation; map sync boundaries, webhooks, and source of truth per entity (contact, deal, email thread).
+- **Forms & CRM**: Lead forms on the site feed a defined pipeline; contacts must be trackable with follow-up discipline.
+- **Comms**: Path to **receive/manage emails** and tie them to contacts (tool-dependent).
+- **Scheduling**: Easy **calendar booking** for estimates or service (embed vs native — TBD).
+- **Calls / quotes intake**: Capture call-backs and quote requests; **full quoting engine is a later phase**.
+- **Team secrets (sensitive)**: Long-term need to **store and maintain passwords/API keys** for third-party tools in a **controlled, auditable** way. *Implementation options must be security-reviewed* (dedicated vault, encrypted fields, SSO, or external password manager with process). Not committed in this PRD—see open decisions.
 
-## Success criteria (phase 01)
-- Planning loop runnable from repo root (`npm run planning -- snapshot`).
-- Source pushed to `main` with submodule pinned.
+## Technical direction (agreed for planning)
+| Area | Choice |
+|------|--------|
+| App shell | **Payload CMS** using the official **[with-vercel-website](https://github.com/payloadcms/payload/tree/main/templates/with-vercel-website)** template (Next.js App Router, layout builder, SEO, drafts, etc.). |
+| Database | **Supabase** as the **PostgreSQL** provider (Payload Postgres adapter + connection string from Supabase). Not Neon for this project. |
+| Hosting | **Vercel** for the Next.js + Payload deployment. |
+| Planning | RepoPlanner `.planning/` contract; CLI from repo root. |
 
-## Out of scope (for now)
-- Full visual design system and content migration (add in later phases).
+**Note:** The Payload Vercel template often documents Neon + Blob; we will **swap the DB** to Supabase Postgres and align env vars (`POSTGRES_URL` / `DATABASE_URL` per Payload docs). Vercel Blob vs Supabase Storage can be decided during build.
+
+## Initial users (bootstrap)
+Create **three** admin-facing identities for development and early admin (adjust domains for production):
+
+| Email | Role (TBD) |
+|-------|------------|
+| `bg@grimetime.local` | Team |
+| `pb@grimetime.local` | Team |
+| `de@grimetime.local` | Team |
+
+Use strong passwords in non-prod; rotate before production. Map real people and roles in DECISIONS or internal HR doc.
+
+## Near-term scope (now → first release)
+1. **Planning & documentation** — PRD, roadmap, workflow outlines (`.planning/workflows/`), CRM comparison notes.
+2. **Landing experience** — Marketing landing + core pages via Payload layout builder blocks (hero, content, CTA, etc.).
+3. **Customer management baseline** — Payload collections/globals for contacts or leads aligned with how you’ll sync to CRM.
+4. **Workflow docs** — How a lead becomes a customer; where EngageBay/HubSpot fits; who owns each step.
+
+## Later scope (explicitly deferred)
+- Full **quoting** system (pricing rules, PDFs, approvals).
+- Full **password vault** product feature — plan security model first; may start with process + external vault.
+
+## Non-functional
+- **Security**: Principle of least privilege for admin users; secrets never in git; encryption at rest for any stored credentials if built in-app.
+- **Compliance**: If storing customer PII, document retention and CRM subprocessors when HubSpot/EngageBay is chosen.
+
+## Open questions
+See `.planning/DECISIONS.xml` and phase 02 PLAN `questions` for CRM choice, vault approach, and booking mechanism.
+
+## References
+- Payload template: [with-vercel-website](https://github.com/payloadcms/payload/tree/main/templates/with-vercel-website) (layout builder, collections, globals).
+- Workflow stubs: `.planning/workflows/README.md`
 ]]></content>
   </doc>
 </planning-references>
