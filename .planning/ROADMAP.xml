@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<roadmap>
+  <phase id="01">
+    <title>Foundation</title>
+    <goal>Planning files, repo hygiene, and initial site scaffold for grime_time_site.</goal>
+    <requirements>REQ-01</requirements>
+    <depends></depends>
+    <status>in-progress</status>
+    <plans>.planning/phases/01-foundation/</plans>
+  </phase>
+  <doc-flow>
+    <doc name="TASK-REGISTRY.xml">List tasks with keywords + statuses.</doc>
+    <doc name="STATE.xml">Current phase pointer + next action.</doc>
+    <doc name="templates/LOOP-DOC-TEMPLATE.xml">Reference template for planning.</doc>
+  </doc-flow>
+</roadmap>

@@ -1,0 +1,14 @@
+{
+  "name": "grime_time_site",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "planning": "node vendor/repo-planner/scripts/loop-cli.mjs"
+  },
+  "dependencies": {
+    "@iarna/toml": "^2.2.5",
+    "commander": "^12.1.0",
+    "ejs": "^3.1.10",
+    "fast-xml-parser": "^4.5.0"
+  }
+}

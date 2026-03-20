@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<task-registry>
+  <phase id="01">
+    <task id="01-01" agent-id="" status="planned">
+      <goal>Establish Grime Time site structure, content model, and deployment.</goal>
+      <keywords>site,scaffold,deploy</keywords>
+      <commands>
+        <command>npm run planning -- snapshot</command>
+      </commands>
+    </task>
+  </phase>
+</task-registry>

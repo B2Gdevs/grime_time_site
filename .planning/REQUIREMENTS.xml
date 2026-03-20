@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<planning-references>
+  <doc>
+    <path>PRD-grime-time-site.md</path>
+    <content><![CDATA[# Grime Time Site — PRD (stub)
+
+## Vision
+Public web presence for Grime Time. Flesh out audience, pages, and brand as the project grows.
+
+## Initial scope
+- Git repo with RepoPlanner submodule and `.planning/` contract (STATE, TASK-REGISTRY, ROADMAP).
+- Site implementation TBD (framework, hosting).
+
+## Success criteria (phase 01)
+- Planning loop runnable from repo root (`npm run planning -- snapshot`).
+- Source pushed to `main` with submodule pinned.
+
+## Out of scope (for now)
+- Full visual design system and content migration (add in later phases).
+]]></content>
+  </doc>
+</planning-references>

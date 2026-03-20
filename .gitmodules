@@ -1,0 +1,3 @@
+[submodule "vendor/repo-planner"]
+	path = vendor/repo-planner
+	url = https://github.com/MagicbornStudios/RepoPlanner.git

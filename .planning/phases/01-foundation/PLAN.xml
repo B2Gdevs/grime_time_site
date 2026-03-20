@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phase-plan>
+  <meta>
+    <phase-id>01</phase-id>
+    <phase-name>Foundation</phase-name>
+    <date>2026-03-20</date>
+  </meta>
+  <purpose>Stand up repo hygiene, RepoPlanner submodule, and a minimal planning loop before building the public site.</purpose>
+  <scope>In scope: git, `.planning/` artifacts, npm script for CLI. Out of scope: full site UI and content (later phases).</scope>
+  <files>
+    <file path=".planning/REQUIREMENTS.xml">
+      <description>Living PRD stub embedded as planning reference.</description>
+      <keywords>PRD,scope</keywords>
+    </file>
+    <file path="package.json">
+      <description>Host `planning` script and CLI dependencies.</description>
+      <keywords>npm,cli</keywords>
+    </file>
+  </files>
+  <keywords>
+    <keyword>RepoPlanner</keyword>
+    <keyword>grime_time_site</keyword>
+  </keywords>
+  <commands>
+    <command>npm run planning -- snapshot</command>
+    <command>npm run planning -- setup checklist</command>
+  </commands>
+  <tasks>
+    <task id="01-bootstrap" owner="team">
+      <description>Keep STATE, TASK-REGISTRY, and ROADMAP aligned as work lands.</description>
+      <status>in-progress</status>
+    </task>
+  </tasks>
+  <questions>
+    <question id="q-stack" status="open">Which framework and host (e.g. Vercel, static) for the public site?</question>
+  </questions>
+  <decisions>
+  </decisions>
+  <requriements-suggestions>
+  </requriements-suggestions>
+</phase-plan>
