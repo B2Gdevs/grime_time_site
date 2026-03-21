@@ -5,6 +5,8 @@ declare global {
       DATABASE_URL: string
       NEXT_PUBLIC_SERVER_URL: string
       VERCEL_PROJECT_PRODUCTION_URL: string
+      ENGAGEBAY_JS_TRACKING_KEY?: string
+      ENGAGEBAY_JS_FORM_REF?: string
     }
   }
 }
