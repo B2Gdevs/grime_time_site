@@ -29,7 +29,7 @@ Exterior-cleaning marketing site and admin, based on the official Payload **[wit
 | Command | Purpose |
 |---------|---------|
 | `npm run dev` | Dev server |
-| `npm run build` / `npm start` | Production build (`next build --webpack` for correct Payload UI Sass resolution) & run |
+| `npm run build` / `npm start` | Production build (Turbopack by default) & run |
 | `npm run payload migrate` | Run DB migrations (Postgres) |
 | `npm run planning -- snapshot` | RepoPlanner CLI |
 

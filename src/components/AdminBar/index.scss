@@ -1,7 +1,6 @@
-@import '~@payloadcms/ui/scss';
-
-.admin-bar {
-  @include small-break {
+/* Self-contained: avoids @payloadcms/ui/scss (Turbopack cannot resolve nested vars import). Matches Payload small-break (768px). */
+@media (max-width: 768px) {
+  .admin-bar {
     display: none;
   }
 }

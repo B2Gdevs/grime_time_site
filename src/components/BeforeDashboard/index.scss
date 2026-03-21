@@ -1,7 +1,6 @@
-@import '~@payloadcms/ui/scss';
-
+/* Self-contained: replaces Payload base() — baseline grid 20px × multiplier */
 .dashboard .before-dashboard {
-  margin-bottom: base(1.5);
+  margin-bottom: 30px;
 
   &__banner {
     & h4 {
@@ -11,7 +10,7 @@
 
   &__instructions {
     list-style: decimal;
-    margin-bottom: base(0.5);
+    margin-bottom: 10px;
 
     & li {
       width: 100%;
