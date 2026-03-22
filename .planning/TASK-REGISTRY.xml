@@ -17,18 +17,18 @@
         <command>rg -n "Supabase|Payload|EngageBay|HubSpot" .planning/</command>
       </commands>
     </task>
-    <task id="02-02" agent-id="" status="planned">
+    <task id="02-02" agent-id="" status="done">
       <goal>Document EngageBay vs HubSpot: features, pricing, API/webhooks, fit for exterior-cleaning lead flow.</goal>
       <keywords>crm,comparison,integrations</keywords>
       <commands>
-        <command># capture notes in .planning/workflows/crm-and-integrations.md when ready</command>
+        <command>See .planning/workflows/crm-and-integrations.md</command>
       </commands>
     </task>
-    <task id="02-03" agent-id="" status="planned">
+    <task id="02-03" agent-id="" status="in-progress">
       <goal>Draft workflow runbooks: lead-to-customer, team login &amp; tool access, CRM touchpoints.</goal>
       <keywords>workflows,runbooks</keywords>
       <commands>
-        <command>ls .planning/workflows/</command>
+        <command>See lead-to-customer-runbook.md; team-login-and-vault.md TBD</command>
       </commands>
     </task>
     <task id="02-04" agent-id="" status="planned">
@@ -86,11 +86,11 @@
     </task>
   </phase>
   <phase id="05">
-    <task id="05-01" agent-id="" status="planned">
+    <task id="05-01" agent-id="" status="in-progress">
       <goal>Lead forms + contact storage; export/sync path toward chosen CRM.</goal>
       <keywords>forms,crm,leads</keywords>
       <commands>
-        <command>npm run planning -- snapshot</command>
+        <command>Payload form-submissions + EngageBay contact + note; verify in trial</command>
       </commands>
     </task>
     <task id="05-02" agent-id="" status="planned">
@@ -109,11 +109,11 @@
     </task>
   </phase>
   <phase id="06">
-    <task id="06-01" agent-id="" status="planned">
-      <goal>Quoting system (deferred — plan schema and milestones when phase 05 is stable).</goal>
+    <task id="06-01" agent-id="" status="in-progress">
+      <goal>Quoting system: internal Payload collection + env gate; full economics engine still deferred.</goal>
       <keywords>quotes,pricing,defer</keywords>
       <commands>
-        <command># backlog</command>
+        <command>See collections/Quotes + quote-system-and-texas-compliance.md</command>
       </commands>
     </task>
   </phase>

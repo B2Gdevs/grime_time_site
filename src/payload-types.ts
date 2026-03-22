@@ -71,6 +71,7 @@ export interface Config {
     posts: Post;
     media: Media;
     categories: Category;
+    quotes: Quote;
     users: User;
     redirects: Redirect;
     forms: Form;
@@ -93,6 +94,7 @@ export interface Config {
     posts: PostsSelect<false> | PostsSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
+    quotes: QuotesSelect<false> | QuotesSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
@@ -112,10 +114,12 @@ export interface Config {
   globals: {
     header: Header;
     footer: Footer;
+    pricing: Pricing;
   };
   globalsSelect: {
     header: HeaderSelect<false> | HeaderSelect<true>;
     footer: FooterSelect<false> | FooterSelect<true>;
+    pricing: PricingSelect<false> | PricingSelect<true>;
   };
   locale: null;
   widgets: {
@@ -201,7 +205,15 @@ export interface Page {
       | null;
     media?: (number | null) | Media;
   };
-  layout: (CallToActionBlock | ContentBlock | MediaBlock | ArchiveBlock | FormBlock)[];
+  layout: (
+    | ServiceGridBlock
+    | PricingTableBlock
+    | CallToActionBlock
+    | ContentBlock
+    | MediaBlock
+    | ArchiveBlock
+    | FormBlock
+  )[];
   meta?: {
     title?: string | null;
     /**
@@ -438,6 +450,85 @@ export interface User {
     | null;
   password?: string | null;
   collection: 'users';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ServiceGridBlock".
+ */
+export interface ServiceGridBlock {
+  heading: string;
+  intro?: string | null;
+  services?:
+    | {
+        name: string;
+        summary: string;
+        id?: string | null;
+      }[]
+    | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'serviceGrid';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "PricingTableBlock".
+ */
+export interface PricingTableBlock {
+  /**
+   * Optional title for this section. If empty, uses the global “Pricing & packages” title when source is global.
+   */
+  heading?: string | null;
+  dataSource?: ('global' | 'inline') | null;
+  inlinePlans?:
+    | {
+        /**
+         * Package name, e.g. “Driveway refresh”
+         */
+        name: string;
+        /**
+         * Short subtitle under the name
+         */
+        tagline?: string | null;
+        /**
+         * Display price, e.g. $199, From $149, Call for quote
+         */
+        price: string;
+        /**
+         * Fine print: per visit, typical home size, etc.
+         */
+        priceNote?: string | null;
+        highlighted?: boolean | null;
+        features?:
+          | {
+              text: string;
+              id?: string | null;
+            }[]
+          | null;
+        link: {
+          type?: ('reference' | 'custom') | null;
+          newTab?: boolean | null;
+          reference?:
+            | ({
+                relationTo: 'pages';
+                value: number | Page;
+              } | null)
+            | ({
+                relationTo: 'posts';
+                value: number | Post;
+              } | null);
+          url?: string | null;
+          label: string;
+          /**
+           * Choose how the link should be rendered.
+           */
+          appearance?: ('default' | 'outline') | null;
+        };
+        id?: string | null;
+      }[]
+    | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'pricingTable';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -782,6 +873,96 @@ export interface Form {
   createdAt: string;
 }
 /**
+ * Internal job quotes only — not exposed on the public site. Enable with QUOTES_INTERNAL_ENABLED and QUOTES_INTERNAL_EMAILS.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "quotes".
+ */
+export interface Quote {
+  id: number;
+  /**
+   * Short label, e.g. “123 Oak — house wash”
+   */
+  title: string;
+  status?: ('draft' | 'sent' | 'accepted' | 'lost') | null;
+  customerName?: string | null;
+  customerEmail?: string | null;
+  customerPhone?: string | null;
+  /**
+   * Sq ft, stories, linear feet, or preset label
+   */
+  jobSize?: string | null;
+  /**
+   * Surfaces: siding, concrete, roof, windows, etc.
+   */
+  surfaceDescription?: string | null;
+  soilingLevel?: ('light' | 'medium' | 'heavy') | null;
+  /**
+   * Ladder work, vegetation, HOA, hazards
+   */
+  accessNotes?: string | null;
+  /**
+   * Staff-only — pricing discussion, CPA/tax flags, etc.
+   */
+  internalNotes?: string | null;
+  /**
+   * Optional: lead form submission this quote came from.
+   */
+  sourceSubmission?: (number | null) | FormSubmission;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Website form posts. Lead columns are derived from field names (email, name, etc.). CRM columns reflect EngageBay sync.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "form-submissions".
+ */
+export interface FormSubmission {
+  id: number;
+  form: number | Form;
+  submissionData?:
+    | {
+        field: string;
+        value: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Auto-filled from submission row named email (or similar).
+   */
+  leadEmail?: string | null;
+  /**
+   * Auto-filled from name / fullName / firstName rows.
+   */
+  leadName?: string | null;
+  /**
+   * EngageBay sync result (server-set).
+   */
+  crmSyncStatus?:
+    | (
+        | 'ok'
+        | 'ok_note_warning'
+        | 'failed'
+        | 'failed_contact'
+        | 'skipped_no_api_key'
+        | 'skipped_sync_disabled'
+        | 'skipped_no_email'
+        | 'skipped_no_rows'
+      )
+    | null;
+  /**
+   * ISO timestamp of last CRM sync attempt.
+   */
+  crmSyncedAt?: string | null;
+  /**
+   * Error or status detail from the sync step.
+   */
+  crmSyncDetail?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "redirects".
  */
@@ -804,23 +985,6 @@ export interface Redirect {
         } | null);
     url?: string | null;
   };
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "form-submissions".
- */
-export interface FormSubmission {
-  id: number;
-  form: number | Form;
-  submissionData?:
-    | {
-        field: string;
-        value: string;
-        id?: string | null;
-      }[]
-    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -988,6 +1152,10 @@ export interface PayloadLockedDocument {
         value: number | Category;
       } | null)
     | ({
+        relationTo: 'quotes';
+        value: number | Quote;
+      } | null)
+    | ({
         relationTo: 'users';
         value: number | User;
       } | null)
@@ -1084,6 +1252,8 @@ export interface PagesSelect<T extends boolean = true> {
   layout?:
     | T
     | {
+        serviceGrid?: T | ServiceGridBlockSelect<T>;
+        pricingTable?: T | PricingTableBlockSelect<T>;
         cta?: T | CallToActionBlockSelect<T>;
         content?: T | ContentBlockSelect<T>;
         mediaBlock?: T | MediaBlockSelect<T>;
@@ -1103,6 +1273,59 @@ export interface PagesSelect<T extends boolean = true> {
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ServiceGridBlock_select".
+ */
+export interface ServiceGridBlockSelect<T extends boolean = true> {
+  heading?: T;
+  intro?: T;
+  services?:
+    | T
+    | {
+        name?: T;
+        summary?: T;
+        id?: T;
+      };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "PricingTableBlock_select".
+ */
+export interface PricingTableBlockSelect<T extends boolean = true> {
+  heading?: T;
+  dataSource?: T;
+  inlinePlans?:
+    | T
+    | {
+        name?: T;
+        tagline?: T;
+        price?: T;
+        priceNote?: T;
+        highlighted?: T;
+        features?:
+          | T
+          | {
+              text?: T;
+              id?: T;
+            };
+        link?:
+          | T
+          | {
+              type?: T;
+              newTab?: T;
+              reference?: T;
+              url?: T;
+              label?: T;
+              appearance?: T;
+            };
+        id?: T;
+      };
+  id?: T;
+  blockName?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1335,6 +1558,25 @@ export interface CategoriesSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "quotes_select".
+ */
+export interface QuotesSelect<T extends boolean = true> {
+  title?: T;
+  status?: T;
+  customerName?: T;
+  customerEmail?: T;
+  customerPhone?: T;
+  jobSize?: T;
+  surfaceDescription?: T;
+  soilingLevel?: T;
+  accessNotes?: T;
+  internalNotes?: T;
+  sourceSubmission?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users_select".
  */
 export interface UsersSelect<T extends boolean = true> {
@@ -1518,6 +1760,11 @@ export interface FormSubmissionsSelect<T extends boolean = true> {
         value?: T;
         id?: T;
       };
+  leadEmail?: T;
+  leadName?: T;
+  crmSyncStatus?: T;
+  crmSyncedAt?: T;
+  crmSyncDetail?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1690,6 +1937,69 @@ export interface Footer {
   createdAt?: string | null;
 }
 /**
+ * Packages shown when a page uses the “Pricing table” block with “Use global pricing”.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pricing".
+ */
+export interface Pricing {
+  id: number;
+  sectionTitle?: string | null;
+  /**
+   * Optional intro under the title (plain text).
+   */
+  sectionIntro?: string | null;
+  plans?:
+    | {
+        /**
+         * Package name, e.g. “Driveway refresh”
+         */
+        name: string;
+        /**
+         * Short subtitle under the name
+         */
+        tagline?: string | null;
+        /**
+         * Display price, e.g. $199, From $149, Call for quote
+         */
+        price: string;
+        /**
+         * Fine print: per visit, typical home size, etc.
+         */
+        priceNote?: string | null;
+        highlighted?: boolean | null;
+        features?:
+          | {
+              text: string;
+              id?: string | null;
+            }[]
+          | null;
+        link: {
+          type?: ('reference' | 'custom') | null;
+          newTab?: boolean | null;
+          reference?:
+            | ({
+                relationTo: 'pages';
+                value: number | Page;
+              } | null)
+            | ({
+                relationTo: 'posts';
+                value: number | Post;
+              } | null);
+          url?: string | null;
+          label: string;
+          /**
+           * Choose how the link should be rendered.
+           */
+          appearance?: ('default' | 'outline') | null;
+        };
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "header_select".
  */
@@ -1728,6 +2038,43 @@ export interface FooterSelect<T extends boolean = true> {
               reference?: T;
               url?: T;
               label?: T;
+            };
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pricing_select".
+ */
+export interface PricingSelect<T extends boolean = true> {
+  sectionTitle?: T;
+  sectionIntro?: T;
+  plans?:
+    | T
+    | {
+        name?: T;
+        tagline?: T;
+        price?: T;
+        priceNote?: T;
+        highlighted?: T;
+        features?:
+          | T
+          | {
+              text?: T;
+              id?: T;
+            };
+        link?:
+          | T
+          | {
+              type?: T;
+              newTab?: T;
+              reference?: T;
+              url?: T;
+              label?: T;
+              appearance?: T;
             };
         id?: T;
       };

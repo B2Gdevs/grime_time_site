@@ -3,7 +3,7 @@
   <decision id="D-stack-001">
     <title>Payload + Supabase + Vercel</title>
     <summary>Use Payload CMS (with-vercel-website template) on Vercel with PostgreSQL hosted on Supabase. Swap template DB env from Neon to Supabase connection string when implementing.</summary>
-    <impact>All schema and migrations target Postgres via Payload; Blob/storage may still use Vercel Blob or move to Supabase Storage in a later decision.</impact>
+    <impact>All schema and migrations target Postgres via Payload using **`@payloadcms/db-postgres`** (node `pg`) for reliable Supabase compatibility; avoid the template’s Neon/WebSocket (`db-vercel-postgres`) driver against Supabase poolers. Media: Supabase Storage (S3 API, bucket `media`) via @payloadcms/storage-s3 when env is set; otherwise local `public/media` for dev.</impact>
     <references>
       <file path=".planning/REQUIREMENTS.xml" />
     </references>
@@ -28,7 +28,7 @@
   <decision id="D-quotes-001">
     <title>Quote system: internal-only, feature-flagged</title>
     <summary>Quotes capture job size, description, soiling level, and (later) economics (labor, materials, margin, Texas sales tax per CPA guidance). **Not** shown to customers until explicitly designed. Access restricted to allowlisted staff emails (bg/pb/de grimetime.local initially); implement with env flags `QUOTES_INTERNAL_ENABLED` + `QUOTES_INTERNAL_EMAILS`.</summary>
-    <impact>Public site stays trust + booking-style intake; internal admin surfaces built behind flags and Payload access control.</impact>
+    <impact>Public site stays trust + booking-style intake. **v1:** Payload `quotes` collection (admin group Internal) gated by `QUOTES_INTERNAL_ENABLED` + `QUOTES_INTERNAL_EMAILS`. Labor/material/tax automation remains future work per workflow doc.</impact>
     <references>
       <file path=".planning/workflows/quote-system-and-texas-compliance.md" />
     </references>

@@ -1,4 +1,5 @@
-import { vercelPostgresAdapter } from '@payloadcms/db-vercel-postgres'
+import { postgresAdapter } from '@payloadcms/db-postgres'
+import { resendAdapter } from '@payloadcms/email-resend'
 import sharp from 'sharp'
 import path from 'path'
 import { buildConfig, PayloadRequest } from 'payload'
@@ -8,16 +9,34 @@ import { Categories } from './collections/Categories'
 import { Media } from './collections/Media'
 import { Pages } from './collections/Pages'
 import { Posts } from './collections/Posts'
+import { Quotes } from './collections/Quotes'
 import { Users } from './collections/Users'
 import { Footer } from './Footer/config'
 import { Header } from './Header/config'
+import { Pricing } from './globals/Pricing/config'
 import { plugins } from './plugins'
 import { defaultLexical } from '@/fields/defaultLexical'
 import { getServerSideURL } from './utilities/getURL'
-import { vercelBlobStorage } from '@payloadcms/storage-vercel-blob'
+import { s3Storage } from '@payloadcms/storage-s3'
+import {
+  getSupabasePublicObjectUrl,
+  getSupabaseS3Endpoint,
+  isSupabaseMediaStorageConfigured,
+} from './utilities/supabaseS3Storage'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
+
+const postgresUrl = process.env.POSTGRES_URL?.trim() || ''
+/** Supabase (and many hosted PG providers) require TLS for non-local URLs. */
+const supabaseOrRemoteSsl =
+  postgresUrl && !postgresUrl.includes('localhost') && !postgresUrl.includes('127.0.0.1')
+    ? { rejectUnauthorized: false }
+    : false
+
+const resendApiKey = process.env.RESEND_API_KEY?.trim()
+const emailFrom = process.env.EMAIL_FROM?.trim() || 'onboarding@resend.dev'
+const emailFromName = process.env.EMAIL_FROM_NAME?.trim() || 'Grime Time'
 
 export default buildConfig({
   admin: {
@@ -58,24 +77,48 @@ export default buildConfig({
   },
   // This config helps us configure global or default features that the other editors can inherit
   editor: defaultLexical,
-  db: vercelPostgresAdapter({
+  db: postgresAdapter({
     pool: {
-      connectionString: process.env.POSTGRES_URL || '',
+      connectionString: postgresUrl,
+      max: 10,
+      ...(supabaseOrRemoteSsl ? { ssl: supabaseOrRemoteSsl } : {}),
     },
   }),
-  collections: [Pages, Posts, Media, Categories, Users],
+  collections: [Pages, Posts, Media, Categories, Quotes, Users],
   cors: [getServerSideURL()].filter(Boolean),
   plugins: [
     ...plugins,
-    vercelBlobStorage({
+    s3Storage({
+      bucket: process.env.SUPABASE_STORAGE_BUCKET?.trim() || 'media',
       collections: {
-        media: true,
+        media: {
+          generateFileURL: ({ filename, prefix }) =>
+            getSupabasePublicObjectUrl(filename, prefix),
+        },
       },
-      token: process.env.BLOB_READ_WRITE_TOKEN || '',
+      config: {
+        credentials: {
+          accessKeyId: process.env.SUPABASE_S3_ACCESS_KEY_ID || '',
+          secretAccessKey: process.env.SUPABASE_S3_SECRET_ACCESS_KEY || '',
+        },
+        endpoint: getSupabaseS3Endpoint(),
+        forcePathStyle: true,
+        region: process.env.SUPABASE_S3_REGION?.trim() || 'us-east-1',
+      },
+      enabled: isSupabaseMediaStorageConfigured(),
     }),
   ],
-  globals: [Header, Footer],
+  globals: [Header, Footer, Pricing],
   secret: process.env.PAYLOAD_SECRET,
+  ...(resendApiKey
+    ? {
+        email: resendAdapter({
+          apiKey: resendApiKey,
+          defaultFromAddress: emailFrom,
+          defaultFromName: emailFromName,
+        }),
+      }
+    : {}),
   sharp,
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),

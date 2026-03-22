@@ -20,16 +20,24 @@ export const home: (args: HomeArgs) => RequiredDataFromCollectionSlug<'pages'> =
           link: {
             type: 'custom',
             appearance: 'default',
-            label: 'All posts',
-            url: '/posts',
+            label: 'Book online',
+            url: '/schedule',
           },
         },
         {
           link: {
             type: 'custom',
             appearance: 'outline',
-            label: 'Contact',
+            label: 'Get a quote',
             url: '/contact',
+          },
+        },
+        {
+          link: {
+            type: 'custom',
+            appearance: 'outline',
+            label: 'Our services',
+            url: '/#services',
           },
         },
       ],
@@ -47,7 +55,7 @@ export const home: (args: HomeArgs) => RequiredDataFromCollectionSlug<'pages'> =
                   format: 0,
                   mode: 'normal',
                   style: '',
-                  text: 'Payload Website Template',
+                  text: 'Grime Time Exterior Cleaning',
                   version: 1,
                 },
               ],
@@ -61,35 +69,12 @@ export const home: (args: HomeArgs) => RequiredDataFromCollectionSlug<'pages'> =
               type: 'paragraph',
               children: [
                 {
-                  type: 'link',
-                  children: [
-                    {
-                      type: 'text',
-                      detail: 0,
-                      format: 0,
-                      mode: 'normal',
-                      style: '',
-                      text: 'Visit the admin dashboard',
-                      version: 1,
-                    },
-                  ],
-                  direction: 'ltr',
-                  fields: {
-                    linkType: 'custom',
-                    newTab: false,
-                    url: '/admin',
-                  },
-                  format: '',
-                  indent: 0,
-                  version: 3,
-                },
-                {
                   type: 'text',
                   detail: 0,
                   format: 0,
                   mode: 'normal',
                   style: '',
-                  text: " to begin managing this site's content. The code for this template is completely open-source and can be found ",
+                  text: 'House washing, concrete, and exterior detailing done safely with soft-wash methods. Serving homeowners who want curb appeal without the hassle — ',
                   version: 1,
                 },
                 {
@@ -101,15 +86,15 @@ export const home: (args: HomeArgs) => RequiredDataFromCollectionSlug<'pages'> =
                       format: 0,
                       mode: 'normal',
                       style: '',
-                      text: 'on our Github',
+                      text: 'book a visit',
                       version: 1,
                     },
                   ],
                   direction: 'ltr',
                   fields: {
                     linkType: 'custom',
-                    newTab: true,
-                    url: 'https://github.com/payloadcms/payload/tree/main/templates/website',
+                    newTab: false,
+                    url: '/schedule',
                   },
                   format: '',
                   indent: 0,
@@ -121,7 +106,39 @@ export const home: (args: HomeArgs) => RequiredDataFromCollectionSlug<'pages'> =
                   format: 0,
                   mode: 'normal',
                   style: '',
-                  text: '. ',
+                  text: ' or ',
+                  version: 1,
+                },
+                {
+                  type: 'link',
+                  children: [
+                    {
+                      type: 'text',
+                      detail: 0,
+                      format: 0,
+                      mode: 'normal',
+                      style: '',
+                      text: 'send us a message',
+                      version: 1,
+                    },
+                  ],
+                  direction: 'ltr',
+                  fields: {
+                    linkType: 'custom',
+                    newTab: false,
+                    url: '/contact',
+                  },
+                  format: '',
+                  indent: 0,
+                  version: 3,
+                },
+                {
+                  type: 'text',
+                  detail: 0,
+                  format: 0,
+                  mode: 'normal',
+                  style: '',
+                  text: ' for a tailored quote.',
                   version: 1,
                 },
               ],
@@ -140,6 +157,32 @@ export const home: (args: HomeArgs) => RequiredDataFromCollectionSlug<'pages'> =
       },
     },
     layout: [
+      {
+        blockType: 'serviceGrid',
+        heading: 'What we do',
+        intro:
+          'Professional exterior cleaning for homes and small commercial properties. Every job is scoped for your surfaces and soil level.',
+        services: [
+          {
+            name: 'House & siding wash',
+            summary:
+              'Soft wash for vinyl, brick, and fiber cement — removes mildew and road film without high-pressure damage.',
+          },
+          {
+            name: 'Concrete & flatwork',
+            summary:
+              'Driveways, patios, and walkways — lift oil and organic stains where safely possible.',
+          },
+          {
+            name: 'Detailing add-ons',
+            summary: 'Gutters, soffits, decks, and fence refresh bundles available with any package.',
+          },
+        ],
+      },
+      {
+        blockType: 'pricingTable',
+        dataSource: 'global',
+      },
       {
         blockName: 'Content Block',
         blockType: 'content',
@@ -668,7 +711,7 @@ export const home: (args: HomeArgs) => RequiredDataFromCollectionSlug<'pages'> =
     meta: {
       description: 'An open-source website built with Payload and Next.js.',
       image: heroImage.id,
-      title: 'Payload Website Template',
+      title: 'Grime Time | Exterior cleaning',
     },
     title: 'Home',
   }

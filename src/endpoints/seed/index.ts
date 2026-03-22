@@ -1,6 +1,6 @@
 import type { CollectionSlug, GlobalSlug, Payload, PayloadRequest, File } from 'payload'
 
-import { contactForm as contactFormData } from './contact-form'
+import { buildContactFormData } from './contact-form'
 import { contact as contactPageData } from './contact-page'
 import { home } from './home'
 import { image1 } from './image-1'
@@ -20,7 +20,7 @@ const collections: CollectionSlug[] = [
   'search',
 ]
 
-const globals: GlobalSlug[] = ['header', 'footer']
+const globals: GlobalSlug[] = ['header', 'footer', 'pricing']
 
 const categories = ['Technology', 'News', 'Finance', 'Design', 'Software', 'Engineering']
 
@@ -45,18 +45,22 @@ export const seed = async ({
 
   // clear the database
   await Promise.all(
-    globals.map((global) =>
-      payload.updateGlobal({
+    globals.map((global) => {
+      if (global === 'pricing') {
+        return payload.updateGlobal({
+          slug: 'pricing',
+          data: { sectionTitle: '', sectionIntro: '', plans: [] },
+          depth: 0,
+          context: { disableRevalidate: true },
+        })
+      }
+      return payload.updateGlobal({
         slug: global,
-        data: {
-          navItems: [],
-        },
+        data: { navItems: [] },
         depth: 0,
-        context: {
-          disableRevalidate: true,
-        },
-      }),
-    ),
+        context: { disableRevalidate: true },
+      })
+    }),
   )
 
   await Promise.all(
@@ -214,7 +218,7 @@ export const seed = async ({
   const contactForm = await payload.create({
     collection: 'forms',
     depth: 0,
-    data: contactFormData,
+    data: buildContactFormData(),
   })
 
   payload.logger.info(`— Seeding pages...`)
@@ -242,8 +246,22 @@ export const seed = async ({
           {
             link: {
               type: 'custom',
-              label: 'Posts',
-              url: '/posts',
+              label: 'Home',
+              url: '/',
+            },
+          },
+          {
+            link: {
+              type: 'custom',
+              label: 'Services',
+              url: '/#services',
+            },
+          },
+          {
+            link: {
+              type: 'custom',
+              label: 'Pricing',
+              url: '/#pricing',
             },
           },
           {
@@ -254,6 +272,20 @@ export const seed = async ({
                 relationTo: 'pages',
                 value: contactPage.id,
               },
+            },
+          },
+          {
+            link: {
+              type: 'custom',
+              label: 'Book online',
+              url: '/schedule',
+            },
+          },
+          {
+            link: {
+              type: 'custom',
+              label: 'Posts',
+              url: '/posts',
             },
           },
         ],
@@ -284,6 +316,71 @@ export const seed = async ({
               label: 'Payload',
               newTab: true,
               url: 'https://payloadcms.com/',
+            },
+          },
+        ],
+      },
+    }),
+    payload.updateGlobal({
+      slug: 'pricing',
+      data: {
+        sectionTitle: 'Packages & pricing',
+        sectionIntro:
+          'Starting points for typical homes — final price depends on size, soil level, and access. Request a quote for an exact number.',
+        plans: [
+          {
+            name: 'Essential wash',
+            tagline: 'Great for maintenance',
+            price: 'From $149',
+            priceNote: 'Typical small home / partial facade',
+            highlighted: false,
+            features: [
+              { text: 'Soft wash siding & trim' },
+              { text: 'Mildew & dust removal' },
+              { text: 'Walkthrough photo summary' },
+            ],
+            link: {
+              type: 'custom',
+              label: 'Get info',
+              url: '/contact',
+              appearance: 'outline',
+            },
+          },
+          {
+            name: 'Full exterior',
+            tagline: 'Most popular',
+            price: 'From $279',
+            priceNote: 'Average single-story home',
+            highlighted: true,
+            features: [
+              { text: 'Everything in Essential' },
+              { text: 'Gutters & soffits rinsed' },
+              { text: 'Concrete entryway rinse' },
+              { text: 'Priority scheduling window' },
+            ],
+            link: {
+              type: 'custom',
+              label: 'Book / quote',
+              url: '/schedule',
+              appearance: 'default',
+            },
+          },
+          {
+            name: 'Property refresh',
+            tagline: 'Larger or heavily soiled',
+            price: 'Custom',
+            priceNote: 'Multi-story, stone, heavy organic growth',
+            highlighted: false,
+            features: [
+              { text: 'Site visit or photo estimate' },
+              { text: 'Add-ons: roof, deck, fence' },
+              { text: 'Commercial & HOA welcome' },
+            ],
+            link: {
+              type: 'custom',
+              label: 'Request quote',
+              url: '/contact',
+              appearance: 'outline',
             },
           },
         ],

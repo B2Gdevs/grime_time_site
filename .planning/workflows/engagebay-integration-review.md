@@ -1,8 +1,16 @@
 # EngageBay — integration review (pre-build)
 
 **Owner:** TBD  
-**Last reviewed:** 2026-03-20  
+**Last reviewed:** 2026-03-21  
 **Status:** Chosen as CRM direction; validate in a trial before production cutover.
+
+## Implemented in repo (verify in your EngageBay trial)
+
+- [x] API key in env; **create/update contact** from Payload form submissions (`POST .../subscribers/subscriber`).
+- [x] Optional **tag** on contacts (`ENGAGEBAY_SUBMISSION_TAG`).
+- [x] **Note** on contact with full form row dump (`POST .../notes`), skippable via `ENGAGEBAY_ATTACH_SUBMISSION_NOTE=false`.
+- [ ] Rate limits / batch jobs for large imports — still N/A until volume requires it.
+- [ ] Custom fields for lead source, service area — optional; extend [`syncFormSubmissionToEngageBay.ts`](../../src/lib/engagebay/syncFormSubmissionToEngageBay.ts).
 
 ## Official surfaces
 

@@ -1,8 +1,15 @@
 # Internal quote system — product math & Texas compliance (planning)
 
 **Owner:** TBD  
-**Last reviewed:** 2026-03-20  
+**Last reviewed:** 2026-03-21  
 **Visibility:** **Internal only.** Feature-flagged; customers see public site + booking-style forms, **not** final quotes until you intentionally expose them later.
+
+## Implementation (v1 — Payload admin)
+
+- **Collection:** `quotes` (admin group **Internal**). Fields match the intake list below (title, status, customer fields, job size, surfaces, soiling, access notes, internal notes).
+- **Access:** Set `QUOTES_INTERNAL_ENABLED=true` and `QUOTES_INTERNAL_EMAILS` to a comma-separated list of staff emails (must match Payload user emails). When disabled or the list is empty, **no one** can read/create quotes in admin.
+- **Code:** [`src/collections/Quotes`](../../src/collections/Quotes), [`src/utilities/quotesAccess.ts`](../../src/utilities/quotesAccess.ts).
+- **EngageBay:** Quotes are **not** auto-synced to deals yet — decide in “Next planning steps” and track in [`crm-and-integrations.md`](./crm-and-integrations.md).
 
 ## Job intake fields (for quotes when built)
 
@@ -53,5 +60,7 @@ Use spreadsheet or internal admin calculators before automating in code.
 ## Next planning steps
 
 - [ ] CPA confirmation on Texas tax treatment per service line
-- [ ] Lock v1 field list and status workflow (draft → sent → accepted/lost)
+- [x] Lock v1 field list and status workflow (draft → sent → accepted/lost) — reflected in Payload `quotes` collection
 - [ ] Decide if quotes are Payload-only with EngageBay deal sync or deal-only in CRM
+- [x] Optional: link `quotes` → `form-submissions` — **sourceSubmission** relationship on `quotes`
+- [ ] Optional: EngageBay deal id field on quotes

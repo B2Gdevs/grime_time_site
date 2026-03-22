@@ -1,6 +1,6 @@
 import { RequiredDataFromCollectionSlug } from 'payload'
 
-export const contactForm: RequiredDataFromCollectionSlug<'forms'> = {
+const contactFormBase: RequiredDataFromCollectionSlug<'forms'> = {
   confirmationMessage: {
     root: {
       type: 'root',
@@ -35,7 +35,7 @@ export const contactForm: RequiredDataFromCollectionSlug<'forms'> = {
   createdAt: '2023-01-12T21:47:41.374Z',
   emails: [
     {
-      emailFrom: '"Payload" \u003Cdemo@payloadcms.com\u003E',
+      emailFrom: '"Grime Time" \u003Conboarding@resend.dev\u003E',
       emailTo: '{{email}}',
       message: {
         root: {
@@ -90,7 +90,7 @@ export const contactForm: RequiredDataFromCollectionSlug<'forms'> = {
     {
       name: 'phone',
       blockName: 'phone',
-      blockType: 'number',
+      blockType: 'text',
       label: 'Phone',
       required: false,
       width: 100,
@@ -109,3 +109,18 @@ export const contactForm: RequiredDataFromCollectionSlug<'forms'> = {
   title: 'Contact Form',
   updatedAt: '2023-01-12T21:47:41.374Z',
 }
+
+/** Uses `EMAIL_FROM` when set (must match a verified sender in Resend). */
+export function buildContactFormData(): RequiredDataFromCollectionSlug<'forms'> {
+  const addr = process.env.EMAIL_FROM?.trim()
+  const emailFrom = addr ? `"Grime Time" <${addr}>` : contactFormBase.emails?.[0]?.emailFrom
+  const emails = contactFormBase.emails?.length
+    ? [{ ...contactFormBase.emails[0], emailFrom: emailFrom || contactFormBase.emails[0].emailFrom }]
+    : contactFormBase.emails
+  return {
+    ...contactFormBase,
+    emails,
+  }
+}
+
+export const contactForm = contactFormBase

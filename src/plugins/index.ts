@@ -9,12 +9,14 @@ import { GenerateTitle, GenerateURL } from '@payloadcms/plugin-seo/types'
 import { FixedToolbarFeature, HeadingFeature, lexicalEditor } from '@payloadcms/richtext-lexical'
 import { searchFields } from '@/search/fieldOverrides'
 import { beforeSyncWithSearch } from '@/search/beforeSync'
+import { afterFormSubmissionEngageBay } from '@/hooks/afterFormSubmissionEngageBay'
+import { beforeFormSubmissionNormalize } from '@/hooks/beforeFormSubmissionNormalize'
 
 import { Page, Post } from '@/payload-types'
 import { getServerSideURL } from '@/utilities/getURL'
 
 const generateTitle: GenerateTitle<Post | Page> = ({ doc }) => {
-  return doc?.title ? `${doc.title} | Payload Website Template` : 'Payload Website Template'
+  return doc?.title ? `${doc.title} | Grime Time` : 'Grime Time'
 }
 
 const generateURL: GenerateURL<Post | Page> = ({ doc }) => {
@@ -57,6 +59,82 @@ export const plugins: Plugin[] = [
   formBuilderPlugin({
     fields: {
       payment: false,
+    },
+    formSubmissionOverrides: {
+      admin: {
+        group: 'Leads',
+        defaultColumns: ['form', 'leadEmail', 'leadName', 'crmSyncStatus', 'createdAt'],
+        description:
+          'Website form posts. Lead columns are derived from field names (email, name, etc.). CRM columns reflect EngageBay sync.',
+      },
+      fields: ({ defaultFields }) => [
+        ...defaultFields,
+        {
+          type: 'row',
+          fields: [
+            {
+              name: 'leadEmail',
+              type: 'email',
+              admin: {
+                readOnly: true,
+                width: '50%',
+                description: 'Auto-filled from submission row named email (or similar).',
+              },
+            },
+            {
+              name: 'leadName',
+              type: 'text',
+              admin: {
+                readOnly: true,
+                width: '50%',
+                description: 'Auto-filled from name / fullName / firstName rows.',
+              },
+            },
+          ],
+        },
+        {
+          name: 'crmSyncStatus',
+          type: 'select',
+          admin: {
+            readOnly: true,
+            position: 'sidebar',
+            description: 'EngageBay sync result (server-set).',
+          },
+          options: [
+            { label: 'OK', value: 'ok' },
+            { label: 'OK (note warning)', value: 'ok_note_warning' },
+            { label: 'Failed', value: 'failed' },
+            { label: 'Failed (contact)', value: 'failed_contact' },
+            { label: 'Skipped — no API key', value: 'skipped_no_api_key' },
+            { label: 'Skipped — sync off', value: 'skipped_sync_disabled' },
+            { label: 'Skipped — no email', value: 'skipped_no_email' },
+            { label: 'Skipped — no rows', value: 'skipped_no_rows' },
+          ],
+        },
+        {
+          name: 'crmSyncedAt',
+          type: 'text',
+          admin: {
+            readOnly: true,
+            position: 'sidebar',
+            description: 'ISO timestamp of last CRM sync attempt.',
+          },
+        },
+        {
+          name: 'crmSyncDetail',
+          type: 'textarea',
+          admin: {
+            readOnly: true,
+            position: 'sidebar',
+            rows: 4,
+            description: 'Error or status detail from the sync step.',
+          },
+        },
+      ],
+      hooks: {
+        beforeChange: [beforeFormSubmissionNormalize],
+        afterChange: [afterFormSubmissionEngageBay],
+      },
     },
     formOverrides: {
       fields: ({ defaultFields }) => {
