@@ -12,9 +12,10 @@
     <item>Launch polish is now actively tracking the shared public/admin visual system, including theme tokens, typography, and QA for login/admin shells.</item>
     <item>The homepage renderer now drops placeholder seed media on `home` and uses masked section shells so service, pricing, and CTA content read like intentional marketing panels instead of template leftovers.</item>
     <item>The live homepage now uses a compact code-viewer style service surface with icon-led tabs, inline `Start estimate` actions in the file rail, and a side-by-side detail pane instead of stacked service/pricing explainer grids.</item>
+    <item>The seeded public-site narrative now includes a founder-story `about` page plus a homepage panel that explains the business as two young entrepreneurs building serious operating experience ahead of college.</item>
   </highlights>
   <next>
-    <item>Finish the seeded homepage, pricing, and proof content so the live site matches the new quote flow after the next reseed.</item>
+    <item>Finish the seeded homepage, about page, pricing, and proof content so the live site matches the new quote flow after the next reseed.</item>
     <item>Add a quick-edit admin path for reviews, testimonials, and before/after proof.</item>
     <item>Complete launch QA across public routes, login, and admin screens after reseed.</item>
   </next>

@@ -33,7 +33,7 @@
   </keywords>
   <tasks>
     <task id="03-site-baseline" owner="team">
-      <description>Seed and publish the real homepage and core marketing pages instead of relying on the static fallback.</description>
+      <description>Seed and publish the real homepage and core marketing pages, including founder-story/about content, instead of relying on the static fallback.</description>
       <status>in-progress</status>
     </task>
     <task id="03-proof-content" owner="team">

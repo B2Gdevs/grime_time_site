@@ -12,6 +12,49 @@ export function HomeMarketingPanels() {
       <HomeServiceSurface />
 
       <section className="site-section-shell px-6 py-8 md:px-10 md:py-10">
+        <NoiseBackground className="opacity-55" contrast="light" />
+
+        <div className="relative z-10 grid gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
+          <div>
+            <p className="text-sm font-medium uppercase tracking-[0.24em] text-primary">About Grime Time</p>
+            <h2 className="mt-4 max-w-3xl text-3xl font-semibold tracking-tight">
+              Founded by two young entrepreneurs building real-world experience before college.
+            </h2>
+            <div className="mt-6 grid gap-4 text-sm leading-7 text-muted-foreground">
+              <p>
+                The business started with simple work, then grew from the belief that learning how to
+                sell, serve, estimate, and operate in the real world would only make formal education
+                stronger later.
+              </p>
+              <p>
+                They took what they already knew, decided not to stay small by default, and started
+                building a more formidable company with better systems, better customer communication,
+                and a long-term plan to scale beyond basic jobs.
+              </p>
+            </div>
+          </div>
+          <div className="rounded-[1.5rem] border border-border/80 bg-background/75 p-6 shadow-sm">
+            <p className="text-sm font-medium uppercase tracking-[0.2em] text-primary">What that means</p>
+            <div className="mt-4 grid gap-4 text-sm leading-7 text-muted-foreground">
+              <p>Hungry operators, clear scope, and work that gets tighter every season.</p>
+              <p>Residential first, then disciplined growth into repeat commercial work.</p>
+            </div>
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <Button asChild>
+                <Link href="/about">
+                  Read our story
+                  <ArrowRightIcon className="size-4" />
+                </Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link href="/#instant-quote">Start estimate</Link>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="site-section-shell px-6 py-8 md:px-10 md:py-10">
         <NoiseBackground className="opacity-70" contrast="light" />
 
         <div className="relative z-10 grid gap-8 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:items-end">

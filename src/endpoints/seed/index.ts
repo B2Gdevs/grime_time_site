@@ -6,6 +6,7 @@ import {
   resolveSeedStaffEmails,
 } from '@/utilities/quotesAccess'
 import { SCHEDULE_REQUEST_FORM_TITLE } from '@/lib/forms/scheduleRequest'
+import { about as aboutPageData } from './about-page'
 import { buildContactFormData, SEED_CONTACT_FORM_TITLE } from './contact-form'
 import { buildInstantQuoteFormData, SEED_INSTANT_QUOTE_FORM_TITLE } from './instant-quote-form'
 import { buildScheduleRequestFormData } from './schedule-request-form'
@@ -299,6 +300,14 @@ async function runSeed({
     req,
   ).then(({ id }) => payload.findByID({ collection: 'pages', id, depth: 0, req }))
 
+  const aboutPage = await upsertBySlug(
+    payload,
+    'pages',
+    'about',
+    aboutPageData() as Record<string, unknown>,
+    req,
+  ).then(({ id }) => payload.findByID({ collection: 'pages', id, depth: 0, req }))
+
   payload.logger.info(`— Updating globals...`)
 
   await Promise.all([
@@ -311,6 +320,16 @@ async function runSeed({
               type: 'custom',
               label: 'Home',
               url: '/',
+            },
+          },
+          {
+            link: {
+              type: 'reference',
+              label: 'About',
+              reference: {
+                relationTo: 'pages',
+                value: aboutPage.id,
+              },
             },
           },
           {
@@ -344,13 +363,6 @@ async function runSeed({
               url: '/schedule',
             },
           },
-          {
-            link: {
-              type: 'custom',
-              label: 'Posts',
-              url: '/posts',
-            },
-          },
         ],
       },
       req,
@@ -359,6 +371,16 @@ async function runSeed({
       slug: 'footer',
       data: {
         navItems: [
+          {
+            link: {
+              type: 'reference',
+              label: 'About',
+              reference: {
+                relationTo: 'pages',
+                value: aboutPage.id,
+              },
+            },
+          },
           {
             link: {
               type: 'custom',
