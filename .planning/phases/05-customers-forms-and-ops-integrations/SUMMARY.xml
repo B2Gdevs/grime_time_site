@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phase-summary>
+  <meta>
+    <phase-id>05</phase-id>
+    <phase-name>Customers, forms, and ops integrations</phase-name>
+    <date>2026-03-23</date>
+  </meta>
+  <status>in-progress</status>
+  <highlights>
+    <item>Payload REST API routes are now mounted from the app root so public forms and auth calls stop failing with 404s.</item>
+    <item>The homepage instant quote form, the custom contact page, and the schedule page now all submit through first-party React Hook Form + Zod routes instead of relying on embedded CRM forms.</item>
+    <item>Lead submissions now write CRM sync metadata during the create path instead of relying on a broken post-create patch against form submissions.</item>
+    <item>The CRM sync path is now provider-abstracted: EngageBay remains the default provider, HubSpot can be configured as a fallback, and the active provider can be switched from the admin ops dashboard without schema changes.</item>
+    <item>Current EngageBay handoff is still returning `crmSyncStatus=failed_contact`, so Payload capture is reliable but EngageBay delivery is not yet production-ready.</item>
+  </highlights>
+  <next>
+    <item>Resolve EngageBay API quota/key-scope issues before treating CRM sync as production-ready.</item>
+    <item>If HubSpot is configured, verify provider switching in ops and use that path as the fallback before building quote-to-deal sync in phase `05-04`.</item>
+    <item>Optional next pass: replace remaining layout-builder contact blocks with the same first-party form UI used on `/contact`.</item>
+  </next>
+</phase-summary>

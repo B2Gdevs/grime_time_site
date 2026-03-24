@@ -4,6 +4,8 @@ This repo uses [RepoPlanner](https://github.com/MagicbornStudios/RepoPlanner) as
 
 **Direction (see REQUIREMENTS.xml):** [Payload `with-vercel-website`](https://github.com/payloadcms/payload/tree/main/templates/with-vercel-website) on Vercel, PostgreSQL via **Supabase**, exterior-cleaning marketing + ops workflows; **CRM:** EngageBay (integration map: `workflows/crm-and-integrations.md`).
 
+**What to open next for engineering:** [`ROADMAP.xml`](./ROADMAP.xml) and [`phases/`](./phases/). Staff runbooks that appear in the app live under **`src/content/docs/`** (see `src/lib/docs/catalog.ts`).
+
 ## Commands
 
 ```bash

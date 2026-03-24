@@ -1,5 +1,27 @@
 # Payload CMS Development Rules
 
+## Planning Execution Contract
+
+1. Use the `.planning` loop on every substantial task. Start from `.planning/ROADMAP.xml`, `.planning/TASK-REGISTRY.xml`, the active phase `PLAN.xml`, and the current phase `SUMMARY.xml`.
+2. Work must stay phase-aware. If the change belongs to an existing phase, update that phase plan/summary and the related task status. If it does not fit, add the new task or phase explicitly before treating it as active work.
+3. Close work properly. When a task meaningfully changes state, update `TASK-REGISTRY.xml`. When a phase-level outcome changes, update that phase `SUMMARY.xml`. Add or revise `DECISIONS.xml` entries when the repo now depends on a new architectural or process decision.
+4. Keep references real. New workflow or integration docs must point at the files, routes, collections, globals, scripts, or env vars they govern.
+5. Run `npm run planning -- snapshot` after every meaningful change set, not as an optional cleanup step.
+6. Do not invent parallel planning systems in random markdown files. If it is execution state, put it in the planning contract. If it is a runbook visible in the portal, put it in `src/content/docs/` and list it in `src/lib/docs/catalog.ts`.
+
+## Payload MCP Workflow
+
+1. Prefer the official Payload MCP plugin and expose it from the same app/dev server instead of running an unrelated sidecar CMS bridge.
+2. MCP enablement must remain explicit and safe. If it introduces schema changes, wire it behind an env gate and document the migration requirement instead of silently breaking the current database.
+3. Keep editor setup documented for both Cursor and Codex. Repo-local templates are fine, but do not hardcode secrets into committed config.
+4. Use MCP for content and admin-data operations when the project has it enabled and configured; otherwise fall back to the normal repo workflow without pretending MCP is live.
+
+## Grime Time — planning & internal docs (do not regress)
+
+1. **Phase planning** belongs under **`.planning/phases/`** (numbered folders + `README.md`), aligned with **`.planning/ROADMAP.xml`**. Do **not** add roadmap/phase-bridge files under **`.planning/workflows/`** (e.g. no `development-phases.md` there).
+2. **Staff runbooks shown in the product** (portal **Docs**, gated so only admins see them): markdown in **`src/content/docs/`**, listed in **`src/lib/docs/catalog.ts`** with `audience: 'admin'`. Do **not** keep a second copy under `.planning/workflows/` for those.
+3. **`.planning/workflows/`** is for integration maps, policies, and specs that are *not* the portal doc surface (or that still point at repo paths for editor convenience, like some team playbooks already in the catalog).
+
 You are an expert Payload CMS developer. When working with Payload projects, follow these rules:
 
 ## Core Principles

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phase-plan>
+  <meta>
+    <phase-id>04</phase-id>
+    <phase-name>Supabase and team access</phase-name>
+    <date>2026-03-23</date>
+  </meta>
+  <purpose>Bring the repo onto the real Supabase-backed database with explicit user approval for schema changes, then establish admin access and repeatable seed/bootstrap flows.</purpose>
+  <scope>In scope: Postgres adapter wiring, environment setup, approved migration runs, initial admin bootstrap, customer-vs-admin access separation, and the ability to seed baseline content into the real database. Out of scope: public marketing polish, CRM deal sync, and editable ops globals.</scope>
+  <files>
+    <file path=".planning/workflows/content-and-seeding.md">
+      <description>Seed workflow after migrations and admin access.</description>
+      <keywords>seed,admin</keywords>
+    </file>
+    <file path=".planning/workflows/payload-mcp-and-editor-setup.md">
+      <description>Payload MCP enablement path and local editor configuration.</description>
+      <keywords>mcp,cursor,codex</keywords>
+    </file>
+    <file path="scripts/bootstrap-admin.ts">
+      <description>First-admin bootstrap path using env credentials.</description>
+      <keywords>admin,bootstrap</keywords>
+    </file>
+    <file path=".env.example">
+      <description>Environment variable reference for admin, Supabase, and seed flows.</description>
+      <keywords>env,supabase</keywords>
+    </file>
+    <file path="src/migrations/20260324_024258_add_payload_mcp_api_keys.ts">
+      <description>Pending migration for Payload MCP API keys and remaining quote schema deltas.</description>
+      <keywords>mcp,migration,quotes</keywords>
+    </file>
+    <file path="src/app/(portal)/ops/page.tsx">
+      <description>Admin-only ops dashboard route, separate from the customer dashboard.</description>
+      <keywords>auth,admin,portal,ops</keywords>
+    </file>
+    <file path="src/components/login-form.tsx">
+      <description>Customer-only login flow and post-login routing.</description>
+      <keywords>auth,customer,login</keywords>
+    </file>
+  </files>
+  <keywords>
+    <keyword>supabase</keyword>
+    <keyword>migrations</keyword>
+    <keyword>admin</keyword>
+    <keyword>seed</keyword>
+  </keywords>
+  <tasks>
+    <task id="04-db-approval" owner="team">
+      <description>Run Payload migrations only with explicit user approval and confirm the database is ready for seed content.</description>
+      <status>in-progress</status>
+    </task>
+    <task id="04-admin-bootstrap" owner="team">
+      <description>Create and verify the first admin account using the bootstrap script or admin login flow.</description>
+      <status>planned</status>
+    </task>
+    <task id="04-seed-readiness" owner="team">
+      <description>Confirm the environment is ready to seed baseline marketing content and users into the real database.</description>
+      <status>planned</status>
+    </task>
+    <task id="04-mcp-tooling" owner="team">
+      <description>Wire Payload MCP as an env-gated part of the dev process, keep local editor configs on the same localhost origin as Next dev, and document that route availability still depends on the approved MCP API-key migration.</description>
+      <status>in-progress</status>
+    </task>
+    <task id="04-split-access" owner="team">
+      <description>Keep customer login/customer dashboard separate from admin sign-in/admin ops so the public account flow never advertises Payload admin.</description>
+      <status>in-progress</status>
+    </task>
+  </tasks>
+  <questions>
+    <question id="q-migration-window" status="open">When should the approved migration/seed run happen against the current Supabase database?</question>
+    <question id="q-admin-identity" status="open">Which email should be the long-term primary admin account in production?</question>
+    <question id="q-mcp-rollout" status="open">When should the MCP API keys migration be approved so editor tooling can be enabled locally?</question>
+    <question id="q-admin-entry" status="open">Should the team eventually get a branded `/team/login` route, or is Payload admin login the long-term admin entry point?</question>
+  </questions>
+</phase-plan>

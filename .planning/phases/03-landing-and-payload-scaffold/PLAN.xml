@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phase-plan>
+  <meta>
+    <phase-id>03</phase-id>
+    <phase-name>Landing and Payload scaffold</phase-name>
+    <date>2026-03-23</date>
+  </meta>
+  <purpose>Turn the Payload website template into a real exterior-cleaning marketing site with seeded pages, proof, and clear conversion paths.</purpose>
+  <scope>In scope: homepage and core service pages, seed baseline content, layout-builder usage, review/testimonial content planning, before/after proof, CTA flow, and launch content QA. Out of scope: deep CRM automation, quote economics, and editable internal scorecard data.</scope>
+  <files>
+    <file path=".planning/workflows/content-and-seeding.md">
+      <description>Seed ownership and repeatable content reset path.</description>
+      <keywords>seed,content</keywords>
+    </file>
+    <file path=".planning/workflows/customer-site-content-and-engagebay.md">
+      <description>Public-site routes, forms, and launch content checklist.</description>
+      <keywords>marketing,site,content</keywords>
+    </file>
+    <file path="src/endpoints/seed/home.ts">
+      <description>Baseline homepage content and layout blocks.</description>
+      <keywords>seed,home</keywords>
+    </file>
+    <file path="src/endpoints/seed/index.ts">
+      <description>Seed entrypoint and idempotent content upsert.</description>
+      <keywords>seed,bootstrap</keywords>
+    </file>
+  </files>
+  <keywords>
+    <keyword>marketing</keyword>
+    <keyword>seed</keyword>
+    <keyword>testimonial</keyword>
+    <keyword>proof</keyword>
+  </keywords>
+  <tasks>
+    <task id="03-site-baseline" owner="team">
+      <description>Seed and publish the real homepage and core marketing pages instead of relying on the static fallback.</description>
+      <status>in-progress</status>
+    </task>
+    <task id="03-proof-content" owner="team">
+      <description>Establish a quick-edit path for reviews, testimonials, and before/after proof inside Payload admin.</description>
+      <status>planned</status>
+    </task>
+    <task id="03-launch-qa" owner="team">
+      <description>Verify nav, CTAs, service areas, form submission, visual-system/theme polish, masked section framing, compact code-viewer style service explainers with side-by-side detail panes, and mobile launch quality after seed content is in place.</description>
+      <status>in-progress</status>
+    </task>
+  </tasks>
+  <questions>
+    <question id="q-proof-model" status="open">Should testimonials be a dedicated collection, a reusable block, or a global for fastest admin editing?</question>
+    <question id="q-pricing-page" status="open">Will pricing stay estimate-only messaging or include starting-price ranges on the public site?</question>
+  </questions>
+</phase-plan>

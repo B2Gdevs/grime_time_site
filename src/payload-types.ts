@@ -64,6 +64,7 @@ export type SupportedTimezones =
 export interface Config {
   auth: {
     users: UserAuthOperations;
+    'payload-mcp-api-keys': PayloadMcpApiKeyAuthOperations;
   };
   blocks: {};
   collections: {
@@ -77,6 +78,7 @@ export interface Config {
     forms: Form;
     'form-submissions': FormSubmission;
     search: Search;
+    'payload-mcp-api-keys': PayloadMcpApiKey;
     'payload-kv': PayloadKv;
     'payload-jobs': PayloadJob;
     'payload-folders': FolderInterface;
@@ -100,6 +102,7 @@ export interface Config {
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
     search: SearchSelect<false> | SearchSelect<true>;
+    'payload-mcp-api-keys': PayloadMcpApiKeysSelect<false> | PayloadMcpApiKeysSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-jobs': PayloadJobsSelect<false> | PayloadJobsSelect<true>;
     'payload-folders': PayloadFoldersSelect<false> | PayloadFoldersSelect<true>;
@@ -125,7 +128,7 @@ export interface Config {
   widgets: {
     collections: CollectionsWidget;
   };
-  user: User;
+  user: User | PayloadMcpApiKey;
   jobs: {
     tasks: {
       schedulePublish: TaskSchedulePublish;
@@ -138,6 +141,24 @@ export interface Config {
   };
 }
 export interface UserAuthOperations {
+  forgotPassword: {
+    email: string;
+    password: string;
+  };
+  login: {
+    email: string;
+    password: string;
+  };
+  registerFirstUser: {
+    email: string;
+    password: string;
+  };
+  unlock: {
+    email: string;
+    password: string;
+  };
+}
+export interface PayloadMcpApiKeyAuthOperations {
   forgotPassword: {
     email: string;
     password: string;
@@ -432,6 +453,7 @@ export interface Category {
 export interface User {
   id: number;
   name?: string | null;
+  roles: ('admin' | 'customer')[];
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -873,7 +895,7 @@ export interface Form {
   createdAt: string;
 }
 /**
- * Internal job quotes only — not exposed on the public site. Enable with QUOTES_INTERNAL_ENABLED and QUOTES_INTERNAL_EMAILS.
+ * Internal job quotes only. Includes line items, totals, and Texas tax review fields. Never expose draft quotes on the public site.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "quotes".
@@ -881,39 +903,110 @@ export interface Form {
 export interface Quote {
   id: number;
   /**
-   * Short label, e.g. “123 Oak — house wash”
+   * Short label, for example: 123 Oak - house wash
    */
   title: string;
   status?: ('draft' | 'sent' | 'accepted' | 'lost') | null;
+  validUntil?: string | null;
   customerName?: string | null;
   customerEmail?: string | null;
   customerPhone?: string | null;
   /**
-   * Sq ft, stories, linear feet, or preset label
+   * Job site details used for scoping and local tax review.
+   */
+  serviceAddress?: {
+    street1?: string | null;
+    street2?: string | null;
+    city?: string | null;
+    state?: string | null;
+    postalCode?: string | null;
+  };
+  propertyType?: ('residential' | 'commercial' | 'new_residential_construction' | 'hoa_multi_unit' | 'other') | null;
+  /**
+   * Sq ft, stories, linear feet, or preset label.
    */
   jobSize?: string | null;
   /**
-   * Surfaces: siding, concrete, roof, windows, etc.
+   * Surfaces: siding, concrete, roof, windows, gutters, fencing, etc.
    */
   surfaceDescription?: string | null;
   soilingLevel?: ('light' | 'medium' | 'heavy') | null;
   /**
-   * Ladder work, vegetation, HOA, hazards
+   * Ladder work, vegetation, HOA restrictions, hazards, water access, etc.
    */
   accessNotes?: string | null;
   /**
-   * Staff-only — pricing discussion, CPA/tax flags, etc.
+   * Quote builder rows. Totals are calculated from these lines.
+   */
+  serviceLines?:
+    | {
+        serviceType:
+          | 'house_wash'
+          | 'soft_wash'
+          | 'roof_cleaning'
+          | 'window_cleaning'
+          | 'concrete_cleaning'
+          | 'driveway_walkway_cleaning'
+          | 'fence_cleaning'
+          | 'deck_patio_cleaning'
+          | 'gutter_cleaning'
+          | 'rust_stain_treatment'
+          | 'other';
+        description: string;
+        quantity: number;
+        unit?: string | null;
+        unitPrice: number;
+        lineTotal?: number | null;
+        /**
+         * Most Texas exterior cleaning lines will stay taxable unless you have a documented exception.
+         */
+        taxable?: boolean | null;
+        taxCategory?:
+          | ('building_grounds_cleaning' | 'pressure_washing_maintenance' | 'window_washing' | 'manual_review_required')
+          | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Calculated subtotal and tax fields. Enter the rate you plan to collect; keep exemptions and CPA-review paths documented.
+   */
+  pricing?: {
+    /**
+     * Pre-tax discount applied against the quote subtotal.
+     */
+    discountAmount?: number | null;
+    /**
+     * Texas Comptroller guidance generally treats cleaning homes/buildings, washing windows, and pressure washing buildings, sidewalks, or parking lots as taxable. Keep exemption and CPA-review paths available before finalizing the quote.
+     */
+    taxDecision?:
+      | ('collect_sales_tax' | 'homebuilder_exception' | 'exemption_certificate' | 'manual_review_required')
+      | null;
+    /**
+     * Enter the actual rate you plan to collect. Texas state sales tax is 6.25%; local tax can bring the total up to 8.25% depending on your facts and filing setup.
+     */
+    taxRatePercent?: number | null;
+    /**
+     * Document why you collected or did not collect tax, plus any homebuilder certification, exemption certificate, or CPA guidance.
+     */
+    taxDecisionNotes?: string | null;
+    subtotal?: number | null;
+    taxableSubtotal?: number | null;
+    salesTaxAmount?: number | null;
+    total?: number | null;
+  };
+  /**
+   * Staff-only pricing discussion, objections, follow-up notes, and compliance flags.
    */
   internalNotes?: string | null;
   /**
-   * Optional: lead form submission this quote came from.
+   * Optional lead form submission this quote came from.
    */
   sourceSubmission?: (number | null) | FormSubmission;
   updatedAt: string;
   createdAt: string;
 }
 /**
- * Website form posts. Lead columns are derived from field names (email, name, etc.). CRM columns reflect EngageBay sync.
+ * Website form posts. Lead columns are derived from field names (email, name, etc.). CRM columns reflect provider sync.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "form-submissions".
@@ -937,7 +1030,7 @@ export interface FormSubmission {
    */
   leadName?: string | null;
   /**
-   * EngageBay sync result (server-set).
+   * CRM sync result (server-set).
    */
   crmSyncStatus?:
     | (
@@ -1018,6 +1111,125 @@ export interface Search {
     | null;
   updatedAt: string;
   createdAt: string;
+}
+/**
+ * API keys control which collections, resources, tools, and prompts MCP clients can access
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payload-mcp-api-keys".
+ */
+export interface PayloadMcpApiKey {
+  id: number;
+  /**
+   * The user that the API key is associated with.
+   */
+  user: number | User;
+  /**
+   * A useful label for the API key.
+   */
+  label?: string | null;
+  /**
+   * The purpose of the API key.
+   */
+  description?: string | null;
+  categories?: {
+    /**
+     * Allow clients to find categories.
+     */
+    find?: boolean | null;
+    /**
+     * Allow clients to create categories.
+     */
+    create?: boolean | null;
+    /**
+     * Allow clients to update categories.
+     */
+    update?: boolean | null;
+  };
+  media?: {
+    /**
+     * Allow clients to find media.
+     */
+    find?: boolean | null;
+    /**
+     * Allow clients to create media.
+     */
+    create?: boolean | null;
+    /**
+     * Allow clients to update media.
+     */
+    update?: boolean | null;
+  };
+  pages?: {
+    /**
+     * Allow clients to find pages.
+     */
+    find?: boolean | null;
+    /**
+     * Allow clients to create pages.
+     */
+    create?: boolean | null;
+    /**
+     * Allow clients to update pages.
+     */
+    update?: boolean | null;
+  };
+  posts?: {
+    /**
+     * Allow clients to find posts.
+     */
+    find?: boolean | null;
+    /**
+     * Allow clients to create posts.
+     */
+    create?: boolean | null;
+    /**
+     * Allow clients to update posts.
+     */
+    update?: boolean | null;
+  };
+  quotes?: {
+    /**
+     * Allow clients to find quotes.
+     */
+    find?: boolean | null;
+  };
+  footer?: {
+    /**
+     * Allow clients to find footer global.
+     */
+    find?: boolean | null;
+    /**
+     * Allow clients to update footer global.
+     */
+    update?: boolean | null;
+  };
+  header?: {
+    /**
+     * Allow clients to find header global.
+     */
+    find?: boolean | null;
+    /**
+     * Allow clients to update header global.
+     */
+    update?: boolean | null;
+  };
+  pricing?: {
+    /**
+     * Allow clients to find pricing global.
+     */
+    find?: boolean | null;
+    /**
+     * Allow clients to update pricing global.
+     */
+    update?: boolean | null;
+  };
+  updatedAt: string;
+  createdAt: string;
+  enableAPIKey?: boolean | null;
+  apiKey?: string | null;
+  apiKeyIndex?: string | null;
+  collection: 'payload-mcp-api-keys';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1176,14 +1388,23 @@ export interface PayloadLockedDocument {
         value: number | Search;
       } | null)
     | ({
+        relationTo: 'payload-mcp-api-keys';
+        value: number | PayloadMcpApiKey;
+      } | null)
+    | ({
         relationTo: 'payload-folders';
         value: number | FolderInterface;
       } | null);
   globalSlug?: string | null;
-  user: {
-    relationTo: 'users';
-    value: number | User;
-  };
+  user:
+    | {
+        relationTo: 'users';
+        value: number | User;
+      }
+    | {
+        relationTo: 'payload-mcp-api-keys';
+        value: number | PayloadMcpApiKey;
+      };
   updatedAt: string;
   createdAt: string;
 }
@@ -1193,10 +1414,15 @@ export interface PayloadLockedDocument {
  */
 export interface PayloadPreference {
   id: number;
-  user: {
-    relationTo: 'users';
-    value: number | User;
-  };
+  user:
+    | {
+        relationTo: 'users';
+        value: number | User;
+      }
+    | {
+        relationTo: 'payload-mcp-api-keys';
+        value: number | PayloadMcpApiKey;
+      };
   key?: string | null;
   value?:
     | {
@@ -1563,13 +1789,49 @@ export interface CategoriesSelect<T extends boolean = true> {
 export interface QuotesSelect<T extends boolean = true> {
   title?: T;
   status?: T;
+  validUntil?: T;
   customerName?: T;
   customerEmail?: T;
   customerPhone?: T;
+  serviceAddress?:
+    | T
+    | {
+        street1?: T;
+        street2?: T;
+        city?: T;
+        state?: T;
+        postalCode?: T;
+      };
+  propertyType?: T;
   jobSize?: T;
   surfaceDescription?: T;
   soilingLevel?: T;
   accessNotes?: T;
+  serviceLines?:
+    | T
+    | {
+        serviceType?: T;
+        description?: T;
+        quantity?: T;
+        unit?: T;
+        unitPrice?: T;
+        lineTotal?: T;
+        taxable?: T;
+        taxCategory?: T;
+        id?: T;
+      };
+  pricing?:
+    | T
+    | {
+        discountAmount?: T;
+        taxDecision?: T;
+        taxRatePercent?: T;
+        taxDecisionNotes?: T;
+        subtotal?: T;
+        taxableSubtotal?: T;
+        salesTaxAmount?: T;
+        total?: T;
+      };
   internalNotes?: T;
   sourceSubmission?: T;
   updatedAt?: T;
@@ -1581,6 +1843,7 @@ export interface QuotesSelect<T extends boolean = true> {
  */
 export interface UsersSelect<T extends boolean = true> {
   name?: T;
+  roles?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -1794,6 +2057,71 @@ export interface SearchSelect<T extends boolean = true> {
       };
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payload-mcp-api-keys_select".
+ */
+export interface PayloadMcpApiKeysSelect<T extends boolean = true> {
+  user?: T;
+  label?: T;
+  description?: T;
+  categories?:
+    | T
+    | {
+        find?: T;
+        create?: T;
+        update?: T;
+      };
+  media?:
+    | T
+    | {
+        find?: T;
+        create?: T;
+        update?: T;
+      };
+  pages?:
+    | T
+    | {
+        find?: T;
+        create?: T;
+        update?: T;
+      };
+  posts?:
+    | T
+    | {
+        find?: T;
+        create?: T;
+        update?: T;
+      };
+  quotes?:
+    | T
+    | {
+        find?: T;
+      };
+  footer?:
+    | T
+    | {
+        find?: T;
+        update?: T;
+      };
+  header?:
+    | T
+    | {
+        find?: T;
+        update?: T;
+      };
+  pricing?:
+    | T
+    | {
+        find?: T;
+        update?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  enableAPIKey?: T;
+  apiKey?: T;
+  apiKeyIndex?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

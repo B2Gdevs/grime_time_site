@@ -15,6 +15,7 @@ export async function seedTestUser(): Promise<void> {
   // Delete existing test user if any
   await payload.delete({
     collection: 'users',
+    overrideAccess: true,
     where: {
       email: {
         equals: testUser.email,
@@ -25,7 +26,11 @@ export async function seedTestUser(): Promise<void> {
   // Create fresh test user
   await payload.create({
     collection: 'users',
-    data: testUser,
+    data: {
+      ...testUser,
+      roles: ['admin'],
+    },
+    overrideAccess: true,
   })
 }
 
@@ -37,6 +42,7 @@ export async function cleanupTestUser(): Promise<void> {
 
   await payload.delete({
     collection: 'users',
+    overrideAccess: true,
     where: {
       email: {
         equals: testUser.email,

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phase-plan>
+  <meta>
+    <phase-id>05</phase-id>
+    <phase-name>Customers, forms, and ops integrations</phase-name>
+    <date>2026-03-23</date>
+  </meta>
+  <purpose>Make the public site operational by turning submissions, scheduling, and quotes into managed CRM relationships with EngageBay as the default provider and HubSpot as a supported fallback.</purpose>
+  <scope>In scope: form-to-contact sync, first-party scheduling forms, call and quote intake handoff, CRM provider abstraction, runtime provider selection, and quote summary sync into CRM deals. Out of scope: customer-visible quote acceptance, accounting sync, and bidirectional CRM ownership unless explicitly approved later.</scope>
+  <files>
+    <file path=".planning/workflows/customer-site-content-and-engagebay.md">
+      <description>Public-site conversion flow and content checklist.</description>
+      <keywords>site,forms</keywords>
+    </file>
+    <file path=".planning/workflows/crm-and-integrations.md">
+      <description>System-of-record mapping and EngageBay touchpoints.</description>
+      <keywords>crm,integrations</keywords>
+    </file>
+    <file path=".planning/workflows/engagebay-integration-review.md">
+      <description>API and webhook launch checklist.</description>
+      <keywords>engagebay,api</keywords>
+    </file>
+    <file path=".planning/workflows/quote-system-and-texas-compliance.md">
+      <description>Quote workflow and CRM handoff planning.</description>
+      <keywords>quotes,deals</keywords>
+    </file>
+  </files>
+  <keywords>
+    <keyword>engagebay</keyword>
+    <keyword>forms</keyword>
+    <keyword>deals</keyword>
+    <keyword>quotes</keyword>
+  </keywords>
+  <tasks>
+    <task id="05-form-sync" owner="team">
+      <description>Keep every public lead tied to the active CRM provider with clear sync status and task ownership, and move quote/contact/schedule capture onto a shared first-party form system.</description>
+      <status>in-progress</status>
+    </task>
+    <task id="05-schedule-flow" owner="team">
+      <description>Make scheduling part of the lead pipeline with a first-party form flow, shared validators/helpers, and Payload-to-CRM write-back instead of an embedded vendor form.</description>
+      <status>in-progress</status>
+    </task>
+    <task id="05-quote-deal-sync" owner="team">
+      <description>Mirror Payload quotes into CRM deals so follow-up and relationship management happen in the chosen provider.</description>
+      <status>planned</status>
+    </task>
+  </tasks>
+  <questions>
+    <question id="q-deal-direction" status="open">Should v1 treat Payload quotes as the source of truth and push one-way to CRM deals, or allow CRM stage changes to write back later?</question>
+    <question id="q-owner-assignment" status="open">How should new leads and synced deals be assigned to an owner in the active CRM provider for follow-up?</question>
+    <question id="q-engagebay-quota" status="open">Is the current EngageBay 403 coming from trial API-call limits, the wrong key scope, or a throttling window that needs retry logic?</question>
+  </questions>
+</phase-plan>

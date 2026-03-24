@@ -1,5 +1,12 @@
 import Script from 'next/script'
 
+function getTrackingKey(): string | null {
+  const raw = process.env.ENGAGEBAY_JS_TRACKING_KEY?.trim()
+  if (!raw) return null
+  const pipe = raw.indexOf('|')
+  return pipe > 0 ? raw.slice(0, pipe) : raw
+}
+
 function parseSetAccount(): { key: string; ref: string } | null {
   const raw = process.env.ENGAGEBAY_JS_TRACKING_KEY?.trim()
   const refEnv = process.env.ENGAGEBAY_JS_FORM_REF?.trim()
@@ -17,10 +24,14 @@ function parseSetAccount(): { key: string; ref: string } | null {
  */
 export function EngageBayTracking() {
   const parsed = parseSetAccount()
-  if (!parsed) return null
-  const { key, ref: accountRef } = parsed
+  const trackingKey = getTrackingKey()
+  const scheduleFormId = process.env.ENGAGEBAY_SCHEDULE_FORM_ID?.trim()
 
-  const inline = `var EhAPI = EhAPI || {};EhAPI.after_load = function(){EhAPI.set_account(${JSON.stringify(key)},${JSON.stringify(accountRef)});EhAPI.execute('rules');};`
+  if (!parsed && !trackingKey && !scheduleFormId) return null
+
+  const inline = parsed
+    ? `var EhAPI = window.EhAPI || {};EhAPI.after_load = function(){EhAPI.set_account(${JSON.stringify(parsed.key)},${JSON.stringify(parsed.ref)});EhAPI.execute('rules');};window.EhAPI = EhAPI;`
+    : 'var EhAPI = window.EhAPI || {};EhAPI.after_load = EhAPI.after_load || function(){};window.EhAPI = EhAPI;'
 
   const cacheBust = new Date().getUTCHours()
   const src = `https://d2p078bqz5urf7.cloudfront.net/jsapi/ehform.js?v${cacheBust}`

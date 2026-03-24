@@ -20,4 +20,17 @@
   & a:hover {
     opacity: 0.85;
   }
+
+  &__ops-link {
+    margin-bottom: 0.75rem;
+
+    & a {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-weight: 600;
+      text-decoration: underline;
+      text-underline-offset: 0.18em;
+    }
+  }
 }

@@ -3,14 +3,14 @@
   <decision id="D-stack-001">
     <title>Payload + Supabase + Vercel</title>
     <summary>Use Payload CMS (with-vercel-website template) on Vercel with PostgreSQL hosted on Supabase. Swap template DB env from Neon to Supabase connection string when implementing.</summary>
-    <impact>All schema and migrations target Postgres via Payload using **`@payloadcms/db-postgres`** (node `pg`) for reliable Supabase compatibility; avoid the template’s Neon/WebSocket (`db-vercel-postgres`) driver against Supabase poolers. Media: Supabase Storage (S3 API, bucket `media`) via @payloadcms/storage-s3 when env is set; otherwise local `public/media` for dev.</impact>
+    <impact>All schema and migrations target Postgres via Payload using `@payloadcms/db-postgres` (node `pg`) for reliable Supabase compatibility; avoid the template's Neon/WebSocket driver against Supabase poolers. Media uses Supabase Storage via `@payloadcms/storage-s3` when env is set; otherwise local media for dev.</impact>
     <references>
       <file path=".planning/REQUIREMENTS.xml" />
     </references>
   </decision>
   <decision id="D-internal-docs-001">
     <title>Where internal process documentation lives</title>
-    <summary>Repo may stay **public** for transparency if we avoid secrets and customer PII in commits. High-level `.planning/` is OK; detailed SOPs can move to private repo, Notion, or Payload admin-only collections. Customers only see public pages + appropriate forms—not internal quotes or ops tools.</summary>
+    <summary>Repo may stay public for transparency if we avoid secrets and customer PII in commits. High-level `.planning/` is OK; detailed SOPs can move to private repo, Notion, or Payload admin-only collections. Customers only see public pages and appropriate forms, not internal quotes or ops tools.</summary>
     <impact>Good-faith, pragmatic process writing; classify sensitive detail out of public git.</impact>
     <references>
       <file path=".planning/workflows/internal-docs-policy.md" />
@@ -18,25 +18,63 @@
   </decision>
   <decision id="D-crm-001">
     <title>CRM: EngageBay (validate before production)</title>
-    <summary>Default choice **EngageBay** for one shared org, mixed user email domains, marketing + CRM. **Review** official API, webhooks, and trial limits in `engagebay-integration-review.md` before locking integrations. HubSpot remains a fallback if API/automation gaps block the roadmap.</summary>
-    <impact>Lead sync, sequences, and deals target EngageBay REST API from server-side routes; keys in env only.</impact>
+    <summary>Default choice is EngageBay for one shared org, mixed user email domains, marketing, and CRM. Review official API, webhooks, and trial limits in `engagebay-integration-review.md` before locking integrations. HubSpot remains a fallback if API or automation gaps block the roadmap.</summary>
+    <impact>Lead sync, sequences, and deals target the CRM abstraction layer with EngageBay active by default; keys stay in env only and provider selection can switch at runtime from the ops dashboard.</impact>
     <references>
       <file path=".planning/workflows/engagebay-integration-review.md" />
       <file path=".planning/workflows/crm-org-and-sync.md" />
+      <file path=".planning/workflows/crm-and-integrations.md" />
+    </references>
+  </decision>
+  <decision id="D-content-001">
+    <title>Marketing site content is seed-first, with quick-edit proof in Payload admin</title>
+    <summary>The launch site should come from repeatable seed content, then allow staff to update reviews, testimonials, and before/after proof quickly in Payload admin without touching code.</summary>
+    <impact>Homepage and core marketing pages remain reproducible across environments, while trust content can become an admin-managed collection or global once the quickest acceptable editing path is implemented.</impact>
+    <references>
+      <file path=".planning/workflows/content-and-seeding.md" />
+      <file path=".planning/workflows/customer-site-content-and-engagebay.md" />
+    </references>
+  </decision>
+  <decision id="D-crm-002">
+    <title>Payload quotes stay the source of truth; EngageBay gets synced deal summaries</title>
+    <summary>Quote detail, pricing logic, and tax notes live in Payload. EngageBay should receive a mirrored deal record for relationship management, follow-up, and pipeline visibility.</summary>
+    <impact>Prevents the CRM from becoming the quoting engine while still letting staff manage deal stages, reminders, and customer communication in EngageBay. Write-back from EngageBay to Payload remains a later decision.</impact>
+    <references>
+      <file path=".planning/workflows/crm-and-integrations.md" />
+      <file path=".planning/workflows/quote-system-and-texas-compliance.md" />
     </references>
   </decision>
   <decision id="D-quotes-001">
     <title>Quote system: internal-only, feature-flagged</title>
-    <summary>Quotes capture job size, description, soiling level, and (later) economics (labor, materials, margin, Texas sales tax per CPA guidance). **Not** shown to customers until explicitly designed. Access restricted to allowlisted staff emails (bg/pb/de grimetime.local initially); implement with env flags `QUOTES_INTERNAL_ENABLED` + `QUOTES_INTERNAL_EMAILS`.</summary>
-    <impact>Public site stays trust + booking-style intake. **v1:** Payload `quotes` collection (admin group Internal) gated by `QUOTES_INTERNAL_ENABLED` + `QUOTES_INTERNAL_EMAILS`. Labor/material/tax automation remains future work per workflow doc.</impact>
+    <summary>Quotes capture job size, description, soiling level, and later economics such as labor, materials, margin, and Texas sales tax per CPA guidance. Quotes are not shown to customers until explicitly designed. Access is restricted to allowlisted staff emails using `QUOTES_INTERNAL_ENABLED` and `QUOTES_INTERNAL_EMAILS`.</summary>
+    <impact>Public site stays trust and booking-style intake. V1 is a Payload `quotes` collection in the Internal admin group. Labor, material, and tax automation remain future work per the workflow doc.</impact>
     <references>
       <file path=".planning/workflows/quote-system-and-texas-compliance.md" />
     </references>
   </decision>
+  <decision id="D-ops-001">
+    <title>Business scorecard and growth system belong to phase 06</title>
+    <summary>KPI definitions, projected revenue, MRR, margin review, liabilities, asset ladder, and daily/weekly rhythm are part of advanced ops work. Start them as internal docs/config with real business targets, then promote them to editable Payload data only after schema approval.</summary>
+    <impact>Prevents overbuilding too early. The team can use the playbook immediately in docs and dashboard context, while editable ops globals remain a later step once migration work is approved.</impact>
+    <references>
+      <file path=".planning/workflows/business-scorecard-and-growth.md" />
+      <file path=".planning/TASK-REGISTRY.xml" />
+    </references>
+  </decision>
+  <decision id="D-devtools-001">
+    <title>Payload MCP is the preferred AI editing bridge, but it is migration-gated</title>
+    <summary>Use Payload's official MCP plugin so local editors can read and update approved content surfaces through the same app server. Keep it behind an explicit env flag until the MCP API keys schema is approved and migrated.</summary>
+    <impact>Codex and Cursor setup can be documented and prepared in-repo without silently breaking the current database. The endpoint should come from the normal dev server once the migration gate is cleared.</impact>
+    <references>
+      <file path=".planning/workflows/payload-mcp-and-editor-setup.md" />
+      <file path="src/payload.config.ts" />
+      <file path=".env.example" />
+    </references>
+  </decision>
   <decision id="D-vault-001" status="open">
     <title>Shared passwords and API keys for third-party tools</title>
-    <summary>Requirement acknowledged: team needs one place to view/maintain logins for other systems. Do not store plaintext in content collections without an encryption/security review. Options: team password manager (1Password/Bitwarden), Payload encrypted fields + RBAC, or dedicated secrets patterns.</summary>
-    <impact>May remain process + external tool for v1; in-app vault only after threat model.</impact>
+    <summary>Requirement acknowledged: team needs one place to view and maintain logins for other systems. Do not store plaintext in content collections without an encryption and security review. Options include a team password manager, Payload encrypted fields plus RBAC, or dedicated secrets patterns.</summary>
+    <impact>May remain process plus external tool for v1; in-app vault only after threat model.</impact>
     <references>
       <file path=".planning/REQUIREMENTS.xml" />
     </references>

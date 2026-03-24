@@ -1,5 +1,7 @@
 import type { Metadata } from 'next'
 
+import { HomeMarketingPanels } from '@/components/HomeMarketingPanels'
+import { InstantQuoteSection } from '@/components/InstantQuoteSection'
 import { PayloadRedirects } from '@/components/PayloadRedirects'
 import configPromise from '@payload-config'
 import { getPayload, type RequiredDataFromCollectionSlug } from 'payload'
@@ -67,6 +69,11 @@ export default async function Page({ params: paramsPromise }: Args) {
   }
 
   const { hero, layout } = page
+  const homeBlockTypes = new Set(['pricingTable'])
+  const renderBlocks =
+    slug === 'home'
+      ? layout.filter((block) => homeBlockTypes.has(block.blockType))
+      : layout
 
   return (
     <article className="pt-16 pb-24">
@@ -77,7 +84,9 @@ export default async function Page({ params: paramsPromise }: Args) {
       {draft && <LivePreviewListener />}
 
       <RenderHero {...hero} />
-      {await RenderBlocks({ blocks: layout })}
+      {slug === 'home' ? <InstantQuoteSection /> : null}
+      {await RenderBlocks({ blocks: renderBlocks })}
+      {slug === 'home' ? <HomeMarketingPanels /> : null}
     </article>
   )
 }

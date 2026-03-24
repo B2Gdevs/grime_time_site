@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phase-summary>
+  <meta>
+    <phase-id>03</phase-id>
+    <phase-name>Landing and Payload scaffold</phase-name>
+    <date>2026-03-23</date>
+  </meta>
+  <status>in-progress</status>
+  <highlights>
+    <item>Homepage seed content has been reworked toward a real exterior-cleaning marketing site instead of the template fallback.</item>
+    <item>Instant quote UX is live on the homepage and posts usable lead data into Payload form submissions.</item>
+    <item>Launch polish is now actively tracking the shared public/admin visual system, including theme tokens, typography, and QA for login/admin shells.</item>
+    <item>The homepage renderer now drops placeholder seed media on `home` and uses masked section shells so service, pricing, and CTA content read like intentional marketing panels instead of template leftovers.</item>
+    <item>The live homepage now uses a compact code-viewer style service surface with icon-led tabs, inline `Start estimate` actions in the file rail, and a side-by-side detail pane instead of stacked service/pricing explainer grids.</item>
+  </highlights>
+  <next>
+    <item>Finish the seeded homepage, pricing, and proof content so the live site matches the new quote flow after the next reseed.</item>
+    <item>Add a quick-edit admin path for reviews, testimonials, and before/after proof.</item>
+    <item>Complete launch QA across public routes, login, and admin screens after reseed.</item>
+  </next>
+</phase-summary>

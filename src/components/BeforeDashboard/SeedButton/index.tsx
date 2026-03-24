@@ -7,9 +7,10 @@ import './index.scss'
 
 const SuccessMessage: React.FC = () => (
   <div>
-    Database seeded! You can now{' '}
+    Seed finished — baseline pages, posts, and globals were created or updated from{' '}
+    <code>src/endpoints/seed</code>.{' '}
     <a target="_blank" href="/">
-      visit your website
+      View site
     </a>
   </div>
 )
@@ -23,10 +24,6 @@ export const SeedButton: React.FC = () => {
     async (e: React.MouseEvent<HTMLButtonElement>) => {
       e.preventDefault()
 
-      if (seeded) {
-        toast.info('Database already seeded.')
-        return
-      }
       if (loading) {
         toast.info('Seeding already in progress.')
         return

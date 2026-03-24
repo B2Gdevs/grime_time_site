@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phase-plan>
+  <meta>
+    <phase-id>06</phase-id>
+    <phase-name>Quoting and advanced ops</phase-name>
+    <date>2026-03-23</date>
+  </meta>
+  <purpose>Turn Grime Time's internal operations into a measurable system: quote workflow, internal dashboard command center, KPI scorecard, operating cadence, and phased growth guidance for tools and equipment.</purpose>
+  <scope>In scope: internal quote workflow, staff dashboard UX, profitability and revenue definitions, MRR framing, liabilities checklist, route and call cadence, milestone ladder, equipment and tool recommendations, and admin-facing docs/dashboard context. Out of scope: customer-facing quote approvals, automated tax-rate engine, accounting sync, and editable internal globals until migration approval.</scope>
+  <files>
+    <file path=".planning/workflows/admin-portal-quotes-ux.md">
+      <description>Dashboard, portal, admin, and quote UX planning.</description>
+      <keywords>dashboard,portal,ux</keywords>
+    </file>
+    <file path=".planning/workflows/quote-system-and-texas-compliance.md">
+      <description>Quote workflow and tax-process guidance.</description>
+      <keywords>quotes,tax,pricing</keywords>
+    </file>
+    <file path=".planning/workflows/business-scorecard-and-growth.md">
+      <description>Scorecard, asset ladder, milestones, and operating rhythm.</description>
+      <keywords>kpi,mrr,assets,growth,ops</keywords>
+    </file>
+    <file path="src/app/(portal)/dashboard/page.tsx">
+      <description>Customer dashboard route.</description>
+      <keywords>dashboard,portal,customer</keywords>
+    </file>
+    <file path="src/app/(portal)/ops/page.tsx">
+      <description>Admin-only internal command-center route.</description>
+      <keywords>dashboard,portal,admin,ops</keywords>
+    </file>
+    <file path="src/components/data-table.tsx">
+      <description>Left-rail command-center navigator and ops detail panes.</description>
+      <keywords>dashboard,ux,tabs,portal</keywords>
+    </file>
+    <file path="src/components/chart-area-interactive.tsx">
+      <description>Business momentum chart with responsive metric controls.</description>
+      <keywords>dashboard,chart,responsive</keywords>
+    </file>
+    <file path="src/components/ui/sidebar.tsx">
+      <description>Portal shell overflow boundaries and sidebar scroll containment.</description>
+      <keywords>dashboard,sidebar,scroll</keywords>
+    </file>
+    <file path="src/lib/ops/businessOperatingSystem.ts">
+      <description>App-side scorecard and growth config.</description>
+      <keywords>dashboard,config,admin</keywords>
+    </file>
+    <file path="src/lib/ops/internalDashboardData.ts">
+      <description>Dashboard-specific display data and operator board content.</description>
+      <keywords>dashboard,data,ops</keywords>
+    </file>
+  </files>
+  <keywords>
+    <keyword>quotes</keyword>
+    <keyword>dashboard</keyword>
+    <keyword>operations</keyword>
+    <keyword>growth</keyword>
+    <keyword>scorecard</keyword>
+  </keywords>
+  <commands>
+    <command>cmd /c npx tsc --noEmit</command>
+    <command>cmd /c npm run test:int</command>
+  </commands>
+  <tasks>
+    <task id="06-quote-workflow" owner="team">
+      <description>Keep quote scope internal-only and align field and automation changes with tax-review guidance.</description>
+      <status>in-progress</status>
+    </task>
+    <task id="06-dashboard" owner="team">
+      <description>Make `/ops` the internal command center with KPI cards, chart, operator panel, left-rail command navigation, daily board, scorecard, milestones, asset guidance, controlled scrolling, and runtime admin controls like CRM provider switching, while `/dashboard` stays customer-facing.</description>
+      <status>in-progress</status>
+    </task>
+    <task id="06-ops-data" owner="team">
+      <description>Define KPI formulas, growth thresholds, and asset/tool guidance before turning them into editable app data.</description>
+      <status>in-progress</status>
+    </task>
+  </tasks>
+  <questions>
+    <question id="q-ops-global" status="open">When should the dashboard scorecard move from docs/config into an editable Payload global?</question>
+    <question id="q-accounting" status="open">Will revenue, margin, and liability data stay manual in v1 or sync from QuickBooks later?</question>
+    <question id="q-commercial" status="open">At what revenue or route-density threshold should larger-area commercial work become a formal target?</question>
+  </questions>
+  <decisions>
+    <decision>D-quotes-001</decision>
+    <decision>D-ops-001</decision>
+    <decision>D-vault-001</decision>
+  </decisions>
+  <requriements-suggestions>
+  </requriements-suggestions>
+</phase-plan>

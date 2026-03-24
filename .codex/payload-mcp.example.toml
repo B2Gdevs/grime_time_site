@@ -1,0 +1,3 @@
+[mcp_servers.payload_local]
+command = "npx"
+args = ["-y", "mcp-remote", "http://localhost:5465/api/mcp", "--header", "Authorization: Bearer REPLACE_WITH_PAYLOAD_MCP_API_KEY"]

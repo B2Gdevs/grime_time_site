@@ -1,12 +1,12 @@
 import React from 'react'
 
+import { AdminLoginPanel } from '@/components/AdminLoginPanel'
+
+/** Payload admin `beforeLogin` — shadcn login-03–style card (see `AdminLoginPanel`). */
 const BeforeLogin: React.FC = () => {
   return (
-    <div>
-      <p>
-        <b>Welcome to your dashboard!</b>
-        {' This is where site admins will log in to manage your website.'}
-      </p>
+    <div className="mx-auto mb-6 w-full max-w-sm">
+      <AdminLoginPanel />
     </div>
   )
 }

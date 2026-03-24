@@ -1,7 +1,7 @@
 # Internal quote system — product math & Texas compliance (planning)
 
 **Owner:** TBD  
-**Last reviewed:** 2026-03-21  
+**Last reviewed:** 2026-03-23  
 **Visibility:** **Internal only.** Feature-flagged; customers see public site + booking-style forms, **not** final quotes until you intentionally expose them later.
 
 ## Implementation (v1 — Payload admin)
@@ -9,7 +9,24 @@
 - **Collection:** `quotes` (admin group **Internal**). Fields match the intake list below (title, status, customer fields, job size, surfaces, soiling, access notes, internal notes).
 - **Access:** Set `QUOTES_INTERNAL_ENABLED=true` and `QUOTES_INTERNAL_EMAILS` to a comma-separated list of staff emails (must match Payload user emails). When disabled or the list is empty, **no one** can read/create quotes in admin.
 - **Code:** [`src/collections/Quotes`](../../src/collections/Quotes), [`src/utilities/quotesAccess.ts`](../../src/utilities/quotesAccess.ts).
-- **EngageBay:** Quotes are **not** auto-synced to deals yet — decide in “Next planning steps” and track in [`crm-and-integrations.md`](./crm-and-integrations.md).
+- **EngageBay:** Planning direction is now to keep quote detail in Payload and sync summary records into EngageBay deals for follow-up and pipeline visibility.
+
+## Texas tax review snapshot (reviewed March 23, 2026)
+
+Primary source check against the **Texas Comptroller** says the following is the current working default for this business:
+
+- **Cleaning / janitorial services are taxable.** Comptroller publication **94-111** says if you operate a janitorial or custodial service, you should be collecting sales and use tax.
+- **Exterior cleaning of buildings is taxable.** The same publication says tax is due on charges to clean a home, office, warehouse, garage, restaurant, or other building, including washing windows.
+- **Pressure washing is generally taxable.** Comptroller publication **94-111** says pressure washing is taxable, and specifically notes that pressure washing buildings, sidewalks, and parking lots is taxable as building or grounds cleaning.
+- **Typical operating inputs are taxable to you.** Publication **94-111** says you must pay tax on soap, cleaners, chemicals, materials, supplies, and equipment used to perform cleaning services, subject to limited resale-certificate situations for items transferred to the customer.
+- **Residential exceptions are narrow.** Publication **94-111** says the self-employed household worker exception does **not** cover broader real property services like landscaping or pool cleaning; homebuilder / new residential construction treatment is separate and should be handled carefully.
+- **New construction / contractor rules are different.** Publication **94-116** says new construction and certain residential contractor scenarios follow contractor rules instead of the normal taxable-service pattern, which is why quote records need an explicit exemption / review path.
+
+Operational reading for Grime Time:
+
+- Default most quote lines to **taxable**.
+- Keep a **manual review** path for any homebuilder, new-residential-construction, exempt-organization, or unusual mixed contract scenario.
+- Do **not** hardcode a universal rate table until the business decides how it wants to manage local tax collection and gets CPA confirmation on the exact service mix.
 
 ## Job intake fields (for quotes when built)
 
@@ -61,6 +78,8 @@ Use spreadsheet or internal admin calculators before automating in code.
 
 - [ ] CPA confirmation on Texas tax treatment per service line
 - [x] Lock v1 field list and status workflow (draft → sent → accepted/lost) — reflected in Payload `quotes` collection
-- [ ] Decide if quotes are Payload-only with EngageBay deal sync or deal-only in CRM
+- [x] Keep Payload as quote source of truth and plan one-way sync to EngageBay deals
 - [x] Optional: link `quotes` → `form-submissions` — **sourceSubmission** relationship on `quotes`
-- [ ] Optional: EngageBay deal id field on quotes
+- [ ] Add EngageBay deal id field on quotes
+- [ ] Define which quote events create/update a CRM deal
+- [ ] Define v1 mapping between quote statuses and EngageBay deal stages

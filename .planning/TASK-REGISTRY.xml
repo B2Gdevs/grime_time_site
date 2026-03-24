@@ -25,21 +25,21 @@
       </commands>
     </task>
     <task id="02-03" agent-id="" status="in-progress">
-      <goal>Draft workflow runbooks: lead-to-customer, team login &amp; tool access, CRM touchpoints.</goal>
+      <goal>Draft workflow runbooks: lead-to-customer, team login and tool access, CRM touchpoints.</goal>
       <keywords>workflows,runbooks</keywords>
       <commands>
-        <command>See lead-to-customer-runbook.md; team-login-and-vault.md TBD</command>
+        <command>See src/content/docs/lead-to-customer-runbook.md (portal Docs, admin); team-login-and-vault.md TBD</command>
       </commands>
     </task>
     <task id="02-04" agent-id="" status="planned">
-      <goal>Define &quot;single pane of glass&quot;: what lives in Payload admin vs external CRM/calendar; integration map.</goal>
+      <goal>Define "single pane of glass": what lives in Payload admin vs external CRM/calendar; integration map.</goal>
       <keywords>architecture,integrations</keywords>
       <commands>
         <command>npm run planning -- snapshot</command>
       </commands>
     </task>
     <task id="02-05" agent-id="" status="planned">
-      <goal>Security framing for shared credentials (options: 1Password, vault patterns, Payload encrypted fields) — decision prep only.</goal>
+      <goal>Security framing for shared credentials (options: 1Password, vault patterns, Payload encrypted fields) - decision prep only.</goal>
       <keywords>security,vault,secrets</keywords>
       <commands>
         <command># see DECISIONS.xml</command>
@@ -61,50 +61,85 @@
         <command># follow template README after clone/generate</command>
       </commands>
     </task>
-    <task id="03-02" agent-id="" status="planned">
-      <goal>Public landing + core marketing pages for exterior cleaning brand.</goal>
+    <task id="03-02" agent-id="" status="in-progress">
+      <goal>Seed and publish the real homepage and core marketing pages for the exterior-cleaning brand.</goal>
       <keywords>landing,seo,content</keywords>
       <commands>
-        <command>npm run planning -- snapshot</command>
+        <command>See .planning/phases/03-landing-and-payload-scaffold/PLAN.xml</command>
+      </commands>
+    </task>
+    <task id="03-03" agent-id="" status="planned">
+      <goal>Plan a quick-edit admin path for reviews, testimonials, and before/after proof so staff can update trust content without code edits.</goal>
+      <keywords>testimonial,review,proof,admin</keywords>
+      <commands>
+        <command>See .planning/workflows/content-and-seeding.md and customer-site-content-and-engagebay.md</command>
+      </commands>
+    </task>
+    <task id="03-04" agent-id="" status="in-progress">
+      <goal>Launch checklist for marketing-site readiness: nav, CTA flow, form coverage, service areas, visual system/theme polish, and mobile QA.</goal>
+      <keywords>launch,qa,marketing</keywords>
+      <commands>
+        <command>See .planning/workflows/customer-site-content-and-engagebay.md</command>
       </commands>
     </task>
   </phase>
   <phase id="04">
-    <task id="04-01" agent-id="" status="planned">
+    <task id="04-01" agent-id="" status="in-progress">
       <goal>Connect Payload to Supabase Postgres (adapter + migrations); document env for local and Vercel.</goal>
       <keywords>supabase,postgres,payload</keywords>
       <commands>
         <command># POSTGRES_URL from Supabase dashboard</command>
       </commands>
     </task>
-    <task id="04-02" agent-id="" status="done">
-      <goal>Seed initial users: bg@grimetime.local, pb@grimetime.local, de@grimetime.local (password changethis via seed; rotate in prod).</goal>
+    <task id="04-02" agent-id="" status="planned">
+      <goal>Create and verify the initial admin user in the real Supabase-backed database after approved migrations.</goal>
       <keywords>auth,users,seed</keywords>
       <commands>
-        <command># Payload admin or seed script</command>
+        <command>Use scripts/bootstrap-admin.ts or the Payload admin login flow after migration approval</command>
+      </commands>
+    </task>
+    <task id="04-03" agent-id="" status="in-progress">
+      <goal>Prepare Payload MCP and editor wiring so the same local app server can expose `/api/mcp` after approved schema work and local API key setup.</goal>
+      <keywords>mcp,cursor,codex,devtools</keywords>
+      <commands>
+        <command>See .planning/workflows/payload-mcp-and-editor-setup.md</command>
+      </commands>
+    </task>
+    <task id="04-04" agent-id="" status="in-progress">
+      <goal>Split customer vs admin access flows so customer login stays customer-only, admin sign-in stays on Payload admin, and the admin ops dashboard lives on its own internal route.</goal>
+      <keywords>auth,portal,admin,customer,dashboard</keywords>
+      <commands>
+        <command>See src/app/(portal)/dashboard/page.tsx and src/app/(portal)/ops/page.tsx</command>
       </commands>
     </task>
   </phase>
   <phase id="05">
     <task id="05-01" agent-id="" status="in-progress">
-      <goal>Lead forms + contact storage; export/sync path toward chosen CRM.</goal>
+      <goal>Lead forms + contact storage; shared first-party quote/contact/schedule submission path; provider-abstracted export/sync path so EngageBay stays default but HubSpot can be swapped in later.</goal>
       <keywords>forms,crm,leads</keywords>
       <commands>
-        <command>Payload form-submissions + EngageBay contact + note; verify in trial</command>
+        <command>Payload form-submissions + active CRM provider sync; verify EngageBay in trial and keep HubSpot fallback ready</command>
       </commands>
     </task>
-    <task id="05-02" agent-id="" status="planned">
-      <goal>Calendar booking (embed Cal.com/Calendly or alternative) — integrate with contact record.</goal>
+    <task id="05-02" agent-id="" status="in-progress">
+      <goal>Calendar booking and schedule request flow - use first-party forms with shared validation/helpers and integrate the lead into Payload plus active CRM follow-up.</goal>
       <keywords>booking,calendar</keywords>
       <commands>
-        <command># TBD</command>
+        <command>See .planning/phases/05-customers-forms-and-ops-integrations/PLAN.xml</command>
       </commands>
     </task>
     <task id="05-03" agent-id="" status="planned">
       <goal>Calls / quote requests intake (lightweight); email visibility plan.</goal>
       <keywords>intake,calls,email</keywords>
       <commands>
-        <command># TBD</command>
+        <command>See .planning/workflows/crm-and-integrations.md</command>
+      </commands>
+    </task>
+    <task id="05-04" agent-id="" status="planned">
+      <goal>Sync Payload quotes into EngageBay deals so relationship management and follow-up live in the CRM.</goal>
+      <keywords>engagebay,deals,quotes,crm</keywords>
+      <commands>
+        <command>See .planning/workflows/crm-and-integrations.md and quote-system-and-texas-compliance.md</command>
       </commands>
     </task>
   </phase>
@@ -114,6 +149,27 @@
       <keywords>quotes,pricing,defer</keywords>
       <commands>
         <command>See collections/Quotes + quote-system-and-texas-compliance.md</command>
+      </commands>
+    </task>
+    <task id="06-02" agent-id="" status="in-progress">
+      <goal>Build and document the internal dashboard command center: KPI cards, chart, daily board, scorecard, milestones, asset guidance, and admin runtime controls like CRM provider switching.</goal>
+      <keywords>dashboard,portal,ux,kpi,ops</keywords>
+      <commands>
+        <command>See .planning/workflows/admin-portal-quotes-ux.md and src/app/(portal)/dashboard/page.tsx</command>
+      </commands>
+    </task>
+    <task id="06-03" agent-id="" status="in-progress">
+      <goal>Define KPI formulas and replace placeholder projected revenue, MRR, margin, and milestone thresholds with real business targets before moving them into editable app data.</goal>
+      <keywords>scorecard,assets,equipment,tools,growth,milestones</keywords>
+      <commands>
+        <command>See .planning/workflows/business-scorecard-and-growth.md</command>
+      </commands>
+    </task>
+    <task id="06-04" agent-id="" status="planned">
+      <goal>Promote the dashboard scorecard from static docs/config into editable internal app data once schema and migrations are approved.</goal>
+      <keywords>payload,global,dashboard,editable,planning</keywords>
+      <commands>
+        <command># add internal ops global after migration approval</command>
       </commands>
     </task>
   </phase>

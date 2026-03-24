@@ -7,6 +7,7 @@ import { useForm, FormProvider } from 'react-hook-form'
 import RichText from '@/components/RichText'
 import { Button } from '@/components/ui/button'
 import type { DefaultTypedEditorState } from '@payloadcms/richtext-lexical'
+import { postJsonForm, readApiErrorMessage } from '@/lib/forms/api'
 
 import { fields } from './fields'
 import { getClientSideURL } from '@/utilities/getURL'
@@ -63,31 +64,12 @@ export const FormBlock: React.FC<
         }, 1000)
 
         try {
-          const req = await fetch(`${getClientSideURL()}/api/form-submissions`, {
-            body: JSON.stringify({
-              form: formID,
-              submissionData: dataToSend,
-            }),
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            method: 'POST',
+          await postJsonForm(`${getClientSideURL()}/api/form-submissions`, {
+            form: formID,
+            submissionData: dataToSend,
           })
 
-          const res = await req.json()
-
           clearTimeout(loadingTimerID)
-
-          if (req.status >= 400) {
-            setIsLoading(false)
-
-            setError({
-              message: res.errors?.[0]?.message || 'Internal Server Error',
-              status: res.status,
-            })
-
-            return
-          }
 
           setIsLoading(false)
           setHasSubmitted(true)
@@ -100,10 +82,14 @@ export const FormBlock: React.FC<
             if (redirectUrl) router.push(redirectUrl)
           }
         } catch (err) {
+          clearTimeout(loadingTimerID)
           console.warn(err)
           setIsLoading(false)
           setError({
-            message: 'Something went wrong.',
+            message: readApiErrorMessage(
+              err instanceof Error ? { message: err.message } : null,
+              'Something went wrong.',
+            ),
           })
         }
       }

@@ -18,39 +18,40 @@
   </phase>
   <phase id="03">
     <title>Landing &amp; Payload scaffold</title>
-    <goal>Import or generate Payload with-vercel-website baseline; public landing + layout builder; deploy path on Vercel.</goal>
+    <goal>Payload website baseline plus seeded public marketing site, proof content, and quick-edit content paths for launch pages.</goal>
     <requirements>REQ-03</requirements>
     <depends>02</depends>
     <status>in-progress</status>
-    <plans>repo root `src/`</plans>
+    <plans>.planning/phases/03-landing-and-payload-scaffold/</plans>
   </phase>
   <phase id="04">
     <title>Supabase + team access</title>
     <goal>Wire Postgres to Supabase; env for prod/dev; seed users bg@ / pb@ / de@ grimetime.local; auth verified.</goal>
     <requirements>REQ-04</requirements>
     <depends>03</depends>
-    <status>planned</status>
-    <plans>TBD</plans>
+    <status>in-progress</status>
+    <plans>.planning/phases/04-supabase-and-team-access/</plans>
   </phase>
   <phase id="05">
     <title>Customers, forms &amp; ops integrations</title>
-    <goal>Lead forms, contact model, EngageBay sync; email/calendar integration plan; lightweight call/quote intake.</goal>
+    <goal>Lead forms, contact model, EngageBay sync, scheduling, and CRM deal handoff for quote-driven follow-up.</goal>
     <requirements>REQ-05</requirements>
     <depends>04</depends>
-    <status>planned</status>
-    <plans>TBD</plans>
+    <status>in-progress</status>
+    <plans>.planning/phases/05-customers-forms-and-ops-integrations/</plans>
   </phase>
   <phase id="06">
     <title>Quoting &amp; advanced ops</title>
-    <goal>Quoting system; optional in-app credential vault if approved — after security design.</goal>
+    <goal>Quoting system; internal dashboard with real business targets; growth playbook; phased equipment/tool guidance; optional in-app credential vault if approved after security design.</goal>
     <requirements>REQ-06</requirements>
     <depends>05</depends>
-    <status>planned</status>
-    <plans>TBD</plans>
+    <status>in-progress</status>
+    <plans>.planning/phases/06-quoting-and-advanced-ops/</plans>
   </phase>
   <doc-flow>
     <doc name="TASK-REGISTRY.xml">Tasks by phase.</doc>
     <doc name="REQUIREMENTS.xml">PRD embedded markdown.</doc>
-    <doc name="workflows/README.md">Workflow runbook index.</doc>
+    <doc name="workflows/README.md">Workflow doc index.</doc>
+    <doc name="phases/README.md">Phase folders aligned with this roadmap.</doc>
   </doc-flow>
 </roadmap>

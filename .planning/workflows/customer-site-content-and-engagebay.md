@@ -1,52 +1,70 @@
-# Customer-facing site: routes, content, forms, EngageBay
+# Customer-facing site: routes, content, forms, CRM
 
 **Owner:** TBD  
-**Last reviewed:** 2026-03-21  
+**Last reviewed:** 2026-03-24  
 
 ## What visitors see today
 
 | URL | What it is |
 |-----|------------|
-| **`/`** | **Home** — a **Page** with slug `home` from the CMS, **or** (until seeded / empty DB) a tiny fallback: [`home-static`](../../src/endpoints/seed/home-static.ts) (“Grime Time” + link to `/admin`). |
-| **`/contact`**, **`/about`**, etc. | **Dynamic pages** — same template as home: [`[slug]/page.tsx`](../../src/app/(frontend)/[slug]/page.tsx). Slug = URL segment. |
-| **`/posts`**, **`/posts/...`** | Blog-style **Posts** (after seed). |
-| **`/schedule`** | EngageHub **scheduling embed** when `ENGAGEBAY_SCHEDULE_FORM_ID` is set. |
-| **`/admin`** | **Payload admin** (staff only) — edit Pages, Posts, **Forms**, Globals (Header/Footer), Media. |
+| **`/`** | **Home** - a **Page** with slug `home` from the CMS, or a small fallback while the DB is empty. |
+| **`/contact`**, **`/about`**, etc. | **Dynamic pages** rendered from the same frontend page template. |
+| **`/posts`**, **`/posts/...`** | Blog-style **Posts**. |
+| **`/schedule`** | First-party **schedule request form** built in React. It stores a Payload form submission and writes into the active CRM provider from the server-side create path. |
+| **`/admin`** | **Payload admin** (staff only) for Pages, Posts, Forms, Globals, Media, and internal records. |
 
-**Why it “just says Grime Time”:** the database has no published **home** page yet, or you haven’t re-seeded / edited content — so the app shows the **static fallback** for `/` only.
+## How to get a real marketing site
 
-## How to get a real marketing site (happy path)
+1. Run `npm run dev` and open `/admin`.
+2. Seed if you want demo pages/posts/forms.
+3. In **Pages**, open `home` or create it with slug `home`, then publish it.
+4. Use the layout builder for hero/content/CTA blocks or the custom homepage surfaces already wired in code.
+5. Update **Header** and **Footer** globals with real nav links.
+6. Republish affected pages so the frontend revalidates.
 
-1. **`npm run dev`** (or production URL) and open **`/admin`**.  
-2. **Seed** (dashboard button) if you want demo pages/posts/forms — *destructive* to seeded collections.  
-3. In **Pages**, open **`home`** (or create it, slug **`home`**, publish).  
-4. Use the **layout builder** (Hero, Content, Media, CTA, **Form** blocks) to design the landing page.  
-5. **Globals** → **Header / Footer** — add nav links (`/`, `/schedule`, `/contact`, etc.).  
-6. **Republish** affected pages so the front-end rebuilds (template uses revalidation hooks).
+## Forms (Payload -> CRM)
 
-## Forms (Payload → EngageBay)
+- **Form builder** still lives in Payload for layout-builder blocks, and those blocks POST to **`/api/form-submissions`**. Submissions are stored in the **`form-submissions`** collection (admin **Leads** group). Each row gets **`leadEmail`** / **`leadName`** from common field names and **`crmSyncStatus`** (+ timestamp/detail) during the server-side create path.
+- **CRM provider abstraction:** the create path now routes through [`src/hooks/beforeFormSubmissionCrm.ts`](../../src/hooks/beforeFormSubmissionCrm.ts) and [`src/lib/crm`](../../src/lib/crm). EngageBay is the default provider when configured; HubSpot is supported as a fallback. Admins can switch the active provider from `/ops` without schema changes.
+- **EngageBay today:** when `ENGAGEBAY_API_KEY` is set and sync is not disabled, each new submission creates or updates a contact through EngageBay's REST API and attempts to attach a note with every submitted field. Disable notes with `ENGAGEBAY_ATTACH_SUBMISSION_NOTE=false`.
+- **Field names (contact card):** system fields mapped are `email`, `name` / `fullName` / `firstName`, and `phone`. Everything else is carried in the CRM note or activity body where supported.
+- **Scheduling:** `/schedule` now uses a native form and posts to `/api/lead-forms/schedule`. The form-submission create path sets `crmSyncStatus` / `crmSyncedAt` / `crmSyncDetail` while it writes to the active CRM provider.
 
-- **Form builder** lives in Payload; blocks on pages POST to **`/api/form-submissions`** (Payload). Submissions are stored in the **`form-submissions`** collection (admin **Leads** group). Each row gets **`leadEmail`** / **`leadName`** from common field names and **`crmSyncStatus`** (+ timestamp/detail) after the EngageBay step runs.  
-- **EngageBay:** when `ENGAGEBAY_API_KEY` is set and sync is not disabled, each **new** submission creates/updates a **contact** via EngageBay’s REST API (`POST .../subscribers/subscriber`), then attaches a **note** with every submitted field (so `message` and custom fields show in CRM). Disable notes with `ENGAGEBAY_ATTACH_SUBMISSION_NOTE=false`. See [`engagebay/syncFormSubmissionToEngageBay.ts`](../../src/lib/engagebay/syncFormSubmissionToEngageBay.ts).  
-- **Field names (contact card):** **SYSTEM** fields mapped: `email` (required), `name` / `fullName` / `firstName`, `phone`. Everything else is in the **note** body.  
-- **Scheduling:** keep using **`/schedule`** + `EhForms` embed; optional **tag** `ENGAGEBAY_SUBMISSION_TAG` on API-created contacts for “website form” vs “scheduler”.
+## Shared form system
 
-## Tracking & embeds (already in code)
+- Shared React Hook Form + Zod UI helpers live in [`src/components/ui/form.tsx`](../../src/components/ui/form.tsx).
+- Shared client submit helper lives in [`src/lib/forms/api.ts`](../../src/lib/forms/api.ts).
+- Shared lead-validator helpers live in [`src/lib/forms/shared.ts`](../../src/lib/forms/shared.ts).
+- Shared server-side form-submission helper lives in [`src/lib/forms/createLeadFormSubmission.ts`](../../src/lib/forms/createLeadFormSubmission.ts).
+- Schedule request schema + row mapping live in [`src/lib/forms/scheduleRequest.ts`](../../src/lib/forms/scheduleRequest.ts).
+- Contact request schema + row mapping live in [`src/lib/forms/contactRequest.ts`](../../src/lib/forms/contactRequest.ts).
+- Instant quote schema + row mapping live in [`src/lib/forms/instantQuoteRequest.ts`](../../src/lib/forms/instantQuoteRequest.ts).
 
-- **`EngageBayTracking`** in [`layout.tsx`](../../src/app/(frontend)/layout.tsx): `ehform.js` + `set_account` from env.  
-- **Schedule embed:** [`EngageBayScheduleForm`](../../src/components/EngageBayScheduleForm/).
+## Content checklist
 
-## Content checklist (better-looking launch)
+- [ ] Published **home** with real hero, services, trust, service area, and CTA.
+- [ ] Shared visual system feels deliberate across public site, customer login, and admin login.
+- [ ] Reviews / testimonials visible on the homepage and editable quickly in Payload admin.
+- [ ] Before / after proof or project-gallery content visible on at least one key landing page.
+- [ ] Contact page and schedule / quote flows reviewed on mobile.
+- [ ] Header nav + mobile menu reviewed.
+- [ ] SEO titles/descriptions reviewed on key pages.
+- [ ] Images in **Media** are real Grime Time assets, not stock placeholders.
+- [ ] Confirm one test form submission appears in the active CRM provider.
+- [ ] Confirm the current EngageBay API key is not over quota if EngageBay is active.
 
-- [ ] Published **home** with real hero, services, trust, service area, CTA.  
-- [ ] **Contact** page + Form block (or link to `/schedule`).  
-- [ ] Header nav + mobile menu reviewed.  
-- [ ] SEO titles/descriptions (SEO plugin fields on pages).  
-- [ ] Images in **Media** (Supabase Storage bucket `media` when S3 env vars are set).  
-- [ ] Confirm one test form submission appears in **EngageBay** contacts.
+## Current planning focus
+
+The launch version should make trust and conversion obvious:
+
+- strong hero with service + geography
+- one primary CTA and one secondary CTA
+- visible proof: reviews, testimonials, before/after work
+- service areas and FAQs that remove friction
+- quote, contact, and schedule paths that turn into CRM contacts every time
 
 ## References
 
-- [Payload layout template (with-vercel-website)](https://github.com/payloadcms/payload/tree/main/templates/with-vercel-website)  
-- [EngageBay REST API](https://github.com/engagebay/restapi)  
-- Ops: [`lead-to-customer-runbook.md`](./lead-to-customer-runbook.md), [`crm-and-integrations.md`](./crm-and-integrations.md)  
+- [Payload layout template (with-vercel-website)](https://github.com/payloadcms/payload/tree/main/templates/with-vercel-website)
+- [EngageBay REST API](https://github.com/engagebay/restapi)
+- Ops: [Lead to customer runbook](../../src/content/docs/lead-to-customer-runbook.md), [`crm-and-integrations.md`](./crm-and-integrations.md)

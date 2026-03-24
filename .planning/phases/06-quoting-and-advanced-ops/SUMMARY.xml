@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phase-summary>
+  <meta>
+    <phase-id>06</phase-id>
+    <phase-name>Quoting and advanced ops</phase-name>
+    <date>2026-03-23</date>
+  </meta>
+  <outcome>Phase opened. Internal quote workflow, dashboard UX, scorecard definitions, operating rhythm, and asset-growth guidance are now documented and partially surfaced in the admin portal. The customer dashboard now stays separate from the admin ops dashboard, the portal shell constrains overflow correctly, the command center uses a left-rail navigator instead of a cramped horizontal tab row, and `/ops` now exposes runtime CRM provider controls for admins.</outcome>
+  <files>
+    <file path=".planning/workflows/admin-portal-quotes-ux.md">
+      <description>Dashboard and internal UX planning.</description>
+    </file>
+    <file path=".planning/workflows/quote-system-and-texas-compliance.md">
+      <description>Internal quote and tax-process workflow.</description>
+    </file>
+    <file path=".planning/workflows/business-scorecard-and-growth.md">
+      <description>Scorecard and growth playbook.</description>
+    </file>
+    <file path="src/app/(portal)/dashboard/page.tsx">
+      <description>Customer dashboard route.</description>
+    </file>
+    <file path="src/app/(portal)/ops/page.tsx">
+      <description>Internal admin ops dashboard route with runtime CRM provider state.</description>
+    </file>
+    <file path="src/components/portal/CrmProviderCard.tsx">
+      <description>Admin-only runtime toggle for switching the active CRM provider.</description>
+    </file>
+    <file path="src/components/data-table.tsx">
+      <description>Left-rail command-center navigator and detail panes for daily ops, scorecard, milestones, and assets.</description>
+    </file>
+    <file path="src/components/chart-area-interactive.tsx">
+      <description>Responsive chart controls that no longer overlap dashboard content.</description>
+    </file>
+    <file path="src/lib/ops/businessOperatingSystem.ts">
+      <description>Admin-facing config for growth and system context.</description>
+    </file>
+    <file path="src/lib/ops/internalDashboardData.ts">
+      <description>Dashboard-specific operator board and trend data.</description>
+    </file>
+  </files>
+  <keywords>
+    <keyword>ops</keyword>
+    <keyword>quotes</keyword>
+    <keyword>dashboard</keyword>
+    <keyword>growth</keyword>
+  </keywords>
+  <commands>
+    <command>cmd /c npx tsc --noEmit</command>
+    <command>cmd /c npm run test:int</command>
+  </commands>
+  <decisions>
+    <decision>D-quotes-001</decision>
+    <decision>D-ops-001</decision>
+  </decisions>
+  <tests>
+    <test>cmd /c npx tsc --noEmit</test>
+    <test>cmd /c npm run test:int</test>
+  </tests>
+  <next>
+    <action>Decide when to promote dashboard KPI and ops settings into an editable Payload global and whether more runtime controls belong in Payload schema or should stay migration-free.</action>
+  </next>
+  <requriements-suggestions>
+  </requriements-suggestions>
+</phase-summary>

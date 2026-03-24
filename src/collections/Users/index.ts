@@ -1,18 +1,71 @@
-import type { CollectionConfig } from 'payload'
+import type {
+  CollectionBeforeChangeHook,
+  CollectionConfig,
+  FieldAccess,
+  PayloadRequest,
+} from 'payload'
 
-import { authenticated } from '../../access/authenticated'
+import { adminOrSelf } from '@/access/adminOrSelf'
+import { isAdmin } from '@/access/isAdmin'
+import { isAdminUser, USER_ROLE_OPTIONS } from '@/lib/auth/roles'
+
+/** Single source of truth for the auth collection slug (Payload admin user). */
+export const USERS_COLLECTION_SLUG = 'users' as const satisfies CollectionConfig['slug']
+
+const canCreateUser = async ({ req }: { req: PayloadRequest }): Promise<boolean> => {
+  if (isAdminUser(req.user)) return true
+
+  const existingUsers = await req.payload.find({
+    collection: USERS_COLLECTION_SLUG,
+    depth: 0,
+    limit: 1,
+    overrideAccess: true,
+    pagination: false,
+    req,
+  })
+
+  return existingUsers.totalDocs === 0
+}
+
+const isAdminField: FieldAccess = ({ req: { user } }) => isAdminUser(user)
+
+const ensureBootstrapAdmin: CollectionBeforeChangeHook = async ({ data, operation, req }) => {
+  if (operation !== 'create') return data
+
+  const existingUsers = await req.payload.find({
+    collection: USERS_COLLECTION_SLUG,
+    depth: 0,
+    limit: 1,
+    overrideAccess: true,
+    pagination: false,
+    req,
+  })
+
+  const roles =
+    Array.isArray(data?.roles) && data.roles.length > 0
+      ? Array.from(new Set(data.roles))
+      : existingUsers.totalDocs === 0
+        ? ['admin']
+        : ['customer']
+
+  return {
+    ...data,
+    email: typeof data?.email === 'string' ? data.email.trim().toLowerCase() : data?.email,
+    roles,
+  }
+}
 
 export const Users: CollectionConfig = {
-  slug: 'users',
+  slug: USERS_COLLECTION_SLUG,
   access: {
-    admin: authenticated,
-    create: authenticated,
-    delete: authenticated,
-    read: authenticated,
-    update: authenticated,
+    admin: ({ req: { user } }) => isAdminUser(user),
+    create: canCreateUser,
+    delete: isAdmin,
+    read: adminOrSelf,
+    update: adminOrSelf,
   },
   admin: {
-    defaultColumns: ['name', 'email'],
+    defaultColumns: ['name', 'email', 'roles'],
     useAsTitle: 'name',
   },
   auth: true,
@@ -21,6 +74,26 @@ export const Users: CollectionConfig = {
       name: 'name',
       type: 'text',
     },
+    {
+      name: 'roles',
+      type: 'select',
+      defaultValue: ['customer'],
+      hasMany: true,
+      options: USER_ROLE_OPTIONS.map((option) => ({ ...option })),
+      required: true,
+      saveToJWT: true,
+      access: {
+        create: isAdminField,
+        update: isAdminField,
+        read: ({ req: { user }, doc }) => {
+          if (isAdminUser(user)) return true
+          return user?.id === doc?.id
+        },
+      },
+    },
   ],
+  hooks: {
+    beforeChange: [ensureBootstrapAdmin],
+  },
   timestamps: true,
 }

@@ -1,0 +1,74 @@
+/* Shared theme tokens only. Avoid importing frontend Tailwind/preflight into Payload admin. */
+@import '../theme-tokens.css';
+
+body {
+  min-height: 100vh;
+}
+
+.login.template-minimal .template-minimal__wrap {
+  display: grid;
+  gap: 1.5rem;
+  margin-inline: auto;
+  max-width: 28rem;
+  padding-block: clamp(2rem, 8vh, 4rem);
+}
+
+.login.template-minimal .login__brand {
+  margin-bottom: 0;
+}
+
+.login.template-minimal .login__form.form {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    0 10px 30px -20px color-mix(in oklab, var(--color-foreground) 45%, transparent),
+    0 1px 2px 0 color-mix(in oklab, var(--color-foreground) 14%, transparent);
+  display: grid;
+  gap: 1rem;
+  margin: 0;
+  padding: 1.5rem;
+}
+
+.login.template-minimal .login__form__inputWrap {
+  display: grid;
+  gap: 1rem;
+}
+
+.login.template-minimal .field-type {
+  margin-bottom: 0;
+}
+
+.login.template-minimal .field-label {
+  color: var(--color-foreground);
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.login.template-minimal .field-type input {
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.login.template-minimal .login__form.form > a {
+  color: var(--color-muted-foreground);
+  font-size: 0.875rem;
+}
+
+.login.template-minimal .form-submit {
+  display: flex;
+}
+
+.login.template-minimal .form-submit .btn {
+  width: 100%;
+}
+
+.dashboard .before-dashboard {
+  background: color-mix(in oklab, var(--color-card) 94%, white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 10px 30px -24px color-mix(in oklab, var(--color-foreground) 35%, transparent);
+  padding: 1.5rem;
+}

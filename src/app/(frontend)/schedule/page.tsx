@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 
-import { EngageBayScheduleForm } from '@/components/EngageBayScheduleForm'
+import { ScheduleRequestForm } from '@/components/forms/ScheduleRequestForm'
+import { NoiseBackground } from '@/components/NoiseBackground'
 
 export const metadata: Metadata = {
   title: 'Schedule',
@@ -8,22 +9,43 @@ export const metadata: Metadata = {
 }
 
 export default function SchedulePage() {
-  const formConfigured = Boolean(process.env.ENGAGEBAY_SCHEDULE_FORM_ID?.trim())
-
   return (
-    <div className="container pt-24 pb-24">
-      <div className="prose dark:prose-invert mb-10 max-w-none">
-        <h1>Schedule</h1>
-        <p>Pick a time using the form below.</p>
-      </div>
-      {formConfigured ? (
-        <EngageBayScheduleForm />
-      ) : (
-        <p className="text-muted-foreground">
-          Add <code className="text-sm">ENGAGEBAY_SCHEDULE_FORM_ID</code> to your environment to show the
-          booking form.
-        </p>
-      )}
+    <div className="container py-24">
+      <section className="site-section-shell px-6 py-8 md:px-10 md:py-10">
+        <NoiseBackground className="opacity-75" contrast="light" />
+
+        <div className="relative z-10 grid gap-8 lg:grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)] lg:items-start">
+          <div className="grid gap-5">
+            <div>
+              <p className="text-sm font-medium uppercase tracking-[0.24em] text-primary">
+                Book online
+              </p>
+              <h1 className="mt-4 text-4xl font-semibold tracking-tight md:text-5xl">
+                Schedule a scope review or service window.
+              </h1>
+              <p className="mt-4 max-w-xl text-base leading-8 text-muted-foreground md:text-lg">
+                Pick a time that works. If the property needs photos, access review, or special
+                surface notes, we will confirm that before the final schedule is locked.
+              </p>
+            </div>
+
+            <div className="rounded-[1.5rem] border border-border/80 bg-background/80 p-5 shadow-sm">
+              <p className="text-xs font-medium uppercase tracking-[0.22em] text-primary">
+                Before you book
+              </p>
+              <div className="mt-4 grid gap-3 text-sm leading-7 text-muted-foreground">
+                <p>Bring the property address, approximate square footage, and any gate or access notes.</p>
+                <p>If the job is algae-heavy, waterfront, or commercial, use the notes field so we scope it correctly.</p>
+                <p>We store the request in Payload first, then push the contact into EngageBay for follow-up and ownership.</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-[1.75rem] border border-border/80 bg-card/78 p-5 shadow-sm md:p-6">
+            <ScheduleRequestForm />
+          </div>
+        </div>
+      </section>
     </div>
   )
 }

@@ -9,7 +9,7 @@ import { GenerateTitle, GenerateURL } from '@payloadcms/plugin-seo/types'
 import { FixedToolbarFeature, HeadingFeature, lexicalEditor } from '@payloadcms/richtext-lexical'
 import { searchFields } from '@/search/fieldOverrides'
 import { beforeSyncWithSearch } from '@/search/beforeSync'
-import { afterFormSubmissionEngageBay } from '@/hooks/afterFormSubmissionEngageBay'
+import { beforeFormSubmissionCrm } from '@/hooks/beforeFormSubmissionCrm'
 import { beforeFormSubmissionNormalize } from '@/hooks/beforeFormSubmissionNormalize'
 
 import { Page, Post } from '@/payload-types'
@@ -65,7 +65,7 @@ export const plugins: Plugin[] = [
         group: 'Leads',
         defaultColumns: ['form', 'leadEmail', 'leadName', 'crmSyncStatus', 'createdAt'],
         description:
-          'Website form posts. Lead columns are derived from field names (email, name, etc.). CRM columns reflect EngageBay sync.',
+          'Website form posts. Lead columns are derived from field names (email, name, etc.). CRM columns reflect provider sync.',
       },
       fields: ({ defaultFields }) => [
         ...defaultFields,
@@ -98,7 +98,7 @@ export const plugins: Plugin[] = [
           admin: {
             readOnly: true,
             position: 'sidebar',
-            description: 'EngageBay sync result (server-set).',
+            description: 'CRM sync result (server-set).',
           },
           options: [
             { label: 'OK', value: 'ok' },
@@ -132,8 +132,7 @@ export const plugins: Plugin[] = [
         },
       ],
       hooks: {
-        beforeChange: [beforeFormSubmissionNormalize],
-        afterChange: [afterFormSubmissionEngageBay],
+        beforeChange: [beforeFormSubmissionNormalize, beforeFormSubmissionCrm],
       },
     },
     formOverrides: {

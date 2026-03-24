@@ -1,5 +1,8 @@
 import { RequiredDataFromCollectionSlug } from 'payload'
 
+/** Must match the `title` below — seed upserts forms by this title. */
+export const SEED_CONTACT_FORM_TITLE = 'Contact Form'
+
 const contactFormBase: RequiredDataFromCollectionSlug<'forms'> = {
   confirmationMessage: {
     root: {
@@ -106,7 +109,7 @@ const contactFormBase: RequiredDataFromCollectionSlug<'forms'> = {
   ],
   redirect: undefined,
   submitButtonLabel: 'Submit',
-  title: 'Contact Form',
+  title: SEED_CONTACT_FORM_TITLE,
   updatedAt: '2023-01-12T21:47:41.374Z',
 }
 

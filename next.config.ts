@@ -12,6 +12,7 @@ const NEXT_PUBLIC_SERVER_URL = process.env.VERCEL_PROJECT_PRODUCTION_URL
   : process.env.__NEXT_PRIVATE_ORIGIN || 'http://localhost:3000'
 
 const nextConfig: NextConfig = {
+  allowedDevOrigins: ['127.0.0.1', 'localhost'],
   sassOptions: {
     includePaths: [path.join(dirname, 'node_modules', '@payloadcms', 'ui', 'dist', 'scss')],
   },
@@ -29,6 +30,11 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: '*.supabase.co',
+        pathname: '/storage/v1/object/public/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.storage.supabase.co',
         pathname: '/storage/v1/object/public/**',
       },
     ],
