@@ -9,6 +9,7 @@ import {
   instantQuoteRequestToSubmissionRows,
   INSTANT_QUOTE_REQUEST_FORM_TITLE,
 } from '@/lib/forms/instantQuoteRequest'
+import { getInstantQuoteCatalog } from '@/lib/quotes/getInstantQuoteCatalog'
 
 export async function POST(request: Request) {
   const payload = await getPayload({ config })
@@ -26,10 +27,11 @@ export async function POST(request: Request) {
   }
 
   try {
+    const catalog = await getInstantQuoteCatalog({ payload })
     const submission = await createLeadFormSubmission({
       candidateTitles: [INSTANT_QUOTE_REQUEST_FORM_TITLE, CONTACT_REQUEST_FORM_TITLE],
       payload,
-      submissionData: instantQuoteRequestToSubmissionRows(result.data),
+      submissionData: instantQuoteRequestToSubmissionRows(result.data, catalog),
     })
 
     return NextResponse.json({

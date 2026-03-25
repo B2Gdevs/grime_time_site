@@ -1,3 +1,12 @@
+export type TodayOpsSlot = {
+  focus: string
+  success: string
+  time: string
+}
+
+export const weekendOpsMessage =
+  'Weekends use a lighter template: catch up on admin, equipment prep, and planning. Use weekdays on the calendar for the full field rhythm.'
+
 export const opsTrendData = [
   {
     grossMargin: 42,
@@ -43,7 +52,7 @@ export const opsTrendData = [
   },
 ] as const
 
-export const todayOpsBoard = [
+export const todayOpsBoard: readonly TodayOpsSlot[] = [
   {
     focus: 'Review weather, route, unpaid invoices, and open quotes.',
     success: 'No surprises in the field block.',

@@ -8,12 +8,17 @@ import {
 } from '@/lib/forms/shared'
 
 export const contactServiceOptions = [
+  { label: 'General question', value: 'general_question' },
+  { label: 'Existing service follow-up', value: 'existing_service_follow_up' },
+  { label: 'Billing or refund question', value: 'billing_refund' },
+  { label: 'Privacy or data request', value: 'privacy_data_request' },
+  { label: 'Terms or policy question', value: 'policy_question' },
+  { label: 'Scheduling question', value: 'scheduling_question' },
   { label: 'House wash', value: 'house_wash' },
   { label: 'Driveway / concrete', value: 'driveway_concrete' },
   { label: 'Deck / porch', value: 'deck_porch' },
   { label: 'Dock / waterfront', value: 'dock_waterfront' },
   { label: 'Commercial question', value: 'commercial_question' },
-  { label: 'General question', value: 'general_question' },
 ] as const
 
 export const preferredReplyOptions = [

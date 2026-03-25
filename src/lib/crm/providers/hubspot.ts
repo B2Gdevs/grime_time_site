@@ -1,4 +1,5 @@
 import { getLeadEmailFromRows, getLeadNameFromRows, getLeadPhoneFromRows, submissionRowsToPlaintext } from '@/lib/crm/submissionRows'
+import { getHubSpotAccessToken } from '@/lib/hubspot/accessToken'
 
 import type { CrmProvider, CrmSyncResult, SubmissionRow } from '@/lib/crm/types'
 
@@ -8,19 +9,11 @@ type HubSpotSearchResponse = {
   results?: Array<{ id: string }>
 }
 
-function getHubSpotAccessToken(): string | null {
-  return (
-    process.env.HUBSPOT_ACCESS_TOKEN?.trim() ||
-    process.env.HUBSPOT_PRIVATE_APP_TOKEN?.trim() ||
-    null
-  )
-}
-
 function hubSpotHeaders() {
   const accessToken = getHubSpotAccessToken()
 
   if (!accessToken) {
-    throw new Error('Missing HUBSPOT_ACCESS_TOKEN')
+    throw new Error('Missing HUBSPOT_ACCESS_TOKEN or HUBSPOT_PRIVATE_APP_TOKEN')
   }
 
   return {

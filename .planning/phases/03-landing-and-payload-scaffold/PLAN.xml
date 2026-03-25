@@ -5,8 +5,8 @@
     <phase-name>Landing and Payload scaffold</phase-name>
     <date>2026-03-23</date>
   </meta>
-  <purpose>Turn the Payload website template into a real exterior-cleaning marketing site with seeded pages, proof, and clear conversion paths.</purpose>
-  <scope>In scope: homepage and core service pages, seed baseline content, layout-builder usage, review/testimonial content planning, before/after proof, CTA flow, and launch content QA. Out of scope: deep CRM automation, quote economics, and editable internal scorecard data.</scope>
+  <purpose>Turn the Payload website template into a real exterior-cleaning marketing site with seeded pages, proof, clear conversion paths, and customer-facing trust/support content.</purpose>
+  <scope>In scope: homepage and core service pages, seed baseline content, layout-builder usage, customer-facing support/legal pages, review/testimonial content planning, before/after proof, CTA flow, and launch content QA. Out of scope: deep CRM automation, quote economics, and editable internal scorecard data.</scope>
   <files>
     <file path=".planning/workflows/content-and-seeding.md">
       <description>Seed ownership and repeatable content reset path.</description>
@@ -23,6 +23,10 @@
     <file path="src/endpoints/seed/index.ts">
       <description>Seed entrypoint and idempotent content upsert.</description>
       <keywords>seed,bootstrap</keywords>
+    </file>
+    <file path="src/endpoints/seed/public-support-pages.ts">
+      <description>Seeded customer-facing privacy, terms, refund, and contact SLA pages.</description>
+      <keywords>seed,legal,support</keywords>
     </file>
   </files>
   <keywords>
@@ -41,8 +45,12 @@
       <status>planned</status>
     </task>
     <task id="03-launch-qa" owner="team">
-      <description>Verify nav, CTAs, service areas, form submission, visual-system/theme polish, masked section framing, compact code-viewer style service explainers with side-by-side detail panes, and mobile launch quality after seed content is in place.</description>
+      <description>Verify nav, CTAs, service areas, form submission, customer trust/support pages, visual-system/theme polish, masked section framing, compact code-viewer style service explainers with side-by-side detail panes, and mobile launch quality after seed content is in place.</description>
       <status>in-progress</status>
+    </task>
+    <task id="03-customer-trust-pages" owner="team">
+      <description>Publish customer-facing support/legal pages in Payload for privacy, terms, refund handling, and contact response standards.</description>
+      <status>done</status>
     </task>
   </tasks>
   <questions>

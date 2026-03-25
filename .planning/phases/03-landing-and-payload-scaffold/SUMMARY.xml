@@ -9,6 +9,7 @@
   <highlights>
     <item>Homepage seed content has been reworked toward a real exterior-cleaning marketing site instead of the template fallback.</item>
     <item>Instant quote UX is live on the homepage and posts usable lead data into Payload form submissions.</item>
+    <item>Customer-facing privacy, terms, refund, and contact-SLA pages are now seeded as Payload `pages` content and intended to be linked from the public footer/contact flow.</item>
     <item>Launch polish is now actively tracking the shared public/admin visual system, including theme tokens, typography, and QA for login/admin shells.</item>
     <item>The homepage renderer now drops placeholder seed media on `home` and uses masked section shells so service, pricing, and CTA content read like intentional marketing panels instead of template leftovers.</item>
     <item>The live homepage now uses a compact code-viewer style service surface with icon-led tabs, inline `Start estimate` actions in the file rail, and a side-by-side detail pane instead of stacked service/pricing explainer grids.</item>
@@ -16,6 +17,7 @@
   </highlights>
   <next>
     <item>Finish the seeded homepage, about page, pricing, and proof content so the live site matches the new quote flow after the next reseed.</item>
+    <item>Reseed and review the new customer trust/support pages plus footer links on the live site.</item>
     <item>Add a quick-edit admin path for reviews, testimonials, and before/after proof.</item>
     <item>Complete launch QA across public routes, login, and admin screens after reseed.</item>
   </next>

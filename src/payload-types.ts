@@ -74,6 +74,13 @@ export interface Config {
     categories: Category;
     quotes: Quote;
     users: User;
+    invoices: Invoice;
+    'service-plans': ServicePlan;
+    'service-appointments': ServiceAppointment;
+    'growth-milestones': GrowthMilestone;
+    'ops-asset-ladder-items': OpsAssetLadderItem;
+    'ops-liability-items': OpsLiabilityItem;
+    'ops-scorecard-rows': OpsScorecardRow;
     redirects: Redirect;
     forms: Form;
     'form-submissions': FormSubmission;
@@ -98,6 +105,13 @@ export interface Config {
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     quotes: QuotesSelect<false> | QuotesSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
+    invoices: InvoicesSelect<false> | InvoicesSelect<true>;
+    'service-plans': ServicePlansSelect<false> | ServicePlansSelect<true>;
+    'service-appointments': ServiceAppointmentsSelect<false> | ServiceAppointmentsSelect<true>;
+    'growth-milestones': GrowthMilestonesSelect<false> | GrowthMilestonesSelect<true>;
+    'ops-asset-ladder-items': OpsAssetLadderItemsSelect<false> | OpsAssetLadderItemsSelect<true>;
+    'ops-liability-items': OpsLiabilityItemsSelect<false> | OpsLiabilityItemsSelect<true>;
+    'ops-scorecard-rows': OpsScorecardRowsSelect<false> | OpsScorecardRowsSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
@@ -118,11 +132,17 @@ export interface Config {
     header: Header;
     footer: Footer;
     pricing: Pricing;
+    internalOpsSettings: InternalOpsSetting;
+    quoteSettings: QuoteSetting;
+    servicePlanSettings: ServicePlanSetting;
   };
   globalsSelect: {
     header: HeaderSelect<false> | HeaderSelect<true>;
     footer: FooterSelect<false> | FooterSelect<true>;
     pricing: PricingSelect<false> | PricingSelect<true>;
+    internalOpsSettings: InternalOpsSettingsSelect<false> | InternalOpsSettingsSelect<true>;
+    quoteSettings: QuoteSettingsSelect<false> | QuoteSettingsSelect<true>;
+    servicePlanSettings: ServicePlanSettingsSelect<false> | ServicePlanSettingsSelect<true>;
   };
   locale: null;
   widgets: {
@@ -453,6 +473,22 @@ export interface Category {
 export interface User {
   id: number;
   name?: string | null;
+  phone?: string | null;
+  company?: string | null;
+  billingAddress?: {
+    street1?: string | null;
+    street2?: string | null;
+    city?: string | null;
+    state?: string | null;
+    postalCode?: string | null;
+  };
+  serviceAddress?: {
+    street1?: string | null;
+    street2?: string | null;
+    city?: string | null;
+    state?: string | null;
+    postalCode?: string | null;
+  };
   roles: ('admin' | 'customer')[];
   updatedAt: string;
   createdAt: string;
@@ -912,6 +948,10 @@ export interface Quote {
   customerEmail?: string | null;
   customerPhone?: string | null;
   /**
+   * Attach the customer portal account so the estimate appears in their portal.
+   */
+  customerUser?: (number | null) | User;
+  /**
    * Job site details used for scoping and local tax review.
    */
   serviceAddress?: {
@@ -1052,6 +1092,234 @@ export interface FormSubmission {
    * Error or status detail from the sync step.
    */
   crmSyncDetail?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Customer-facing invoices that appear in the portal.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "invoices".
+ */
+export interface Invoice {
+  id: number;
+  invoiceNumber: string;
+  title: string;
+  status: 'draft' | 'open' | 'paid' | 'overdue' | 'void';
+  issueDate?: string | null;
+  dueDate?: string | null;
+  customerUser?: (number | null) | User;
+  customerEmail: string;
+  customerName?: string | null;
+  serviceAddress?: {
+    street1?: string | null;
+    street2?: string | null;
+    city?: string | null;
+    state?: string | null;
+    postalCode?: string | null;
+  };
+  total: number;
+  balanceDue: number;
+  /**
+   * Optional hosted invoice / payment URL.
+   */
+  paymentUrl?: string | null;
+  lineItems?:
+    | {
+        description: string;
+        amount: number;
+        id?: string | null;
+      }[]
+    | null;
+  relatedQuote?: (number | null) | Quote;
+  notes?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Recurring maintenance-plan records used by the customer portal and scheduling views.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "service-plans".
+ */
+export interface ServicePlan {
+  id: number;
+  title: string;
+  status: 'draft' | 'active' | 'paused' | 'cancelled';
+  /**
+   * First visit or anchor date used to suggest the ongoing cadence.
+   */
+  anchorDate?: string | null;
+  preferredWindow?: ('morning' | 'afternoon' | 'flexible') | null;
+  customerUser: number | User;
+  customerEmail: string;
+  customerName?: string | null;
+  serviceAddress?: {
+    street1?: string | null;
+    street2?: string | null;
+    city?: string | null;
+    state?: string | null;
+    postalCode?: string | null;
+  };
+  /**
+   * Accepted quote this plan was built from.
+   */
+  sourceQuote?: (number | null) | Quote;
+  /**
+   * Short service scope summary shown in the portal.
+   */
+  serviceSummary?: string | null;
+  /**
+   * Reference price for one normal standalone visit.
+   */
+  singleJobAmount: number;
+  discountPercent: number;
+  visitsPerYear: number;
+  billingInstallmentsPerYear: number;
+  discountedVisitAmount?: number | null;
+  annualPlanAmount?: number | null;
+  installmentAmount?: number | null;
+  cadenceMonths?: number | null;
+  notes?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Scheduled or requested customer jobs shown in the portal and ops calendar.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "service-appointments".
+ */
+export interface ServiceAppointment {
+  id: number;
+  title: string;
+  status: 'requested' | 'confirmed' | 'reschedule_requested' | 'completed' | 'cancelled';
+  arrivalWindow?: ('morning' | 'afternoon' | 'flexible') | null;
+  requestSource?: ('portal' | 'admin' | 'phone' | 'subscription_auto') | null;
+  customerUser: number | User;
+  customerEmail: string;
+  customerName?: string | null;
+  serviceAddress?: {
+    street1?: string | null;
+    street2?: string | null;
+    city?: string | null;
+    state?: string | null;
+    postalCode?: string | null;
+  };
+  /**
+   * Customer-requested date before the team confirms the slot.
+   */
+  requestedDate?: string | null;
+  scheduledStart?: string | null;
+  scheduledEnd?: string | null;
+  relatedQuote?: (number | null) | Quote;
+  servicePlan?: (number | null) | ServicePlan;
+  customerNotes?: string | null;
+  internalNotes?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Growth ladder rows shown on /ops (edit in admin).
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "growth-milestones".
+ */
+export interface GrowthMilestone {
+  id: number;
+  title: string;
+  /**
+   * Volume or stage trigger (e.g. jobs per month).
+   */
+  trigger?: string | null;
+  /**
+   * Operating standard to unlock the next stage.
+   */
+  winCondition?: string | null;
+  /**
+   * Lower numbers appear first on the portal.
+   */
+  sortOrder?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Equipment ladder on /ops. Unchecked = want; checked = have.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ops-asset-ladder-items".
+ */
+export interface OpsAssetLadderItem {
+  id: number;
+  /**
+   * Stage or category name.
+   */
+  label: string;
+  /**
+   * What to buy or spec.
+   */
+  buyNotes?: string | null;
+  /**
+   * Why it matters / bottleneck it removes.
+   */
+  whyNotes?: string | null;
+  /**
+   * Checked = you have it. Unchecked = on the wishlist.
+   */
+  owned?: boolean | null;
+  /**
+   * Lower numbers appear first on the portal.
+   */
+  sortOrder?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Liability / drag items shown on /ops scorecard tab.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ops-liability-items".
+ */
+export interface OpsLiabilityItem {
+  id: number;
+  label: string;
+  /**
+   * Optional detail shown in the portal sheet.
+   */
+  notes?: string | null;
+  /**
+   * Lower numbers appear first.
+   */
+  sortOrder?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * KPI definitions for /ops. Title should match the built-in KPI name (e.g. Revenue, MRR) to override defaults.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ops-scorecard-rows".
+ */
+export interface OpsScorecardRow {
+  id: number;
+  /**
+   * Must match scorecard KPI label exactly when overriding defaults.
+   */
+  title: string;
+  formula: string;
+  /**
+   * Target / operating standard text.
+   */
+  targetGuidance?: string | null;
+  /**
+   * Optional scalar staff can track (displayed on /ops card grid).
+   */
+  manualValue?: number | null;
+  /**
+   * Label for manual value (e.g. Target hours).
+   */
+  manualValueLabel?: string | null;
+  sortOrder?: number | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1224,6 +1492,16 @@ export interface PayloadMcpApiKey {
      */
     update?: boolean | null;
   };
+  quoteSettings?: {
+    /**
+     * Allow clients to find quoteSettings global.
+     */
+    find?: boolean | null;
+    /**
+     * Allow clients to update quoteSettings global.
+     */
+    update?: boolean | null;
+  };
   updatedAt: string;
   createdAt: string;
   enableAPIKey?: boolean | null;
@@ -1370,6 +1648,34 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'users';
         value: number | User;
+      } | null)
+    | ({
+        relationTo: 'invoices';
+        value: number | Invoice;
+      } | null)
+    | ({
+        relationTo: 'service-plans';
+        value: number | ServicePlan;
+      } | null)
+    | ({
+        relationTo: 'service-appointments';
+        value: number | ServiceAppointment;
+      } | null)
+    | ({
+        relationTo: 'growth-milestones';
+        value: number | GrowthMilestone;
+      } | null)
+    | ({
+        relationTo: 'ops-asset-ladder-items';
+        value: number | OpsAssetLadderItem;
+      } | null)
+    | ({
+        relationTo: 'ops-liability-items';
+        value: number | OpsLiabilityItem;
+      } | null)
+    | ({
+        relationTo: 'ops-scorecard-rows';
+        value: number | OpsScorecardRow;
       } | null)
     | ({
         relationTo: 'redirects';
@@ -1793,6 +2099,7 @@ export interface QuotesSelect<T extends boolean = true> {
   customerName?: T;
   customerEmail?: T;
   customerPhone?: T;
+  customerUser?: T;
   serviceAddress?:
     | T
     | {
@@ -1843,6 +2150,26 @@ export interface QuotesSelect<T extends boolean = true> {
  */
 export interface UsersSelect<T extends boolean = true> {
   name?: T;
+  phone?: T;
+  company?: T;
+  billingAddress?:
+    | T
+    | {
+        street1?: T;
+        street2?: T;
+        city?: T;
+        state?: T;
+        postalCode?: T;
+      };
+  serviceAddress?:
+    | T
+    | {
+        street1?: T;
+        street2?: T;
+        city?: T;
+        state?: T;
+        postalCode?: T;
+      };
   roles?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -1860,6 +2187,159 @@ export interface UsersSelect<T extends boolean = true> {
         createdAt?: T;
         expiresAt?: T;
       };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "invoices_select".
+ */
+export interface InvoicesSelect<T extends boolean = true> {
+  invoiceNumber?: T;
+  title?: T;
+  status?: T;
+  issueDate?: T;
+  dueDate?: T;
+  customerUser?: T;
+  customerEmail?: T;
+  customerName?: T;
+  serviceAddress?:
+    | T
+    | {
+        street1?: T;
+        street2?: T;
+        city?: T;
+        state?: T;
+        postalCode?: T;
+      };
+  total?: T;
+  balanceDue?: T;
+  paymentUrl?: T;
+  lineItems?:
+    | T
+    | {
+        description?: T;
+        amount?: T;
+        id?: T;
+      };
+  relatedQuote?: T;
+  notes?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "service-plans_select".
+ */
+export interface ServicePlansSelect<T extends boolean = true> {
+  title?: T;
+  status?: T;
+  anchorDate?: T;
+  preferredWindow?: T;
+  customerUser?: T;
+  customerEmail?: T;
+  customerName?: T;
+  serviceAddress?:
+    | T
+    | {
+        street1?: T;
+        street2?: T;
+        city?: T;
+        state?: T;
+        postalCode?: T;
+      };
+  sourceQuote?: T;
+  serviceSummary?: T;
+  singleJobAmount?: T;
+  discountPercent?: T;
+  visitsPerYear?: T;
+  billingInstallmentsPerYear?: T;
+  discountedVisitAmount?: T;
+  annualPlanAmount?: T;
+  installmentAmount?: T;
+  cadenceMonths?: T;
+  notes?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "service-appointments_select".
+ */
+export interface ServiceAppointmentsSelect<T extends boolean = true> {
+  title?: T;
+  status?: T;
+  arrivalWindow?: T;
+  requestSource?: T;
+  customerUser?: T;
+  customerEmail?: T;
+  customerName?: T;
+  serviceAddress?:
+    | T
+    | {
+        street1?: T;
+        street2?: T;
+        city?: T;
+        state?: T;
+        postalCode?: T;
+      };
+  requestedDate?: T;
+  scheduledStart?: T;
+  scheduledEnd?: T;
+  relatedQuote?: T;
+  servicePlan?: T;
+  customerNotes?: T;
+  internalNotes?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "growth-milestones_select".
+ */
+export interface GrowthMilestonesSelect<T extends boolean = true> {
+  title?: T;
+  trigger?: T;
+  winCondition?: T;
+  sortOrder?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ops-asset-ladder-items_select".
+ */
+export interface OpsAssetLadderItemsSelect<T extends boolean = true> {
+  label?: T;
+  buyNotes?: T;
+  whyNotes?: T;
+  owned?: T;
+  sortOrder?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ops-liability-items_select".
+ */
+export interface OpsLiabilityItemsSelect<T extends boolean = true> {
+  label?: T;
+  notes?: T;
+  sortOrder?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ops-scorecard-rows_select".
+ */
+export interface OpsScorecardRowsSelect<T extends boolean = true> {
+  title?: T;
+  formula?: T;
+  targetGuidance?: T;
+  manualValue?: T;
+  manualValueLabel?: T;
+  sortOrder?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2117,6 +2597,12 @@ export interface PayloadMcpApiKeysSelect<T extends boolean = true> {
         find?: T;
         update?: T;
       };
+  quoteSettings?:
+    | T
+    | {
+        find?: T;
+        update?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
   enableAPIKey?: T;
@@ -2328,6 +2814,148 @@ export interface Pricing {
   createdAt?: string | null;
 }
 /**
+ * Revenue targets and chart copy for the ops command center (portal).
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "internalOpsSettings".
+ */
+export interface InternalOpsSetting {
+  id: number;
+  /**
+   * Annual revenue goal in USD (reference for planning; cards use display fields below).
+   */
+  annualRevenueGoal?: number | null;
+  /**
+   * Value shown on the “Projected revenue” KPI card (e.g. weighted pipeline target).
+   */
+  projectedRevenueDisplay?: string | null;
+  /**
+   * Value shown on the “MRR” KPI card.
+   */
+  mrrTargetDisplay?: string | null;
+  /**
+   * Shown under the business momentum chart on /ops.
+   */
+  chartDisclaimer?: string | null;
+  /**
+   * Extra line under the chart when HubSpot pipeline is shown (e.g. how open deal totals are computed).
+   */
+  chartPipelineNote?: string | null;
+  /**
+   * Help text for the Leads KPI card (info icon on /ops).
+   */
+  kpiTooltipLeads?: string | null;
+  /**
+   * Help text for the Quotes KPI card.
+   */
+  kpiTooltipQuotes?: string | null;
+  /**
+   * Help text for the Projected revenue KPI card.
+   */
+  kpiTooltipProjectedRevenue?: string | null;
+  /**
+   * Help text for the MRR KPI card.
+   */
+  kpiTooltipMrr?: string | null;
+  /**
+   * Optional tooltips for scorecard tab rows. KPI name must match the scorecard label exactly (e.g. Revenue, MRR).
+   */
+  scorecardKpiTooltips?:
+    | {
+        kpiName: string;
+        helpText: string;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * Draft and publish the service toggles, rates, and multipliers that power the public instant quote experience.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "quoteSettings".
+ */
+export interface QuoteSetting {
+  id: number;
+  /**
+   * These rows drive the instant quote cards, labels, and live estimate math. Turn services on/off without code.
+   */
+  services: {
+    serviceKey: 'house_wash' | 'driveway' | 'porch_patio' | 'dock' | 'dumpster_pad';
+    label: string;
+    description: string;
+    recommendedFor: string;
+    minimum: number;
+    sqftLowRate: number;
+    sqftHighRate: number;
+    sortOrder?: number | null;
+    enabledOnSite?: boolean | null;
+    quoteEnabled?: boolean | null;
+    frequencyEligible?: boolean | null;
+    id?: string | null;
+  }[];
+  /**
+   * How job condition changes the estimate range.
+   */
+  conditionMultipliers: {
+    light: number;
+    standard: number;
+    heavy: number;
+  };
+  /**
+   * How home height changes the estimate range.
+   */
+  storyMultipliers: {
+    oneStory: number;
+    twoStories: number;
+    threePlusStories: number;
+  };
+  /**
+   * Discount multipliers for recurring maintenance plans.
+   */
+  frequencyMultipliers: {
+    oneTime: number;
+    biannual: number;
+    quarterly: number;
+  };
+  _status?: ('draft' | 'published') | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * Draft and publish the default subscription terms used when Grime Time sells recurring maintenance plans.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "servicePlanSettings".
+ */
+export interface ServicePlanSetting {
+  id: number;
+  /**
+   * Default annual visit count for recurring plans.
+   */
+  minimumVisitsPerYear: number;
+  /**
+   * Default discount applied to each visit relative to a one-off single-job quote.
+   */
+  discountPercentOffSingleJob: number;
+  /**
+   * How many installments the annual plan total is split into by default.
+   */
+  billingInstallmentsPerYear: number;
+  /**
+   * Default spacing in months between recurring visits.
+   */
+  defaultCadenceMonths: number;
+  /**
+   * Short summary shown to customers in the portal.
+   */
+  customerSummary?: string | null;
+  _status?: ('draft' | 'published') | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "header_select".
  */
@@ -2412,6 +3040,93 @@ export interface PricingSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "internalOpsSettings_select".
+ */
+export interface InternalOpsSettingsSelect<T extends boolean = true> {
+  annualRevenueGoal?: T;
+  projectedRevenueDisplay?: T;
+  mrrTargetDisplay?: T;
+  chartDisclaimer?: T;
+  chartPipelineNote?: T;
+  kpiTooltipLeads?: T;
+  kpiTooltipQuotes?: T;
+  kpiTooltipProjectedRevenue?: T;
+  kpiTooltipMrr?: T;
+  scorecardKpiTooltips?:
+    | T
+    | {
+        kpiName?: T;
+        helpText?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "quoteSettings_select".
+ */
+export interface QuoteSettingsSelect<T extends boolean = true> {
+  services?:
+    | T
+    | {
+        serviceKey?: T;
+        label?: T;
+        description?: T;
+        recommendedFor?: T;
+        minimum?: T;
+        sqftLowRate?: T;
+        sqftHighRate?: T;
+        sortOrder?: T;
+        enabledOnSite?: T;
+        quoteEnabled?: T;
+        frequencyEligible?: T;
+        id?: T;
+      };
+  conditionMultipliers?:
+    | T
+    | {
+        light?: T;
+        standard?: T;
+        heavy?: T;
+      };
+  storyMultipliers?:
+    | T
+    | {
+        oneStory?: T;
+        twoStories?: T;
+        threePlusStories?: T;
+      };
+  frequencyMultipliers?:
+    | T
+    | {
+        oneTime?: T;
+        biannual?: T;
+        quarterly?: T;
+      };
+  _status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "servicePlanSettings_select".
+ */
+export interface ServicePlanSettingsSelect<T extends boolean = true> {
+  minimumVisitsPerYear?: T;
+  discountPercentOffSingleJob?: T;
+  billingInstallmentsPerYear?: T;
+  defaultCadenceMonths?: T;
+  customerSummary?: T;
+  _status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "collections_widget".
  */
 export interface CollectionsWidget {
@@ -2437,7 +3152,7 @@ export interface TaskSchedulePublish {
           relationTo: 'posts';
           value: number | Post;
         } | null);
-    global?: string | null;
+    global?: ('quoteSettings' | 'servicePlanSettings') | null;
     user?: (number | null) | User;
   };
   output?: unknown;

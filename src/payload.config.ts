@@ -7,14 +7,24 @@ import { buildConfig, PayloadRequest } from 'payload'
 import { fileURLToPath } from 'url'
 
 import { Categories } from './collections/Categories'
+import { GrowthMilestones } from './collections/GrowthMilestones'
+import { Invoices } from './collections/Invoices'
 import { Media } from './collections/Media'
+import { OpsAssetLadderItems } from './collections/OpsAssetLadderItems'
+import { OpsLiabilityItems } from './collections/OpsLiabilityItems'
+import { OpsScorecardRows } from './collections/OpsScorecardRows'
 import { Pages } from './collections/Pages'
 import { Posts } from './collections/Posts'
 import { Quotes } from './collections/Quotes'
+import { ServiceAppointments } from './collections/ServiceAppointments'
+import { ServicePlans } from './collections/ServicePlans'
 import { Users } from './collections/Users'
 import { Footer } from './Footer/config'
 import { Header } from './Header/config'
+import { InternalOpsSettings } from './globals/InternalOpsSettings/config'
 import { Pricing } from './globals/Pricing/config'
+import { QuoteSettings } from './globals/QuoteSettings/config'
+import { ServicePlanSettings } from './globals/ServicePlanSettings/config'
 import { migrations } from './migrations'
 import { plugins } from './plugins'
 import { defaultLexical } from '@/fields/defaultLexical'
@@ -92,7 +102,21 @@ export default buildConfig({
     push: false,
     prodMigrations: migrations,
   }),
-  collections: [Pages, Posts, Media, Categories, Quotes, Users],
+  collections: [
+    Pages,
+    Posts,
+    Media,
+    Categories,
+    Quotes,
+    Users,
+    Invoices,
+    ServicePlans,
+    ServiceAppointments,
+    GrowthMilestones,
+    OpsAssetLadderItems,
+    OpsLiabilityItems,
+    OpsScorecardRows,
+  ],
   cors: [getServerSideURL()].filter(Boolean),
   plugins: [
     ...plugins,
@@ -168,6 +192,13 @@ export default buildConfig({
                   update: true,
                 },
               },
+              quoteSettings: {
+                description: 'Draftable instant-quote math and service toggles.',
+                enabled: {
+                  find: true,
+                  update: true,
+                },
+              },
             },
             mcp: {
               handlerOptions: {
@@ -203,7 +234,7 @@ export default buildConfig({
       enabled: isSupabaseMediaStorageConfigured(),
     }),
   ],
-  globals: [Header, Footer, Pricing],
+  globals: [Header, Footer, Pricing, InternalOpsSettings, QuoteSettings, ServicePlanSettings],
   secret: process.env.PAYLOAD_SECRET,
   ...(resendApiKey
     ? {

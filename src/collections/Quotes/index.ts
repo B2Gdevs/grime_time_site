@@ -14,11 +14,30 @@ import {
   buildQuoteTaxDecisionNotes,
   buildQuoteTitle,
 } from '@/lib/quotes/normalizeQuoteDraft'
+import { buildCustomerOwnershipWhere } from '@/lib/customers/access'
 import { canAccessQuotes, quotesInternalEnabled } from '@/utilities/quotesAccess'
 
 const quotesStaffAccess: Access = ({ req: { user } }) => {
-  if (!quotesInternalEnabled()) return false
+  if (!quotesInternalEnabled() && !user) return false
   return Boolean(user && canAccessQuotes(user))
+}
+
+const quotesReadAccess: Access = ({ req: { user } }) => {
+  if (user && canAccessQuotes(user)) return true
+
+  const customerWhere = buildCustomerOwnershipWhere(user)
+  if (!customerWhere || customerWhere === true) return customerWhere
+
+  return {
+    and: [
+      customerWhere,
+      {
+        status: {
+          in: ['sent', 'accepted'],
+        },
+      },
+    ],
+  }
 }
 
 export const Quotes: CollectionConfig = {
@@ -31,7 +50,7 @@ export const Quotes: CollectionConfig = {
       'Internal job quotes only. Includes line items, totals, and Texas tax review fields. Never expose draft quotes on the public site.',
   },
   access: {
-    read: quotesStaffAccess,
+    read: quotesReadAccess,
     create: quotesStaffAccess,
     update: quotesStaffAccess,
     delete: quotesStaffAccess,
@@ -91,6 +110,15 @@ export const Quotes: CollectionConfig = {
           },
         },
       ],
+    },
+    {
+      name: 'customerUser',
+      type: 'relationship',
+      relationTo: 'users',
+      admin: {
+        description: 'Attach the customer portal account so the estimate appears in their portal.',
+        position: 'sidebar',
+      },
     },
     {
       type: 'group',

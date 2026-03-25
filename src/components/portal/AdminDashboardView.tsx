@@ -1,37 +1,54 @@
 import Link from 'next/link'
 
-import { CalendarClockIcon, FileTextIcon, ShieldIcon } from 'lucide-react'
+import { FileTextIcon, ReceiptTextIcon, Settings2Icon, ShieldIcon } from 'lucide-react'
 
 import { ChartAreaInteractive } from '@/components/chart-area-interactive'
 import { CrmProviderCard } from '@/components/portal/CrmProviderCard'
+import type { CrmSyncBannerState } from '@/components/portal/CrmSyncBanner'
+import { CrmSyncBanner } from '@/components/portal/CrmSyncBanner'
 import { DataTable } from '@/components/data-table'
 import { SectionCards, type SectionCardItem } from '@/components/section-cards'
 import { SiteHeader } from '@/components/site-header'
 import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import {
-  assetLadder,
-  businessScorecard,
-  growthMilestones,
-  liabilityChecklist,
-  toolRecommendations,
-} from '@/lib/ops/businessOperatingSystem'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import type {
+  OpsAssetLadderRow,
+  OpsGrowthMilestoneRow,
+  OpsLiabilityRow,
+  OpsMergedScorecardRow,
+} from '@/lib/ops/opsDashboardTypes'
 import type { CrmProviderSlug, CrmProviderSummary } from '@/lib/crm/types'
 
 export function AdminDashboardView({
   activeCrmProvider,
+  assetLadderItems,
   cards,
+  chartDisclaimer,
+  crmBannerState,
   crmProviders,
+  growthMilestones,
+  hubSpotOpsEnabled,
+  liabilityItems,
+  mergedScorecard,
+  pipelineSnapshotLabel,
+  pipelineSnapshotValue,
+  quotesEnabled,
+  scorecardTooltipMap,
 }: {
   activeCrmProvider: CrmProviderSlug | null
+  assetLadderItems: OpsAssetLadderRow[]
   cards: SectionCardItem[]
+  chartDisclaimer?: string | null
+  crmBannerState: CrmSyncBannerState | null
   crmProviders: CrmProviderSummary[]
+  growthMilestones: OpsGrowthMilestoneRow[]
+  hubSpotOpsEnabled: boolean
+  liabilityItems: OpsLiabilityRow[]
+  mergedScorecard: OpsMergedScorecardRow[]
+  pipelineSnapshotLabel?: string | null
+  pipelineSnapshotValue?: string | null
+  quotesEnabled: boolean
+  scorecardTooltipMap: Record<string, string>
 }) {
   return (
     <>
@@ -44,29 +61,47 @@ export function AdminDashboardView({
           className="@container/main portal-scroll flex min-h-0 flex-1 flex-col gap-6 overflow-x-hidden overflow-y-auto overscroll-contain py-4 md:py-6"
           data-portal-scroll=""
         >
+          <CrmSyncBanner state={crmBannerState} />
+
           <SectionCards items={cards} />
 
+          <DataTable
+            assetLadderItems={assetLadderItems}
+            growthMilestones={growthMilestones}
+            hubSpotOpsEnabled={hubSpotOpsEnabled}
+            liabilityItems={liabilityItems}
+            mergedScorecard={mergedScorecard}
+            scorecardTooltipMap={scorecardTooltipMap}
+          />
+
           <div className="grid min-w-0 gap-4 px-4 lg:px-6 xl:grid-cols-[minmax(0,1.7fr)_22rem]">
-            <ChartAreaInteractive />
+            <ChartAreaInteractive
+              disclaimer={chartDisclaimer}
+              pipelineSnapshotLabel={pipelineSnapshotLabel}
+              pipelineSnapshotValue={pipelineSnapshotValue}
+            />
 
             <div className="grid gap-4">
-              <CrmProviderCard
-                activeProvider={activeCrmProvider}
-                availableProviders={crmProviders}
-              />
+              <CrmProviderCard activeProvider={activeCrmProvider} availableProviders={crmProviders} />
 
               <Card className="min-w-0">
                 <CardHeader>
                   <CardTitle>Operator panel</CardTitle>
-                  <CardDescription>
-                    The ops dashboard is the command center. Payload admin remains the back office.
-                  </CardDescription>
+                  <CardDescription>Quote tools, docs, and Payload admin.</CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-3">
+                  {quotesEnabled ? (
+                    <Button asChild className="justify-start">
+                      <Link href="/admin/collections/quotes">
+                        <ReceiptTextIcon className="size-4" />
+                        Open quotes
+                      </Link>
+                    </Button>
+                  ) : null}
                   <Button asChild className="justify-start">
-                    <Link href="/docs/business-scorecard-and-growth">
-                      <FileTextIcon className="size-4" />
-                      Open scorecard
+                    <Link href="/admin/globals/quoteSettings">
+                      <Settings2Icon className="size-4" />
+                      Open quote settings
                     </Link>
                   </Button>
                   <Button asChild variant="outline" className="justify-start">
@@ -76,9 +111,9 @@ export function AdminDashboardView({
                     </Link>
                   </Button>
                   <Button asChild variant="outline" className="justify-start">
-                    <Link href="/schedule">
-                      <CalendarClockIcon className="size-4" />
-                      Open scheduling
+                    <Link href="/docs/business-scorecard-and-growth">
+                      <FileTextIcon className="size-4" />
+                      Open scorecard
                     </Link>
                   </Button>
                   <Button asChild variant="outline" className="justify-start">
@@ -87,22 +122,10 @@ export function AdminDashboardView({
                       Open Payload admin
                     </Link>
                   </Button>
-
-                  <div className="mt-2 grid gap-2 rounded-lg border p-3 text-sm">
-                    <div className="font-medium">Current phase-06 focus</div>
-                    <div className="text-muted-foreground">{growthMilestones[0]?.winCondition}</div>
-                    <div className="text-muted-foreground">Next asset: {assetLadder[1]?.buy}</div>
-                    <div className="text-muted-foreground">
-                      Weekly review items: {businessScorecard.length} KPIs, {liabilityChecklist.length}{' '}
-                      liabilities, {toolRecommendations.length} tool tracks.
-                    </div>
-                  </div>
                 </CardContent>
               </Card>
             </div>
           </div>
-
-          <DataTable />
         </div>
       </div>
     </>

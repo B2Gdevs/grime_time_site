@@ -85,6 +85,14 @@ const DOCS: PortalDoc[] = [
     slug: 'site-integrations-and-launch-checklist',
     title: 'Site integrations and launch checklist',
   },
+  {
+    audience: 'admin',
+    description: 'Where to edit /ops KPI display strings and chart disclaimer (Payload global).',
+    filePath: 'src/content/docs/ops-dashboard-targets.md',
+    group: 'Team playbooks',
+    slug: 'ops-dashboard-targets',
+    title: 'Ops dashboard targets',
+  },
 ]
 
 export function getPortalDocs(options: { isAdmin: boolean }): PortalDoc[] {

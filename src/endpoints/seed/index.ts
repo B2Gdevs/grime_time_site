@@ -6,9 +6,22 @@ import {
   resolveSeedStaffEmails,
 } from '@/utilities/quotesAccess'
 import { SCHEDULE_REQUEST_FORM_TITLE } from '@/lib/forms/scheduleRequest'
+import { defaultInstantQuoteCatalog } from '@/lib/quotes/instantQuoteCatalog'
+import {
+  assetLadder as defaultAssetLadder,
+  businessScorecard,
+  growthMilestones as defaultGrowthMilestones,
+  liabilityChecklist,
+} from '@/lib/ops/businessOperatingSystem'
 import { about as aboutPageData } from './about-page'
 import { buildContactFormData, SEED_CONTACT_FORM_TITLE } from './contact-form'
 import { buildInstantQuoteFormData, SEED_INSTANT_QUOTE_FORM_TITLE } from './instant-quote-form'
+import {
+  contactSlaPage,
+  privacyPolicyPage,
+  refundPolicyPage,
+  termsAndConditionsPage,
+} from './public-support-pages'
 import { buildScheduleRequestFormData } from './schedule-request-form'
 import { contact as contactPageData } from './contact-page'
 import { home } from './home'
@@ -308,6 +321,38 @@ async function runSeed({
     req,
   ).then(({ id }) => payload.findByID({ collection: 'pages', id, depth: 0, req }))
 
+  const privacyPage = await upsertBySlug(
+    payload,
+    'pages',
+    'privacy-policy',
+    privacyPolicyPage() as Record<string, unknown>,
+    req,
+  ).then(({ id }) => payload.findByID({ collection: 'pages', id, depth: 0, req }))
+
+  const termsPage = await upsertBySlug(
+    payload,
+    'pages',
+    'terms-and-conditions',
+    termsAndConditionsPage() as Record<string, unknown>,
+    req,
+  ).then(({ id }) => payload.findByID({ collection: 'pages', id, depth: 0, req }))
+
+  const refundPage = await upsertBySlug(
+    payload,
+    'pages',
+    'refund-policy',
+    refundPolicyPage() as Record<string, unknown>,
+    req,
+  ).then(({ id }) => payload.findByID({ collection: 'pages', id, depth: 0, req }))
+
+  const contactSla = await upsertBySlug(
+    payload,
+    'pages',
+    'contact-sla',
+    contactSlaPage() as Record<string, unknown>,
+    req,
+  ).then(({ id }) => payload.findByID({ collection: 'pages', id, depth: 0, req }))
+
   payload.logger.info(`— Updating globals...`)
 
   await Promise.all([
@@ -383,25 +428,52 @@ async function runSeed({
           },
           {
             link: {
-              type: 'custom',
-              label: 'Admin',
-              url: '/admin',
+              type: 'reference',
+              label: 'Contact',
+              reference: {
+                relationTo: 'pages',
+                value: contactPage.id,
+              },
             },
           },
           {
             link: {
-              type: 'custom',
-              label: 'Source Code',
-              newTab: true,
-              url: 'https://github.com/payloadcms/payload/tree/main/templates/website',
+              type: 'reference',
+              label: 'Privacy',
+              reference: {
+                relationTo: 'pages',
+                value: privacyPage.id,
+              },
             },
           },
           {
             link: {
-              type: 'custom',
-              label: 'Payload',
-              newTab: true,
-              url: 'https://payloadcms.com/',
+              type: 'reference',
+              label: 'Terms',
+              reference: {
+                relationTo: 'pages',
+                value: termsPage.id,
+              },
+            },
+          },
+          {
+            link: {
+              type: 'reference',
+              label: 'Refund policy',
+              reference: {
+                relationTo: 'pages',
+                value: refundPage.id,
+              },
+            },
+          },
+          {
+            link: {
+              type: 'reference',
+              label: 'Contact SLA',
+              reference: {
+                relationTo: 'pages',
+                value: contactSla.id,
+              },
             },
           },
         ],
@@ -474,9 +546,168 @@ async function runSeed({
       },
       req,
     }),
+    payload.updateGlobal({
+      slug: 'quoteSettings',
+      data: {
+        services: defaultInstantQuoteCatalog.services.map((service) => ({
+          serviceKey: service.key,
+          label: service.label,
+          description: service.description,
+          recommendedFor: service.recommendedFor,
+          minimum: service.minimum,
+          sqftLowRate: service.sqftLowRate,
+          sqftHighRate: service.sqftHighRate,
+          enabledOnSite: service.enabledOnSite,
+          quoteEnabled: service.quoteEnabled,
+          frequencyEligible: service.frequencyEligible,
+          sortOrder: service.sortOrder,
+        })),
+        conditionMultipliers: {
+          light: defaultInstantQuoteCatalog.conditionMultipliers.light,
+          standard: defaultInstantQuoteCatalog.conditionMultipliers.standard,
+          heavy: defaultInstantQuoteCatalog.conditionMultipliers.heavy,
+        },
+        storyMultipliers: {
+          oneStory: defaultInstantQuoteCatalog.storyMultipliers['1'],
+          twoStories: defaultInstantQuoteCatalog.storyMultipliers['2'],
+          threePlusStories: defaultInstantQuoteCatalog.storyMultipliers['3+'],
+        },
+        frequencyMultipliers: {
+          oneTime: defaultInstantQuoteCatalog.frequencyMultipliers.one_time,
+          biannual: defaultInstantQuoteCatalog.frequencyMultipliers.biannual,
+          quarterly: defaultInstantQuoteCatalog.frequencyMultipliers.quarterly,
+        },
+      },
+      req,
+    }),
+    payload.updateGlobal({
+      slug: 'servicePlanSettings',
+      data: {
+        billingInstallmentsPerYear: 12,
+        customerSummary:
+          'Recurring plans default to two visits per year at a 20% discount from normal one-off pricing, billed in equal installments across the year.',
+        defaultCadenceMonths: 6,
+        discountPercentOffSingleJob: 20,
+        minimumVisitsPerYear: 2,
+      },
+      req,
+    }),
   ])
 
+  for (const [index, milestone] of defaultGrowthMilestones.entries()) {
+    await upsertCollectionDoc(payload, req, {
+      collection: 'growth-milestones',
+      data: {
+        sortOrder: index,
+        title: milestone.milestone,
+        trigger: milestone.trigger,
+        winCondition: milestone.winCondition,
+      },
+      keyField: 'title',
+      keyValue: milestone.milestone,
+    })
+  }
+
+  for (const [index, item] of defaultAssetLadder.entries()) {
+    await upsertCollectionDoc(payload, req, {
+      collection: 'ops-asset-ladder-items',
+      data: {
+        buyNotes: item.buy,
+        label: item.category,
+        owned: false,
+        sortOrder: index,
+        whyNotes: item.why,
+      },
+      keyField: 'label',
+      keyValue: item.category,
+    })
+  }
+
+  for (const [index, item] of liabilityChecklist.entries()) {
+    await upsertCollectionDoc(payload, req, {
+      collection: 'ops-liability-items',
+      data: {
+        label: item,
+        notes: 'Track this weekly until accounting automation owns it.',
+        sortOrder: index,
+      },
+      keyField: 'label',
+      keyValue: item,
+    })
+  }
+
+  for (const [index, row] of businessScorecard.entries()) {
+    await upsertCollectionDoc(payload, req, {
+      collection: 'ops-scorecard-rows',
+      data: {
+        formula: row.formula,
+        manualValue:
+          row.name === 'Projected revenue'
+            ? 13600
+            : row.name === 'MRR'
+              ? 1800
+              : undefined,
+        manualValueLabel:
+          row.name === 'Projected revenue'
+            ? 'Weighted pipeline'
+            : row.name === 'MRR'
+              ? 'Target'
+              : undefined,
+        sortOrder: index,
+        targetGuidance: row.target,
+        title: row.name,
+      },
+      keyField: 'title',
+      keyValue: row.name,
+    })
+  }
+
   payload.logger.info('Seed upsert finished successfully.')
+}
+
+async function upsertCollectionDoc(
+  payload: Payload,
+  req: PayloadRequest,
+  args: {
+    collection:
+      | 'growth-milestones'
+      | 'ops-asset-ladder-items'
+      | 'ops-liability-items'
+      | 'ops-scorecard-rows'
+    data: Record<string, unknown>
+    keyField: string
+    keyValue: string
+  },
+) {
+  const existingId = await payload
+    .find({
+      collection: args.collection,
+      depth: 0,
+      limit: 1,
+      pagination: false,
+      req,
+      where: {
+        [args.keyField]: {
+          equals: args.keyValue,
+        },
+      },
+    })
+    .then((result) => result.docs[0]?.id)
+
+  if (existingId != null) {
+    return (payload as any).update({
+      collection: args.collection,
+      id: existingId,
+      data: args.data,
+      req,
+    })
+  }
+
+  return (payload as any).create({
+    collection: args.collection,
+    data: args.data,
+    req,
+  })
 }
 
 async function fetchFileByURL(url: string, suggestedFilename?: string): Promise<File> {

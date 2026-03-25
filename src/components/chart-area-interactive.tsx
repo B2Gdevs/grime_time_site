@@ -76,7 +76,17 @@ function formatMetricValue(metric: MetricKey, value: number): string {
   }).format(value)
 }
 
-export function ChartAreaInteractive() {
+export function ChartAreaInteractive({
+  disclaimer,
+  pipelineSnapshotLabel,
+  pipelineSnapshotValue,
+}: {
+  /** Shown under the chart — e.g. from Internal ops targets global. */
+  disclaimer?: string | null
+  /** When HubSpot returns pipeline totals, show next to the illustrative chart. */
+  pipelineSnapshotLabel?: string | null
+  pipelineSnapshotValue?: string | null
+}) {
   const [metric, setMetric] = React.useState<MetricKey>('projectedRevenue')
   const latestValue = opsTrendData[opsTrendData.length - 1]?.[metric] ?? 0
 
@@ -85,7 +95,12 @@ export function ChartAreaInteractive() {
       <CardHeader className="min-w-0">
         <div className="flex min-w-0 flex-col gap-4 @[720px]/card:flex-row @[720px]/card:items-start @[720px]/card:justify-between">
           <div className="min-w-0 space-y-1">
-            <CardTitle>Business momentum</CardTitle>
+            <div className="flex flex-wrap items-center gap-2">
+              <CardTitle>Business momentum</CardTitle>
+              <span className="bg-muted text-muted-foreground rounded-md px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide">
+                Illustrative
+              </span>
+            </div>
             <CardDescription>{metricMeta[metric].description}</CardDescription>
           </div>
           <div className="hidden @[720px]/card:flex">
@@ -129,6 +144,12 @@ export function ChartAreaInteractive() {
         <div className="pt-2 text-3xl font-semibold tabular-nums">
           {formatMetricValue(metric, latestValue)}
         </div>
+        {pipelineSnapshotLabel && pipelineSnapshotValue ? (
+          <p className="text-muted-foreground pt-1 text-xs leading-relaxed">
+            <span className="font-medium text-foreground">{pipelineSnapshotLabel}:</span>{' '}
+            {pipelineSnapshotValue} (CRM snapshot; chart series remains illustrative.)
+          </p>
+        ) : null}
       </CardHeader>
       <CardContent className="min-w-0 px-2 pt-2 sm:px-6">
         <ChartContainer className="h-[280px] w-full" config={chartConfig}>
@@ -167,6 +188,11 @@ export function ChartAreaInteractive() {
             />
           </AreaChart>
         </ChartContainer>
+        {disclaimer ? (
+          <p className="text-muted-foreground mt-3 px-2 text-xs leading-relaxed sm:px-6">
+            {disclaimer}
+          </p>
+        ) : null}
       </CardContent>
     </Card>
   )

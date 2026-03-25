@@ -7,8 +7,10 @@
 ## Implementation (v1 — Payload admin)
 
 - **Collection:** `quotes` (admin group **Internal**). Fields match the intake list below (title, status, customer fields, job size, surfaces, soiling, access notes, internal notes).
+- **Portal shortcuts:** Admin `/ops` and the portal sidebar should point staff to **Quotes** and **Quote settings**, not to the public `/schedule` page.
 - **Access:** Set `QUOTES_INTERNAL_ENABLED=true` and `QUOTES_INTERNAL_EMAILS` to a comma-separated list of staff emails (must match Payload user emails). When disabled or the list is empty, **no one** can read/create quotes in admin.
 - **Code:** [`src/collections/Quotes`](../../src/collections/Quotes), [`src/utilities/quotesAccess.ts`](../../src/utilities/quotesAccess.ts).
+- **Pricing controls:** The public instant quote math is powered by global [`src/globals/QuoteSettings/config.ts`](../../src/globals/QuoteSettings/config.ts), which has Payload drafts enabled so staff can stage and publish pricing/service changes deliberately.
 - **EngageBay:** Planning direction is now to keep quote detail in Payload and sync summary records into EngageBay deals for follow-up and pipeline visibility.
 
 ## Texas tax review snapshot (reviewed March 23, 2026)

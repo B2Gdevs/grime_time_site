@@ -1,5 +1,6 @@
 import Link from 'next/link'
 
+import { redirect } from 'next/navigation'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 
@@ -22,6 +23,9 @@ export default async function DocsIndexPage() {
   }
 
   const isAdmin = userIsAdmin(user)
+  if (!isAdmin) {
+    redirect('/dashboard')
+  }
   const docs = getPortalDocs({ isAdmin })
   const groupedDocs = groupPortalDocs(docs)
   const featured = isAdmin ? docs.find((doc) => doc.audience === 'admin') ?? docs[0] : docs[0]

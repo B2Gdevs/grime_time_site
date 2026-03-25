@@ -87,8 +87,8 @@ export function ContactRequestForm() {
           <p className="text-xs font-medium uppercase tracking-[0.22em] text-primary">Contact</p>
           <h2 className="text-2xl font-semibold tracking-tight">Send the team a real request</h2>
           <p className="text-sm leading-6 text-muted-foreground">
-            This goes straight into Payload and the CRM follow-up queue. Use it for service
-            questions, scope notes, and callback requests.
+            This goes straight into Payload and the CRM follow-up queue. Use it for support,
+            billing, privacy, policy, or service questions that are not just a quote request.
           </p>
         </div>
         <div className="rounded-2xl border border-border/70 bg-card/90 p-3 text-primary">
@@ -217,7 +217,7 @@ export function ContactRequestForm() {
                 <FormLabel>Message</FormLabel>
                 <FormControl>
                   <Textarea
-                    placeholder="Tell us what needs attention, what surface you are asking about, and any timing details."
+                    placeholder="Tell us what you need, whether it is support, billing, privacy, policy, scheduling, or a service question."
                     rows={6}
                     {...field}
                   />
@@ -242,7 +242,7 @@ export function ContactRequestForm() {
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm leading-6 text-muted-foreground">
-              We use this to create a real follow-up record, not a dead-end inbox.
+              We use this to create a real follow-up record for support, billing, privacy, and service questions.
             </p>
             <Button className="min-w-44" disabled={form.formState.isSubmitting} type="submit">
               {form.formState.isSubmitting ? (

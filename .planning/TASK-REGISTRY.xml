@@ -82,6 +82,13 @@
         <command>See .planning/workflows/customer-site-content-and-engagebay.md</command>
       </commands>
     </task>
+    <task id="03-05" agent-id="" status="done">
+      <goal>Publish customer-facing trust/support pages in Payload for privacy, terms, refunds, and contact response standards, then link them from the public site.</goal>
+      <keywords>privacy,terms,refunds,sla,pages</keywords>
+      <commands>
+        <command>See src/endpoints/seed/public-support-pages.ts and src/endpoints/seed/index.ts</command>
+      </commands>
+    </task>
   </phase>
   <phase id="04">
     <task id="04-01" agent-id="" status="in-progress">
@@ -106,23 +113,23 @@
       </commands>
     </task>
     <task id="04-04" agent-id="" status="in-progress">
-      <goal>Split customer vs admin access flows so customer login stays customer-only, admin sign-in stays on Payload admin, and the admin ops dashboard lives on its own internal route.</goal>
+      <goal>Split customer vs admin access flows so customer login stays customer-only, admin sign-in stays on Payload admin, the admin ops dashboard lives on `/ops`, and the customer portal nav stays focused on estimates, invoices, schedule, and account settings.</goal>
       <keywords>auth,portal,admin,customer,dashboard</keywords>
       <commands>
-        <command>See src/app/(portal)/dashboard/page.tsx and src/app/(portal)/ops/page.tsx</command>
+        <command>See src/app/(portal)/dashboard/page.tsx, src/components/app-sidebar.tsx, src/app/(portal)/ops/page.tsx</command>
       </commands>
     </task>
   </phase>
   <phase id="05">
     <task id="05-01" agent-id="" status="in-progress">
-      <goal>Lead forms + contact storage; shared first-party quote/contact/schedule submission path; provider-abstracted export/sync path so EngageBay stays default but HubSpot can be swapped in later.</goal>
+      <goal>Lead forms + contact storage; shared first-party quote/contact/schedule/support submission path; provider-abstracted export/sync path so EngageBay stays default but HubSpot can be swapped in later.</goal>
       <keywords>forms,crm,leads</keywords>
       <commands>
         <command>Payload form-submissions + active CRM provider sync; verify EngageBay in trial and keep HubSpot fallback ready</command>
       </commands>
     </task>
     <task id="05-02" agent-id="" status="in-progress">
-      <goal>Calendar booking and schedule request flow - use first-party forms with shared validation/helpers and integrate the lead into Payload plus active CRM follow-up.</goal>
+      <goal>Calendar booking and schedule request flow - use first-party forms with shared validation/helpers, customer portal schedule-change requests, recurring-plan cadence, and integrate the lead into Payload plus active CRM follow-up.</goal>
       <keywords>booking,calendar</keywords>
       <commands>
         <command>See .planning/phases/05-customers-forms-and-ops-integrations/PLAN.xml</command>
@@ -142,20 +149,34 @@
         <command>See .planning/workflows/crm-and-integrations.md and quote-system-and-texas-compliance.md</command>
       </commands>
     </task>
+    <task id="05-05" agent-id="" status="done">
+      <goal>HubSpot ops read path for admin `/ops`: health check, tasks filtered by local calendar day, open-deal pipeline sum (v1 cap 100 deals); admin-only API routes mirror `crm-provider` auth.</goal>
+      <keywords>hubspot,ops,portal,api</keywords>
+      <commands>
+        <command>See src/app/api/internal/hubspot/health/route.ts, tasks/route.ts, pipeline-summary/route.ts; D-crm-003</command>
+      </commands>
+    </task>
+    <task id="05-06" agent-id="" status="done">
+      <goal>Customer portal account surfaces: estimates from Payload quotes, invoices, recurring service plans, service appointments, and self-serve account/contact updates with no docs/admin clutter in customer nav.</goal>
+      <keywords>portal,customer,invoices,schedule,account</keywords>
+      <commands>
+        <command>See src/app/(portal)/dashboard/page.tsx, estimates/page.tsx, invoices/page.tsx, service-schedule/page.tsx, account/page.tsx</command>
+      </commands>
+    </task>
   </phase>
   <phase id="06">
     <task id="06-01" agent-id="" status="in-progress">
-      <goal>Quoting system: internal Payload collection + env gate; full economics engine still deferred.</goal>
+      <goal>Quoting system: internal Payload collection + env gate, plus draftable/publishable quote-settings globals that power the public instant quote math and service toggles.</goal>
       <keywords>quotes,pricing,defer</keywords>
       <commands>
-        <command>See collections/Quotes + quote-system-and-texas-compliance.md</command>
+        <command>See collections/Quotes + globals/QuoteSettings + quote-system-and-texas-compliance.md</command>
       </commands>
     </task>
-    <task id="06-02" agent-id="" status="in-progress">
+    <task id="06-02" agent-id="" status="done">
       <goal>Build and document the internal dashboard command center: KPI cards, chart, daily board, scorecard, milestones, asset guidance, and admin runtime controls like CRM provider switching.</goal>
       <keywords>dashboard,portal,ux,kpi,ops</keywords>
       <commands>
-        <command>See .planning/workflows/admin-portal-quotes-ux.md and src/app/(portal)/dashboard/page.tsx</command>
+        <command>See .planning/workflows/admin-portal-quotes-ux.md and src/app/(portal)/ops/page.tsx</command>
       </commands>
     </task>
     <task id="06-03" agent-id="" status="in-progress">
@@ -165,11 +186,39 @@
         <command>See .planning/workflows/business-scorecard-and-growth.md</command>
       </commands>
     </task>
-    <task id="06-04" agent-id="" status="planned">
+    <task id="06-04" agent-id="" status="done">
       <goal>Promote the dashboard scorecard from static docs/config into editable internal app data once schema and migrations are approved.</goal>
       <keywords>payload,global,dashboard,editable,planning</keywords>
       <commands>
-        <command># add internal ops global after migration approval</command>
+        <command>internalOpsSettings global; migration 20260324_211620; D-ops-002</command>
+      </commands>
+    </task>
+    <task id="06-05" agent-id="" status="done">
+      <goal>Payload CRUD for growth ladder and asset ladder (`growth-milestones`, `ops-asset-ladder-items`); portal tabs read from DB; Internal ops targets extended for KPI/scorecard tooltips and chart pipeline note.</goal>
+      <keywords>payload,collections,ops,dashboard</keywords>
+      <commands>
+        <command>migration 20260324_223907_ops_ladders_and_kpi_tooltips; src/collections/GrowthMilestones, OpsAssetLadderItems</command>
+      </commands>
+    </task>
+    <task id="06-06" agent-id="" status="done">
+      <goal>Ops portal layout fix (single right column for all TabsContent), KPI row above command center, liabilities + scorecard rows collections with merge fallbacks, admin customer `/dashboard` preview + dual sidebar nav, optional `PORTAL_ADMIN_ONLY`, HubSpot task owner name resolution, planning/docs updates (D-ops-003).</goal>
+      <keywords>portal,layout,ops,payload,hubspot</keywords>
+      <commands>
+        <command>migration 20260325_005955_ops_liabilities_and_scorecard_rows; src/components/data-table.tsx, AdminDashboardView, app-sidebar; src/collections/OpsLiabilityItems, OpsScorecardRows; src/lib/ops/mergeScorecard.ts; src/lib/hubspot/opsClient.ts hubSpotOwnersNameMap</command>
+      </commands>
+    </task>
+    <task id="06-07" agent-id="" status="planned">
+      <goal>Optional: internal admin API routes + portal forms for milestones, asset ladder, and liabilities if deep links to Payload admin are insufficient.</goal>
+      <keywords>portal,api,crud,ops</keywords>
+      <commands>
+        <command>See TASK-REGISTRY 06-06 (current: deep links only)</command>
+      </commands>
+    </task>
+    <task id="06-08" agent-id="" status="done">
+      <goal>Wire ops scorecard/liability CRUD into the live dashboard, seed default rows so `/ops` is not empty, add scheduled-job reads to the day-board calendar, and move dashboard detail panels into the left rail instead of overlay sheets.</goal>
+      <keywords>ops,scorecard,calendar,portal,layout</keywords>
+      <commands>
+        <command>See src/app/(portal)/ops/page.tsx, src/components/data-table.tsx, src/components/portal/OperatingDayCalendar.tsx, src/endpoints/seed/index.ts</command>
       </commands>
     </task>
   </phase>

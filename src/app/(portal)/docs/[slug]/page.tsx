@@ -1,6 +1,6 @@
 import Link from 'next/link'
 
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 
@@ -36,6 +36,9 @@ export default async function DocPage({ params }: Props) {
 
   const { slug } = await params
   const isAdmin = userIsAdmin(user)
+  if (!isAdmin) {
+    redirect('/dashboard')
+  }
   const doc = getPortalDocBySlug(slug, { isAdmin })
 
   if (!doc) {

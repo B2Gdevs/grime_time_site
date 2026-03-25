@@ -1,11 +1,14 @@
 'use client'
 
 import {
-  BookOpenIcon,
-  CalendarClockIcon,
   FileTextIcon,
+  HomeIcon,
   LayoutDashboardIcon,
   LifeBuoyIcon,
+  CalendarClockIcon,
+  ReceiptTextIcon,
+  UserRoundCogIcon,
+  Settings2Icon,
   ShieldIcon,
 } from 'lucide-react'
 
@@ -26,6 +29,7 @@ import {
 export function AppSidebar({
   documents,
   isAdmin,
+  quotesEnabled,
   user,
   ...props
 }: React.ComponentProps<typeof Sidebar> & {
@@ -34,6 +38,7 @@ export function AppSidebar({
     url: string
   }[]
   isAdmin: boolean
+  quotesEnabled: boolean
   user: {
     email: string
     name: string
@@ -41,35 +46,80 @@ export function AppSidebar({
 }) {
   const dashboardUrl = isAdmin ? '/ops' : '/dashboard'
 
-  const navMain = [
-    {
-      icon: LayoutDashboardIcon,
-      title: isAdmin ? 'Ops dashboard' : 'Dashboard',
-      url: dashboardUrl,
-    },
-    {
-      icon: BookOpenIcon,
-      title: 'Docs',
-      url: '/docs',
-    },
-    {
-      icon: CalendarClockIcon,
-      title: 'Schedule',
-      url: '/schedule',
-    },
-  ]
+  const navMain = isAdmin
+    ? [
+        {
+          icon: LayoutDashboardIcon,
+          title: 'Ops dashboard',
+          url: '/ops',
+        },
+        {
+          icon: HomeIcon,
+          title: 'Customer home',
+          url: '/dashboard',
+        },
+      ]
+    : [
+        {
+          icon: LayoutDashboardIcon,
+          title: 'Dashboard',
+          url: '/dashboard',
+        },
+        {
+          icon: ReceiptTextIcon,
+          title: 'Estimates',
+          url: '/estimates',
+        },
+        {
+          icon: FileTextIcon,
+          title: 'Invoices',
+          url: '/invoices',
+        },
+        {
+          icon: CalendarClockIcon,
+          title: 'Schedule',
+          url: '/service-schedule',
+        },
+        {
+          icon: UserRoundCogIcon,
+          title: 'Account',
+          url: '/account',
+        },
+      ]
 
   const navSecondary = [
-    {
-      icon: FileTextIcon,
-      title: 'Marketing site',
-      url: '/',
-    },
     {
       icon: LifeBuoyIcon,
       title: 'Contact',
       url: '/contact',
     },
+    ...(!isAdmin
+      ? [
+          {
+            icon: ReceiptTextIcon,
+            title: 'Request quote',
+            url: '/#instant-quote',
+          },
+        ]
+      : []),
+    ...(isAdmin && quotesEnabled
+      ? [
+          {
+            icon: ReceiptTextIcon,
+            title: 'Quotes',
+            url: '/admin/collections/quotes',
+          },
+        ]
+      : []),
+    ...(isAdmin
+      ? [
+          {
+            icon: Settings2Icon,
+            title: 'Quote settings',
+            url: '/admin/globals/quoteSettings',
+          },
+        ]
+      : []),
     ...(isAdmin
       ? [
           {
@@ -99,7 +149,7 @@ export function AppSidebar({
       </SidebarHeader>
       <SidebarContent className="portal-nav-scroll" data-portal-nav-scroll="">
         <NavMain items={navMain} />
-        <NavDocuments items={documents} />
+        {documents.length > 0 ? <NavDocuments items={documents} /> : null}
         <NavSecondary items={navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>

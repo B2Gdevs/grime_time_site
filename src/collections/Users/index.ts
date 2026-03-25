@@ -75,6 +75,96 @@ export const Users: CollectionConfig = {
       type: 'text',
     },
     {
+      name: 'phone',
+      type: 'text',
+    },
+    {
+      name: 'company',
+      type: 'text',
+    },
+    {
+      name: 'billingAddress',
+      type: 'group',
+      fields: [
+        {
+          name: 'street1',
+          type: 'text',
+        },
+        {
+          name: 'street2',
+          type: 'text',
+        },
+        {
+          type: 'row',
+          fields: [
+            {
+              name: 'city',
+              type: 'text',
+              admin: {
+                width: '40%',
+              },
+            },
+            {
+              name: 'state',
+              type: 'text',
+              defaultValue: 'TX',
+              admin: {
+                width: '20%',
+              },
+            },
+            {
+              name: 'postalCode',
+              type: 'text',
+              admin: {
+                width: '40%',
+              },
+            },
+          ],
+        },
+      ],
+    },
+    {
+      name: 'serviceAddress',
+      type: 'group',
+      fields: [
+        {
+          name: 'street1',
+          type: 'text',
+        },
+        {
+          name: 'street2',
+          type: 'text',
+        },
+        {
+          type: 'row',
+          fields: [
+            {
+              name: 'city',
+              type: 'text',
+              admin: {
+                width: '40%',
+              },
+            },
+            {
+              name: 'state',
+              type: 'text',
+              defaultValue: 'TX',
+              admin: {
+                width: '20%',
+              },
+            },
+            {
+              name: 'postalCode',
+              type: 'text',
+              admin: {
+                width: '40%',
+              },
+            },
+          ],
+        },
+      ],
+    },
+    {
       name: 'roles',
       type: 'select',
       defaultValue: ['customer'],

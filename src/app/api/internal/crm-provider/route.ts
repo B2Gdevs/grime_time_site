@@ -1,29 +1,15 @@
-import config from '@payload-config'
-import { getPayload } from 'payload'
 import { z } from 'zod'
 
+import { requireAdminPayload } from '@/lib/auth/requireAdminPayload'
 import { setActiveCrmProvider, getCrmRuntimeState } from '@/lib/crm'
 import type { CrmProviderSlug } from '@/lib/crm/types'
-import { userIsAdmin } from '@/lib/auth/getCurrentPayloadUser'
-import type { User } from '@/payload-types'
 
 const crmProviderSchema = z.object({
   provider: z.enum(['engagebay', 'hubspot']),
 })
 
-async function requireAdmin(request: Request) {
-  const payload = await getPayload({ config })
-  const { user } = await payload.auth({ headers: request.headers })
-
-  if (!userIsAdmin(user as User | null)) {
-    return null
-  }
-
-  return payload
-}
-
 export async function GET(request: Request) {
-  const payload = await requireAdmin(request)
+  const payload = await requireAdminPayload(request)
 
   if (!payload) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
@@ -34,7 +20,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const payload = await requireAdmin(request)
+  const payload = await requireAdminPayload(request)
 
   if (!payload) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })

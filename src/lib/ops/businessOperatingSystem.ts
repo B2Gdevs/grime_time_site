@@ -35,6 +35,11 @@ export const businessScorecard = [
     target: 'This is the base for route density and MRR.',
   },
   {
+    formula: 'Revenue divided by completed jobs.',
+    name: 'Average ticket',
+    target: 'Use this to see whether the business is winning better work or only more work.',
+  },
+  {
     formula: 'Open quotes weighted by close probability.',
     name: 'Projected revenue',
     target: 'Keep a 2-4 week forward view so hiring and equipment decisions are not reactive.',
@@ -48,6 +53,7 @@ export const liabilityChecklist = [
   'Chemical, fuel, and repair bills not yet paid',
   'Warranty callbacks, rework time, and damage claims reserve',
   'Payroll tax and contractor payment obligations',
+  'Accounts payable due to suppliers and vendors',
 ] as const
 
 export const operatingRhythm = {

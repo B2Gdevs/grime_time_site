@@ -33,11 +33,16 @@ import {
   instantQuoteConditionOptions,
   instantQuoteFrequencyOptions,
   instantQuoteRequestSchema,
-  instantQuoteServiceOptions,
+  getInstantQuoteServiceSelectOptions,
   instantQuoteStoriesOptions,
   type InstantQuoteRequestValues,
 } from '@/lib/forms/instantQuoteRequest'
-import { formatCurrency, getInstantQuoteService } from '@/lib/quotes/instantQuoteCatalog'
+import {
+  formatCurrency,
+  getDefaultInstantQuoteServiceKey,
+  getInstantQuoteService,
+  type InstantQuoteCatalog,
+} from '@/lib/quotes/instantQuoteCatalog'
 
 type QuoteResponse = {
   crmSyncStatus: string | null
@@ -46,22 +51,25 @@ type QuoteResponse = {
   submissionId: number | string
 }
 
-const defaultValues: InstantQuoteRequestValues = {
-  address: '',
-  condition: 'standard',
-  details: '',
-  email: '',
-  frequency: 'one_time',
-  fullName: '',
-  phone: '',
-  serviceKey: 'house_wash',
-  sqft: '1800',
-  stories: '1',
-}
-
-export function InstantQuoteSection() {
+export function InstantQuoteSection({ catalog }: { catalog: InstantQuoteCatalog }) {
   const [feedback, setFeedback] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const serviceOptions = useMemo(() => getInstantQuoteServiceSelectOptions(catalog), [catalog])
+  const defaultValues = useMemo<InstantQuoteRequestValues>(
+    () => ({
+      address: '',
+      condition: 'standard',
+      details: '',
+      email: '',
+      frequency: 'one_time',
+      fullName: '',
+      phone: '',
+      serviceKey: getDefaultInstantQuoteServiceKey(catalog),
+      sqft: '1800',
+      stories: '1',
+    }),
+    [catalog],
+  )
 
   const form = useForm<InstantQuoteRequestValues>({
     resolver: zodResolver(instantQuoteRequestSchema),
@@ -70,10 +78,10 @@ export function InstantQuoteSection() {
 
   const values = form.watch()
   const estimate = useMemo(
-    () => buildInstantQuoteEstimate(values),
-    [values.condition, values.frequency, values.serviceKey, values.sqft, values.stories],
+    () => buildInstantQuoteEstimate(values, catalog),
+    [catalog, values.condition, values.frequency, values.serviceKey, values.sqft, values.stories],
   )
-  const service = getInstantQuoteService(values.serviceKey)
+  const service = getInstantQuoteService(values.serviceKey, catalog)
 
   async function onSubmit(submission: InstantQuoteRequestValues) {
     setError(null)
@@ -120,8 +128,8 @@ export function InstantQuoteSection() {
             </p>
 
             <div className="mt-8 grid gap-4 sm:grid-cols-2">
-              {instantQuoteServiceOptions.map((item) => {
-                const catalogItem = getInstantQuoteService(item.value)
+              {serviceOptions.map((item) => {
+                const catalogItem = getInstantQuoteService(item.value, catalog)
                 const selected = item.value === values.serviceKey
 
                 return (
@@ -193,7 +201,7 @@ export function InstantQuoteSection() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {instantQuoteServiceOptions.map((item) => (
+                            {serviceOptions.map((item) => (
                               <SelectItem key={item.value} value={item.value}>
                                 {item.label}
                               </SelectItem>

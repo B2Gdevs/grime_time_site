@@ -7,8 +7,11 @@ import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { getCurrentPayloadUser, userIsAdmin } from '@/lib/auth/getCurrentPayloadUser'
 import { getPortalDocs } from '@/lib/docs/catalog'
 import { Providers } from '@/providers'
+import { quotesInternalEnabled } from '@/utilities/quotesAccess'
 
 import '../(frontend)/globals.css'
+
+const portalAdminOnly = process.env.PORTAL_ADMIN_ONLY === 'true'
 
 export default async function PortalLayout({ children }: { children: ReactNode }) {
   const user = await getCurrentPayloadUser()
@@ -18,10 +21,17 @@ export default async function PortalLayout({ children }: { children: ReactNode }
   }
 
   const isAdmin = userIsAdmin(user)
-  const docs = getPortalDocs({ isAdmin }).map((doc) => ({
-    name: doc.title,
-    url: `/docs/${doc.slug}`,
-  }))
+
+  if (portalAdminOnly && !isAdmin) {
+    redirect('/?portal=staff-only')
+  }
+  const quotesEnabled = isAdmin && quotesInternalEnabled()
+  const docs = isAdmin
+    ? getPortalDocs({ isAdmin }).map((doc) => ({
+        name: doc.title,
+        url: `/docs/${doc.slug}`,
+      }))
+    : []
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -39,6 +49,7 @@ export default async function PortalLayout({ children }: { children: ReactNode }
             <AppSidebar
               documents={docs}
               isAdmin={isAdmin}
+              quotesEnabled={quotesEnabled}
               user={{
                 email: user.email,
                 name: user.name || user.email,

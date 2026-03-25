@@ -9,13 +9,18 @@
   <highlights>
     <item>Payload REST API routes are now mounted from the app root so public forms and auth calls stop failing with 404s.</item>
     <item>The homepage instant quote form, the custom contact page, and the schedule page now all submit through first-party React Hook Form + Zod routes instead of relying on embedded CRM forms.</item>
+    <item>The contact path now clearly covers support, billing, refund, privacy, and policy questions, not just pre-quote service inquiries.</item>
+    <item>The customer portal is now account-first: estimates, invoices, recurring-plan context, service appointments, and account/profile updates are backed by Payload data instead of docs-first placeholders.</item>
     <item>Lead submissions now write CRM sync metadata during the create path instead of relying on a broken post-create patch against form submissions.</item>
     <item>The CRM sync path is now provider-abstracted: EngageBay remains the default provider, HubSpot can be configured as a fallback, and the active provider can be switched from the admin ops dashboard without schema changes.</item>
+    <item>When HubSpot is active, `/ops` loads CRM tasks by day and an open-deal pipeline snapshot via admin-gated routes under `src/app/api/internal/hubspot/`; EngageBay-only mode shows an explicit empty state and banner (D-crm-003).</item>
     <item>Current EngageBay handoff is still returning `crmSyncStatus=failed_contact`, so Payload capture is reliable but EngageBay delivery is not yet production-ready.</item>
   </highlights>
   <next>
     <item>Resolve EngageBay API quota/key-scope issues before treating CRM sync as production-ready.</item>
+    <item>Reseed and verify the expanded contact/support categories plus policy-page links on the public contact route.</item>
     <item>If HubSpot is configured, verify provider switching in ops and use that path as the fallback before building quote-to-deal sync in phase `05-04`.</item>
+    <item>Backfill real customer accounts to invoices, service plans, appointments, and quote `customerUser` links so the portal shows production data instead of only seeded framework records.</item>
     <item>Optional next pass: replace remaining layout-builder contact blocks with the same first-party form UI used on `/contact`.</item>
   </next>
 </phase-summary>

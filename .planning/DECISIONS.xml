@@ -28,11 +28,24 @@
   </decision>
   <decision id="D-content-001">
     <title>Marketing site content is seed-first, with quick-edit proof in Payload admin</title>
-    <summary>The launch site should come from repeatable seed content, then allow staff to update reviews, testimonials, and before/after proof quickly in Payload admin without touching code.</summary>
-    <impact>Homepage and core marketing pages remain reproducible across environments, while trust content can become an admin-managed collection or global once the quickest acceptable editing path is implemented.</impact>
+    <summary>The launch site should come from repeatable seed content, then allow staff to update reviews, testimonials, before/after proof, and public customer-support pages quickly in Payload admin without touching code.</summary>
+    <impact>Homepage, support/legal pages, and core marketing pages remain reproducible across environments through the `pages` collection, while trust content can become an admin-managed collection or global once the quickest acceptable editing path is implemented.</impact>
     <references>
       <file path=".planning/workflows/content-and-seeding.md" />
       <file path=".planning/workflows/customer-site-content-and-engagebay.md" />
+      <file path="src/endpoints/seed/public-support-pages.ts" />
+      <file path="src/app/(frontend)/contact/page.tsx" />
+    </references>
+  </decision>
+  <decision id="D-crm-003">
+    <title>Ops dashboard CRM reads are HubSpot-gated</title>
+    <summary>Day-board tasks and open-deal pipeline KPIs on `/ops` call HubSpot only when HubSpot is the active runtime provider and a token is configured. EngageBay remains the default for form submission sync; EngageBay parity for ops-board reads is explicitly out of scope until a later phase.</summary>
+    <impact>Internal routes under `src/app/api/internal/hubspot/*` and `src/lib/hubspot/opsClient.ts` implement health, tasks-by-date, and pipeline summary. The portal shows a sync banner and an empty-state message when HubSpot is not active. Form sync continues to use the existing CRM abstraction in `src/lib/crm`.</impact>
+    <references>
+      <file path="src/app/(portal)/ops/page.tsx" />
+      <file path="src/lib/hubspot/opsClient.ts" />
+      <file path=".planning/workflows/crm-and-integrations.md" />
+      <file path="src/content/docs/ops-dashboard-targets.md" />
     </references>
   </decision>
   <decision id="D-crm-002">
@@ -45,11 +58,24 @@
     </references>
   </decision>
   <decision id="D-quotes-001">
-    <title>Quote system: internal-only, feature-flagged</title>
-    <summary>Quotes capture job size, description, soiling level, and later economics such as labor, materials, margin, and Texas sales tax per CPA guidance. Quotes are not shown to customers until explicitly designed. Access is restricted to allowlisted staff emails using `QUOTES_INTERNAL_ENABLED` and `QUOTES_INTERNAL_EMAILS`.</summary>
-    <impact>Public site stays trust and booking-style intake. V1 is a Payload `quotes` collection in the Internal admin group. Labor, material, and tax automation remain future work per the workflow doc.</impact>
+    <title>Quote system: staff-managed, customer-readable for own sent/accepted estimates</title>
+    <summary>Quotes capture job size, description, soiling level, and later economics such as labor, materials, margin, and Texas sales tax per CPA guidance. Staff still manage quote CRUD in Payload, but customers can read their own sent/accepted estimates through the portal when a quote is linked to their account or email.</summary>
+    <impact>Quote editing stays internal, while the customer portal can use the same collection as the estimate surface instead of maintaining a second estimate model. `QUOTES_INTERNAL_ENABLED` still gates staff-facing quote-tool shortcuts, not customer read access for their own records.</impact>
     <references>
       <file path=".planning/workflows/quote-system-and-texas-compliance.md" />
+      <file path="src/collections/Quotes/index.ts" />
+      <file path="src/app/(portal)/estimates/page.tsx" />
+    </references>
+  </decision>
+  <decision id="D-quotes-002">
+    <title>Instant quote math lives in draftable Payload global `quoteSettings`</title>
+    <summary>The public instant quote widget should not depend on hardcoded pricing bands. Service toggles, minimums, square-foot rates, and estimate multipliers live in Payload global `quoteSettings` with drafts enabled, so staff can stage changes and publish them deliberately.</summary>
+    <impact>The home-page quote UI and lead submission route read published settings by default, while staff can preview drafts through Payload draft mode. This keeps pricing edits in admin, preserves a publish workflow, and avoids redeploying for normal quote tuning.</impact>
+    <references>
+      <file path="src/globals/QuoteSettings/config.ts" />
+      <file path="src/lib/quotes/getInstantQuoteCatalog.ts" />
+      <file path="src/components/InstantQuoteSection.tsx" />
+      <file path="src/app/api/lead-forms/instant-quote/route.ts" />
     </references>
   </decision>
   <decision id="D-ops-001">
@@ -59,6 +85,53 @@
     <references>
       <file path=".planning/workflows/business-scorecard-and-growth.md" />
       <file path=".planning/TASK-REGISTRY.xml" />
+    </references>
+  </decision>
+  <decision id="D-ops-002">
+    <title>Internal ops KPI display lives in Payload global `internalOpsSettings`</title>
+    <summary>Admin-editable Internal ops targets global (src/globals/InternalOpsSettings/config.ts) holds display strings for projected revenue and MRR cards plus chart disclaimer and annual revenue goal reference. Access is admin-only. The business momentum chart remains illustrative sample data until real series are integrated (task 06-03).</summary>
+    <impact>The /ops route reads this global via Local API with fallbacks if the table is missing; staff edit values in Payload admin, not in code. Portal doc: src/content/docs/ops-dashboard-targets.md (catalog slug ops-dashboard-targets).</impact>
+    <references>
+      <file path="src/globals/InternalOpsSettings/config.ts" />
+      <file path="src/app/(portal)/ops/page.tsx" />
+      <file path="src/content/docs/ops-dashboard-targets.md" />
+      <file path="src/migrations/20260324_211620.ts" />
+    </references>
+  </decision>
+  <decision id="D-ops-003">
+    <title>Liabilities and scorecard definitions in Payload with live dashboard wiring</title>
+    <summary>Operational liability checklist rows live in admin-only collection `ops-liability-items`. Scorecard definition rows (title, formula, target guidance, optional manual value fields, sort order) live in `ops-scorecard-rows`. The portal merges DB rows with defaults from `src/lib/ops/businessOperatingSystem.ts`, seeds those defaults into real records, and now uses scorecard manual values to power KPI cards where appropriate.</summary>
+    <impact>The `/ops` dashboard is no longer an empty shell when the collections exist but have no content. Scorecard and liability CRUD now show up in the live dashboard, while HubSpot-backed metrics continue to override projected revenue when active. Customer portal can still be staff-only during rollout by toggling `PORTAL_ADMIN_ONLY=true`.</impact>
+    <references>
+      <file path="src/collections/OpsLiabilityItems/index.ts" />
+      <file path="src/collections/OpsScorecardRows/index.ts" />
+      <file path="src/lib/ops/mergeScorecard.ts" />
+      <file path="src/app/(portal)/ops/page.tsx" />
+      <file path="src/endpoints/seed/index.ts" />
+      <file path="src/app/(portal)/layout.tsx" />
+      <file path="src/content/docs/ops-dashboard-targets.md" />
+      <file path=".env.example" />
+    </references>
+  </decision>
+  <decision id="D-portal-001">
+    <title>Customer portal is account-first, not docs-first</title>
+    <summary>The customer portal should behave like an account center: estimates, invoices, scheduling, recurring-plan context, and account/contact details. Customers should not be pushed toward docs, the marketing site, Quote settings, or Payload admin from portal navigation.</summary>
+    <impact>`/dashboard`, `/estimates`, `/invoices`, `/service-schedule`, and `/account` become the customer surface. Portal docs remain admin-only, and the customer sidebar/navigation strips out marketing/admin clutter.</impact>
+    <references>
+      <file path="src/components/app-sidebar.tsx" />
+      <file path="src/app/(portal)/dashboard/page.tsx" />
+      <file path="src/app/(portal)/docs/page.tsx" />
+      <file path="src/app/(portal)/account/page.tsx" />
+    </references>
+  </decision>
+  <decision id="D-service-plan-001">
+    <title>Recurring plan defaults live in draftable Payload global `servicePlanSettings`</title>
+    <summary>Default recurring-plan terms are configurable in Payload global `servicePlanSettings`: two visits per year minimum, 20% off one-off single-job pricing by default, billed across the year in equal installments, with a default six-month cadence. Staff can stage and publish changes instead of hardcoding subscription logic.</summary>
+    <impact>The customer portal and service-plan records share one source of truth for recurring-plan defaults. `service-plans` stores per-customer overrides and calculated totals, while the global keeps the baseline commercial policy editable.</impact>
+    <references>
+      <file path="src/globals/ServicePlanSettings/config.ts" />
+      <file path="src/collections/ServicePlans/index.ts" />
+      <file path="src/app/(portal)/service-schedule/page.tsx" />
     </references>
   </decision>
   <decision id="D-devtools-001">

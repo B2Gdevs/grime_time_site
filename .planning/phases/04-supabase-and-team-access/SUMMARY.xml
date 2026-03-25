@@ -12,11 +12,13 @@
     <item>Payload MCP is now part of the repo process as an env-gated plugin path, with editor setup documented for Cursor and Codex and local configs normalized to `localhost:5465`.</item>
     <item>A pending migration file now exists for Payload MCP API keys and the remaining quote schema changes, but it has not been applied.</item>
     <item>The customer login flow is now customer-only, while admin access stays on Payload admin and the internal ops dashboard lives on a separate `/ops` route.</item>
+    <item>The portal sidebar and route boundaries now keep customers on account-centric pages (`/dashboard`, `/estimates`, `/invoices`, `/service-schedule`, `/account`) instead of exposing docs/admin-oriented navigation.</item>
   </highlights>
   <next>
     <item>Approve and run the database migration window before enabling any new schema-backed tooling such as Payload MCP API keys.</item>
     <item>Create the first durable admin account in the real database.</item>
     <item>After migration approval, enable Payload MCP, restart dev, and generate an API key for local editor use.</item>
     <item>Decide whether admin sign-in should remain at `/admin/login` or later get a branded dedicated team-login route.</item>
+    <item>Backfill any real production customer accounts to the new portal profile fields if existing contacts need billing/service addresses immediately.</item>
   </next>
 </phase-summary>

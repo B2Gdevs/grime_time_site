@@ -5,8 +5,8 @@
     <phase-name>Quoting and advanced ops</phase-name>
     <date>2026-03-23</date>
   </meta>
-  <purpose>Turn Grime Time's internal operations into a measurable system: quote workflow, internal dashboard command center, KPI scorecard, operating cadence, and phased growth guidance for tools and equipment.</purpose>
-  <scope>In scope: internal quote workflow, staff dashboard UX, profitability and revenue definitions, MRR framing, liabilities checklist, route and call cadence, milestone ladder, equipment and tool recommendations, and admin-facing docs/dashboard context. Out of scope: customer-facing quote approvals, automated tax-rate engine, accounting sync, and editable internal globals until migration approval.</scope>
+  <purpose>Turn Grime Time's internal operations into a measurable system: quote workflow, editable quote math, internal dashboard command center, KPI scorecard, operating cadence, and phased growth guidance for tools and equipment.</purpose>
+  <scope>In scope: internal quote workflow, staff dashboard UX, profitability and revenue definitions, MRR framing, Payload-backed liabilities and scorecard row collections (merged with code defaults), seeded CRUD defaults for ladders/liabilities/scorecard rows, scorecard manual values powering KPI cards, scheduled-job reads on the day-board calendar, left-rail command-center detail panel (no overlay sheets), KPI cards above the command center, admin dual-nav to `/ops` and customer `/dashboard` preview, optional `PORTAL_ADMIN_ONLY` gate on portal layout, deep links from `/ops` to Payload admin for ladders and scorecard, HubSpot owners resolution for task display names on the day board, growth/asset ladder CRUD collections, KPI and scorecard tooltips via Internal ops targets global, compact CRM switch on `/ops`, admin-editable display strings via Payload global internalOpsSettings, and draftable/publishable quote settings via Payload global quoteSettings. Out of scope: customer-facing quote editing, automated tax-rate engine, accounting sync, EngageBay parity for CRM task board, and in-portal write APIs for milestones/assets/liabilities beyond Payload admin (use admin links).</scope>
   <files>
     <file path=".planning/workflows/admin-portal-quotes-ux.md">
       <description>Dashboard, portal, admin, and quote UX planning.</description>
@@ -28,6 +28,10 @@
       <description>Admin-only internal command-center route.</description>
       <keywords>dashboard,portal,admin,ops</keywords>
     </file>
+    <file path="src/components/app-sidebar.tsx">
+      <description>Portal sidebar shortcuts for admin quote tools and docs.</description>
+      <keywords>portal,sidebar,quotes</keywords>
+    </file>
     <file path="src/components/data-table.tsx">
       <description>Left-rail command-center navigator and ops detail panes.</description>
       <keywords>dashboard,ux,tabs,portal</keywords>
@@ -48,6 +52,54 @@
       <description>Dashboard-specific display data and operator board content.</description>
       <keywords>dashboard,data,ops</keywords>
     </file>
+    <file path="src/globals/InternalOpsSettings/config.ts">
+      <description>Admin-only global for ops KPI display strings and chart disclaimer.</description>
+      <keywords>dashboard,payload,global,ops</keywords>
+    </file>
+    <file path="src/globals/QuoteSettings/config.ts">
+      <description>Draftable quote math and service-toggle global used by the public instant quote flow.</description>
+      <keywords>quotes,payload,global,drafts</keywords>
+    </file>
+    <file path="src/lib/quotes/getInstantQuoteCatalog.ts">
+      <description>Server-side reader that maps published or draft quote settings into the instant quote engine.</description>
+      <keywords>quotes,pricing,global</keywords>
+    </file>
+    <file path="src/components/portal/OperatingDayCalendar.tsx">
+      <description>Calendar-based day board; scheduled jobs plus HubSpot tasks when provider active.</description>
+      <keywords>dashboard,calendar,ops,hubspot</keywords>
+    </file>
+    <file path="src/app/api/internal/service-appointments/route.ts">
+      <description>Admin-only service-appointment feed for the day-board calendar.</description>
+      <keywords>ops,calendar,api</keywords>
+    </file>
+    <file path="src/collections/GrowthMilestones/index.ts">
+      <description>Admin-only growth ladder rows for `/ops` milestones tab.</description>
+      <keywords>payload,collections,ops</keywords>
+    </file>
+    <file path="src/collections/OpsAssetLadderItems/index.ts">
+      <description>Admin-only asset ladder rows for `/ops` assets tab.</description>
+      <keywords>payload,collections,ops</keywords>
+    </file>
+    <file path="src/collections/OpsLiabilityItems/index.ts">
+      <description>Admin-only liability checklist rows for `/ops` scorecard liabilities sub-tab.</description>
+      <keywords>payload,collections,ops</keywords>
+    </file>
+    <file path="src/collections/OpsScorecardRows/index.ts">
+      <description>Admin-only scorecard definition rows merged with code defaults on `/ops`.</description>
+      <keywords>payload,collections,ops</keywords>
+    </file>
+    <file path="src/lib/ops/mergeScorecard.ts">
+      <description>Merges static business scorecard with Payload `ops-scorecard-rows`.</description>
+      <keywords>ops,scorecard</keywords>
+    </file>
+    <file path="src/app/(portal)/layout.tsx">
+      <description>Portal shell; optional `PORTAL_ADMIN_ONLY` redirect for non-admins.</description>
+      <keywords>portal,auth,ops</keywords>
+    </file>
+    <file path="src/lib/hubspot/opsClient.ts">
+      <description>HubSpot REST helpers for ops health, tasks, open pipeline.</description>
+      <keywords>hubspot,api,ops</keywords>
+    </file>
   </files>
   <keywords>
     <keyword>quotes</keyword>
@@ -62,26 +114,30 @@
   </commands>
   <tasks>
     <task id="06-quote-workflow" owner="team">
-      <description>Keep quote scope internal-only and align field and automation changes with tax-review guidance.</description>
+      <description>Keep quote scope internal-only, surface Quotes and Quote settings directly in the admin portal, and align field and automation changes with tax-review guidance.</description>
       <status>in-progress</status>
     </task>
     <task id="06-dashboard" owner="team">
       <description>Make `/ops` the internal command center with KPI cards, chart, operator panel, left-rail command navigation, daily board, scorecard, milestones, asset guidance, controlled scrolling, and runtime admin controls like CRM provider switching, while `/dashboard` stays customer-facing.</description>
-      <status>in-progress</status>
+      <status>done</status>
     </task>
     <task id="06-ops-data" owner="team">
-      <description>Define KPI formulas, growth thresholds, and asset/tool guidance before turning them into editable app data.</description>
+      <description>Define KPI formulas, growth thresholds, and asset/tool guidance, then make sure scorecard/liability CRUD and manual values actually power the live dashboard.</description>
       <status>in-progress</status>
     </task>
   </tasks>
   <questions>
-    <question id="q-ops-global" status="open">When should the dashboard scorecard move from docs/config into an editable Payload global?</question>
+    <question id="q-ops-global" status="resolved">KPI display strings and chart disclaimer: editable via Payload global internalOpsSettings (D-ops-002). Full scorecard row definitions remain in code until a broader ops content model is needed.</question>
+    <question id="q-quote-settings" status="resolved">Instant quote rates and service toggles live in Payload global quoteSettings with drafts enabled; the public site reads published settings while staff can preview drafts via draft mode.</question>
     <question id="q-accounting" status="open">Will revenue, margin, and liability data stay manual in v1 or sync from QuickBooks later?</question>
     <question id="q-commercial" status="open">At what revenue or route-density threshold should larger-area commercial work become a formal target?</question>
   </questions>
   <decisions>
     <decision>D-quotes-001</decision>
+    <decision>D-quotes-002</decision>
     <decision>D-ops-001</decision>
+    <decision>D-ops-002</decision>
+    <decision>D-ops-003</decision>
     <decision>D-vault-001</decision>
   </decisions>
   <requriements-suggestions>

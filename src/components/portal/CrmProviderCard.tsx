@@ -5,8 +5,8 @@ import { Building2Icon, RefreshCwIcon } from 'lucide-react'
 
 import type { CrmProviderSlug, CrmProviderSummary } from '@/lib/crm/types'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 
 type Props = {
   activeProvider: CrmProviderSlug | null
@@ -24,19 +24,23 @@ function isResponseState(value: unknown): value is ResponseState {
   return 'activeProvider' in value && 'availableProviders' in value
 }
 
+const ORDER: CrmProviderSlug[] = ['engagebay', 'hubspot']
+
 export function CrmProviderCard(props: Props) {
   const [state, setState] = useState<ResponseState>({
     activeProvider: props.activeProvider,
     availableProviders: props.availableProviders,
   })
-  const [message, setMessage] = useState<string | null>(null)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
-  const configuredProviders = state.availableProviders.filter((provider) => provider.configured)
+  const ordered = ORDER.map((slug) => state.availableProviders.find((p) => p.slug === slug)).filter(
+    Boolean,
+  ) as CrmProviderSummary[]
 
   function handleSelect(provider: CrmProviderSlug) {
     startTransition(async () => {
-      setMessage(null)
+      setErrorMessage(null)
 
       const response = await fetch('/api/internal/crm-provider', {
         body: JSON.stringify({ provider }),
@@ -52,71 +56,69 @@ export function CrmProviderCard(props: Props) {
         | null
 
       if (!response.ok || !isResponseState(body)) {
-        const errorMessage =
+        const msg =
           body && typeof body === 'object' && 'error' in body && typeof body.error === 'string'
             ? body.error
             : 'Could not switch CRM provider.'
 
-        setMessage(errorMessage)
+        setErrorMessage(msg)
         return
       }
 
       setState(body)
-      setMessage(`Active CRM provider: ${body.activeProvider}`)
     })
   }
 
   return (
     <Card className="min-w-0">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-base">
           <Building2Icon className="size-5" />
           CRM provider
         </CardTitle>
-        <CardDescription>
-          Lead forms write to the active provider at runtime. Keep EngageBay live now and switch to HubSpot later without rewiring the form stack.
-        </CardDescription>
+        <CardDescription className="text-xs">Form sync target at runtime.</CardDescription>
       </CardHeader>
-      <CardContent className="grid gap-4">
-        <div className="flex flex-wrap gap-2">
-          {state.availableProviders.map((provider) => {
-            const isActive = state.activeProvider === provider.slug
-            return (
-              <Button
-                key={provider.slug}
-                type="button"
-                variant={isActive ? 'default' : 'outline'}
-                disabled={!provider.configured || isPending}
-                onClick={() => handleSelect(provider.slug)}
-              >
-                {provider.label}
-                {provider.configured ? null : ' (not configured)'}
-              </Button>
-            )
-          })}
+      <CardContent className="grid gap-3">
+        <ToggleGroup
+          className="grid w-full grid-cols-2 gap-0 rounded-lg border bg-muted/40 p-1"
+          disabled={isPending}
+          onValueChange={(value) => {
+            if (value === 'engagebay' || value === 'hubspot') {
+              handleSelect(value)
+            }
+          }}
+          type="single"
+          value={state.activeProvider ?? undefined}
+          variant="outline"
+        >
+          {ordered.map((provider) => (
+            <ToggleGroupItem
+              key={provider.slug}
+              className="flex-1 rounded-md px-2 text-xs sm:text-sm"
+              disabled={!provider.configured || isPending}
+              value={provider.slug}
+            >
+              {provider.label}
+            </ToggleGroupItem>
+          ))}
+        </ToggleGroup>
+
+        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+          {isPending ? (
+            <Badge variant="outline" className="gap-1 font-normal">
+              <RefreshCwIcon className="size-3 animate-spin" />
+              Saving
+            </Badge>
+          ) : null}
+          {ordered.map((p) => (
+            <span key={p.slug}>
+              {p.label}
+              {p.configured ? '' : ' (not configured)'}
+            </span>
+          ))}
         </div>
 
-        <div className="rounded-lg border p-3 text-sm">
-          <div className="flex flex-wrap items-center gap-2 font-medium">
-            <span>Runtime state</span>
-            <Badge variant="outline">
-              {state.activeProvider ? `Active: ${state.activeProvider}` : 'No active provider'}
-            </Badge>
-            {isPending ? (
-              <Badge variant="outline" className="gap-1">
-                <RefreshCwIcon className="size-3 animate-spin" />
-                Saving
-              </Badge>
-            ) : null}
-          </div>
-          <p className="mt-2 text-muted-foreground">
-            Configured providers: {configuredProviders.length > 0 ? configuredProviders.map((provider) => provider.label).join(', ') : 'none'}
-          </p>
-          <p className="mt-1 text-muted-foreground">
-            This toggle is persisted in the app runtime state, not in Payload schema, so it stays migration-free.
-          </p>
-          {message ? <p className="mt-2 text-foreground">{message}</p> : null}
-        </div>
+        {errorMessage ? <p className="text-destructive text-sm">{errorMessage}</p> : null}
       </CardContent>
     </Card>
   )

@@ -32,8 +32,19 @@ See `.env.example` for the full list. Integration-related:
 |------|------|
 | Form -> CRM | [`src/hooks/beforeFormSubmissionCrm.ts`](../../src/hooks/beforeFormSubmissionCrm.ts), [`src/lib/crm`](../../src/lib/crm), lead extract [`src/utilities/formSubmissionLead.ts`](../../src/utilities/formSubmissionLead.ts) |
 | Runtime provider control | [`src/components/portal/CrmProviderCard.tsx`](../../src/components/portal/CrmProviderCard.tsx), [`src/app/api/internal/crm-provider/route.ts`](../../src/app/api/internal/crm-provider/route.ts) |
+| HubSpot ops reads (admin `/ops` only) | [`src/lib/hubspot/opsClient.ts`](../../src/lib/hubspot/opsClient.ts), [`src/lib/hubspot/accessToken.ts`](../../src/lib/hubspot/accessToken.ts), [`src/app/api/internal/hubspot/health/route.ts`](../../src/app/api/internal/hubspot/health/route.ts), [`tasks/route.ts`](../../src/app/api/internal/hubspot/tasks/route.ts), [`pipeline-summary/route.ts`](../../src/app/api/internal/hubspot/pipeline-summary/route.ts) |
 | Legacy EngageBay browser scripts | [`src/components/EngageBayTracking`](../../src/components/EngageBayTracking), [`src/components/EngageBayScheduleForm`](../../src/components/EngageBayScheduleForm) |
 | Quotes access | [`src/utilities/quotesAccess.ts`](../../src/utilities/quotesAccess.ts), [`src/collections/Quotes`](../../src/collections/Quotes) |
+
+## HubSpot private app scopes (ops dashboard)
+
+When using HubSpot for the internal `/ops` day board and pipeline KPIs, the private app token needs at least:
+
+- **CRM → deals** read (search/list open deals for pipeline sum; v1 uses up to 100 deals per request).
+- **CRM → tasks** read/search (tasks filtered by `hs_timestamp` for the selected local calendar day).
+- **CRM → owners** read (or equivalent scope for listing owners) so task `hubspot_owner_id` values can be resolved to **display names** on the day board (`hubSpotOwnersNameMap` in `src/lib/hubspot/opsClient.ts`). If the token lacks this scope, tasks still load but may show raw owner IDs.
+
+Tasks and deals are fetched only when HubSpot is the **active** runtime provider and the token env var is set. See decision **D-crm-003** in `.planning/DECISIONS.xml`.
 
 ## Runtime switching
 

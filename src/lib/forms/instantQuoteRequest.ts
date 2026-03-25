@@ -1,9 +1,13 @@
 import { z } from 'zod'
 
 import {
+  buildInstantQuoteServiceOptions,
   calculateInstantQuote,
+  defaultInstantQuoteCatalog,
   formatCurrency,
   getInstantQuoteService,
+  instantQuoteServiceKeys,
+  type InstantQuoteCatalog,
   type InstantQuoteCondition,
   type InstantQuoteFrequency,
   type InstantQuoteServiceKey,
@@ -13,12 +17,7 @@ import { leadEmailSchema, optionalPhoneSchema, optionalTrimmedString, requiredTr
 
 export const INSTANT_QUOTE_REQUEST_FORM_TITLE = 'Instant Quote Form'
 
-export const instantQuoteServiceOptions = [
-  { label: 'House wash', value: 'house_wash' },
-  { label: 'Driveway and flatwork', value: 'driveway' },
-  { label: 'Porch or patio refresh', value: 'porch_patio' },
-  { label: 'Dock cleaning', value: 'dock' },
-] as const
+export const instantQuoteServiceOptions = buildInstantQuoteServiceOptions(defaultInstantQuoteCatalog)
 
 export const instantQuoteStoriesOptions = [
   { label: '1 story', value: '1' },
@@ -39,7 +38,7 @@ export const instantQuoteFrequencyOptions = [
 ] as const
 
 export const instantQuoteRequestSchema = z.object({
-  serviceKey: z.enum(instantQuoteServiceOptions.map((option) => option.value)),
+  serviceKey: z.enum(instantQuoteServiceKeys),
   sqft: requiredTrimmedString(1, 20, 'Enter the approximate square footage.').refine(
     (value) => {
       const parsed = Number.parseFloat(value)
@@ -59,21 +58,34 @@ export const instantQuoteRequestSchema = z.object({
 
 export type InstantQuoteRequestValues = z.infer<typeof instantQuoteRequestSchema>
 
-export function buildInstantQuoteEstimate(values: InstantQuoteRequestValues) {
-  const sqft = Number.parseFloat(values.sqft)
-
-  return calculateInstantQuote({
-    condition: values.condition as InstantQuoteCondition,
-    frequency: values.frequency as InstantQuoteFrequency,
-    serviceKey: values.serviceKey as InstantQuoteServiceKey,
-    sqft: Number.isFinite(sqft) ? sqft : 0,
-    stories: values.stories as InstantQuoteStories,
-  })
+export function getInstantQuoteServiceSelectOptions(catalog: InstantQuoteCatalog) {
+  return buildInstantQuoteServiceOptions(catalog)
 }
 
-export function instantQuoteRequestToSubmissionRows(values: InstantQuoteRequestValues) {
-  const estimate = buildInstantQuoteEstimate(values)
-  const service = getInstantQuoteService(values.serviceKey as InstantQuoteServiceKey)
+export function buildInstantQuoteEstimate(
+  values: InstantQuoteRequestValues,
+  catalog: InstantQuoteCatalog = defaultInstantQuoteCatalog,
+) {
+  const sqft = Number.parseFloat(values.sqft)
+
+  return calculateInstantQuote(
+    {
+      condition: values.condition as InstantQuoteCondition,
+      frequency: values.frequency as InstantQuoteFrequency,
+      serviceKey: values.serviceKey as InstantQuoteServiceKey,
+      sqft: Number.isFinite(sqft) ? sqft : 0,
+      stories: values.stories as InstantQuoteStories,
+    },
+    catalog,
+  )
+}
+
+export function instantQuoteRequestToSubmissionRows(
+  values: InstantQuoteRequestValues,
+  catalog: InstantQuoteCatalog = defaultInstantQuoteCatalog,
+) {
+  const estimate = buildInstantQuoteEstimate(values, catalog)
+  const service = getInstantQuoteService(values.serviceKey as InstantQuoteServiceKey, catalog)
   const storiesLabel =
     instantQuoteStoriesOptions.find((option) => option.value === values.stories)?.label ?? values.stories
   const conditionLabel =

@@ -5,8 +5,8 @@
     <phase-name>Customers, forms, and ops integrations</phase-name>
     <date>2026-03-23</date>
   </meta>
-  <purpose>Make the public site operational by turning submissions, scheduling, and quotes into managed CRM relationships with EngageBay as the default provider and HubSpot as a supported fallback.</purpose>
-  <scope>In scope: form-to-contact sync, first-party scheduling forms, call and quote intake handoff, CRM provider abstraction, runtime provider selection, and quote summary sync into CRM deals. Out of scope: customer-visible quote acceptance, accounting sync, and bidirectional CRM ownership unless explicitly approved later.</scope>
+  <purpose>Make the public site and customer portal operational by turning submissions, scheduling, support, estimates, invoices, and recurring-plan scheduling into managed Payload/CRM relationships with EngageBay as the default provider and HubSpot as a supported fallback.</purpose>
+  <scope>In scope: form-to-contact sync, first-party scheduling forms, customer support intake, call and quote intake handoff, customer portal estimates/invoices/schedule/account surfaces, recurring service-plan defaults, CRM provider abstraction, runtime provider selection, and quote summary sync into CRM deals. Out of scope: customer-visible quote editing, accounting sync, and bidirectional CRM ownership unless explicitly approved later.</scope>
   <files>
     <file path=".planning/workflows/customer-site-content-and-engagebay.md">
       <description>Public-site conversion flow and content checklist.</description>
@@ -24,6 +24,34 @@
       <description>Quote workflow and CRM handoff planning.</description>
       <keywords>quotes,deals</keywords>
     </file>
+    <file path="src/app/(frontend)/contact/page.tsx">
+      <description>Customer-facing contact and support route.</description>
+      <keywords>contact,support,frontend</keywords>
+    </file>
+    <file path="src/lib/forms/contactRequest.ts">
+      <description>Contact/support request categories and submission mapping.</description>
+      <keywords>contact,forms,support</keywords>
+    </file>
+    <file path="src/app/(portal)/service-schedule/page.tsx">
+      <description>Customer portal schedule page for appointments, recurring plans, and schedule-change requests.</description>
+      <keywords>portal,schedule,customer</keywords>
+    </file>
+    <file path="src/collections/Invoices/index.ts">
+      <description>Customer-facing invoice records used by the portal.</description>
+      <keywords>portal,invoices,payload</keywords>
+    </file>
+    <file path="src/collections/ServiceAppointments/index.ts">
+      <description>Scheduled or requested customer jobs used by the portal and ops calendar.</description>
+      <keywords>portal,schedule,payload</keywords>
+    </file>
+    <file path="src/collections/ServicePlans/index.ts">
+      <description>Recurring maintenance-plan records and calculated subscription totals.</description>
+      <keywords>portal,subscription,payload</keywords>
+    </file>
+    <file path="src/globals/ServicePlanSettings/config.ts">
+      <description>Draftable recurring-plan defaults for the customer portal and service-plan records.</description>
+      <keywords>portal,subscription,global,drafts</keywords>
+    </file>
   </files>
   <keywords>
     <keyword>engagebay</keyword>
@@ -33,16 +61,24 @@
   </keywords>
   <tasks>
     <task id="05-form-sync" owner="team">
-      <description>Keep every public lead tied to the active CRM provider with clear sync status and task ownership, and move quote/contact/schedule capture onto a shared first-party form system.</description>
+      <description>Keep every public lead tied to the active CRM provider with clear sync status and task ownership, and move quote/contact/schedule/support capture onto a shared first-party form system.</description>
       <status>in-progress</status>
     </task>
     <task id="05-schedule-flow" owner="team">
-      <description>Make scheduling part of the lead pipeline with a first-party form flow, shared validators/helpers, and Payload-to-CRM write-back instead of an embedded vendor form.</description>
+      <description>Make scheduling part of the lead pipeline with a first-party form flow, shared validators/helpers, customer portal schedule requests/reschedules, recurring-plan cadence, and Payload-to-CRM write-back instead of an embedded vendor form.</description>
       <status>in-progress</status>
+    </task>
+    <task id="05-customer-portal-ops" owner="team">
+      <description>Use Payload collections/globals for customer portal estimates, invoices, recurring plans, service appointments, and self-serve account/contact updates.</description>
+      <status>done</status>
     </task>
     <task id="05-quote-deal-sync" owner="team">
       <description>Mirror Payload quotes into CRM deals so follow-up and relationship management happen in the chosen provider.</description>
       <status>planned</status>
+    </task>
+    <task id="05-hubspot-ops-read" owner="team">
+      <description>Admin-only HubSpot REST reads for `/ops`: account health probe, tasks due on a selected calendar day (portal timezone), and open-deal amount sum for pipeline KPI when HubSpot is the active runtime provider. EngageBay does not receive ops-board parity in this delivery.</description>
+      <status>done</status>
     </task>
   </tasks>
   <questions>

@@ -11,6 +11,7 @@ import { homeStatic } from '@/endpoints/seed/home-static'
 
 import { RenderBlocks } from '@/blocks/RenderBlocks'
 import { RenderHero } from '@/heros/RenderHero'
+import { getInstantQuoteCatalog } from '@/lib/quotes/getInstantQuoteCatalog'
 import { generateMeta } from '@/utilities/generateMeta'
 import PageClient from './page.client'
 import { LivePreviewListener } from '@/components/LivePreviewListener'
@@ -69,6 +70,8 @@ export default async function Page({ params: paramsPromise }: Args) {
   }
 
   const { hero, layout } = page
+  const instantQuoteCatalog =
+    slug === 'home' ? await getInstantQuoteCatalog({ draft, payload: await getPayload({ config: configPromise }) }) : null
   const homeBlockTypes = new Set(['pricingTable'])
   const renderBlocks =
     slug === 'home'
@@ -84,7 +87,7 @@ export default async function Page({ params: paramsPromise }: Args) {
       {draft && <LivePreviewListener />}
 
       <RenderHero {...hero} />
-      {slug === 'home' ? <InstantQuoteSection /> : null}
+      {slug === 'home' && instantQuoteCatalog ? <InstantQuoteSection catalog={instantQuoteCatalog} /> : null}
       {await RenderBlocks({ blocks: renderBlocks })}
       {slug === 'home' ? <HomeMarketingPanels /> : null}
     </article>

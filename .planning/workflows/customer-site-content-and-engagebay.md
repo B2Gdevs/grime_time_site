@@ -9,6 +9,7 @@
 |-----|------------|
 | **`/`** | **Home** - a **Page** with slug `home` from the CMS, or a small fallback while the DB is empty. |
 | **`/contact`**, **`/about`**, etc. | **Dynamic pages** rendered from the same frontend page template. |
+| **`/privacy-policy`**, **`/terms-and-conditions`**, **`/refund-policy`**, **`/contact-sla`** | Public customer-support / trust pages seeded into the same **Pages** collection. |
 | **`/posts`**, **`/posts/...`** | Blog-style **Posts**. |
 | **`/schedule`** | First-party **schedule request form** built in React. It stores a Payload form submission and writes into the active CRM provider from the server-side create path. |
 | **`/admin`** | **Payload admin** (staff only) for Pages, Posts, Forms, Globals, Media, and internal records. |
@@ -29,6 +30,7 @@
 - **EngageBay today:** when `ENGAGEBAY_API_KEY` is set and sync is not disabled, each new submission creates or updates a contact through EngageBay's REST API and attempts to attach a note with every submitted field. Disable notes with `ENGAGEBAY_ATTACH_SUBMISSION_NOTE=false`.
 - **Field names (contact card):** system fields mapped are `email`, `name` / `fullName` / `firstName`, and `phone`. Everything else is carried in the CRM note or activity body where supported.
 - **Scheduling:** `/schedule` now uses a native form and posts to `/api/lead-forms/schedule`. The form-submission create path sets `crmSyncStatus` / `crmSyncedAt` / `crmSyncDetail` while it writes to the active CRM provider.
+- **Contact support path:** `/contact` is the non-quote catch-all and should cover general support, billing/refund, privacy, policy, scheduling, and service follow-up requests.
 
 ## Shared form system
 
@@ -47,6 +49,7 @@
 - [ ] Reviews / testimonials visible on the homepage and editable quickly in Payload admin.
 - [ ] Before / after proof or project-gallery content visible on at least one key landing page.
 - [ ] Contact page and schedule / quote flows reviewed on mobile.
+- [ ] Privacy, terms, refund, and contact-SLA pages reviewed on mobile and linked from the footer/contact flow.
 - [ ] Header nav + mobile menu reviewed.
 - [ ] SEO titles/descriptions reviewed on key pages.
 - [ ] Images in **Media** are real Grime Time assets, not stock placeholders.

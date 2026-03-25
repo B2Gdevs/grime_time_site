@@ -426,3 +426,20 @@
   background-clip: padding-box;
   background-color: color-mix(in oklab, var(--foreground) 18%, transparent);
 }
+
+/* Ops calendar: weekday rhythm marker (react-day-picker modifier) */
+.rdp-day_has-rhythm .rdp-day_button {
+  position: relative;
+}
+
+.rdp-day_has-rhythm .rdp-day_button::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  transform: translateX(-50%);
+  border-radius: 9999px;
+  background: color-mix(in oklab, var(--primary) 65%, transparent);
+}

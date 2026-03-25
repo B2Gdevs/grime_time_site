@@ -6,7 +6,7 @@
     <date>2026-03-23</date>
   </meta>
   <purpose>Bring the repo onto the real Supabase-backed database with explicit user approval for schema changes, then establish admin access and repeatable seed/bootstrap flows.</purpose>
-  <scope>In scope: Postgres adapter wiring, environment setup, approved migration runs, initial admin bootstrap, customer-vs-admin access separation, and the ability to seed baseline content into the real database. Out of scope: public marketing polish, CRM deal sync, and editable ops globals.</scope>
+  <scope>In scope: Postgres adapter wiring, environment setup, approved migration runs, initial admin bootstrap, customer-vs-admin access separation, customer portal route/nav boundaries, and the ability to seed baseline content into the real database. Out of scope: public marketing polish, CRM deal sync, and editable ops globals.</scope>
   <files>
     <file path=".planning/workflows/content-and-seeding.md">
       <description>Seed workflow after migrations and admin access.</description>
@@ -31,6 +31,10 @@
     <file path="src/app/(portal)/ops/page.tsx">
       <description>Admin-only ops dashboard route, separate from the customer dashboard.</description>
       <keywords>auth,admin,portal,ops</keywords>
+    </file>
+    <file path="src/components/app-sidebar.tsx">
+      <description>Portal sidebar split between customer account navigation and admin tools.</description>
+      <keywords>portal,nav,auth</keywords>
     </file>
     <file path="src/components/login-form.tsx">
       <description>Customer-only login flow and post-login routing.</description>
@@ -61,7 +65,7 @@
       <status>in-progress</status>
     </task>
     <task id="04-split-access" owner="team">
-      <description>Keep customer login/customer dashboard separate from admin sign-in/admin ops so the public account flow never advertises Payload admin.</description>
+      <description>Keep customer login/customer dashboard separate from admin sign-in/admin ops so the public account flow never advertises Payload admin and the customer nav stays account-first.</description>
       <status>in-progress</status>
     </task>
   </tasks>
