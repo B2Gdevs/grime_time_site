@@ -5,24 +5,24 @@
     <phase-name>Customers, forms, and ops integrations</phase-name>
     <date>2026-03-23</date>
   </meta>
-  <purpose>Make the public site and customer portal operational by turning submissions, scheduling, support, estimates, invoices, and recurring-plan scheduling into managed Payload/CRM relationships with EngageBay as the default provider and HubSpot as a supported fallback.</purpose>
-  <scope>In scope: form-to-contact sync, first-party scheduling forms, customer support intake, call and quote intake handoff, customer portal estimates/invoices/schedule/account surfaces, recurring service-plan defaults, CRM provider abstraction, runtime provider selection, and quote summary sync into CRM deals. Out of scope: customer-visible quote editing, accounting sync, and bidirectional CRM ownership unless explicitly approved later.</scope>
+  <purpose>Make the public site and customer portal operational by turning submissions, scheduling, support, estimates, invoices, and recurring-plan scheduling into first-party Payload relationships, with Resend and Stripe reserved for delivery and payment rails rather than core CRM ownership.</purpose>
+  <scope>In scope: first-party lead capture, scheduling intake, customer support intake, call and quote intake handoff, customer portal estimates/invoices/schedule/account surfaces, recurring service-plan defaults, internal CRM planning, Stripe billing direction, Resend lifecycle direction, and quote-to-opportunity planning inside Payload. Out of scope: customer-visible quote editing, finalized accounting sync, and full sequence automation implementation unless explicitly approved later.</scope>
   <files>
     <file path=".planning/workflows/customer-site-content-and-engagebay.md">
       <description>Public-site conversion flow and content checklist.</description>
       <keywords>site,forms</keywords>
     </file>
     <file path=".planning/workflows/crm-and-integrations.md">
-      <description>System-of-record mapping and EngageBay touchpoints.</description>
-      <keywords>crm,integrations</keywords>
+      <description>System-of-record mapping for the in-house CRM, Stripe, Resend, and Payload jobs.</description>
+      <keywords>crm,integrations,payload</keywords>
     </file>
-    <file path=".planning/workflows/engagebay-integration-review.md">
-      <description>API and webhook launch checklist.</description>
-      <keywords>engagebay,api</keywords>
+    <file path=".planning/workflows/payload-native-crm-and-billing.md">
+      <description>Product direction, data model, design rules, billing split, and automation roadmap for the in-house CRM.</description>
+      <keywords>crm,billing,resend,stripe</keywords>
     </file>
     <file path=".planning/workflows/quote-system-and-texas-compliance.md">
-      <description>Quote workflow and CRM handoff planning.</description>
-      <keywords>quotes,deals</keywords>
+      <description>Quote workflow and internal opportunity handoff planning.</description>
+      <keywords>quotes,pipeline</keywords>
     </file>
     <file path="src/app/(frontend)/contact/page.tsx">
       <description>Customer-facing contact and support route.</description>
@@ -49,16 +49,16 @@
       <keywords>portal,subscription,payload</keywords>
     </file>
     <file path="src/collections/Quotes/index.ts">
-      <description>Payload quote records that store CRM deal-sync metadata and remain the estimate source for the customer portal.</description>
-      <keywords>quotes,crm,payload</keywords>
+      <description>Payload quote records that remain the estimate source for the customer portal and future internal opportunity pipeline.</description>
+      <keywords>quotes,payload,pipeline</keywords>
     </file>
     <file path="src/hooks/beforeQuoteCrm.ts">
-      <description>Quote-side CRM sync hook for sent/accepted/lost quotes.</description>
-      <keywords>quotes,crm,hook</keywords>
+      <description>Quote-side lifecycle hook used while external CRM sync is retired and internal opportunity flow is defined.</description>
+      <keywords>quotes,pipeline,hook</keywords>
     </file>
-    <file path="src/lib/crm/providers/hubspot.ts">
-      <description>HubSpot contact/deal sync implementation used by the active CRM provider abstraction.</description>
-      <keywords>hubspot,crm,deals</keywords>
+    <file path="src/lib/crm/index.ts">
+      <description>Current CRM abstraction boundary; now used to keep lead capture internal while the first-party CRM model replaces external providers.</description>
+      <keywords>crm,payload,forms</keywords>
     </file>
     <file path="src/globals/ServicePlanSettings/config.ts">
       <description>Draftable recurring-plan defaults for the customer portal and service-plan records.</description>
@@ -66,18 +66,18 @@
     </file>
   </files>
   <keywords>
-    <keyword>engagebay</keyword>
+    <keyword>crm</keyword>
     <keyword>forms</keyword>
-    <keyword>deals</keyword>
+    <keyword>billing</keyword>
     <keyword>quotes</keyword>
   </keywords>
   <tasks>
     <task id="05-form-sync" owner="team">
-      <description>Keep every public lead tied to the active CRM provider with clear sync status and task ownership, and move quote/contact/schedule/support capture onto a shared first-party form system.</description>
+      <description>Keep every public lead captured in Payload with clear internal follow-up metadata, and move quote/contact/schedule/support capture onto a shared first-party form system.</description>
       <status>in-progress</status>
     </task>
     <task id="05-schedule-flow" owner="team">
-      <description>Make scheduling part of the lead pipeline with a first-party form flow, shared validators/helpers, customer portal schedule requests/reschedules, recurring-plan cadence, and Payload-to-CRM write-back instead of an embedded vendor form.</description>
+      <description>Make scheduling part of the in-house customer lifecycle with a first-party form flow, shared validators/helpers, customer portal schedule requests/reschedules, recurring-plan cadence, and Payload-managed follow-up instead of an embedded vendor form.</description>
       <status>in-progress</status>
     </task>
     <task id="05-customer-portal-ops" owner="team">
@@ -85,17 +85,17 @@
       <status>done</status>
     </task>
     <task id="05-quote-deal-sync" owner="team">
-      <description>Mirror Payload quotes into CRM deals so follow-up and relationship management happen in the chosen provider. Current delivery focus: one-way HubSpot deal sync with quote-side CRM metadata and env-configured stage mapping.</description>
+      <description>Retire external quote-to-deal sync and replace it with internal opportunity planning so follow-up and relationship management happen inside Payload.</description>
       <status>in-progress</status>
     </task>
     <task id="05-hubspot-ops-read" owner="team">
-      <description>Admin-only HubSpot REST reads for `/ops`: account health probe, tasks due on a selected calendar day (portal timezone), and open-deal amount sum for pipeline KPI when HubSpot is the active runtime provider. EngageBay does not receive ops-board parity in this delivery.</description>
-      <status>done</status>
+      <description>Replace the old provider-toggle/day-board assumptions with internal queue, appointment, and opportunity reads so `/ops` uses Payload-native data sources only.</description>
+      <status>in-progress</status>
     </task>
   </tasks>
   <questions>
-    <question id="q-deal-direction" status="resolved">v1 treats Payload quotes as the source of truth and pushes one-way into CRM deals. Write-back remains deferred until the outbound sync is stable.</question>
-    <question id="q-owner-assignment" status="in-progress">How should new leads and synced deals be assigned to an owner in the active CRM provider for follow-up?</question>
-    <question id="q-engagebay-quota" status="open">Is the current EngageBay 403 coming from trial API-call limits, the wrong key scope, or a throttling window that needs retry logic?</question>
+    <question id="q-deal-direction" status="resolved">Payload quotes remain the source of truth. The next step is an internal opportunity/pipeline model rather than syncing into a third-party CRM.</question>
+    <question id="q-owner-assignment" status="in-progress">How should new leads, opportunities, and customer tasks be assigned to an owner inside the first-party CRM workspace?</question>
+    <question id="q-engagebay-quota" status="resolved">No longer relevant. Third-party CRM providers are being removed from the active product direction.</question>
   </questions>
 </phase-plan>

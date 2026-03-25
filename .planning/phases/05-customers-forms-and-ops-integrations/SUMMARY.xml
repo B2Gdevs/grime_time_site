@@ -11,17 +11,15 @@
     <item>The homepage instant quote form, the custom contact page, and the schedule page now all submit through first-party React Hook Form + Zod routes instead of relying on embedded CRM forms.</item>
     <item>The contact path now clearly covers support, billing, refund, privacy, and policy questions, not just pre-quote service inquiries.</item>
     <item>The customer portal is now account-first: estimates, invoices, recurring-plan context, service appointments, and account/profile updates are backed by Payload data instead of docs-first placeholders.</item>
-    <item>Lead submissions now write CRM sync metadata during the create path instead of relying on a broken post-create patch against form submissions.</item>
-    <item>The CRM sync path is now provider-abstracted: EngageBay remains the default provider, HubSpot can be configured as a fallback, and the active provider can be switched from the admin ops dashboard without schema changes.</item>
-    <item>When HubSpot is active, `/ops` loads CRM tasks by day and an open-deal pipeline snapshot via admin-gated routes under `src/app/api/internal/hubspot/`; EngageBay-only mode shows an explicit empty state and banner (D-crm-003).</item>
-    <item>When HubSpot is active, quotes saved as sent, accepted, or lost now mirror into HubSpot deals through the same CRM abstraction, and each quote stores the synced deal id plus sync status/details.</item>
-    <item>Current EngageBay handoff is still returning `crmSyncStatus=failed_contact`, so Payload capture is reliable but EngageBay delivery is not yet production-ready.</item>
+    <item>Lead submissions still record sync metadata during the create path, but the active product direction is now to keep those records internal while the first-party CRM model replaces third-party providers.</item>
+    <item>Customer data ownership is shifting toward Payload-native leads, contacts, accounts, opportunities, activities, tasks, and service records, with Resend and Stripe reserved for outbound communication and payments.</item>
+    <item>The ops/dashboard path now uses internal quote, appointment, and service-plan metrics backed by Payload collections instead of provider-specific reads.</item>
   </highlights>
   <next>
-    <item>Resolve EngageBay API quota/key-scope issues before treating CRM sync as production-ready.</item>
-    <item>Verify HubSpot quote sync against the real production pipeline ids and owner ids, then document the chosen stage mapping.</item>
+    <item>Define the first-party CRM collections and relationships for leads, accounts, contacts, opportunities, activities, tasks, and sequence enrollment.</item>
+    <item>Map Stripe-backed invoice/payment state into the existing billing and customer portal records.</item>
+    <item>Map Resend plus Payload jobs into the follow-up, reminder, and dunning workflows.</item>
     <item>Reseed and verify the expanded contact/support categories plus policy-page links on the public contact route.</item>
-    <item>If HubSpot is configured, verify provider switching in ops and use that path as the fallback when EngageBay is degraded.</item>
     <item>Backfill real customer accounts to invoices, service plans, appointments, and quote `customerUser` links so the portal shows production data instead of only seeded framework records.</item>
     <item>Optional next pass: replace remaining layout-builder contact blocks with the same first-party form UI used on `/contact`.</item>
   </next>

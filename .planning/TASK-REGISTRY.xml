@@ -14,12 +14,12 @@
       <goal>Maintain PRD + roadmap alignment (Payload template, Supabase PG, Vercel, three seed emails).</goal>
       <keywords>prd,payload,supabase</keywords>
       <commands>
-        <command>rg -n "Supabase|Payload|EngageBay|HubSpot" .planning/</command>
+        <command>rg -n "Supabase|Payload|Stripe|Resend|CRM" .planning/</command>
       </commands>
     </task>
     <task id="02-02" agent-id="" status="done">
-      <goal>Document EngageBay vs HubSpot: features, pricing, API/webhooks, fit for exterior-cleaning lead flow.</goal>
-      <keywords>crm,comparison,integrations</keywords>
+      <goal>Document the shift from third-party CRM to a Payload-native CRM, lifecycle automation, Stripe billing, and Resend follow-up.</goal>
+      <keywords>crm,payload,stripe,resend</keywords>
       <commands>
         <command>See .planning/workflows/crm-and-integrations.md</command>
       </commands>
@@ -32,8 +32,8 @@
       </commands>
     </task>
     <task id="02-04" agent-id="" status="planned">
-      <goal>Define "single pane of glass": what lives in Payload admin vs external CRM/calendar; integration map.</goal>
-      <keywords>architecture,integrations</keywords>
+      <goal>Define "single pane of glass": what lives in Payload admin/routes vs Stripe, Resend, and background jobs; integration map.</goal>
+      <keywords>architecture,integrations,billing,email</keywords>
       <commands>
         <command>npm run planning -- snapshot</command>
       </commands>
@@ -122,38 +122,38 @@
   </phase>
   <phase id="05">
     <task id="05-01" agent-id="" status="in-progress">
-      <goal>Lead forms + contact storage; shared first-party quote/contact/schedule/support submission path; provider-abstracted export/sync path so EngageBay stays default but HubSpot can be swapped in later.</goal>
-      <keywords>forms,crm,leads</keywords>
+      <goal>Lead forms + contact storage; shared first-party quote/contact/schedule/support submission path; Payload-native CRM records with no third-party CRM dependency.</goal>
+      <keywords>forms,crm,leads,payload</keywords>
       <commands>
-        <command>Payload form-submissions + active CRM provider sync; verify EngageBay in trial and keep HubSpot fallback ready</command>
+        <command>Payload form-submissions, internal CRM entities, and sequence enrollment design</command>
       </commands>
     </task>
     <task id="05-02" agent-id="" status="in-progress">
-      <goal>Calendar booking and schedule request flow - use first-party forms with shared validation/helpers, customer portal schedule-change requests, recurring-plan cadence, and integrate the lead into Payload plus active CRM follow-up.</goal>
+      <goal>Calendar booking and schedule request flow - use first-party forms with shared validation/helpers, customer portal schedule-change requests, recurring-plan cadence, and integrate the lead into Payload plus internal follow-up state.</goal>
       <keywords>booking,calendar</keywords>
       <commands>
         <command>See .planning/phases/05-customers-forms-and-ops-integrations/PLAN.xml</command>
       </commands>
     </task>
     <task id="05-03" agent-id="" status="planned">
-      <goal>Calls / quote requests intake (lightweight); email visibility plan.</goal>
-      <keywords>intake,calls,email</keywords>
+      <goal>Calls / quote requests intake, internal activity timeline, and Resend-based outbound email visibility plan.</goal>
+      <keywords>intake,calls,email,resend</keywords>
       <commands>
         <command>See .planning/workflows/crm-and-integrations.md</command>
       </commands>
     </task>
     <task id="05-04" agent-id="" status="in-progress">
-      <goal>Sync Payload quotes into active-provider CRM deals so relationship management and follow-up live in the CRM, starting with a HubSpot write path.</goal>
-      <keywords>hubspot,deals,quotes,crm</keywords>
+      <goal>Promote Payload quotes into an in-house opportunity / pipeline model so relationship management and follow-up live inside Payload instead of a third-party CRM.</goal>
+      <keywords>payload,pipeline,quotes,crm</keywords>
       <commands>
         <command>See .planning/workflows/crm-and-integrations.md and quote-system-and-texas-compliance.md</command>
       </commands>
     </task>
-    <task id="05-05" agent-id="" status="done">
-      <goal>HubSpot ops read path for admin `/ops`: health check, tasks filtered by local calendar day, open-deal pipeline sum (v1 cap 100 deals); admin-only API routes mirror `crm-provider` auth.</goal>
-      <keywords>hubspot,ops,portal,api</keywords>
+    <task id="05-05" agent-id="" status="planned">
+      <goal>Build the first internal CRM workspace in Payload: leads, accounts, contacts, opportunities, activities, tasks, and follow-up queue powering `/ops` and future account views.</goal>
+      <keywords>crm,payload,ops,activities</keywords>
       <commands>
-        <command>See src/app/api/internal/hubspot/health/route.ts, tasks/route.ts, pipeline-summary/route.ts; D-crm-003</command>
+        <command>See .planning/workflows/payload-native-crm-and-billing.md</command>
       </commands>
     </task>
     <task id="05-06" agent-id="" status="done">
@@ -173,7 +173,7 @@
       </commands>
     </task>
     <task id="06-02" agent-id="" status="done">
-      <goal>Build and document the internal dashboard command center: KPI cards, chart, daily board, scorecard, milestones, asset guidance, and admin runtime controls like CRM provider switching.</goal>
+      <goal>Build and document the internal dashboard command center: KPI cards, chart, daily board, scorecard, milestones, asset guidance, and first-party operating views powered by Payload data.</goal>
       <keywords>dashboard,portal,ux,kpi,ops</keywords>
       <commands>
         <command>See .planning/workflows/admin-portal-quotes-ux.md and src/app/(portal)/ops/page.tsx</command>
@@ -201,10 +201,10 @@
       </commands>
     </task>
     <task id="06-06" agent-id="" status="done">
-      <goal>Ops portal layout fix (single right column for all TabsContent), KPI row above command center, liabilities + scorecard rows collections with merge fallbacks, admin customer `/dashboard` preview + dual sidebar nav, optional `PORTAL_ADMIN_ONLY`, HubSpot task owner name resolution, planning/docs updates (D-ops-003).</goal>
-      <keywords>portal,layout,ops,payload,hubspot</keywords>
+      <goal>Ops portal layout fix (single right column for all TabsContent), KPI row above command center, liabilities + scorecard rows collections with merge fallbacks, admin customer `/dashboard` preview + dual sidebar nav, optional `PORTAL_ADMIN_ONLY`, planning/docs updates, and first-party day-board wiring (D-ops-003).</goal>
+      <keywords>portal,layout,ops,payload</keywords>
       <commands>
-        <command>migration 20260325_005955_ops_liabilities_and_scorecard_rows; src/components/data-table.tsx, AdminDashboardView, app-sidebar; src/collections/OpsLiabilityItems, OpsScorecardRows; src/lib/ops/mergeScorecard.ts; src/lib/hubspot/opsClient.ts hubSpotOwnersNameMap</command>
+        <command>migration 20260325_005955_ops_liabilities_and_scorecard_rows; src/components/data-table.tsx, AdminDashboardView, app-sidebar; src/collections/OpsLiabilityItems, OpsScorecardRows; src/lib/ops/mergeScorecard.ts</command>
       </commands>
     </task>
     <task id="06-07" agent-id="" status="planned">

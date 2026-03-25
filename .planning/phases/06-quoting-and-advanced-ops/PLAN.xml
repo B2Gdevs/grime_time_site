@@ -6,7 +6,7 @@
     <date>2026-03-23</date>
   </meta>
   <purpose>Turn Grime Time's internal operations into a measurable system: quote workflow, editable quote math, internal dashboard command center, KPI scorecard, operating cadence, and phased growth guidance for tools and equipment.</purpose>
-  <scope>In scope: internal quote workflow, staff dashboard UX, profitability and revenue definitions, MRR framing, Payload-backed liabilities and scorecard row collections (merged with code defaults), seeded CRUD defaults for ladders/liabilities/scorecard rows, scorecard manual values powering KPI cards, scheduled-job reads on the day-board calendar, left-rail command-center detail panel (no overlay sheets), KPI cards above the command center, admin dual-nav to `/ops` and customer `/dashboard` preview, optional `PORTAL_ADMIN_ONLY` gate on portal layout, deep links from `/ops` to Payload admin for ladders and scorecard, HubSpot owners resolution for task display names on the day board, growth/asset ladder CRUD collections, KPI and scorecard tooltips via Internal ops targets global, compact CRM switch on `/ops`, admin-editable display strings via Payload global internalOpsSettings, and draftable/publishable quote settings via Payload global quoteSettings. Out of scope: customer-facing quote editing, automated tax-rate engine, accounting sync, EngageBay parity for CRM task board, and in-portal write APIs for milestones/assets/liabilities beyond Payload admin (use admin links).</scope>
+  <scope>In scope: internal quote workflow, staff dashboard UX, profitability and revenue definitions, MRR framing, Payload-backed liabilities and scorecard row collections (merged with code defaults), seeded CRUD defaults for ladders/liabilities/scorecard rows, scorecard manual values powering KPI cards, scheduled-job reads on the day-board calendar, left-rail command-center detail panel (no overlay sheets), KPI cards above the command center, admin dual-nav to `/ops` and customer `/dashboard` preview, optional `PORTAL_ADMIN_ONLY` gate on portal layout, deep links from `/ops` to Payload admin for ladders and scorecard, internal quote/service-plan-derived KPI context, growth/asset ladder CRUD collections, KPI and scorecard tooltips via Internal ops targets global, admin-editable display strings via Payload global internalOpsSettings, and draftable/publishable quote settings via Payload global quoteSettings. Out of scope: customer-facing quote editing, automated tax-rate engine, finalized accounting sync, and in-portal write APIs for milestones/assets/liabilities beyond Payload admin (use admin links).</scope>
   <files>
     <file path=".planning/workflows/admin-portal-quotes-ux.md">
       <description>Dashboard, portal, admin, and quote UX planning.</description>
@@ -65,8 +65,8 @@
       <keywords>quotes,pricing,global</keywords>
     </file>
     <file path="src/components/portal/OperatingDayCalendar.tsx">
-      <description>Calendar-based day board; scheduled jobs plus HubSpot tasks when provider active.</description>
-      <keywords>dashboard,calendar,ops,hubspot</keywords>
+      <description>Calendar-based day board focused on scheduled jobs, requested jobs, and service workload visibility.</description>
+      <keywords>dashboard,calendar,ops</keywords>
     </file>
     <file path="src/app/api/internal/service-appointments/route.ts">
       <description>Admin-only service-appointment feed for the day-board calendar.</description>
@@ -96,10 +96,6 @@
       <description>Portal shell; optional `PORTAL_ADMIN_ONLY` redirect for non-admins.</description>
       <keywords>portal,auth,ops</keywords>
     </file>
-    <file path="src/lib/hubspot/opsClient.ts">
-      <description>HubSpot REST helpers for ops health, tasks, open pipeline.</description>
-      <keywords>hubspot,api,ops</keywords>
-    </file>
   </files>
   <keywords>
     <keyword>quotes</keyword>
@@ -118,11 +114,11 @@
       <status>in-progress</status>
     </task>
     <task id="06-dashboard" owner="team">
-      <description>Make `/ops` the internal command center with KPI cards, chart, operator panel, left-rail command navigation, daily board, scorecard, milestones, asset guidance, controlled scrolling, and runtime admin controls like CRM provider switching, while `/dashboard` stays customer-facing.</description>
+      <description>Make `/ops` the internal command center with KPI cards, chart, operator panel, left-rail command navigation, daily board, scorecard, milestones, asset guidance, controlled scrolling, and Payload-native operating context while `/dashboard` stays customer-facing.</description>
       <status>done</status>
     </task>
     <task id="06-ops-data" owner="team">
-      <description>Define KPI formulas, growth thresholds, and asset/tool guidance, then make sure scorecard/liability CRUD and manual values actually power the live dashboard.</description>
+      <description>Define KPI formulas, growth thresholds, and asset/tool guidance, then make sure scorecard/liability CRUD, quote pipeline math, and service-plan data actually power the live dashboard.</description>
       <status>in-progress</status>
     </task>
   </tasks>

@@ -63,11 +63,11 @@ const DOCS: PortalDoc[] = [
   },
   {
     audience: 'admin',
-    description: 'How the public site, Payload forms, and EngageBay fit together.',
-    filePath: '.planning/workflows/customer-site-content-and-engagebay.md',
+    description: 'How the public site, Payload forms, the in-house CRM, Stripe, and Resend fit together.',
+    filePath: '.planning/workflows/payload-native-crm-and-billing.md',
     group: 'Team playbooks',
-    slug: 'customer-site-content-and-engagebay',
-    title: 'Customer site and EngageBay',
+    slug: 'payload-native-crm-and-billing',
+    title: 'Payload-native CRM and billing',
   },
   {
     audience: 'admin',
@@ -79,7 +79,7 @@ const DOCS: PortalDoc[] = [
   },
   {
     audience: 'admin',
-    description: 'Launch checklist for the public site, instant quote flow, EngageBay, and Resend.',
+    description: 'Launch checklist for the public site, instant quote flow, internal CRM readiness, Stripe, and Resend.',
     filePath: '.planning/workflows/site-integrations-and-launch-checklist.md',
     group: 'Team playbooks',
     slug: 'site-integrations-and-launch-checklist',

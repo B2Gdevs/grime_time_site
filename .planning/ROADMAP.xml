@@ -34,7 +34,7 @@
   </phase>
   <phase id="05">
     <title>Customers, forms &amp; ops integrations</title>
-    <goal>Lead forms, contact model, EngageBay sync, scheduling, and CRM deal handoff for quote-driven follow-up.</goal>
+    <goal>Lead forms, Payload-native CRM lifecycle, scheduling, Resend follow-up, and Stripe billing handoff for quote-driven follow-up.</goal>
     <requirements>REQ-05</requirements>
     <depends>04</depends>
     <status>in-progress</status>

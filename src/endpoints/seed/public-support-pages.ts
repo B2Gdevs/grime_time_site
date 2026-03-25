@@ -157,7 +157,7 @@ export const privacyPolicyPage = (): RequiredDataFromCollectionSlug<'pages'> =>
       {
         title: 'Where it is stored',
         paragraphs: [
-          'Grime Time stores site submissions in Payload CMS and may sync lead details into the active CRM provider for follow-up and customer relationship management.',
+          'Grime Time stores site submissions in Payload CMS and uses internal operational records to manage follow-up and customer relationship management.',
           'We may also rely on normal website, hosting, email, and storage vendors to operate the site and customer communication flow.',
         ],
       },

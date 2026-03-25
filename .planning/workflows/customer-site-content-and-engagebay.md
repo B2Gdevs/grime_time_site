@@ -1,7 +1,7 @@
-# Customer-facing site: routes, content, forms, CRM
+# Customer-facing site: routes, content, forms, and internal CRM flow
 
 **Owner:** TBD  
-**Last reviewed:** 2026-03-24  
+**Last reviewed:** 2026-03-24
 
 ## What visitors see today
 
@@ -10,8 +10,7 @@
 | **`/`** | **Home** - a **Page** with slug `home` from the CMS, or a small fallback while the DB is empty. |
 | **`/contact`**, **`/about`**, etc. | **Dynamic pages** rendered from the same frontend page template. |
 | **`/privacy-policy`**, **`/terms-and-conditions`**, **`/refund-policy`**, **`/contact-sla`** | Public customer-support / trust pages seeded into the same **Pages** collection. |
-| **`/posts`**, **`/posts/...`** | Blog-style **Posts**. |
-| **`/schedule`** | First-party **schedule request form** built in React. It stores a Payload form submission and writes into the active CRM provider from the server-side create path. |
+| **`/schedule`** | First-party **schedule request form** built in React. It stores a Payload form submission and routes it into the internal follow-up workflow from the server-side create path. |
 | **`/admin`** | **Payload admin** (staff only) for Pages, Posts, Forms, Globals, Media, and internal records. |
 
 ## How to get a real marketing site
@@ -23,13 +22,12 @@
 5. Update **Header** and **Footer** globals with real nav links.
 6. Republish affected pages so the frontend revalidates.
 
-## Forms (Payload -> CRM)
+## Forms (Payload -> internal CRM flow)
 
 - **Form builder** still lives in Payload for layout-builder blocks, and those blocks POST to **`/api/form-submissions`**. Submissions are stored in the **`form-submissions`** collection (admin **Leads** group). Each row gets **`leadEmail`** / **`leadName`** from common field names and **`crmSyncStatus`** (+ timestamp/detail) during the server-side create path.
-- **CRM provider abstraction:** the create path now routes through [`src/hooks/beforeFormSubmissionCrm.ts`](../../src/hooks/beforeFormSubmissionCrm.ts) and [`src/lib/crm`](../../src/lib/crm). EngageBay is the default provider when configured; HubSpot is supported as a fallback. Admins can switch the active provider from `/ops` without schema changes.
-- **EngageBay today:** when `ENGAGEBAY_API_KEY` is set and sync is not disabled, each new submission creates or updates a contact through EngageBay's REST API and attempts to attach a note with every submitted field. Disable notes with `ENGAGEBAY_ATTACH_SUBMISSION_NOTE=false`.
-- **Field names (contact card):** system fields mapped are `email`, `name` / `fullName` / `firstName`, and `phone`. Everything else is carried in the CRM note or activity body where supported.
-- **Scheduling:** `/schedule` now uses a native form and posts to `/api/lead-forms/schedule`. The form-submission create path sets `crmSyncStatus` / `crmSyncedAt` / `crmSyncDetail` while it writes to the active CRM provider.
+- **Current create-path behavior:** [`src/hooks/beforeFormSubmissionCrm.ts`](../../src/hooks/beforeFormSubmissionCrm.ts) and [`src/lib/crm`](../../src/lib/crm) now keep submissions internal while the first-party CRM model replaces third-party providers.
+- **Field names (contact card):** system fields mapped are `email`, `name` / `fullName` / `firstName`, and `phone`. Everything else stays in Payload and should later feed internal activities / notes.
+- **Scheduling:** `/schedule` uses a native form and posts to `/api/lead-forms/schedule`. The form-submission create path sets `crmSyncStatus` / `crmSyncedAt` / `crmSyncDetail` while it writes internal follow-up metadata.
 - **Contact support path:** `/contact` is the non-quote catch-all and should cover general support, billing/refund, privacy, policy, scheduling, and service follow-up requests.
 
 ## Shared form system
@@ -53,8 +51,7 @@
 - [ ] Header nav + mobile menu reviewed.
 - [ ] SEO titles/descriptions reviewed on key pages.
 - [ ] Images in **Media** are real Grime Time assets, not stock placeholders.
-- [ ] Confirm one test form submission appears in the active CRM provider.
-- [ ] Confirm the current EngageBay API key is not over quota if EngageBay is active.
+- [ ] Confirm one test form submission appears in Payload with usable follow-up metadata.
 
 ## Current planning focus
 
@@ -64,10 +61,9 @@ The launch version should make trust and conversion obvious:
 - one primary CTA and one secondary CTA
 - visible proof: reviews, testimonials, before/after work
 - service areas and FAQs that remove friction
-- quote, contact, and schedule paths that turn into CRM contacts every time
+- quote, contact, and schedule paths that turn into internal lead records every time
 
 ## References
 
 - [Payload layout template (with-vercel-website)](https://github.com/payloadcms/payload/tree/main/templates/with-vercel-website)
-- [EngageBay REST API](https://github.com/engagebay/restapi)
 - Ops: [Lead to customer runbook](../../src/content/docs/lead-to-customer-runbook.md), [`crm-and-integrations.md`](./crm-and-integrations.md)

@@ -36,7 +36,7 @@ export default function SchedulePage() {
               <div className="mt-4 grid gap-3 text-sm leading-7 text-muted-foreground">
                 <p>Bring the property address, approximate square footage, and any gate or access notes.</p>
                 <p>If the job is algae-heavy, waterfront, or commercial, use the notes field so we scope it correctly.</p>
-                <p>We store the request in Payload first, then push the contact into EngageBay for follow-up and ownership.</p>
+                <p>We store the request in Payload first, then route it into the internal follow-up workflow.</p>
               </div>
             </div>
           </div>

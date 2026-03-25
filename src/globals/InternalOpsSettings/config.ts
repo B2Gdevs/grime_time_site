@@ -29,7 +29,7 @@ export const InternalOpsSettings: GlobalConfig = {
       type: 'text',
       defaultValue: '$13.6k',
       admin: {
-        description: 'Value shown on the “Projected revenue” KPI card (e.g. weighted pipeline target).',
+        description: 'Value shown on the projected revenue KPI card when live internal quote data is not yet available.',
       },
     },
     {
@@ -37,14 +37,14 @@ export const InternalOpsSettings: GlobalConfig = {
       type: 'text',
       defaultValue: '$1.8k',
       admin: {
-        description: 'Value shown on the “MRR” KPI card.',
+        description: 'Value shown on the MRR KPI card when live service-plan data is not yet available.',
       },
     },
     {
       name: 'chartDisclaimer',
       type: 'textarea',
       defaultValue:
-        'Illustrative sample trend for layout only — connect real accounting or CRM data in a later phase.',
+        'Illustrative sample trend for layout only. Connect real accounting and first-party CRM data in a later phase.',
       admin: {
         description: 'Shown under the business momentum chart on /ops.',
       },
@@ -54,7 +54,7 @@ export const InternalOpsSettings: GlobalConfig = {
       type: 'textarea',
       admin: {
         description:
-          'Extra line under the chart when HubSpot pipeline is shown (e.g. how open deal totals are computed).',
+          'Extra line under the chart when live internal pipeline context is shown (for example how weighted quote totals are computed).',
       },
     },
     {
@@ -82,7 +82,7 @@ export const InternalOpsSettings: GlobalConfig = {
       type: 'array',
       admin: {
         description:
-          'Optional tooltips for scorecard tab rows. KPI name must match the scorecard label exactly (e.g. Revenue, MRR).',
+          'Optional tooltips for scorecard tab rows. KPI name must match the scorecard label exactly (for example Revenue or MRR).',
       },
       fields: [
         {

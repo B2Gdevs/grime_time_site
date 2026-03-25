@@ -86,7 +86,7 @@ export const beforeQuoteCrm: CollectionBeforeChangeHook = async ({
       ...currentData,
       crm: nextCrmGroup({
         data: currentData,
-        detail: 'Customer email is required before the quote can sync to CRM.',
+        detail: 'Customer email is required before the quote can move into the internal follow-up pipeline.',
         existingCrm,
         provider: existingCrm.provider ?? null,
         status: 'skipped_no_email',
@@ -116,7 +116,7 @@ export const beforeQuoteCrm: CollectionBeforeChangeHook = async ({
       },
     }
   } catch (error) {
-    req.payload.logger.error({ err: error }, 'Quote CRM sync error')
+    req.payload.logger.error({ err: error }, 'Quote follow-up pipeline sync error')
 
     return {
       ...currentData,

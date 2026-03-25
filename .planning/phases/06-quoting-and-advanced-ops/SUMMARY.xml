@@ -5,7 +5,7 @@
     <phase-name>Quoting and advanced ops</phase-name>
     <date>2026-03-23</date>
   </meta>
-  <outcome>Internal quote workflow, dashboard UX, scorecard, liabilities, and asset-growth guidance are documented and surfaced in the admin portal. `/ops` shows KPI cards and CRM sync banner above the command center; the command center now uses one left rail that combines section switching with inline detail content, while all live tab content stays in the right column. Admins get sidebar links to both `/ops` and customer `/dashboard` preview; optional `PORTAL_ADMIN_ONLY=true` restricts portal routes to admin users. Liabilities and scorecard rows are Payload collections (`ops-liability-items`, `ops-scorecard-rows`, migration 20260325_005955_ops_liabilities_and_scorecard_rows) merged with code defaults, seeded into real records, and used by the live dashboard; manual scorecard values now drive KPI cards where applicable. The day board reads scheduled jobs from Payload service appointments and HubSpot-backed tasks by day resolves owner IDs to display names where the token allows; open-deal pipeline still feeds projected revenue when HubSpot is active (D-crm-003). Internal ops targets global adds KPI tooltips, scorecard tooltip rows, and optional chart pipeline note. The public instant quote engine reads draftable/publishable `quoteSettings`; the portal links admins to Quotes and Quote settings.</outcome>
+  <outcome>Internal quote workflow, dashboard UX, scorecard, liabilities, and asset-growth guidance are documented and surfaced in the admin portal. `/ops` shows KPI cards above the command center, and the command center now uses one left rail that combines section switching with inline detail content while all live tab content stays in the right column. Admins get sidebar links to both `/ops` and customer `/dashboard` preview; optional `PORTAL_ADMIN_ONLY=true` restricts portal routes to admin users. Liabilities and scorecard rows are Payload collections (`ops-liability-items`, `ops-scorecard-rows`, migration 20260325_005955_ops_liabilities_and_scorecard_rows) merged with code defaults, seeded into real records, and used by the live dashboard; manual scorecard values now drive KPI cards where applicable. The day board focuses on Payload service appointments, while projected revenue and MRR now read from first-party quote and service-plan records when available instead of third-party CRM reads. Internal ops targets global adds KPI tooltips, scorecard tooltip rows, and optional chart note. The public instant quote engine reads draftable/publishable `quoteSettings`; the portal links admins to Quotes and Quote settings.</outcome>
   <files>
     <file path=".planning/workflows/admin-portal-quotes-ux.md">
       <description>Dashboard and internal UX planning.</description>
@@ -23,19 +23,16 @@
       <description>Portal layout with optional `PORTAL_ADMIN_ONLY` gate.</description>
     </file>
     <file path="src/app/(portal)/ops/page.tsx">
-      <description>Internal admin ops dashboard route with runtime CRM provider state.</description>
+      <description>Internal admin ops dashboard route with first-party KPI and schedule context.</description>
     </file>
     <file path="src/components/app-sidebar.tsx">
       <description>Portal sidebar shortcuts for admin quote tools and docs.</description>
-    </file>
-    <file path="src/components/portal/CrmProviderCard.tsx">
-      <description>Admin-only runtime toggle for switching the active CRM provider.</description>
     </file>
     <file path="src/components/data-table.tsx">
       <description>Left-rail command-center navigator with inline detail panel for daily ops, scorecard, milestones, and assets.</description>
     </file>
     <file path="src/components/portal/OperatingDayCalendar.tsx">
-      <description>Calendar-based day board with scheduled jobs and optional HubSpot tasks.</description>
+      <description>Calendar-based day board with scheduled jobs and service workload context.</description>
     </file>
     <file path="src/app/api/internal/service-appointments/route.ts">
       <description>Admin-gated Payload service-appointment feed for the ops calendar.</description>
@@ -71,14 +68,13 @@
     <decision>D-quotes-002</decision>
     <decision>D-ops-001</decision>
     <decision>D-ops-002</decision>
-    <decision>D-crm-003</decision>
   </decisions>
   <tests>
     <test>cmd /c npx tsc --noEmit</test>
     <test>cmd /c npm run test:int</test>
   </tests>
   <next>
-    <action>Wire real revenue/MRR/pipeline series into the chart when accounting or CRM data is ready (task 06-03). Optional: in-portal CRUD APIs under `src/app/api/internal/ops/` if staff need editing without opening Payload admin.</action>
+    <action>Wire real revenue, quote pipeline, and MRR series into the chart from first-party records, then add internal CRM queue views and optional in-portal CRUD APIs under `src/app/api/internal/ops/` if staff need editing without opening Payload admin.</action>
   </next>
   <requriements-suggestions>
   </requriements-suggestions>

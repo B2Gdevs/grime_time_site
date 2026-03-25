@@ -3,9 +3,6 @@ import Link from 'next/link'
 import { FileTextIcon, ReceiptTextIcon, Settings2Icon, ShieldIcon } from 'lucide-react'
 
 import { ChartAreaInteractive } from '@/components/chart-area-interactive'
-import { CrmProviderCard } from '@/components/portal/CrmProviderCard'
-import type { CrmSyncBannerState } from '@/components/portal/CrmSyncBanner'
-import { CrmSyncBanner } from '@/components/portal/CrmSyncBanner'
 import { DataTable } from '@/components/data-table'
 import { SectionCards, type SectionCardItem } from '@/components/section-cards'
 import { SiteHeader } from '@/components/site-header'
@@ -17,17 +14,12 @@ import type {
   OpsLiabilityRow,
   OpsMergedScorecardRow,
 } from '@/lib/ops/opsDashboardTypes'
-import type { CrmProviderSlug, CrmProviderSummary } from '@/lib/crm/types'
 
 export function AdminDashboardView({
-  activeCrmProvider,
   assetLadderItems,
   cards,
   chartDisclaimer,
-  crmBannerState,
-  crmProviders,
   growthMilestones,
-  hubSpotOpsEnabled,
   liabilityItems,
   mergedScorecard,
   pipelineSnapshotLabel,
@@ -35,14 +27,10 @@ export function AdminDashboardView({
   quotesEnabled,
   scorecardTooltipMap,
 }: {
-  activeCrmProvider: CrmProviderSlug | null
   assetLadderItems: OpsAssetLadderRow[]
   cards: SectionCardItem[]
   chartDisclaimer?: string | null
-  crmBannerState: CrmSyncBannerState | null
-  crmProviders: CrmProviderSummary[]
   growthMilestones: OpsGrowthMilestoneRow[]
-  hubSpotOpsEnabled: boolean
   liabilityItems: OpsLiabilityRow[]
   mergedScorecard: OpsMergedScorecardRow[]
   pipelineSnapshotLabel?: string | null
@@ -61,14 +49,11 @@ export function AdminDashboardView({
           className="@container/main portal-scroll flex min-h-0 flex-1 flex-col gap-6 overflow-x-hidden overflow-y-auto overscroll-contain py-4 md:py-6"
           data-portal-scroll=""
         >
-          <CrmSyncBanner state={crmBannerState} />
-
           <SectionCards items={cards} />
 
           <DataTable
             assetLadderItems={assetLadderItems}
             growthMilestones={growthMilestones}
-            hubSpotOpsEnabled={hubSpotOpsEnabled}
             liabilityItems={liabilityItems}
             mergedScorecard={mergedScorecard}
             scorecardTooltipMap={scorecardTooltipMap}
@@ -82,12 +67,10 @@ export function AdminDashboardView({
             />
 
             <div className="grid gap-4">
-              <CrmProviderCard activeProvider={activeCrmProvider} availableProviders={crmProviders} />
-
               <Card className="min-w-0">
                 <CardHeader>
                   <CardTitle>Operator panel</CardTitle>
-                  <CardDescription>Quote tools, docs, and Payload admin.</CardDescription>
+                  <CardDescription>Quote tools, internal docs, and Payload admin.</CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-3">
                   {quotesEnabled ? (

@@ -4,17 +4,8 @@ import config from '@payload-config'
 import { getPayload, type Where } from 'payload'
 
 import { AdminDashboardView } from '@/components/portal/AdminDashboardView'
-import type { CrmSyncBannerState } from '@/components/portal/CrmSyncBanner'
 import type { SectionCardItem } from '@/components/section-cards'
 import { getCurrentPayloadUser, userIsAdmin } from '@/lib/auth/getCurrentPayloadUser'
-import { getCrmRuntimeState } from '@/lib/crm'
-import { hubSpotTokenConfigured } from '@/lib/hubspot/accessToken'
-import {
-  formatCurrencyUsd,
-  formatPipelineAmount,
-  hubSpotHealthCheck,
-  hubSpotOpenPipelineSummary,
-} from '@/lib/hubspot/opsClient'
 import { mergeScorecardRows } from '@/lib/ops/mergeScorecard'
 import type {
   OpsAssetLadderRow,
@@ -30,14 +21,46 @@ import type {
   OpsAssetLadderItem,
   OpsLiabilityItem,
   OpsScorecardRow,
+  Quote,
+  ServicePlan,
 } from '@/payload-types'
 
-const OPS_TARGETS_FALLBACK = {
+const OPS_TARGETS_FALLBACK: {
+  chartDisclaimer: string
+  mrrTargetDisplay: string
+  projectedRevenueDisplay: string
+} = {
   chartDisclaimer:
-    'Illustrative sample trend for layout only — connect real accounting or CRM data in a later phase.',
+    'Illustrative sample trend for layout only. Connect real accounting and internal CRM time series in a later phase.',
   mrrTargetDisplay: '$1.8k',
   projectedRevenueDisplay: '$13.6k',
+}
+
+const QUOTE_PROJECTION_WEIGHTS = {
+  accepted: 1,
+  sent: 0.6,
 } as const
+
+type QuoteProjectionMetrics = {
+  acceptedQuoteCount: number
+  openQuoteCount: number
+  sentQuoteCount: number
+  weightedRevenue: number
+}
+
+type ServicePlanMetrics = {
+  activePlanCount: number
+  annualRecurringRevenue: number
+  monthlyRecurringRevenue: number
+}
+
+function formatCurrencyUsd(value: number): string {
+  return new Intl.NumberFormat('en-US', {
+    currency: 'USD',
+    maximumFractionDigits: 0,
+    style: 'currency',
+  }).format(value)
+}
 
 function formatManualScorecardValue(name: string, value: number): string {
   if (['Revenue', 'Projected revenue', 'MRR', 'Gross profit', 'Average ticket'].includes(name)) {
@@ -105,8 +128,8 @@ export default async function OpsDashboardPage() {
 
   let chartDisclaimer: string | null = OPS_TARGETS_FALLBACK.chartDisclaimer
   let chartPipelineNote: string | null = null
-  let mrrTargetDisplay: string = OPS_TARGETS_FALLBACK.mrrTargetDisplay
-  let projectedRevenueDisplay: string = OPS_TARGETS_FALLBACK.projectedRevenueDisplay
+  let mrrTargetDisplay = OPS_TARGETS_FALLBACK.mrrTargetDisplay
+  let projectedRevenueDisplay = OPS_TARGETS_FALLBACK.projectedRevenueDisplay
   let kpiTooltipLeads: string | null = null
   let kpiTooltipQuotes: string | null = null
   let kpiTooltipProjectedRevenue: string | null = null
@@ -225,7 +248,7 @@ export default async function OpsDashboardPage() {
 
   await Promise.all([loadGrowth(), loadAssets(), loadLiabilities(), loadScorecardRows()])
 
-  const [cardsBase, crmRuntime] = await Promise.all([
+  const [cardsBase, quoteProjection, servicePlanMetrics] = await Promise.all([
     Promise.all([
       safeCountDocs({
         collection: 'form-submissions',
@@ -250,20 +273,28 @@ export default async function OpsDashboardPage() {
         },
       }),
     ]).then(([leads, quotes, customers]) => ({ leads, quotes, customers })),
-    getCrmRuntimeState(),
+    quotesEnabled
+      ? loadQuoteProjection({
+          payload,
+          user,
+        })
+      : Promise.resolve(null),
+    loadServicePlanMetrics({
+      payload,
+      user,
+    }),
   ])
-
-  let crmBannerState: CrmSyncBannerState | null = null
-  let hubSpotOpsEnabled = false
-  let pipelineSnapshotLabel: string | null = null
-  let pipelineSnapshotValue: string | null = null
-  let projectedValue = projectedRevenueDisplay
-  let projectedTrend = 'Target'
-  let projectedFooter =
-    'Weighted pipeline target from the phase-06 scorecard — override in Internal ops targets when HubSpot is off.'
 
   const projectedRow = findScorecardRow(scorecardRowsRaw, 'Projected revenue')
   const mrrRow = findScorecardRow(scorecardRowsRaw, 'MRR')
+
+  let pipelineSnapshotLabel: string | null = null
+  let pipelineSnapshotValue: string | null = null
+
+  let projectedValue = projectedRevenueDisplay
+  let projectedTrend = 'Target'
+  let projectedFooter =
+    'Set the projected revenue target in Internal ops targets or scorecard rows until more quote data is available.'
 
   if (projectedRow?.manualValue != null && Number.isFinite(Number(projectedRow.manualValue))) {
     projectedValue = formatManualScorecardValue('Projected revenue', Number(projectedRow.manualValue))
@@ -271,39 +302,26 @@ export default async function OpsDashboardPage() {
     projectedFooter = projectedRow.targetGuidance?.trim() || projectedFooter
   }
 
-  const hubspotActive = crmRuntime.activeProvider === 'hubspot'
-
-  if (!hubspotActive) {
-    crmBannerState = { status: 'hubspot_inactive' }
-  } else if (!hubSpotTokenConfigured()) {
-    crmBannerState = { status: 'no_token' }
-  } else {
-    const health = await hubSpotHealthCheck()
-    if (!health.ok) {
-      crmBannerState = { status: 'error', message: health.message }
-    } else {
-      hubSpotOpsEnabled = true
-      const pipe = await hubSpotOpenPipelineSummary()
-      if (pipe.error) {
-        crmBannerState = { status: 'degraded', message: pipe.error }
-      } else if (pipe.summary) {
-        projectedValue = formatPipelineAmount(pipe.summary.openPipelineTotal, pipe.summary.currencyCode)
-        projectedTrend = `${pipe.summary.openDealCount} open deals`
-        projectedFooter =
-          'Sum of amount on open deals (HubSpot search, first 100). Not probability-weighted in v1.'
-        pipelineSnapshotLabel = 'Open pipeline (HubSpot sample)'
-        pipelineSnapshotValue = projectedValue
-      }
-    }
+  if (quoteProjection && quoteProjection.openQuoteCount > 0) {
+    projectedValue = formatCurrencyUsd(quoteProjection.weightedRevenue)
+    projectedTrend = `${quoteProjection.openQuoteCount} open quotes`
+    projectedFooter = [
+      'Accepted quotes count at 100%; sent quotes count at 60% for the internal weighted pipeline.',
+      projectedRow?.targetGuidance?.trim() ? `Target: ${projectedRow.targetGuidance.trim()}` : null,
+    ]
+      .filter(Boolean)
+      .join(' ')
+    pipelineSnapshotLabel = 'Internal pipeline mix'
+    pipelineSnapshotValue = `${quoteProjection.acceptedQuoteCount} accepted, ${quoteProjection.sentQuoteCount} sent`
   }
 
   let mrrValue = mrrTargetDisplay
-  let mrrTrend = 'Climb'
+  let mrrTrend = 'Target'
   let mrrFooter = [
     cardsBase.customers.unavailable
       ? 'Customer counts are temporarily unavailable.'
       : `${cardsBase.customers.totalDocs} customer accounts exist; convert repeat work into plans.`,
-    `${liabilityItems.length} liability item${liabilityItems.length === 1 ? '' : 's'} (scorecard tab).`,
+    `${liabilityItems.length} liability item${liabilityItems.length === 1 ? '' : 's'} tracked in the scorecard tab.`,
   ].join(' ')
 
   if (mrrRow?.manualValue != null && Number.isFinite(Number(mrrRow.manualValue))) {
@@ -312,7 +330,21 @@ export default async function OpsDashboardPage() {
     mrrFooter = mrrRow.targetGuidance?.trim() || mrrFooter
   }
 
-  const chartDisclaimerMerged = [chartDisclaimer, hubspotActive && chartPipelineNote ? chartPipelineNote : null]
+  if (servicePlanMetrics && servicePlanMetrics.activePlanCount > 0) {
+    mrrValue = formatCurrencyUsd(servicePlanMetrics.monthlyRecurringRevenue)
+    mrrTrend = `${servicePlanMetrics.activePlanCount} active plans`
+    mrrFooter = [
+      `${formatCurrencyUsd(servicePlanMetrics.annualRecurringRevenue)} in annual recurring plan value is active now.`,
+      mrrRow?.targetGuidance?.trim() ? `Target: ${mrrRow.targetGuidance.trim()}` : null,
+    ]
+      .filter(Boolean)
+      .join(' ')
+  }
+
+  const chartDisclaimerMerged = [
+    chartDisclaimer,
+    quoteProjection && quoteProjection.openQuoteCount > 0 && chartPipelineNote ? chartPipelineNote : null,
+  ]
     .filter(Boolean)
     .join(' ')
 
@@ -321,26 +353,24 @@ export default async function OpsDashboardPage() {
       description: 'Website form submissions captured',
       footer: cardsBase.leads.unavailable
         ? 'Lead counts are temporarily unavailable.'
-        : 'Stored in Payload and ready for active CRM follow-up.',
+        : 'Stored in Payload and ready for the internal follow-up queue.',
       metricTooltip: kpiTooltipLeads ?? undefined,
       title: 'Leads',
-      trend: cardsBase.leads.unavailable ? 'Unavailable' : `${cardsBase.leads.totalDocs} open`,
+      trend: cardsBase.leads.unavailable ? 'Unavailable' : `${cardsBase.leads.totalDocs} tracked`,
       value: String(cardsBase.leads.totalDocs),
     },
     {
       description: 'Quotes currently in the internal workflow',
       footer: cardsBase.quotes.unavailable
         ? 'Quote counts are temporarily unavailable until the quotes schema is synced.'
-        : 'Use Payload admin when you need full quote editing.',
+        : 'Use Payload admin for full quote editing and internal opportunity review.',
       metricTooltip: kpiTooltipQuotes ?? undefined,
       title: 'Quotes',
       trend: cardsBase.quotes.unavailable ? 'Unavailable' : `${cardsBase.quotes.totalDocs} tracked`,
       value: String(cardsBase.quotes.totalDocs),
     },
     {
-      description: hubspotActive
-        ? 'Open deal amounts from HubSpot (when connected)'
-        : 'Weighted pipeline target from Internal ops targets',
+      description: 'Weighted from accepted and sent quotes stored in Payload',
       footer: projectedFooter,
       metricTooltip: kpiTooltipProjectedRevenue ?? undefined,
       title: 'Projected revenue',
@@ -348,7 +378,7 @@ export default async function OpsDashboardPage() {
       value: projectedValue,
     },
     {
-      description: 'Active maintenance-plan target for steadier cash flow',
+      description: 'Active maintenance-plan revenue derived from service plans',
       footer: mrrFooter,
       metricTooltip: kpiTooltipMrr ?? undefined,
       title: 'MRR',
@@ -359,14 +389,10 @@ export default async function OpsDashboardPage() {
 
   return (
     <AdminDashboardView
-      activeCrmProvider={crmRuntime.activeProvider}
       assetLadderItems={assetLadderItems}
       cards={cards}
       chartDisclaimer={chartDisclaimerMerged}
-      crmBannerState={crmBannerState}
-      crmProviders={crmRuntime.availableProviders}
       growthMilestones={growthMilestones}
-      hubSpotOpsEnabled={hubSpotOpsEnabled}
       liabilityItems={liabilityItems}
       mergedScorecard={mergedScorecard}
       pipelineSnapshotLabel={pipelineSnapshotLabel}
@@ -375,6 +401,106 @@ export default async function OpsDashboardPage() {
       scorecardTooltipMap={scorecardTooltipMap}
     />
   )
+}
+
+async function loadQuoteProjection({
+  payload,
+  user,
+}: {
+  payload: Awaited<ReturnType<typeof getPayload>>
+  user: NonNullable<Awaited<ReturnType<typeof getCurrentPayloadUser>>>
+}): Promise<QuoteProjectionMetrics | null> {
+  try {
+    const result = await payload.find({
+      collection: 'quotes',
+      depth: 0,
+      limit: 200,
+      overrideAccess: false,
+      sort: '-updatedAt',
+      user,
+      where: {
+        status: {
+          in: ['accepted', 'sent'],
+        },
+      },
+    })
+
+    let acceptedQuoteCount = 0
+    let sentQuoteCount = 0
+    let weightedRevenue = 0
+
+    for (const quote of result.docs as Quote[]) {
+      const total = typeof quote.pricing?.total === 'number' ? quote.pricing.total : 0
+
+      if (quote.status === 'accepted') {
+        acceptedQuoteCount += 1
+        weightedRevenue += total * QUOTE_PROJECTION_WEIGHTS.accepted
+      }
+
+      if (quote.status === 'sent') {
+        sentQuoteCount += 1
+        weightedRevenue += total * QUOTE_PROJECTION_WEIGHTS.sent
+      }
+    }
+
+    return {
+      acceptedQuoteCount,
+      openQuoteCount: acceptedQuoteCount + sentQuoteCount,
+      sentQuoteCount,
+      weightedRevenue,
+    }
+  } catch (error) {
+    payload.logger.warn({
+      err: error,
+      msg: 'Ops dashboard quote projection load failed.',
+    })
+
+    return null
+  }
+}
+
+async function loadServicePlanMetrics({
+  payload,
+  user,
+}: {
+  payload: Awaited<ReturnType<typeof getPayload>>
+  user: NonNullable<Awaited<ReturnType<typeof getCurrentPayloadUser>>>
+}): Promise<ServicePlanMetrics | null> {
+  try {
+    const result = await payload.find({
+      collection: 'service-plans',
+      depth: 0,
+      limit: 200,
+      overrideAccess: false,
+      sort: '-updatedAt',
+      user,
+      where: {
+        status: {
+          equals: 'active',
+        },
+      },
+    })
+
+    let annualRecurringRevenue = 0
+    for (const plan of result.docs as ServicePlan[]) {
+      if (typeof plan.annualPlanAmount === 'number') {
+        annualRecurringRevenue += plan.annualPlanAmount
+      }
+    }
+
+    return {
+      activePlanCount: result.docs.length,
+      annualRecurringRevenue,
+      monthlyRecurringRevenue: annualRecurringRevenue / 12,
+    }
+  } catch (error) {
+    payload.logger.warn({
+      err: error,
+      msg: 'Ops dashboard service-plan metrics load failed.',
+    })
+
+    return null
+  }
 }
 
 async function safeCountDocs({

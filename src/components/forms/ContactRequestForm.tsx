@@ -70,7 +70,7 @@ export function ContactRequestForm() {
       setSubmitted(true)
       setServerMessage(
         response.crmSyncStatus === 'failed_contact'
-          ? 'Message saved. CRM sync needs attention, but the team still has your request in Payload.'
+          ? 'Message saved. The internal follow-up workflow needs attention, but the team still has your request in Payload.'
           : response.message,
       )
       form.reset(defaultValues)
@@ -87,7 +87,7 @@ export function ContactRequestForm() {
           <p className="text-xs font-medium uppercase tracking-[0.22em] text-primary">Contact</p>
           <h2 className="text-2xl font-semibold tracking-tight">Send the team a real request</h2>
           <p className="text-sm leading-6 text-muted-foreground">
-            This goes straight into Payload and the CRM follow-up queue. Use it for support,
+            This goes straight into Payload and the team follow-up queue. Use it for support,
             billing, privacy, policy, or service questions that are not just a quote request.
           </p>
         </div>

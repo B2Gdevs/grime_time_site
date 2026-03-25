@@ -9,7 +9,7 @@ function pick(rows: Row[], ...names: string[]): string {
   return ''
 }
 
-/** Derive lead columns from plugin `submissionData` rows (same name hints as EngageBay sync). */
+/** Derive lead columns from plugin `submissionData` rows using the field names shared by the first-party form flows. */
 export function extractLeadFromSubmissionData(rows: Row[] | null | undefined): {
   leadEmail: string | null
   leadName: string | null

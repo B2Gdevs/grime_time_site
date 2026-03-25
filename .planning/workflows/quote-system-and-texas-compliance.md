@@ -1,17 +1,17 @@
-# Internal quote system — product math & Texas compliance (planning)
+# Internal quote system - product math & Texas compliance (planning)
 
 **Owner:** TBD  
-**Last reviewed:** 2026-03-23  
+**Last reviewed:** 2026-03-24  
 **Visibility:** **Internal only.** Feature-flagged; customers see public site + booking-style forms, **not** final quotes until you intentionally expose them later.
 
-## Implementation (v1 — Payload admin)
+## Implementation (v1 - Payload admin)
 
 - **Collection:** `quotes` (admin group **Internal**). Fields match the intake list below (title, status, customer fields, job size, surfaces, soiling, access notes, internal notes).
 - **Portal shortcuts:** Admin `/ops` and the portal sidebar should point staff to **Quotes** and **Quote settings**, not to the public `/schedule` page.
 - **Access:** Set `QUOTES_INTERNAL_ENABLED=true` and `QUOTES_INTERNAL_EMAILS` to a comma-separated list of staff emails (must match Payload user emails). When disabled or the list is empty, **no one** can read/create quotes in admin.
 - **Code:** [`src/collections/Quotes`](../../src/collections/Quotes), [`src/utilities/quotesAccess.ts`](../../src/utilities/quotesAccess.ts).
 - **Pricing controls:** The public instant quote math is powered by global [`src/globals/QuoteSettings/config.ts`](../../src/globals/QuoteSettings/config.ts), which has Payload drafts enabled so staff can stage and publish pricing/service changes deliberately.
-- **CRM mirror:** Quote detail stays in Payload and the active CRM can receive a mirrored deal for follow-up and pipeline visibility. HubSpot is the first live write path via [`src/hooks/beforeQuoteCrm.ts`](../../src/hooks/beforeQuoteCrm.ts) and [`src/lib/crm/providers/hubspot.ts`](../../src/lib/crm/providers/hubspot.ts).
+- **Internal pipeline handoff:** Quote detail stays in Payload and should feed a first-party opportunity pipeline for follow-up and pipeline visibility. Current hook boundary: [`src/hooks/beforeQuoteCrm.ts`](../../src/hooks/beforeQuoteCrm.ts).
 
 ## Texas tax review snapshot (reviewed March 23, 2026)
 
@@ -34,22 +34,22 @@ Operational reading for Grime Time:
 
 - **Property / job size** (sq ft, stories, linear feet, or structured presets)
 - **Description** of surfaces (siding, concrete, roof, windows, etc.)
-- **Soiling level** (e.g. light dust → heavily stained / oxidation) — drives labor hours multiplier
-- **Access / hazards** notes (ladder work, vegetation, HOA) — optional risk/time adder
+- **Soiling level** (for example light dust to heavily stained / oxidation) - drives labor hours multiplier
+- **Access / hazards** notes (ladder work, vegetation, HOA) - optional risk/time adder
 - **Photos** (future): stored in Payload media or blob; admin-only until published
 
-## Economics (baseline formulas — tune with real data)
+## Economics (baseline formulas - tune with real data)
 
 Use spreadsheet or internal admin calculators before automating in code.
 
 | Concept | Formula / note |
 |--------|----------------|
-| **Labor cost** | `sum(crew_hours × loaded_hourly_rate)` — *loaded* = wages + payroll tax + workers’ comp + benefits allocation |
+| **Labor cost** | `sum(crew_hours x loaded_hourly_rate)` - *loaded* = wages + payroll tax + workers' comp + benefits allocation |
 | **Materials** | `consumables + equipment depreciation allocation` per job type |
 | **Subtotal** | `labor + materials` |
 | **Markup / margin** | Either `price = subtotal / (1 - target_margin)` or explicit markup % on subtotal |
-| **Sales tax (Texas)** | Apply **Texas sales tax** only where taxable per **Texas Comptroller** rules for your service categories and nexus; some services may be non-taxable or partially taxable — **verify with a CPA** before encoding rates. |
-| **Fees** | Separate line items (e.g. environmental, trip) if used; document each as pass-through vs revenue |
+| **Sales tax (Texas)** | Apply **Texas sales tax** only where taxable per **Texas Comptroller** rules for your service categories and nexus; some services may be non-taxable or partially taxable - **verify with a CPA** before encoding rates. |
+| **Fees** | Separate line items (for example environmental, trip) if used; document each as pass-through vs revenue |
 
 **Compliance:** This doc is not legal/tax advice. Maintain a **rate table** versioned by effective date when rules change.
 
@@ -58,17 +58,17 @@ Use spreadsheet or internal admin calculators before automating in code.
 | Metric | Definition / question |
 |--------|------------------------|
 | **Conversion rate** | `% of contacts who became paying customers` over a window |
-| **Repeat rate** | `% customers with &gt;1 job` or average jobs per customer per year |
-| **Pipeline** | Weighted value of open quotes/deals |
+| **Repeat rate** | `% customers with >1 job` or average jobs per customer per year |
+| **Pipeline** | Weighted value of open quotes / opportunities |
 | **Monthly recurring revenue (approx)** | For subscription/maintenance plans if offered; else use **projected booked revenue** from calendar |
-| **Capacity** | `available crew_hours/month − booked_hours`; when utilization &gt; X% sustained, flag **hire** |
+| **Capacity** | `available crew_hours/month - booked_hours`; when utilization > X% sustained, flag **hire** |
 
-**“What if” scenarios:** Model `new_leads_per_month × conversion × average_ticket` vs `max_jobs_per_month` from crew capacity.
+**"What if" scenarios:** Model `new_leads_per_month x conversion x average_ticket` vs `max_jobs_per_month` from crew capacity.
 
-## Staffing heuristic (example — replace with your numbers)
+## Staffing heuristic (example - replace with your numbers)
 
-- `accounts_per_coordinator = max_active_relationships` (e.g. follow-ups + active jobs)
-- If `active_accounts &gt; N × coordinators`, review hire or automation (EngageBay sequences, templates)
+- `accounts_per_coordinator = max_active_relationships` (for example follow-ups + active jobs)
+- If `active_accounts > N x coordinators`, review hire or automation (Payload jobs, Resend sequences, templates)
 
 ## Feature flags & access
 
@@ -79,10 +79,9 @@ Use spreadsheet or internal admin calculators before automating in code.
 ## Next planning steps
 
 - [ ] CPA confirmation on Texas tax treatment per service line
-- [x] Lock v1 field list and status workflow (draft → sent → accepted/lost) — reflected in Payload `quotes` collection
-- [x] Keep Payload as quote source of truth and plan one-way sync to CRM deals
-- [x] Optional: link `quotes` → `form-submissions` - **sourceSubmission** relationship on `quotes`
-- [x] Add CRM deal id/status metadata on quotes
-- [x] Define which quote events create/update a CRM deal (`sent`, `accepted`, `lost`)
-- [x] Define v1 HubSpot mapping between quote statuses and deal stages through env vars
-- [ ] Add non-HubSpot provider parity if EngageBay stays the long-term default
+- [x] Lock v1 field list and status workflow (draft -> sent -> accepted/lost) - reflected in Payload `quotes` collection
+- [x] Keep Payload as quote source of truth and plan a first-party opportunity pipeline
+- [x] Optional: link `quotes` -> `form-submissions` - **sourceSubmission** relationship on `quotes`
+- [x] Keep lifecycle metadata on quotes while the first-party opportunity model is being defined
+- [ ] Define which quote events create/update an internal opportunity (`sent`, `accepted`, `lost`)
+- [ ] Define internal opportunity stage mapping and owner rules

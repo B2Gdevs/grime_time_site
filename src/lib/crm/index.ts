@@ -1,6 +1,3 @@
-import { engageBayProvider } from './providers/engagebay'
-import { hubSpotProvider } from './providers/hubspot'
-import { readStoredCrmProvider, writeStoredCrmProvider } from './providerState'
 import type {
   CrmProvider,
   CrmProviderSlug,
@@ -11,103 +8,52 @@ import type {
   SyncQuoteArgs,
 } from './types'
 
-const crmProviders: CrmProvider[] = [engageBayProvider, hubSpotProvider]
+const FORM_SYNC_DISABLED_DETAIL =
+  'Lead saved in Payload. External CRM sync is disabled while the first-party CRM is being built.'
+
+const QUOTE_SYNC_DISABLED_DETAIL =
+  'Quote remains in Payload. External deal sync is disabled while the first-party CRM pipeline is being built.'
 
 export function getCrmProviderSummaries(): CrmProviderSummary[] {
-  return crmProviders.map((provider) => ({
-    configured: provider.isConfigured(),
-    label: provider.label,
-    slug: provider.slug,
-  }))
+  return []
 }
 
 export function getConfiguredCrmProviders(): CrmProvider[] {
-  return crmProviders.filter((provider) => provider.isConfigured())
-}
-
-function findCrmProvider(slug: CrmProviderSlug): CrmProvider | null {
-  return crmProviders.find((provider) => provider.slug === slug) ?? null
+  return []
 }
 
 export async function getActiveCrmProvider(): Promise<CrmProvider | null> {
-  const configuredProviders = getConfiguredCrmProviders()
-
-  if (configuredProviders.length === 0) {
-    return null
-  }
-
-  const storedProvider = await readStoredCrmProvider()
-  if (storedProvider) {
-    const provider = findCrmProvider(storedProvider)
-    if (provider?.isConfigured()) {
-      return provider
-    }
-  }
-
-  return configuredProviders[0] ?? null
+  return null
 }
 
 export async function getCrmRuntimeState(): Promise<{
   activeProvider: CrmProviderSlug | null
   availableProviders: CrmProviderSummary[]
 }> {
-  const activeProvider = await getActiveCrmProvider()
-
   return {
-    activeProvider: activeProvider?.slug ?? null,
-    availableProviders: getCrmProviderSummaries(),
+    activeProvider: null,
+    availableProviders: [],
   }
 }
 
-export async function setActiveCrmProvider(slug: CrmProviderSlug): Promise<{
+export async function setActiveCrmProvider(_slug: CrmProviderSlug): Promise<{
   activeProvider: CrmProviderSlug
   availableProviders: CrmProviderSummary[]
 }> {
-  const provider = findCrmProvider(slug)
+  throw new Error('External CRM providers are disabled. Payload is the active CRM system of record.')
+}
 
-  if (!provider?.isConfigured()) {
-    throw new Error(`CRM provider "${slug}" is not configured.`)
-  }
-
-  await writeStoredCrmProvider(slug)
-
+export async function syncFormSubmissionToActiveCrm(_rows: SubmissionRow[]): Promise<CrmSyncResult> {
   return {
-    activeProvider: provider.slug,
-    availableProviders: getCrmProviderSummaries(),
+    detail: FORM_SYNC_DISABLED_DETAIL,
+    status: 'skipped_no_api_key',
   }
 }
 
-export async function syncFormSubmissionToActiveCrm(rows: SubmissionRow[]): Promise<CrmSyncResult> {
-  const provider = await getActiveCrmProvider()
-
-  if (!provider) {
-    return {
-      detail: 'No configured CRM provider is available.',
-      status: 'skipped_no_api_key',
-    }
+export async function syncQuoteDealToActiveCrm(_args: SyncQuoteArgs): Promise<QuoteSyncResult> {
+  return {
+    detail: QUOTE_SYNC_DISABLED_DETAIL,
+    provider: null,
+    status: 'skipped_provider',
   }
-
-  return provider.syncFormSubmission({ rows })
-}
-
-export async function syncQuoteDealToActiveCrm(args: SyncQuoteArgs): Promise<QuoteSyncResult> {
-  const provider = await getActiveCrmProvider()
-
-  if (!provider) {
-    return {
-      detail: 'No configured CRM provider is available.',
-      provider: null,
-      status: 'skipped_provider',
-    }
-  }
-
-  if (!provider.syncQuoteDeal) {
-    return {
-      detail: `${provider.label} does not support quote-to-deal sync yet.`,
-      provider: provider.slug,
-      status: 'skipped_provider',
-    }
-  }
-
-  return provider.syncQuoteDeal(args)
 }

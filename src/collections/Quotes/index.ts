@@ -425,7 +425,7 @@ export const Quotes: CollectionConfig = {
         update: quotesStaffFieldAccess,
       },
       admin: {
-        description: 'Mirror status for the active CRM deal sync.',
+        description: 'Legacy sync metadata retained while the first-party opportunity pipeline replaces external CRM providers.',
         position: 'sidebar',
       },
       fields: [
@@ -433,8 +433,8 @@ export const Quotes: CollectionConfig = {
           name: 'provider',
           type: 'select',
           options: [
-            { label: 'EngageBay', value: 'engagebay' },
-            { label: 'HubSpot', value: 'hubspot' },
+            { label: 'Legacy EngageBay', value: 'engagebay' },
+            { label: 'Legacy HubSpot', value: 'hubspot' },
           ],
           admin: {
             disabled: true,

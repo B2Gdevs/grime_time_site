@@ -17,13 +17,12 @@
     </references>
   </decision>
   <decision id="D-crm-001">
-    <title>CRM: EngageBay (validate before production)</title>
-    <summary>Default choice is EngageBay for one shared org, mixed user email domains, marketing, and CRM. Review official API, webhooks, and trial limits in `engagebay-integration-review.md` before locking integrations. HubSpot remains a fallback if API or automation gaps block the roadmap.</summary>
-    <impact>Lead sync, sequences, and deals target the CRM abstraction layer with EngageBay active by default; keys stay in env only and provider selection can switch at runtime from the ops dashboard.</impact>
+    <title>Payload-native CRM replaces third-party CRM providers</title>
+    <summary>Grime Time will own leads, contacts, accounts, opportunities, activities, and follow-up state inside Payload instead of depending on HubSpot or EngageBay.</summary>
+    <impact>Public forms, quote lifecycle, `/ops`, and future follow-up sequences should write business state directly into Payload collections and jobs. Third-party CRM provider switching is no longer the product direction.</impact>
     <references>
-      <file path=".planning/workflows/engagebay-integration-review.md" />
-      <file path=".planning/workflows/crm-org-and-sync.md" />
       <file path=".planning/workflows/crm-and-integrations.md" />
+      <file path=".planning/workflows/payload-native-crm-and-billing.md" />
     </references>
   </decision>
   <decision id="D-content-001">
@@ -38,36 +37,46 @@
     </references>
   </decision>
   <decision id="D-crm-003">
-    <title>Ops dashboard CRM reads are HubSpot-gated</title>
-    <summary>Day-board tasks and open-deal pipeline KPIs on `/ops` call HubSpot only when HubSpot is the active runtime provider and a token is configured. EngageBay remains the default for form submission sync; EngageBay parity for ops-board reads is explicitly out of scope until a later phase.</summary>
-    <impact>Internal routes under `src/app/api/internal/hubspot/*` and `src/lib/hubspot/opsClient.ts` implement health, tasks-by-date, and pipeline summary. The portal shows a sync banner and an empty-state message when HubSpot is not active. Form sync continues to use the existing CRM abstraction in `src/lib/crm`.</impact>
+    <title>Ops dashboard is Payload-first, not external-CRM-gated</title>
+    <summary>`/ops` should operate from Payload business records, scheduled work, scorecards, and later an internal follow-up queue. External CRM reads are no longer part of the intended operating model.</summary>
+    <impact>Projected revenue, tasks, and pipeline views should move toward Payload-native data sources and background jobs. Admin UX should stop surfacing provider toggles or HubSpot-only empty states.</impact>
     <references>
       <file path="src/app/(portal)/ops/page.tsx" />
-      <file path="src/lib/hubspot/opsClient.ts" />
+      <file path=".planning/workflows/payload-native-crm-and-billing.md" />
       <file path=".planning/workflows/crm-and-integrations.md" />
       <file path="src/content/docs/ops-dashboard-targets.md" />
     </references>
   </decision>
   <decision id="D-crm-002">
-    <title>Payload quotes stay the source of truth; active CRM gets synced deal summaries</title>
-    <summary>Quote detail, pricing logic, and tax notes live in Payload. The active CRM provider should receive a mirrored deal record for relationship management, follow-up, and pipeline visibility, with HubSpot as the first supported write path.</summary>
-    <impact>Prevents the CRM from becoming the quoting engine while still letting staff manage deal stages, reminders, and customer communication in the provider they are actively using. Write-back from CRM to Payload remains a later decision.</impact>
+    <title>Payload quotes stay the source of truth and feed an internal pipeline</title>
+    <summary>Quote detail, pricing logic, tax notes, and lifecycle state live in Payload. Any pipeline or follow-up model should derive from internal Payload opportunity records, not mirrored deals in a third-party CRM.</summary>
+    <impact>Keeps quoting, follow-up, and customer context in one database. Quote-driven pipeline stages can still exist, but they should be first-party records with first-party automations.</impact>
     <references>
       <file path=".planning/workflows/crm-and-integrations.md" />
+      <file path=".planning/workflows/payload-native-crm-and-billing.md" />
       <file path=".planning/workflows/quote-system-and-texas-compliance.md" />
       <file path="src/collections/Quotes/index.ts" />
     </references>
   </decision>
   <decision id="D-crm-004">
-    <title>HubSpot quote sync is one-way and stage-mapped by environment</title>
-    <summary>HubSpot quote-to-deal sync should create or update deals from Payload quote records only when HubSpot is the active provider. The first delivery stays one-way, stores the external deal id on the quote, and maps quote statuses to HubSpot stages through explicit environment variables instead of hardcoded portal assumptions.</summary>
-    <impact>This keeps Payload in control of quote economics while making HubSpot immediately useful for pipeline follow-up. It also avoids baking a specific pipeline/stage model into source code before the production HubSpot account is finalized.</impact>
+    <title>Lifecycle automation uses Payload jobs and Resend</title>
+    <summary>Follow-up sequences, reminders, and lifecycle emails should be orchestrated through Payload background jobs and delivered through Resend rather than a CRM automation suite.</summary>
+    <impact>Sequence state, enrollment rules, and business logic stay in the app database. This also creates a clear place to add tests, demo data, and auditable automation history.</impact>
     <references>
-      <file path=".planning/workflows/crm-and-integrations.md" />
-      <file path=".planning/phases/05-customers-forms-and-ops-integrations/PLAN.xml" />
-      <file path="src/hooks/beforeQuoteCrm.ts" />
-      <file path="src/lib/crm/providers/hubspot.ts" />
+      <file path=".planning/workflows/payload-native-crm-and-billing.md" />
+      <file path="src/payload.config.ts" />
       <file path=".env.example" />
+    </references>
+  </decision>
+  <decision id="D-billing-001">
+    <title>Stripe handles payments; Payload owns billing state</title>
+    <summary>Stripe will process payment methods, invoices, subscriptions, checkout, and webhook events. Payload remains the business-facing source of truth for invoice context, customer-visible billing history, subscription policy, and operational status.</summary>
+    <impact>Billing UI in the customer portal can stay compact and consistent while Stripe handles payment rails. Webhook handlers and reconciliation logic become a first-party implementation requirement.</impact>
+    <references>
+      <file path=".planning/workflows/payload-native-crm-and-billing.md" />
+      <file path=".env.example" />
+      <file path="src/collections/Invoices/index.ts" />
+      <file path="src/collections/ServicePlans/index.ts" />
     </references>
   </decision>
   <decision id="D-quotes-001">
@@ -114,7 +123,7 @@
   <decision id="D-ops-003">
     <title>Liabilities and scorecard definitions in Payload with live dashboard wiring</title>
     <summary>Operational liability checklist rows live in admin-only collection `ops-liability-items`. Scorecard definition rows (title, formula, target guidance, optional manual value fields, sort order) live in `ops-scorecard-rows`. The portal merges DB rows with defaults from `src/lib/ops/businessOperatingSystem.ts`, seeds those defaults into real records, and now uses scorecard manual values to power KPI cards where appropriate.</summary>
-    <impact>The `/ops` dashboard is no longer an empty shell when the collections exist but have no content. Scorecard and liability CRUD now show up in the live dashboard, while HubSpot-backed metrics continue to override projected revenue when active. Customer portal can still be staff-only during rollout by toggling `PORTAL_ADMIN_ONLY=true`.</impact>
+    <impact>The `/ops` dashboard is no longer an empty shell when the collections exist but have no content. Scorecard and liability CRUD now show up in the live dashboard, and first-party quote/service-plan metrics can override fallback target strings as the data model fills in. Customer portal can still be staff-only during rollout by toggling `PORTAL_ADMIN_ONLY=true`.</impact>
     <references>
       <file path="src/collections/OpsLiabilityItems/index.ts" />
       <file path="src/collections/OpsScorecardRows/index.ts" />

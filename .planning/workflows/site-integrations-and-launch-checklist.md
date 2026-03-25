@@ -1,13 +1,14 @@
 # Site integrations and launch checklist
 
 **Owner:** Product / ops  
-**Tools:** Payload, EngageBay, Resend  
+**Tools:** Payload, Stripe, Resend  
 **Last reviewed:** 2026-03-23
 
 ## Stack in scope right now
 
 - **Payload** for public-site content, forms, media, pricing display, and internal quotes
-- **EngageBay** for contacts, deals, ownership, follow-up, and customer relationship management
+- **Payload** for internal CRM records, follow-up state, and customer relationship management
+- **Stripe** for billing and payment rails
 - **Resend** for transactional form confirmations and system email
 
 ## Current launch checklist
@@ -19,7 +20,7 @@
 - [ ] Reviews / testimonials added and editable in Payload admin
 - [ ] Before / after proof added
 - [ ] Contact page and schedule page both work
-- [ ] Schedule page has a valid EngageBay form ref and renders the real embed instead of the config warning state
+- [ ] Schedule page and customer portal scheduling flow feel complete on mobile and desktop
 - [ ] Header nav and footer nav reflect the real customer journey
 
 ### Instant quote and forms
@@ -31,14 +32,12 @@
 - [ ] Team can see the lead in Payload admin
 - [ ] Quote request fields are useful enough for follow-up and scoping
 
-### EngageBay
+### Internal CRM
 
-- [ ] Form submissions create or update EngageBay contacts
-- [ ] EngageBay API key is not hitting quota or trial-call limits during live tests
-- [ ] Notes include quote-request details
-- [ ] Tagging distinguishes website leads from scheduler leads
-- [ ] Deal sync spec is finalized for Payload quotes -> EngageBay deals
+- [ ] Form submissions create or update first-party lead records and follow-up state
+- [ ] Lead, contact, account, opportunity, activity, and task relationships are documented
 - [ ] Ownership rotation and stale-lead follow-up rules are documented
+- [ ] Quote-to-opportunity promotion is defined for accepted and active quotes
 
 ### Resend
 
@@ -59,7 +58,7 @@
 
 1. Public site trust and conversion polish
 2. Instant estimate flow that submits usable lead data
-3. Quote -> EngageBay deal sync
+3. Quote -> internal opportunity workflow
 4. Real KPI targets in the internal dashboard
 
 ## Not in scope yet

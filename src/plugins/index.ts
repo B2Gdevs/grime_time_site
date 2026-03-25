@@ -98,7 +98,7 @@ export const plugins: Plugin[] = [
           admin: {
             readOnly: true,
             position: 'sidebar',
-            description: 'CRM sync result (server-set).',
+            description: 'Internal follow-up sync result (server-set).',
           },
           options: [
             { label: 'OK', value: 'ok' },
@@ -117,7 +117,7 @@ export const plugins: Plugin[] = [
           admin: {
             readOnly: true,
             position: 'sidebar',
-            description: 'ISO timestamp of last CRM sync attempt.',
+            description: 'ISO timestamp of last follow-up sync attempt.',
           },
         },
         {

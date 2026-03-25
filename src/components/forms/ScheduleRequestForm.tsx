@@ -89,8 +89,8 @@ export function ScheduleRequestForm() {
             </p>
             <h2 className="text-2xl font-semibold tracking-tight">Tell us what you need</h2>
             <p className="text-sm leading-6 text-muted-foreground">
-              We will save the lead in Payload and push it into EngageBay for follow-up, ownership,
-              and scheduling.
+              We will save the request in Payload and route it into the team follow-up and scheduling
+              workflow.
             </p>
           </div>
           <div className="rounded-2xl border border-border/70 bg-card/90 p-3 text-primary">

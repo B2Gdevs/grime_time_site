@@ -99,7 +99,7 @@ The dashboard should answer these in under 10 seconds:
 
 - [ ] Clear status workflow in list filters and badges
 - [ ] Duplicate or template path for similar jobs
-- [ ] Sync quote summaries into EngageBay deals for relationship management
+- [ ] Promote quotes into the first-party opportunity pipeline for relationship management and follow-up
 - [ ] Future customer-visible quote flow in a separate doc before shipping anything public
 
 ### E. Cross-cutting

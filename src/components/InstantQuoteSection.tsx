@@ -95,7 +95,7 @@ export function InstantQuoteSection({ catalog }: { catalog: InstantQuoteCatalog 
 
       setFeedback(
         response.crmSyncStatus === 'failed_contact'
-          ? 'Estimate request saved. Our CRM handoff needs attention, but the team still has your request in Payload.'
+          ? 'Estimate request saved. The internal follow-up workflow needs attention, but the team still has your request in Payload.'
           : response.message,
       )
       form.reset(defaultValues)

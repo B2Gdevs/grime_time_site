@@ -73,14 +73,12 @@ function truncateText(text: string, max = 120): string {
 export function DataTable({
   assetLadderItems,
   growthMilestones,
-  hubSpotOpsEnabled,
   liabilityItems,
   mergedScorecard,
   scorecardTooltipMap,
 }: {
   assetLadderItems: OpsAssetLadderRow[]
   growthMilestones: OpsGrowthMilestoneRow[]
-  hubSpotOpsEnabled: boolean
   liabilityItems: OpsLiabilityRow[]
   mergedScorecard: OpsMergedScorecardRow[]
   scorecardTooltipMap: Record<string, string>
@@ -186,7 +184,7 @@ export function DataTable({
                               onClick={() =>
                                 setDetail({
                                   body:
-                                    'The calendar now marks dates that have scheduled or requested jobs. Pick a date to see those jobs first, then HubSpot tasks for the same day when HubSpot is active.',
+                                    'The calendar marks dates that have scheduled or requested jobs. Pick a date to see the workload for that day without leaving the dashboard.',
                                   description: 'Calendar behavior',
                                   title: 'Daily operating board',
                                 })
@@ -197,15 +195,15 @@ export function DataTable({
                           </span>
                         </TooltipTrigger>
                         <TooltipContent className="max-w-xs">
-                          Scheduled jobs show directly on the board. HubSpot tasks still load when the provider is active.
+                          Scheduled jobs and requests show directly on the board from Payload data.
                         </TooltipContent>
                       </Tooltip>
                     </div>
-                    <CardDescription>Calendar, scheduled jobs, and CRM tasks for the selected day.</CardDescription>
+                    <CardDescription>Calendar and scheduled jobs for the selected day.</CardDescription>
                   </div>
                 </CardHeader>
                 <CardContent className="min-w-0">
-                  <OperatingDayCalendar hubSpotOpsEnabled={hubSpotOpsEnabled} />
+                  <OperatingDayCalendar />
                 </CardContent>
               </Card>
             </TabsContent>

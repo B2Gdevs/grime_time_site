@@ -49,7 +49,7 @@ export const beforeFormSubmissionCrm: CollectionBeforeChangeHook = async ({
     if (result.status === 'failed' || result.status === 'failed_contact') {
       req.payload.logger.error(
         { detail: result.detail },
-        'CRM contact sync failed during form submission create path',
+        'Lead follow-up metadata failed during form submission create path',
       )
     }
 
@@ -59,7 +59,7 @@ export const beforeFormSubmissionCrm: CollectionBeforeChangeHook = async ({
       crmSyncedAt,
     })
   } catch (error) {
-    req.payload.logger.error({ err: error }, 'CRM contact sync error')
+    req.payload.logger.error({ err: error }, 'Lead follow-up metadata error')
 
     return withCrmMetadata(data, {
       crmSyncDetail: error instanceof Error ? error.message.slice(0, 400) : 'unknown error',

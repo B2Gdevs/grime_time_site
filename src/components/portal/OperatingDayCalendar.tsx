@@ -5,14 +5,6 @@ import * as React from 'react'
 import { Calendar } from '@/components/ui/calendar'
 import { weekendOpsMessage } from '@/lib/ops/internalDashboardData'
 
-type HubSpotTaskRow = {
-  id: string
-  ownerId: string | null
-  ownerName?: string | null
-  status: string | null
-  subject: string
-}
-
 type ServiceAppointmentRow = {
   arrivalWindow: null | string
   customerName: string
@@ -50,17 +42,14 @@ function sentenceCase(value: null | string | undefined): string {
     .join(' ')
 }
 
-export function OperatingDayCalendar({ hubSpotOpsEnabled }: { hubSpotOpsEnabled: boolean }) {
+export function OperatingDayCalendar() {
   const [selected, setSelected] = React.useState<Date | undefined>(() => new Date())
   const [month, setMonth] = React.useState<Date>(() => new Date())
   const [timeZone, setTimeZone] = React.useState<string | undefined>(undefined)
-  const [tasks, setTasks] = React.useState<HubSpotTaskRow[]>([])
   const [appointments, setAppointments] = React.useState<ServiceAppointmentRow[]>([])
   const [monthAppointmentCounts, setMonthAppointmentCounts] = React.useState<Record<string, number>>({})
   const [loadingAppointments, setLoadingAppointments] = React.useState(false)
   const [appointmentError, setAppointmentError] = React.useState<string | null>(null)
-  const [loadingTasks, setLoadingTasks] = React.useState(false)
-  const [taskError, setTaskError] = React.useState<string | null>(null)
 
   React.useEffect(() => {
     setTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone)
@@ -113,44 +102,6 @@ export function OperatingDayCalendar({ hubSpotOpsEnabled }: { hubSpotOpsEnabled:
       cancelled = true
     }
   }, [month, selected])
-
-  React.useEffect(() => {
-    if (!hubSpotOpsEnabled || !selected) {
-      setTasks([])
-      setTaskError(null)
-      setLoadingTasks(false)
-      return
-    }
-
-    const date = dateKeyLocal(selected)
-    let cancelled = false
-    setLoadingTasks(true)
-    setTaskError(null)
-
-    fetch(`/api/internal/hubspot/tasks?date=${encodeURIComponent(date)}`)
-      .then(async (res) => {
-        const body = (await res.json().catch(() => ({}))) as {
-          error?: string | null
-          tasks?: HubSpotTaskRow[]
-        }
-        if (cancelled) return
-        setTasks(Array.isArray(body.tasks) ? body.tasks : [])
-        if (body.error) setTaskError(body.error)
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setTaskError('Could not load HubSpot tasks.')
-          setTasks([])
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setLoadingTasks(false)
-      })
-
-    return () => {
-      cancelled = true
-    }
-  }, [hubSpotOpsEnabled, selected])
 
   const jobDays = React.useMemo(
     () => Object.keys(monthAppointmentCounts).map((key) => new Date(`${key}T12:00:00`)),
@@ -219,37 +170,6 @@ export function OperatingDayCalendar({ hubSpotOpsEnabled }: { hubSpotOpsEnabled:
           <div className="rounded-lg border border-dashed bg-muted/30 px-3 py-4 text-sm text-muted-foreground">
             No scheduled jobs are assigned to this date yet.
           </div>
-        ) : null}
-
-        {hubSpotOpsEnabled ? (
-          <>
-            <div className="pt-2">
-              <p className="text-sm font-medium">CRM tasks</p>
-            </div>
-            {loadingTasks ? <p className="text-muted-foreground text-sm">Loading HubSpot tasks...</p> : null}
-            {taskError ? <p className="text-destructive text-sm">{taskError}</p> : null}
-            {!loadingTasks && !taskError && tasks.length === 0 ? (
-              <p className="text-muted-foreground text-sm leading-relaxed">
-                No HubSpot tasks with a due timestamp in this calendar day.
-              </p>
-            ) : null}
-            <ul className="space-y-2">
-              {tasks.map((task) => (
-                <li key={task.id}>
-                  <div className="flex items-start gap-2 rounded-lg border bg-card/60 px-3 py-2">
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium leading-snug">{task.subject}</p>
-                      <p className="text-muted-foreground text-xs">
-                        {[task.status, task.ownerName?.trim() || (task.ownerId ? `Owner ${task.ownerId}` : null)]
-                          .filter(Boolean)
-                          .join(' • ') || 'HubSpot task'}
-                      </p>
-                    </div>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </>
         ) : null}
       </div>
     </div>

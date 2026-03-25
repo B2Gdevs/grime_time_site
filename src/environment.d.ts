@@ -7,13 +7,6 @@ declare global {
       DATABASE_URL: string
       NEXT_PUBLIC_SERVER_URL: string
       VERCEL_PROJECT_PRODUCTION_URL: string
-      ENGAGEBAY_JS_TRACKING_KEY?: string
-      ENGAGEBAY_JS_FORM_REF?: string
-      ENGAGEBAY_SCHEDULE_FORM_ID?: string
-      ENGAGEBAY_API_KEY?: string
-      ENGAGEBAY_SYNC_FORM_SUBMISSIONS?: string
-      ENGAGEBAY_SUBMISSION_TAG?: string
-      ENGAGEBAY_ATTACH_SUBMISSION_NOTE?: string
       QUOTES_INTERNAL_ENABLED?: string
       QUOTES_INTERNAL_EMAILS?: string
       ADMIN_EMAIL?: string
@@ -29,6 +22,9 @@ declare global {
       SUPABASE_S3_ENDPOINT?: string
       SUPABASE_S3_REGION?: string
       RESEND_API_KEY?: string
+      STRIPE_SECRET_KEY?: string
+      STRIPE_ACCOUNT_ID?: string
+      STRIPE_WEBHOOK_SECRET?: string
       EMAIL_FROM?: string
       EMAIL_FROM_NAME?: string
     }

@@ -4,26 +4,9 @@ import * as React from 'react'
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts'
 
 import { opsTrendData } from '@/lib/ops/internalDashboardData'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import {
-  ChartConfig,
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from '@/components/ui/chart'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 
 const metricMeta = {
@@ -36,7 +19,7 @@ const metricMeta = {
     label: 'MRR',
   },
   projectedRevenue: {
-    description: 'Weighted pipeline tells you what the next few weeks can realistically support.',
+    description: 'Internal quote pipeline should show what the next few weeks can realistically support.',
     label: 'Projected revenue',
   },
   revenue: {
@@ -81,9 +64,9 @@ export function ChartAreaInteractive({
   pipelineSnapshotLabel,
   pipelineSnapshotValue,
 }: {
-  /** Shown under the chart — e.g. from Internal ops targets global. */
+  /** Shown under the chart, e.g. from the Internal ops targets global. */
   disclaimer?: string | null
-  /** When HubSpot returns pipeline totals, show next to the illustrative chart. */
+  /** Optional first-party KPI context shown next to the illustrative chart. */
   pipelineSnapshotLabel?: string | null
   pipelineSnapshotValue?: string | null
 }) {
@@ -147,7 +130,7 @@ export function ChartAreaInteractive({
         {pipelineSnapshotLabel && pipelineSnapshotValue ? (
           <p className="text-muted-foreground pt-1 text-xs leading-relaxed">
             <span className="font-medium text-foreground">{pipelineSnapshotLabel}:</span>{' '}
-            {pipelineSnapshotValue} (CRM snapshot; chart series remains illustrative.)
+            {pipelineSnapshotValue} (live ops snapshot; chart series remains illustrative.)
           </p>
         ) : null}
       </CardHeader>
