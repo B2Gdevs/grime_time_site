@@ -7,6 +7,7 @@ import * as migration_20260324_223907_ops_ladders_and_kpi_tooltips from './20260
 import * as migration_20260324_234423_add_quote_settings_versions from './20260324_234423_add_quote_settings_versions';
 import * as migration_20260325_005955_ops_liabilities_and_scorecard_rows from './20260325_005955_ops_liabilities_and_scorecard_rows';
 import * as migration_20260325_021602_customer_portal_billing_and_scheduling from './20260325_021602_customer_portal_billing_and_scheduling';
+import * as migration_20260325_030001_hubspot_quote_deal_sync from './20260325_030001_hubspot_quote_deal_sync';
 
 export const migrations = [
   {
@@ -52,6 +53,11 @@ export const migrations = [
   {
     up: migration_20260325_021602_customer_portal_billing_and_scheduling.up,
     down: migration_20260325_021602_customer_portal_billing_and_scheduling.down,
-    name: '20260325_021602_customer_portal_billing_and_scheduling'
+    name: '20260325_021602_customer_portal_billing_and_scheduling',
+  },
+  {
+    up: migration_20260325_030001_hubspot_quote_deal_sync.up,
+    down: migration_20260325_030001_hubspot_quote_deal_sync.down,
+    name: '20260325_030001_hubspot_quote_deal_sync'
   },
 ];

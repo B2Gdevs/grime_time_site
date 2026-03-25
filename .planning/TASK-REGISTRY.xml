@@ -142,9 +142,9 @@
         <command>See .planning/workflows/crm-and-integrations.md</command>
       </commands>
     </task>
-    <task id="05-04" agent-id="" status="planned">
-      <goal>Sync Payload quotes into EngageBay deals so relationship management and follow-up live in the CRM.</goal>
-      <keywords>engagebay,deals,quotes,crm</keywords>
+    <task id="05-04" agent-id="" status="in-progress">
+      <goal>Sync Payload quotes into active-provider CRM deals so relationship management and follow-up live in the CRM, starting with a HubSpot write path.</goal>
+      <keywords>hubspot,deals,quotes,crm</keywords>
       <commands>
         <command>See .planning/workflows/crm-and-integrations.md and quote-system-and-texas-compliance.md</command>
       </commands>

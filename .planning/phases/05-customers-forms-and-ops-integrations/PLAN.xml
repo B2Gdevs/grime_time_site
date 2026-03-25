@@ -48,6 +48,18 @@
       <description>Recurring maintenance-plan records and calculated subscription totals.</description>
       <keywords>portal,subscription,payload</keywords>
     </file>
+    <file path="src/collections/Quotes/index.ts">
+      <description>Payload quote records that store CRM deal-sync metadata and remain the estimate source for the customer portal.</description>
+      <keywords>quotes,crm,payload</keywords>
+    </file>
+    <file path="src/hooks/beforeQuoteCrm.ts">
+      <description>Quote-side CRM sync hook for sent/accepted/lost quotes.</description>
+      <keywords>quotes,crm,hook</keywords>
+    </file>
+    <file path="src/lib/crm/providers/hubspot.ts">
+      <description>HubSpot contact/deal sync implementation used by the active CRM provider abstraction.</description>
+      <keywords>hubspot,crm,deals</keywords>
+    </file>
     <file path="src/globals/ServicePlanSettings/config.ts">
       <description>Draftable recurring-plan defaults for the customer portal and service-plan records.</description>
       <keywords>portal,subscription,global,drafts</keywords>
@@ -73,8 +85,8 @@
       <status>done</status>
     </task>
     <task id="05-quote-deal-sync" owner="team">
-      <description>Mirror Payload quotes into CRM deals so follow-up and relationship management happen in the chosen provider.</description>
-      <status>planned</status>
+      <description>Mirror Payload quotes into CRM deals so follow-up and relationship management happen in the chosen provider. Current delivery focus: one-way HubSpot deal sync with quote-side CRM metadata and env-configured stage mapping.</description>
+      <status>in-progress</status>
     </task>
     <task id="05-hubspot-ops-read" owner="team">
       <description>Admin-only HubSpot REST reads for `/ops`: account health probe, tasks due on a selected calendar day (portal timezone), and open-deal amount sum for pipeline KPI when HubSpot is the active runtime provider. EngageBay does not receive ops-board parity in this delivery.</description>
@@ -82,8 +94,8 @@
     </task>
   </tasks>
   <questions>
-    <question id="q-deal-direction" status="open">Should v1 treat Payload quotes as the source of truth and push one-way to CRM deals, or allow CRM stage changes to write back later?</question>
-    <question id="q-owner-assignment" status="open">How should new leads and synced deals be assigned to an owner in the active CRM provider for follow-up?</question>
+    <question id="q-deal-direction" status="resolved">v1 treats Payload quotes as the source of truth and pushes one-way into CRM deals. Write-back remains deferred until the outbound sync is stable.</question>
+    <question id="q-owner-assignment" status="in-progress">How should new leads and synced deals be assigned to an owner in the active CRM provider for follow-up?</question>
     <question id="q-engagebay-quota" status="open">Is the current EngageBay 403 coming from trial API-call limits, the wrong key scope, or a throttling window that needs retry logic?</question>
   </questions>
 </phase-plan>

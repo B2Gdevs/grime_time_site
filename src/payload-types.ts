@@ -1042,6 +1042,18 @@ export interface Quote {
    * Optional lead form submission this quote came from.
    */
   sourceSubmission?: (number | null) | FormSubmission;
+  /**
+   * Mirror status for the active CRM deal sync.
+   */
+  crm?: {
+    provider?: ('engagebay' | 'hubspot') | null;
+    dealId?: string | null;
+    syncStatus?:
+      | ('skipped_draft' | 'skipped_no_email' | 'skipped_provider' | 'ok' | 'ok_note_warning' | 'failed')
+      | null;
+    syncedAt?: string | null;
+    syncDetail?: string | null;
+  };
   updatedAt: string;
   createdAt: string;
 }
@@ -2141,6 +2153,15 @@ export interface QuotesSelect<T extends boolean = true> {
       };
   internalNotes?: T;
   sourceSubmission?: T;
+  crm?:
+    | T
+    | {
+        provider?: T;
+        dealId?: T;
+        syncStatus?: T;
+        syncedAt?: T;
+        syncDetail?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }

@@ -49,12 +49,25 @@
     </references>
   </decision>
   <decision id="D-crm-002">
-    <title>Payload quotes stay the source of truth; EngageBay gets synced deal summaries</title>
-    <summary>Quote detail, pricing logic, and tax notes live in Payload. EngageBay should receive a mirrored deal record for relationship management, follow-up, and pipeline visibility.</summary>
-    <impact>Prevents the CRM from becoming the quoting engine while still letting staff manage deal stages, reminders, and customer communication in EngageBay. Write-back from EngageBay to Payload remains a later decision.</impact>
+    <title>Payload quotes stay the source of truth; active CRM gets synced deal summaries</title>
+    <summary>Quote detail, pricing logic, and tax notes live in Payload. The active CRM provider should receive a mirrored deal record for relationship management, follow-up, and pipeline visibility, with HubSpot as the first supported write path.</summary>
+    <impact>Prevents the CRM from becoming the quoting engine while still letting staff manage deal stages, reminders, and customer communication in the provider they are actively using. Write-back from CRM to Payload remains a later decision.</impact>
     <references>
       <file path=".planning/workflows/crm-and-integrations.md" />
       <file path=".planning/workflows/quote-system-and-texas-compliance.md" />
+      <file path="src/collections/Quotes/index.ts" />
+    </references>
+  </decision>
+  <decision id="D-crm-004">
+    <title>HubSpot quote sync is one-way and stage-mapped by environment</title>
+    <summary>HubSpot quote-to-deal sync should create or update deals from Payload quote records only when HubSpot is the active provider. The first delivery stays one-way, stores the external deal id on the quote, and maps quote statuses to HubSpot stages through explicit environment variables instead of hardcoded portal assumptions.</summary>
+    <impact>This keeps Payload in control of quote economics while making HubSpot immediately useful for pipeline follow-up. It also avoids baking a specific pipeline/stage model into source code before the production HubSpot account is finalized.</impact>
+    <references>
+      <file path=".planning/workflows/crm-and-integrations.md" />
+      <file path=".planning/phases/05-customers-forms-and-ops-integrations/PLAN.xml" />
+      <file path="src/hooks/beforeQuoteCrm.ts" />
+      <file path="src/lib/crm/providers/hubspot.ts" />
+      <file path=".env.example" />
     </references>
   </decision>
   <decision id="D-quotes-001">

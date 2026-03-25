@@ -1,7 +1,15 @@
 import { engageBayProvider } from './providers/engagebay'
 import { hubSpotProvider } from './providers/hubspot'
 import { readStoredCrmProvider, writeStoredCrmProvider } from './providerState'
-import type { CrmProvider, CrmProviderSlug, CrmProviderSummary, CrmSyncResult, SubmissionRow } from './types'
+import type {
+  CrmProvider,
+  CrmProviderSlug,
+  CrmProviderSummary,
+  CrmSyncResult,
+  QuoteSyncResult,
+  SubmissionRow,
+  SyncQuoteArgs,
+} from './types'
 
 const crmProviders: CrmProvider[] = [engageBayProvider, hubSpotProvider]
 
@@ -80,4 +88,26 @@ export async function syncFormSubmissionToActiveCrm(rows: SubmissionRow[]): Prom
   }
 
   return provider.syncFormSubmission({ rows })
+}
+
+export async function syncQuoteDealToActiveCrm(args: SyncQuoteArgs): Promise<QuoteSyncResult> {
+  const provider = await getActiveCrmProvider()
+
+  if (!provider) {
+    return {
+      detail: 'No configured CRM provider is available.',
+      provider: null,
+      status: 'skipped_provider',
+    }
+  }
+
+  if (!provider.syncQuoteDeal) {
+    return {
+      detail: `${provider.label} does not support quote-to-deal sync yet.`,
+      provider: provider.slug,
+      status: 'skipped_provider',
+    }
+  }
+
+  return provider.syncQuoteDeal(args)
 }

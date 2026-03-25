@@ -11,7 +11,7 @@
 - **Access:** Set `QUOTES_INTERNAL_ENABLED=true` and `QUOTES_INTERNAL_EMAILS` to a comma-separated list of staff emails (must match Payload user emails). When disabled or the list is empty, **no one** can read/create quotes in admin.
 - **Code:** [`src/collections/Quotes`](../../src/collections/Quotes), [`src/utilities/quotesAccess.ts`](../../src/utilities/quotesAccess.ts).
 - **Pricing controls:** The public instant quote math is powered by global [`src/globals/QuoteSettings/config.ts`](../../src/globals/QuoteSettings/config.ts), which has Payload drafts enabled so staff can stage and publish pricing/service changes deliberately.
-- **EngageBay:** Planning direction is now to keep quote detail in Payload and sync summary records into EngageBay deals for follow-up and pipeline visibility.
+- **CRM mirror:** Quote detail stays in Payload and the active CRM can receive a mirrored deal for follow-up and pipeline visibility. HubSpot is the first live write path via [`src/hooks/beforeQuoteCrm.ts`](../../src/hooks/beforeQuoteCrm.ts) and [`src/lib/crm/providers/hubspot.ts`](../../src/lib/crm/providers/hubspot.ts).
 
 ## Texas tax review snapshot (reviewed March 23, 2026)
 
@@ -80,8 +80,9 @@ Use spreadsheet or internal admin calculators before automating in code.
 
 - [ ] CPA confirmation on Texas tax treatment per service line
 - [x] Lock v1 field list and status workflow (draft → sent → accepted/lost) — reflected in Payload `quotes` collection
-- [x] Keep Payload as quote source of truth and plan one-way sync to EngageBay deals
-- [x] Optional: link `quotes` → `form-submissions` — **sourceSubmission** relationship on `quotes`
-- [ ] Add EngageBay deal id field on quotes
-- [ ] Define which quote events create/update a CRM deal
-- [ ] Define v1 mapping between quote statuses and EngageBay deal stages
+- [x] Keep Payload as quote source of truth and plan one-way sync to CRM deals
+- [x] Optional: link `quotes` → `form-submissions` - **sourceSubmission** relationship on `quotes`
+- [x] Add CRM deal id/status metadata on quotes
+- [x] Define which quote events create/update a CRM deal (`sent`, `accepted`, `lost`)
+- [x] Define v1 HubSpot mapping between quote statuses and deal stages through env vars
+- [ ] Add non-HubSpot provider parity if EngageBay stays the long-term default

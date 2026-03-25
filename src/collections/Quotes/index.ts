@@ -1,5 +1,7 @@
 import type { Access, CollectionConfig } from 'payload'
 
+import { beforeQuoteCrm } from '@/hooks/beforeQuoteCrm'
+import { QUOTE_CRM_SYNC_STATUS_OPTIONS } from '@/lib/crm/types'
 import {
   QUOTE_PROPERTY_TYPE_OPTIONS,
   QUOTE_SERVICE_TYPE_OPTIONS,
@@ -39,6 +41,9 @@ const quotesReadAccess: Access = ({ req: { user } }) => {
     ],
   }
 }
+
+const quotesStaffFieldAccess = ({ req: { user } }: { req: { user: unknown } }) =>
+  Boolean(user && canAccessQuotes(user as Parameters<typeof canAccessQuotes>[0]))
 
 export const Quotes: CollectionConfig = {
   slug: 'quotes',
@@ -412,6 +417,68 @@ export const Quotes: CollectionConfig = {
         description: 'Optional lead form submission this quote came from.',
       },
     },
+    {
+      name: 'crm',
+      type: 'group',
+      access: {
+        read: quotesStaffFieldAccess,
+        update: quotesStaffFieldAccess,
+      },
+      admin: {
+        description: 'Mirror status for the active CRM deal sync.',
+        position: 'sidebar',
+      },
+      fields: [
+        {
+          name: 'provider',
+          type: 'select',
+          options: [
+            { label: 'EngageBay', value: 'engagebay' },
+            { label: 'HubSpot', value: 'hubspot' },
+          ],
+          admin: {
+            disabled: true,
+            readOnly: true,
+          },
+        },
+        {
+          name: 'dealId',
+          type: 'text',
+          admin: {
+            disabled: true,
+            readOnly: true,
+          },
+        },
+        {
+          name: 'syncStatus',
+          type: 'select',
+          options: QUOTE_CRM_SYNC_STATUS_OPTIONS.map((option) => ({ ...option })),
+          admin: {
+            disabled: true,
+            readOnly: true,
+          },
+        },
+        {
+          name: 'syncedAt',
+          type: 'date',
+          admin: {
+            date: {
+              pickerAppearance: 'dayAndTime',
+            },
+            disabled: true,
+            readOnly: true,
+          },
+        },
+        {
+          name: 'syncDetail',
+          type: 'textarea',
+          admin: {
+            disabled: true,
+            readOnly: true,
+          },
+        },
+      ],
+    },
   ],
   hooks: {
     beforeValidate: [
@@ -448,6 +515,7 @@ export const Quotes: CollectionConfig = {
         }
       },
     ],
+    beforeChange: [beforeQuoteCrm],
   },
   timestamps: true,
 }
