@@ -24,6 +24,7 @@ Suggested docs:
 | `image-generation-mcp-and-media-workflow.md` | Vendored image-generation MCP server, Python env isolation, editor wiring, and media-asset workflow |
 | `operating-rhythm-roles-and-reminders.md` | Internal role matrix, daily queue rhythm, SLA defaults, reminder policy, and customer/admin boundary guardrails |
 | `frontend-and-code-quality-conventions.md` | UI/icon usage standards, file-size guardrails, string-literal/enum policy, and extraction/reuse conventions |
+| `refactor-extraction-roadmap.md` | Target folder structure, phased extraction strategy, and prioritized refactor queue for reusable architecture |
 | `site-integrations-and-launch-checklist.md` | Current launch checklist for Payload, Stripe, Resend, and the customer quote flow |
 
 Integration specs and policies stay here. Product backlog and UX planning also use `ROADMAP.xml` and `phases/`.

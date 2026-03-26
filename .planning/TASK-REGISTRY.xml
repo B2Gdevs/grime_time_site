@@ -358,5 +358,12 @@
         <command>See .planning/workflows/frontend-and-code-quality-conventions.md</command>
       </commands>
     </task>
+    <task id="07-15" agent-id="" status="in-progress">
+      <goal>Execute the refactor extraction roadmap toward the target folder structure for ops/auth/crm/dashboard modules, including prioritized large-file splits, presenter/policy extraction, and typed query-param utilities for `/ops/*` routing.</goal>
+      <keywords>refactor,architecture,folders,presenters,policies</keywords>
+      <commands>
+        <command>See .planning/workflows/refactor-extraction-roadmap.md</command>
+      </commands>
+    </task>
   </phase>
 </task-registry>

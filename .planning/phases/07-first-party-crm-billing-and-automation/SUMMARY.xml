@@ -26,6 +26,8 @@
     <item>Ops IA planning now requires a route split for dense modules and a conventional shadcn app shell: command center becomes current-user duties, while CRM/scorecard/milestones/assets/today board move to dedicated `/ops/*` pages.</item>
     <item>Portal shell hardening is now tracked to prevent sidebar/content overlap, horizontal overflow, and hidden impersonation toolbar states.</item>
     <item>A new engineering-conventions track now exists for quality guardrails: icon-forward form/action affordances, reduced copy-heavy faded UI patterns, centralized literals via typed shared constants, and extraction triggers for large files/reusable utilities.</item>
+    <item>Conventions are now measurable and pattern-backed: extraction thresholds (repeat counts and size guardrails) plus a shared catalog of preferred app patterns for ops/customer implementations.</item>
+    <item>A refactor extraction roadmap now anchors the target folder structure and prioritized split queue so architecture cleanup can happen incrementally alongside feature delivery.</item>
   </highlights>
   <next>
     <item>Keep `07-01` moving by tightening dedupe, promotion, and owner-routing rules across form intake, quotes, and commercial accounts, then backfill any existing production customer records that still lack the new `account` relationship.</item>
@@ -41,5 +43,7 @@
     <item>Execute `07-11` shell hardening so sidebar/inset/toolbars behave like a conventional app layout with no overlap regressions.</item>
     <item>Execute `07-12` ops route split and convert command center into a "my duties" hub with deep links/query params to specialized views.</item>
     <item>Execute `07-14` conventions adoption incrementally on touched surfaces so large files shrink and repeated literal patterns are consolidated over normal feature work.</item>
+    <item>Use the measurable thresholds and pattern catalog in implementation reviews so DRY/SOLID checks are explicit instead of subjective.</item>
+    <item>Execute `07-15` roadmap slices in priority order to migrate ops/auth/crm/dashboard modules toward the target folder structure without stop-the-world rewrites.</item>
   </next>
 </phase-summary>

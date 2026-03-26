@@ -357,6 +357,26 @@
       <file path=".planning/TASK-REGISTRY.xml" />
     </references>
   </decision>
+  <decision id="D-eng-002">
+    <title>Conventions use measurable thresholds and shared pattern catalog</title>
+    <summary>Engineering standards should be enforceable with measurable thresholds (repeat-literal/UI/mapping counts and file/function size guardrails) plus a shared design-pattern catalog for recurring product surfaces.</summary>
+    <impact>Code reviews and implementation planning can validate DRY/SOLID goals objectively, reduce one-off architecture choices, and improve consistency across portal, CRM, and billing work.</impact>
+    <references>
+      <file path=".planning/workflows/frontend-and-code-quality-conventions.md" />
+      <file path=".planning/phases/07-first-party-crm-billing-and-automation/PLAN.xml" />
+      <file path=".planning/TASK-REGISTRY.xml" />
+    </references>
+  </decision>
+  <decision id="D-eng-003">
+    <title>Refactor roadmap defines target folder structure for modular architecture</title>
+    <summary>The repository should migrate toward the documented target folder/module layout for ops/auth/crm/dashboard concerns. Extraction is incremental and feature-coupled, not a stop-the-world rewrite.</summary>
+    <impact>Provides a stable architectural target for Codex/Cursor sessions, improves reuse across surfaces, and reduces future churn from ad hoc file placement.</impact>
+    <references>
+      <file path=".planning/workflows/refactor-extraction-roadmap.md" />
+      <file path=".planning/phases/07-first-party-crm-billing-and-automation/PLAN.xml" />
+      <file path=".planning/TASK-REGISTRY.xml" />
+    </references>
+  </decision>
   <decision id="D-vault-001" status="open">
     <title>Shared passwords and API keys for third-party tools</title>
     <summary>Requirement acknowledged: team needs one place to view and maintain logins for other systems. Do not store plaintext in content collections without an encryption and security review. Options include a team password manager, Payload encrypted fields plus RBAC, or dedicated secrets patterns.</summary>
