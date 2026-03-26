@@ -16,6 +16,7 @@ import {
   buildQuoteTaxDecisionNotes,
   buildQuoteTitle,
 } from '@/lib/quotes/normalizeQuoteDraft'
+import { createAssignCustomerAccountHook } from '@/lib/customers/accountRelationship'
 import { buildCustomerOwnershipWhere } from '@/lib/customers/access'
 import { canAccessQuotes, quotesInternalEnabled } from '@/utilities/quotesAccess'
 
@@ -115,6 +116,15 @@ export const Quotes: CollectionConfig = {
           },
         },
       ],
+    },
+    {
+      name: 'account',
+      type: 'relationship',
+      relationTo: 'accounts',
+      admin: {
+        description: 'Company or household account that should see this quote in the portal.',
+        position: 'sidebar',
+      },
     },
     {
       name: 'customerUser',
@@ -482,6 +492,7 @@ export const Quotes: CollectionConfig = {
   ],
   hooks: {
     beforeValidate: [
+      createAssignCustomerAccountHook(),
       ({ data }) => {
         if (!data || !Array.isArray(data.serviceLines)) return data
 

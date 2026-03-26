@@ -6,6 +6,7 @@ import { getPayload, type Where } from 'payload'
 import { AdminDashboardView } from '@/components/portal/AdminDashboardView'
 import type { SectionCardItem } from '@/components/section-cards'
 import { getCurrentPayloadUser, userIsAdmin } from '@/lib/auth/getCurrentPayloadUser'
+import { loadCrmWorkspace } from '@/lib/crm/workspace'
 import { mergeScorecardRows } from '@/lib/ops/mergeScorecard'
 import type {
   OpsAssetLadderRow,
@@ -120,7 +121,7 @@ export default async function OpsDashboardPage() {
   }
 
   if (!userIsAdmin(user)) {
-    redirect('/dashboard')
+    redirect('/')
   }
 
   const payload = await getPayload({ config })
@@ -248,10 +249,10 @@ export default async function OpsDashboardPage() {
 
   await Promise.all([loadGrowth(), loadAssets(), loadLiabilities(), loadScorecardRows()])
 
-  const [cardsBase, quoteProjection, servicePlanMetrics] = await Promise.all([
+  const [cardsBase, crmWorkspace, quoteProjection, servicePlanMetrics] = await Promise.all([
     Promise.all([
       safeCountDocs({
-        collection: 'form-submissions',
+        collection: 'leads',
         payload,
         user,
       }),
@@ -273,6 +274,10 @@ export default async function OpsDashboardPage() {
         },
       }),
     ]).then(([leads, quotes, customers]) => ({ leads, quotes, customers })),
+    loadCrmWorkspace({
+      payload,
+      user,
+    }),
     quotesEnabled
       ? loadQuoteProjection({
           payload,
@@ -350,10 +355,10 @@ export default async function OpsDashboardPage() {
 
   const cards: SectionCardItem[] = [
     {
-      description: 'Website form submissions captured',
+      description: 'First-party CRM leads currently in intake',
       footer: cardsBase.leads.unavailable
         ? 'Lead counts are temporarily unavailable.'
-        : 'Stored in Payload and ready for the internal follow-up queue.',
+        : 'Tracked in Payload and surfaced in the CRM workspace follow-up queues.',
       metricTooltip: kpiTooltipLeads ?? undefined,
       title: 'Leads',
       trend: cardsBase.leads.unavailable ? 'Unavailable' : `${cardsBase.leads.totalDocs} tracked`,
@@ -392,6 +397,7 @@ export default async function OpsDashboardPage() {
       assetLadderItems={assetLadderItems}
       cards={cards}
       chartDisclaimer={chartDisclaimerMerged}
+      crmWorkspace={crmWorkspace}
       growthMilestones={growthMilestones}
       liabilityItems={liabilityItems}
       mergedScorecard={mergedScorecard}
@@ -509,7 +515,7 @@ async function safeCountDocs({
   user,
   where,
 }: {
-  collection: 'form-submissions' | 'quotes' | 'users'
+  collection: 'leads' | 'quotes' | 'users'
   payload: Awaited<ReturnType<typeof getPayload>>
   user: NonNullable<Awaited<ReturnType<typeof getCurrentPayloadUser>>>
   where?: Where

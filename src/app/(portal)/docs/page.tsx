@@ -24,7 +24,7 @@ export default async function DocsIndexPage() {
 
   const isAdmin = userIsAdmin(user)
   if (!isAdmin) {
-    redirect('/dashboard')
+    redirect('/')
   }
   const docs = getPortalDocs({ isAdmin })
   const groupedDocs = groupPortalDocs(docs)

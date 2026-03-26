@@ -1,4 +1,4 @@
-import { requirePayloadUser } from '@/lib/auth/requirePayloadUser'
+import { requireEffectivePayloadUser } from '@/lib/auth/requirePayloadUser'
 import { customerScheduleRequestSchema } from '@/lib/forms/customerScheduleRequest'
 import type { Quote, ServiceAppointment, ServicePlan } from '@/payload-types'
 
@@ -12,7 +12,7 @@ function titleFromSource(args: {
 }
 
 export async function POST(request: Request) {
-  const auth = await requirePayloadUser(request)
+  const auth = await requireEffectivePayloadUser(request)
 
   if (!auth) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })

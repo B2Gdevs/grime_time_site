@@ -1,0 +1,3 @@
+[mcp_servers.image_gen_local]
+command = "node"
+args = ["scripts/image-gen-mcp-start.mjs", "--transport", "stdio"]

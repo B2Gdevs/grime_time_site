@@ -13,6 +13,8 @@
     <item>A pending migration file now exists for Payload MCP API keys and the remaining quote schema changes, but it has not been applied.</item>
     <item>The customer login flow is now customer-only, while admin access stays on Payload admin and the internal ops dashboard lives on a separate `/ops` route.</item>
     <item>The portal sidebar and route boundaries now keep customers on account-centric pages (`/dashboard`, `/estimates`, `/invoices`, `/service-schedule`, `/account`) instead of exposing docs/admin-oriented navigation.</item>
+    <item>Admin impersonation is now first-party: a real-admin/effective-user auth context, admin-only impersonation routes, and a floating preview toolbar persist across frontend and portal pages so staff can preview customer scope without losing admin identity.</item>
+    <item>A vendored image-generation MCP server is now part of the repo workflow under `vendor/image-gen-mcp`, with a self-contained `uv` environment, root `.env` passthrough, Cursor/Codex config examples, and an env-gated `npm run dev` hook so image tooling can run alongside Next when needed.</item>
   </highlights>
   <next>
     <item>Approve and run the database migration window before enabling any new schema-backed tooling such as Payload MCP API keys.</item>
@@ -20,5 +22,6 @@
     <item>After migration approval, enable Payload MCP, restart dev, and generate an API key for local editor use.</item>
     <item>Decide whether admin sign-in should remain at `/admin/login` or later get a branded dedicated team-login route.</item>
     <item>Backfill any real production customer accounts to the new portal profile fields if existing contacts need billing/service addresses immediately.</item>
+    <item>Use the new image MCP workflow in phase 03 to generate and curate hero, feature, and background assets, then decide which ones belong in Payload media versus `public/`.</item>
   </next>
 </phase-summary>

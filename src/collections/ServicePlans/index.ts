@@ -1,6 +1,7 @@
 import type { CollectionConfig } from 'payload'
 
 import { isAdmin } from '@/access/isAdmin'
+import { createAssignCustomerAccountHook } from '@/lib/customers/accountRelationship'
 import { buildCustomerOwnershipWhere } from '@/lib/customers/access'
 import { arrivalWindowOptions, servicePlanStatusOptions } from '@/lib/services/constants'
 import { calculateServicePlanPricing } from '@/lib/services/subscriptionMath'
@@ -25,6 +26,15 @@ export const ServicePlans: CollectionConfig = {
       name: 'title',
       type: 'text',
       required: true,
+    },
+    {
+      name: 'account',
+      type: 'relationship',
+      relationTo: 'accounts',
+      admin: {
+        description: 'Portal company or household account associated with this recurring plan.',
+        position: 'sidebar',
+      },
     },
     {
       type: 'row',
@@ -242,6 +252,7 @@ export const ServicePlans: CollectionConfig = {
   ],
   hooks: {
     beforeValidate: [
+      createAssignCustomerAccountHook(),
       ({ data }) => {
         if (!data) return data
 

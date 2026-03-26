@@ -1,7 +1,7 @@
 import config from '@payload-config'
-import { getPayload, type Where } from 'payload'
+import { getPayload } from 'payload'
 
-import { authEntityEmail, authEntityId } from '@/lib/auth/roles'
+import { buildCustomerOwnershipWhere } from '@/lib/customers/access'
 import { buildSuggestedVisitDates } from '@/lib/services/subscriptionMath'
 import type {
   Invoice,
@@ -95,35 +95,11 @@ function serviceAddressLabel(address: Quote['serviceAddress'] | Invoice['service
   )
 }
 
-function buildOwnWhere(user: User) {
-  const userId = authEntityId(user)
-  const userEmail = authEntityEmail(user)?.trim().toLowerCase()
-  const or: Where[] = []
-
-  if (userId != null) {
-    or.push({
-      customerUser: {
-        equals: userId,
-      },
-    } as Where)
-  }
-
-  if (userEmail) {
-    or.push({
-      customerEmail: {
-        equals: userEmail,
-      },
-    } as Where)
-  }
-
-  return or.length > 0 ? { or } : null
-}
-
 export async function getCustomerPortalData(user: User): Promise<CustomerPortalSnapshot> {
   const payload = await getPayload({ config })
-  const ownWhere = buildOwnWhere(user)
+  const ownWhere = buildCustomerOwnershipWhere(user)
 
-  if (!ownWhere) {
+  if (!ownWhere || ownWhere === true) {
     return {
       appointments: [],
       estimates: [],

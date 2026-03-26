@@ -1,8 +1,8 @@
-import { requirePayloadUser } from '@/lib/auth/requirePayloadUser'
+import { requireEffectivePayloadUser } from '@/lib/auth/requirePayloadUser'
 import { customerAccountSchema } from '@/lib/forms/customerAccount'
 
 export async function POST(request: Request) {
-  const auth = await requirePayloadUser(request)
+  const auth = await requireEffectivePayloadUser(request)
 
   if (!auth) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })

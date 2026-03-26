@@ -74,6 +74,14 @@ export interface Config {
     categories: Category;
     quotes: Quote;
     users: User;
+    accounts: Account;
+    contacts: Contact;
+    leads: Lead;
+    opportunities: Opportunity;
+    'crm-activities': CrmActivity;
+    'crm-sequences': CrmSequence;
+    'crm-tasks': CrmTask;
+    'sequence-enrollments': SequenceEnrollment;
     invoices: Invoice;
     'service-plans': ServicePlan;
     'service-appointments': ServiceAppointment;
@@ -105,6 +113,14 @@ export interface Config {
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     quotes: QuotesSelect<false> | QuotesSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
+    accounts: AccountsSelect<false> | AccountsSelect<true>;
+    contacts: ContactsSelect<false> | ContactsSelect<true>;
+    leads: LeadsSelect<false> | LeadsSelect<true>;
+    opportunities: OpportunitiesSelect<false> | OpportunitiesSelect<true>;
+    'crm-activities': CrmActivitiesSelect<false> | CrmActivitiesSelect<true>;
+    'crm-sequences': CrmSequencesSelect<false> | CrmSequencesSelect<true>;
+    'crm-tasks': CrmTasksSelect<false> | CrmTasksSelect<true>;
+    'sequence-enrollments': SequenceEnrollmentsSelect<false> | SequenceEnrollmentsSelect<true>;
     invoices: InvoicesSelect<false> | InvoicesSelect<true>;
     'service-plans': ServicePlansSelect<false> | ServicePlansSelect<true>;
     'service-appointments': ServiceAppointmentsSelect<false> | ServiceAppointmentsSelect<true>;
@@ -475,6 +491,10 @@ export interface User {
   name?: string | null;
   phone?: string | null;
   company?: string | null;
+  /**
+   * Primary CRM account this user should view in the portal.
+   */
+  account?: (number | null) | Account;
   billingAddress?: {
     street1?: string | null;
     street2?: string | null;
@@ -510,16 +530,509 @@ export interface User {
   collection: 'users';
 }
 /**
+ * Household or business relationship record for the first-party CRM.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "accounts".
+ */
+export interface Account {
+  id: number;
+  name: string;
+  status: 'prospect' | 'active' | 'inactive' | 'archived';
+  accountType: 'residential' | 'commercial' | 'hoa_multifamily' | 'municipal' | 'other';
+  owner?: (number | null) | User;
+  legalName?: string | null;
+  primaryContact?: (number | null) | Contact;
+  customerUser?: (number | null) | User;
+  billingEmail?: string | null;
+  accountsPayableEmail?: string | null;
+  accountsPayablePhone?: string | null;
+  billingTerms?: ('due_on_receipt' | 'net_15' | 'net_30' | 'custom') | null;
+  locationCount?: number | null;
+  taxExempt?: boolean | null;
+  /**
+   * Certificate number, internal note, or exemption reference for commercial billing.
+   */
+  taxExemptionReference?: string | null;
+  serviceAddress?: {
+    street1?: string | null;
+    street2?: string | null;
+    city?: string | null;
+    state?: string | null;
+    postalCode?: string | null;
+  };
+  billingAddress?: {
+    street1?: string | null;
+    street2?: string | null;
+    city?: string | null;
+    state?: string | null;
+    postalCode?: string | null;
+  };
+  /**
+   * Useful for multi-site commercial relationships or route notes.
+   */
+  serviceLocationSummary?: string | null;
+  activeQuote?: (number | null) | Quote;
+  activeServicePlan?: (number | null) | ServicePlan;
+  notes?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * People records linked to accounts, opportunities, and customer users.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "contacts".
+ */
+export interface Contact {
+  id: number;
+  fullName: string;
+  email: string;
+  phone?: string | null;
+  owner?: (number | null) | User;
+  status: 'active' | 'unsubscribed' | 'do_not_contact' | 'inactive';
+  roles?: ('primary' | 'billing' | 'onsite' | 'decision_maker' | 'other')[] | null;
+  preferredContactMethod?: ('email' | 'phone' | 'text' | 'any') | null;
+  account?: (number | null) | Account;
+  linkedUser?: (number | null) | User;
+  lastContactAt?: string | null;
+  nextActionAt?: string | null;
+  /**
+   * Date when this contact should appear stale in follow-up queues.
+   */
+  staleAt?: string | null;
+  notes?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Internal job quotes only. Includes line items, totals, and Texas tax review fields. Never expose draft quotes on the public site.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "quotes".
+ */
+export interface Quote {
+  id: number;
+  /**
+   * Short label, for example: 123 Oak - house wash
+   */
+  title: string;
+  status?: ('draft' | 'sent' | 'accepted' | 'lost') | null;
+  validUntil?: string | null;
+  customerName?: string | null;
+  customerEmail?: string | null;
+  customerPhone?: string | null;
+  /**
+   * Company or household account that should see this quote in the portal.
+   */
+  account?: (number | null) | Account;
+  /**
+   * Attach the customer portal account so the estimate appears in their portal.
+   */
+  customerUser?: (number | null) | User;
+  /**
+   * Job site details used for scoping and local tax review.
+   */
+  serviceAddress?: {
+    street1?: string | null;
+    street2?: string | null;
+    city?: string | null;
+    state?: string | null;
+    postalCode?: string | null;
+  };
+  propertyType?: ('residential' | 'commercial' | 'new_residential_construction' | 'hoa_multi_unit' | 'other') | null;
+  /**
+   * Sq ft, stories, linear feet, or preset label.
+   */
+  jobSize?: string | null;
+  /**
+   * Surfaces: siding, concrete, roof, windows, gutters, fencing, etc.
+   */
+  surfaceDescription?: string | null;
+  soilingLevel?: ('light' | 'medium' | 'heavy') | null;
+  /**
+   * Ladder work, vegetation, HOA restrictions, hazards, water access, etc.
+   */
+  accessNotes?: string | null;
+  /**
+   * Quote builder rows. Totals are calculated from these lines.
+   */
+  serviceLines?:
+    | {
+        serviceType:
+          | 'house_wash'
+          | 'soft_wash'
+          | 'roof_cleaning'
+          | 'window_cleaning'
+          | 'concrete_cleaning'
+          | 'driveway_walkway_cleaning'
+          | 'fence_cleaning'
+          | 'deck_patio_cleaning'
+          | 'gutter_cleaning'
+          | 'rust_stain_treatment'
+          | 'other';
+        description: string;
+        quantity: number;
+        unit?: string | null;
+        unitPrice: number;
+        lineTotal?: number | null;
+        /**
+         * Most Texas exterior cleaning lines will stay taxable unless you have a documented exception.
+         */
+        taxable?: boolean | null;
+        taxCategory?:
+          | ('building_grounds_cleaning' | 'pressure_washing_maintenance' | 'window_washing' | 'manual_review_required')
+          | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Calculated subtotal and tax fields. Enter the rate you plan to collect; keep exemptions and CPA-review paths documented.
+   */
+  pricing?: {
+    /**
+     * Pre-tax discount applied against the quote subtotal.
+     */
+    discountAmount?: number | null;
+    /**
+     * Texas Comptroller guidance generally treats cleaning homes/buildings, washing windows, and pressure washing buildings, sidewalks, or parking lots as taxable. Keep exemption and CPA-review paths available before finalizing the quote.
+     */
+    taxDecision?:
+      | ('collect_sales_tax' | 'homebuilder_exception' | 'exemption_certificate' | 'manual_review_required')
+      | null;
+    /**
+     * Enter the actual rate you plan to collect. Texas state sales tax is 6.25%; local tax can bring the total up to 8.25% depending on your facts and filing setup.
+     */
+    taxRatePercent?: number | null;
+    /**
+     * Document why you collected or did not collect tax, plus any homebuilder certification, exemption certificate, or CPA guidance.
+     */
+    taxDecisionNotes?: string | null;
+    subtotal?: number | null;
+    taxableSubtotal?: number | null;
+    salesTaxAmount?: number | null;
+    total?: number | null;
+  };
+  /**
+   * Staff-only pricing discussion, objections, follow-up notes, and compliance flags.
+   */
+  internalNotes?: string | null;
+  /**
+   * Optional lead form submission this quote came from.
+   */
+  sourceSubmission?: (number | null) | FormSubmission;
+  /**
+   * Legacy sync metadata retained while the first-party opportunity pipeline replaces external CRM providers.
+   */
+  crm?: {
+    provider?: ('engagebay' | 'hubspot') | null;
+    dealId?: string | null;
+    syncStatus?:
+      | ('skipped_draft' | 'skipped_no_email' | 'skipped_provider' | 'ok' | 'ok_note_warning' | 'failed')
+      | null;
+    syncedAt?: string | null;
+    syncDetail?: string | null;
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Website form posts. Lead columns are derived from field names (email, name, etc.). CRM columns reflect provider sync.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "form-submissions".
+ */
+export interface FormSubmission {
+  id: number;
+  form: number | Form;
+  submissionData?:
+    | {
+        field: string;
+        value: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Auto-filled from submission row named email (or similar).
+   */
+  leadEmail?: string | null;
+  /**
+   * Auto-filled from name / fullName / firstName rows.
+   */
+  leadName?: string | null;
+  /**
+   * Internal follow-up sync result (server-set).
+   */
+  crmSyncStatus?:
+    | (
+        | 'ok'
+        | 'ok_note_warning'
+        | 'failed'
+        | 'failed_contact'
+        | 'skipped_no_api_key'
+        | 'skipped_sync_disabled'
+        | 'skipped_no_email'
+        | 'skipped_no_rows'
+      )
+    | null;
+  /**
+   * ISO timestamp of last follow-up sync attempt.
+   */
+  crmSyncedAt?: string | null;
+  /**
+   * Error or status detail from the sync step.
+   */
+  crmSyncDetail?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "forms".
+ */
+export interface Form {
+  id: number;
+  title: string;
+  fields?:
+    | (
+        | {
+            name: string;
+            label?: string | null;
+            width?: number | null;
+            required?: boolean | null;
+            defaultValue?: boolean | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'checkbox';
+          }
+        | {
+            name: string;
+            label?: string | null;
+            width?: number | null;
+            required?: boolean | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'country';
+          }
+        | {
+            name: string;
+            label?: string | null;
+            width?: number | null;
+            required?: boolean | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'email';
+          }
+        | {
+            message?: {
+              root: {
+                type: string;
+                children: {
+                  type: any;
+                  version: number;
+                  [k: string]: unknown;
+                }[];
+                direction: ('ltr' | 'rtl') | null;
+                format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+                indent: number;
+                version: number;
+              };
+              [k: string]: unknown;
+            } | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'message';
+          }
+        | {
+            name: string;
+            label?: string | null;
+            width?: number | null;
+            defaultValue?: number | null;
+            required?: boolean | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'number';
+          }
+        | {
+            name: string;
+            label?: string | null;
+            width?: number | null;
+            defaultValue?: string | null;
+            placeholder?: string | null;
+            options?:
+              | {
+                  label: string;
+                  value: string;
+                  id?: string | null;
+                }[]
+              | null;
+            required?: boolean | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'select';
+          }
+        | {
+            name: string;
+            label?: string | null;
+            width?: number | null;
+            required?: boolean | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'state';
+          }
+        | {
+            name: string;
+            label?: string | null;
+            width?: number | null;
+            defaultValue?: string | null;
+            required?: boolean | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'text';
+          }
+        | {
+            name: string;
+            label?: string | null;
+            width?: number | null;
+            defaultValue?: string | null;
+            required?: boolean | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'textarea';
+          }
+      )[]
+    | null;
+  submitButtonLabel?: string | null;
+  /**
+   * Choose whether to display an on-page message or redirect to a different page after they submit the form.
+   */
+  confirmationType?: ('message' | 'redirect') | null;
+  confirmationMessage?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  redirect?: {
+    url: string;
+  };
+  /**
+   * Send custom emails when the form submits. Use comma separated lists to send the same email to multiple recipients. To reference a value from this form, wrap that field's name with double curly brackets, i.e. {{firstName}}. You can use a wildcard {{*}} to output all data and {{*:table}} to format it as an HTML table in the email.
+   */
+  emails?:
+    | {
+        emailTo?: string | null;
+        cc?: string | null;
+        bcc?: string | null;
+        replyTo?: string | null;
+        emailFrom?: string | null;
+        subject: string;
+        /**
+         * Enter the message that should be sent in this email.
+         */
+        message?: {
+          root: {
+            type: string;
+            children: {
+              type: any;
+              version: number;
+              [k: string]: unknown;
+            }[];
+            direction: ('ltr' | 'rtl') | null;
+            format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+            indent: number;
+            version: number;
+          };
+          [k: string]: unknown;
+        } | null;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Recurring maintenance-plan records used by the customer portal and scheduling views.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "service-plans".
+ */
+export interface ServicePlan {
+  id: number;
+  title: string;
+  /**
+   * Portal company or household account associated with this recurring plan.
+   */
+  account?: (number | null) | Account;
+  status: 'draft' | 'active' | 'paused' | 'cancelled';
+  /**
+   * First visit or anchor date used to suggest the ongoing cadence.
+   */
+  anchorDate?: string | null;
+  preferredWindow?: ('morning' | 'afternoon' | 'flexible') | null;
+  customerUser: number | User;
+  customerEmail: string;
+  customerName?: string | null;
+  serviceAddress?: {
+    street1?: string | null;
+    street2?: string | null;
+    city?: string | null;
+    state?: string | null;
+    postalCode?: string | null;
+  };
+  /**
+   * Accepted quote this plan was built from.
+   */
+  sourceQuote?: (number | null) | Quote;
+  /**
+   * Short service scope summary shown in the portal.
+   */
+  serviceSummary?: string | null;
+  /**
+   * Reference price for one normal standalone visit.
+   */
+  singleJobAmount: number;
+  discountPercent: number;
+  visitsPerYear: number;
+  billingInstallmentsPerYear: number;
+  discountedVisitAmount?: number | null;
+  annualPlanAmount?: number | null;
+  installmentAmount?: number | null;
+  cadenceMonths?: number | null;
+  notes?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "ServiceGridBlock".
  */
 export interface ServiceGridBlock {
+  eyebrow?: string | null;
   heading: string;
   intro?: string | null;
   services?:
     | {
+        eyebrow?: string | null;
         name: string;
         summary: string;
+        media?: (number | null) | Media;
+        pricingHint?: string | null;
+        highlights?:
+          | {
+              text: string;
+              id?: string | null;
+            }[]
+          | null;
         id?: string | null;
       }[]
     | null;
@@ -757,203 +1270,31 @@ export interface FormBlock {
   blockType: 'formBlock';
 }
 /**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "forms".
- */
-export interface Form {
-  id: number;
-  title: string;
-  fields?:
-    | (
-        | {
-            name: string;
-            label?: string | null;
-            width?: number | null;
-            required?: boolean | null;
-            defaultValue?: boolean | null;
-            id?: string | null;
-            blockName?: string | null;
-            blockType: 'checkbox';
-          }
-        | {
-            name: string;
-            label?: string | null;
-            width?: number | null;
-            required?: boolean | null;
-            id?: string | null;
-            blockName?: string | null;
-            blockType: 'country';
-          }
-        | {
-            name: string;
-            label?: string | null;
-            width?: number | null;
-            required?: boolean | null;
-            id?: string | null;
-            blockName?: string | null;
-            blockType: 'email';
-          }
-        | {
-            message?: {
-              root: {
-                type: string;
-                children: {
-                  type: any;
-                  version: number;
-                  [k: string]: unknown;
-                }[];
-                direction: ('ltr' | 'rtl') | null;
-                format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-                indent: number;
-                version: number;
-              };
-              [k: string]: unknown;
-            } | null;
-            id?: string | null;
-            blockName?: string | null;
-            blockType: 'message';
-          }
-        | {
-            name: string;
-            label?: string | null;
-            width?: number | null;
-            defaultValue?: number | null;
-            required?: boolean | null;
-            id?: string | null;
-            blockName?: string | null;
-            blockType: 'number';
-          }
-        | {
-            name: string;
-            label?: string | null;
-            width?: number | null;
-            defaultValue?: string | null;
-            placeholder?: string | null;
-            options?:
-              | {
-                  label: string;
-                  value: string;
-                  id?: string | null;
-                }[]
-              | null;
-            required?: boolean | null;
-            id?: string | null;
-            blockName?: string | null;
-            blockType: 'select';
-          }
-        | {
-            name: string;
-            label?: string | null;
-            width?: number | null;
-            required?: boolean | null;
-            id?: string | null;
-            blockName?: string | null;
-            blockType: 'state';
-          }
-        | {
-            name: string;
-            label?: string | null;
-            width?: number | null;
-            defaultValue?: string | null;
-            required?: boolean | null;
-            id?: string | null;
-            blockName?: string | null;
-            blockType: 'text';
-          }
-        | {
-            name: string;
-            label?: string | null;
-            width?: number | null;
-            defaultValue?: string | null;
-            required?: boolean | null;
-            id?: string | null;
-            blockName?: string | null;
-            blockType: 'textarea';
-          }
-      )[]
-    | null;
-  submitButtonLabel?: string | null;
-  /**
-   * Choose whether to display an on-page message or redirect to a different page after they submit the form.
-   */
-  confirmationType?: ('message' | 'redirect') | null;
-  confirmationMessage?: {
-    root: {
-      type: string;
-      children: {
-        type: any;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  } | null;
-  redirect?: {
-    url: string;
-  };
-  /**
-   * Send custom emails when the form submits. Use comma separated lists to send the same email to multiple recipients. To reference a value from this form, wrap that field's name with double curly brackets, i.e. {{firstName}}. You can use a wildcard {{*}} to output all data and {{*:table}} to format it as an HTML table in the email.
-   */
-  emails?:
-    | {
-        emailTo?: string | null;
-        cc?: string | null;
-        bcc?: string | null;
-        replyTo?: string | null;
-        emailFrom?: string | null;
-        subject: string;
-        /**
-         * Enter the message that should be sent in this email.
-         */
-        message?: {
-          root: {
-            type: string;
-            children: {
-              type: any;
-              version: number;
-              [k: string]: unknown;
-            }[];
-            direction: ('ltr' | 'rtl') | null;
-            format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-            indent: number;
-            version: number;
-          };
-          [k: string]: unknown;
-        } | null;
-        id?: string | null;
-      }[]
-    | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * Internal job quotes only. Includes line items, totals, and Texas tax review fields. Never expose draft quotes on the public site.
+ * Inbound lead records before qualification and account/contact conversion.
  *
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "quotes".
+ * via the `definition` "leads".
  */
-export interface Quote {
+export interface Lead {
   id: number;
-  /**
-   * Short label, for example: 123 Oak - house wash
-   */
   title: string;
-  status?: ('draft' | 'sent' | 'accepted' | 'lost') | null;
-  validUntil?: string | null;
-  customerName?: string | null;
+  status: 'new' | 'working' | 'qualified' | 'disqualified' | 'converted';
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  source:
+    | 'instant_quote'
+    | 'contact_request'
+    | 'schedule_request'
+    | 'phone_call'
+    | 'referral'
+    | 'repeat_customer'
+    | 'manual';
+  temperature?: ('cold' | 'warm' | 'hot') | null;
+  customerName: string;
   customerEmail?: string | null;
   customerPhone?: string | null;
-  /**
-   * Attach the customer portal account so the estimate appears in their portal.
-   */
-  customerUser?: (number | null) | User;
-  /**
-   * Job site details used for scoping and local tax review.
-   */
+  owner?: (number | null) | User;
+  nextActionAt?: string | null;
+  staleAt?: string | null;
   serviceAddress?: {
     street1?: string | null;
     street2?: string | null;
@@ -961,149 +1302,94 @@ export interface Quote {
     state?: string | null;
     postalCode?: string | null;
   };
-  propertyType?: ('residential' | 'commercial' | 'new_residential_construction' | 'hoa_multi_unit' | 'other') | null;
-  /**
-   * Sq ft, stories, linear feet, or preset label.
-   */
-  jobSize?: string | null;
-  /**
-   * Surfaces: siding, concrete, roof, windows, gutters, fencing, etc.
-   */
-  surfaceDescription?: string | null;
-  soilingLevel?: ('light' | 'medium' | 'heavy') | null;
-  /**
-   * Ladder work, vegetation, HOA restrictions, hazards, water access, etc.
-   */
-  accessNotes?: string | null;
-  /**
-   * Quote builder rows. Totals are calculated from these lines.
-   */
-  serviceLines?:
-    | {
-        serviceType:
-          | 'house_wash'
-          | 'soft_wash'
-          | 'roof_cleaning'
-          | 'window_cleaning'
-          | 'concrete_cleaning'
-          | 'driveway_walkway_cleaning'
-          | 'fence_cleaning'
-          | 'deck_patio_cleaning'
-          | 'gutter_cleaning'
-          | 'rust_stain_treatment'
-          | 'other';
-        description: string;
-        quantity: number;
-        unit?: string | null;
-        unitPrice: number;
-        lineTotal?: number | null;
-        /**
-         * Most Texas exterior cleaning lines will stay taxable unless you have a documented exception.
-         */
-        taxable?: boolean | null;
-        taxCategory?:
-          | ('building_grounds_cleaning' | 'pressure_washing_maintenance' | 'window_washing' | 'manual_review_required')
-          | null;
-        id?: string | null;
-      }[]
-    | null;
-  /**
-   * Calculated subtotal and tax fields. Enter the rate you plan to collect; keep exemptions and CPA-review paths documented.
-   */
-  pricing?: {
-    /**
-     * Pre-tax discount applied against the quote subtotal.
-     */
-    discountAmount?: number | null;
-    /**
-     * Texas Comptroller guidance generally treats cleaning homes/buildings, washing windows, and pressure washing buildings, sidewalks, or parking lots as taxable. Keep exemption and CPA-review paths available before finalizing the quote.
-     */
-    taxDecision?:
-      | ('collect_sales_tax' | 'homebuilder_exception' | 'exemption_certificate' | 'manual_review_required')
-      | null;
-    /**
-     * Enter the actual rate you plan to collect. Texas state sales tax is 6.25%; local tax can bring the total up to 8.25% depending on your facts and filing setup.
-     */
-    taxRatePercent?: number | null;
-    /**
-     * Document why you collected or did not collect tax, plus any homebuilder certification, exemption certificate, or CPA guidance.
-     */
-    taxDecisionNotes?: string | null;
-    subtotal?: number | null;
-    taxableSubtotal?: number | null;
-    salesTaxAmount?: number | null;
-    total?: number | null;
-  };
-  /**
-   * Staff-only pricing discussion, objections, follow-up notes, and compliance flags.
-   */
-  internalNotes?: string | null;
-  /**
-   * Optional lead form submission this quote came from.
-   */
-  sourceSubmission?: (number | null) | FormSubmission;
-  /**
-   * Mirror status for the active CRM deal sync.
-   */
-  crm?: {
-    provider?: ('engagebay' | 'hubspot') | null;
-    dealId?: string | null;
-    syncStatus?:
-      | ('skipped_draft' | 'skipped_no_email' | 'skipped_provider' | 'ok' | 'ok_note_warning' | 'failed')
-      | null;
-    syncedAt?: string | null;
-    syncDetail?: string | null;
-  };
+  serviceSummary?: string | null;
+  relatedQuote?: (number | null) | Quote;
+  account?: (number | null) | Account;
+  contact?: (number | null) | Contact;
+  notes?: string | null;
   updatedAt: string;
   createdAt: string;
 }
 /**
- * Website form posts. Lead columns are derived from field names (email, name, etc.). CRM columns reflect provider sync.
+ * Pipeline records linked to quotes, accounts, contacts, and follow-up work.
  *
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "form-submissions".
+ * via the `definition` "opportunities".
  */
-export interface FormSubmission {
+export interface Opportunity {
   id: number;
-  form: number | Form;
-  submissionData?:
-    | {
-        field: string;
-        value: string;
-        id?: string | null;
-      }[]
-    | null;
+  title: string;
+  status: 'open' | 'won' | 'lost';
+  stage: 'new_lead' | 'qualified' | 'quoted' | 'follow_up' | 'scheduling' | 'won' | 'lost';
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  owner?: (number | null) | User;
+  value?: number | null;
+  expectedCloseDate?: string | null;
+  lastActivityAt?: string | null;
+  lead?: (number | null) | Lead;
+  account?: (number | null) | Account;
+  contact?: (number | null) | Contact;
+  quote?: (number | null) | Quote;
+  nextAction?: string | null;
+  nextActionAt?: string | null;
+  closeReason?: string | null;
+  notes?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Timeline events for notes, calls, emails, tasks, and system automation.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "crm-activities".
+ */
+export interface CrmActivity {
+  id: number;
+  title: string;
+  activityType: 'note' | 'call' | 'email' | 'text' | 'task_event' | 'appointment' | 'system';
+  direction: 'inbound' | 'outbound' | 'internal' | 'system';
+  owner?: (number | null) | User;
+  occurredAt: string;
+  body?: string | null;
+  lead?: (number | null) | Lead;
+  account?: (number | null) | Account;
+  contact?: (number | null) | Contact;
+  opportunity?: (number | null) | Opportunity;
+  relatedTask?: (number | null) | CrmTask;
+  quote?: (number | null) | Quote;
+  invoice?: (number | null) | Invoice;
+  servicePlan?: (number | null) | ServicePlan;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Follow-up tasks for leads, opportunities, billing, and schedule coordination.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "crm-tasks".
+ */
+export interface CrmTask {
+  id: number;
+  title: string;
+  status: 'open' | 'in_progress' | 'waiting' | 'completed' | 'canceled';
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  taskType: 'call' | 'email' | 'text' | 'quote_follow_up' | 'billing_follow_up' | 'scheduling' | 'general';
+  owner?: (number | null) | User;
+  dueAt: string;
+  completedAt?: string | null;
   /**
-   * Auto-filled from submission row named email (or similar).
+   * If present and before now, the task should show as stale in the queue.
    */
-  leadEmail?: string | null;
-  /**
-   * Auto-filled from name / fullName / firstName rows.
-   */
-  leadName?: string | null;
-  /**
-   * CRM sync result (server-set).
-   */
-  crmSyncStatus?:
-    | (
-        | 'ok'
-        | 'ok_note_warning'
-        | 'failed'
-        | 'failed_contact'
-        | 'skipped_no_api_key'
-        | 'skipped_sync_disabled'
-        | 'skipped_no_email'
-        | 'skipped_no_rows'
-      )
-    | null;
-  /**
-   * ISO timestamp of last CRM sync attempt.
-   */
-  crmSyncedAt?: string | null;
-  /**
-   * Error or status detail from the sync step.
-   */
-  crmSyncDetail?: string | null;
+  staleAt?: string | null;
+  lead?: (number | null) | Lead;
+  account?: (number | null) | Account;
+  contact?: (number | null) | Contact;
+  opportunity?: (number | null) | Opportunity;
+  quote?: (number | null) | Quote;
+  invoice?: (number | null) | Invoice;
+  servicePlan?: (number | null) | ServicePlan;
+  serviceAppointment?: (number | null) | ServiceAppointment;
+  notes?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1117,6 +1403,10 @@ export interface Invoice {
   id: number;
   invoiceNumber: string;
   title: string;
+  /**
+   * Portal company or household account associated with this invoice.
+   */
+  account?: (number | null) | Account;
   status: 'draft' | 'open' | 'paid' | 'overdue' | 'void';
   issueDate?: string | null;
   dueDate?: string | null;
@@ -1149,54 +1439,6 @@ export interface Invoice {
   createdAt: string;
 }
 /**
- * Recurring maintenance-plan records used by the customer portal and scheduling views.
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "service-plans".
- */
-export interface ServicePlan {
-  id: number;
-  title: string;
-  status: 'draft' | 'active' | 'paused' | 'cancelled';
-  /**
-   * First visit or anchor date used to suggest the ongoing cadence.
-   */
-  anchorDate?: string | null;
-  preferredWindow?: ('morning' | 'afternoon' | 'flexible') | null;
-  customerUser: number | User;
-  customerEmail: string;
-  customerName?: string | null;
-  serviceAddress?: {
-    street1?: string | null;
-    street2?: string | null;
-    city?: string | null;
-    state?: string | null;
-    postalCode?: string | null;
-  };
-  /**
-   * Accepted quote this plan was built from.
-   */
-  sourceQuote?: (number | null) | Quote;
-  /**
-   * Short service scope summary shown in the portal.
-   */
-  serviceSummary?: string | null;
-  /**
-   * Reference price for one normal standalone visit.
-   */
-  singleJobAmount: number;
-  discountPercent: number;
-  visitsPerYear: number;
-  billingInstallmentsPerYear: number;
-  discountedVisitAmount?: number | null;
-  annualPlanAmount?: number | null;
-  installmentAmount?: number | null;
-  cadenceMonths?: number | null;
-  notes?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
  * Scheduled or requested customer jobs shown in the portal and ops calendar.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1205,6 +1447,10 @@ export interface ServicePlan {
 export interface ServiceAppointment {
   id: number;
   title: string;
+  /**
+   * Portal company or household account associated with this appointment.
+   */
+  account?: (number | null) | Account;
   status: 'requested' | 'confirmed' | 'reschedule_requested' | 'completed' | 'cancelled';
   arrivalWindow?: ('morning' | 'afternoon' | 'flexible') | null;
   requestSource?: ('portal' | 'admin' | 'phone' | 'subscription_auto') | null;
@@ -1228,6 +1474,90 @@ export interface ServiceAppointment {
   servicePlan?: (number | null) | ServicePlan;
   customerNotes?: string | null;
   internalNotes?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * In-app sequence builder for follow-up automation, task creation, and Resend delivery.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "crm-sequences".
+ */
+export interface CrmSequence {
+  id: number;
+  name: string;
+  /**
+   * Stable internal key for jobs and enrollment logic.
+   */
+  key: string;
+  status: 'draft' | 'active' | 'archived';
+  owner?: (number | null) | User;
+  audience: 'lead' | 'opportunity' | 'customer' | 'billing';
+  trigger:
+    | 'manual'
+    | 'lead_created'
+    | 'quote_sent'
+    | 'quote_accepted'
+    | 'appointment_booked'
+    | 'invoice_issued'
+    | 'invoice_overdue'
+    | 'job_completed';
+  settings?: {
+    businessDaysOnly?: boolean | null;
+    stopOnReply?: boolean | null;
+    stopOnBooking?: boolean | null;
+    stopOnPayment?: boolean | null;
+    sendWindowStartHour?: number | null;
+    sendWindowEndHour?: number | null;
+  };
+  /**
+   * Ordered steps for the sequence builder. Keep each step compact and explicit.
+   */
+  steps?:
+    | {
+        stepType: 'wait' | 'send_email' | 'create_task' | 'finish';
+        delayAmount?: number | null;
+        delayUnit?: ('minutes' | 'hours' | 'days' | 'weeks') | null;
+        /**
+         * Template identifier used by Resend delivery code.
+         */
+        emailTemplateKey?: string | null;
+        emailSubject?: string | null;
+        taskTitle?: string | null;
+        taskType?:
+          | ('call' | 'email' | 'text' | 'quote_follow_up' | 'billing_follow_up' | 'scheduling' | 'general')
+          | null;
+        taskPriority?: ('low' | 'medium' | 'high' | 'urgent') | null;
+        internalNotes?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  notes?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Automation enrollments for Payload jobs and Resend-driven follow-up sequences.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "sequence-enrollments".
+ */
+export interface SequenceEnrollment {
+  id: number;
+  title: string;
+  sequenceKey: string;
+  status: 'queued' | 'active' | 'paused' | 'completed' | 'exited' | 'failed';
+  stepIndex: number;
+  nextRunAt?: string | null;
+  lastRunAt?: string | null;
+  owner?: (number | null) | User;
+  sequenceDefinition?: (number | null) | CrmSequence;
+  lead?: (number | null) | Lead;
+  account?: (number | null) | Account;
+  contact?: (number | null) | Contact;
+  opportunity?: (number | null) | Opportunity;
+  lastError?: string | null;
+  exitReason?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1662,6 +1992,38 @@ export interface PayloadLockedDocument {
         value: number | User;
       } | null)
     | ({
+        relationTo: 'accounts';
+        value: number | Account;
+      } | null)
+    | ({
+        relationTo: 'contacts';
+        value: number | Contact;
+      } | null)
+    | ({
+        relationTo: 'leads';
+        value: number | Lead;
+      } | null)
+    | ({
+        relationTo: 'opportunities';
+        value: number | Opportunity;
+      } | null)
+    | ({
+        relationTo: 'crm-activities';
+        value: number | CrmActivity;
+      } | null)
+    | ({
+        relationTo: 'crm-sequences';
+        value: number | CrmSequence;
+      } | null)
+    | ({
+        relationTo: 'crm-tasks';
+        value: number | CrmTask;
+      } | null)
+    | ({
+        relationTo: 'sequence-enrollments';
+        value: number | SequenceEnrollment;
+      } | null)
+    | ({
         relationTo: 'invoices';
         value: number | Invoice;
       } | null)
@@ -1823,13 +2185,23 @@ export interface PagesSelect<T extends boolean = true> {
  * via the `definition` "ServiceGridBlock_select".
  */
 export interface ServiceGridBlockSelect<T extends boolean = true> {
+  eyebrow?: T;
   heading?: T;
   intro?: T;
   services?:
     | T
     | {
+        eyebrow?: T;
         name?: T;
         summary?: T;
+        media?: T;
+        pricingHint?: T;
+        highlights?:
+          | T
+          | {
+              text?: T;
+              id?: T;
+            };
         id?: T;
       };
   id?: T;
@@ -2111,6 +2483,7 @@ export interface QuotesSelect<T extends boolean = true> {
   customerName?: T;
   customerEmail?: T;
   customerPhone?: T;
+  account?: T;
   customerUser?: T;
   serviceAddress?:
     | T
@@ -2173,6 +2546,7 @@ export interface UsersSelect<T extends boolean = true> {
   name?: T;
   phone?: T;
   company?: T;
+  account?: T;
   billingAddress?:
     | T
     | {
@@ -2211,11 +2585,242 @@ export interface UsersSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "accounts_select".
+ */
+export interface AccountsSelect<T extends boolean = true> {
+  name?: T;
+  status?: T;
+  accountType?: T;
+  owner?: T;
+  legalName?: T;
+  primaryContact?: T;
+  customerUser?: T;
+  billingEmail?: T;
+  accountsPayableEmail?: T;
+  accountsPayablePhone?: T;
+  billingTerms?: T;
+  locationCount?: T;
+  taxExempt?: T;
+  taxExemptionReference?: T;
+  serviceAddress?:
+    | T
+    | {
+        street1?: T;
+        street2?: T;
+        city?: T;
+        state?: T;
+        postalCode?: T;
+      };
+  billingAddress?:
+    | T
+    | {
+        street1?: T;
+        street2?: T;
+        city?: T;
+        state?: T;
+        postalCode?: T;
+      };
+  serviceLocationSummary?: T;
+  activeQuote?: T;
+  activeServicePlan?: T;
+  notes?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "contacts_select".
+ */
+export interface ContactsSelect<T extends boolean = true> {
+  fullName?: T;
+  email?: T;
+  phone?: T;
+  owner?: T;
+  status?: T;
+  roles?: T;
+  preferredContactMethod?: T;
+  account?: T;
+  linkedUser?: T;
+  lastContactAt?: T;
+  nextActionAt?: T;
+  staleAt?: T;
+  notes?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "leads_select".
+ */
+export interface LeadsSelect<T extends boolean = true> {
+  title?: T;
+  status?: T;
+  priority?: T;
+  source?: T;
+  temperature?: T;
+  customerName?: T;
+  customerEmail?: T;
+  customerPhone?: T;
+  owner?: T;
+  nextActionAt?: T;
+  staleAt?: T;
+  serviceAddress?:
+    | T
+    | {
+        street1?: T;
+        street2?: T;
+        city?: T;
+        state?: T;
+        postalCode?: T;
+      };
+  serviceSummary?: T;
+  relatedQuote?: T;
+  account?: T;
+  contact?: T;
+  notes?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "opportunities_select".
+ */
+export interface OpportunitiesSelect<T extends boolean = true> {
+  title?: T;
+  status?: T;
+  stage?: T;
+  priority?: T;
+  owner?: T;
+  value?: T;
+  expectedCloseDate?: T;
+  lastActivityAt?: T;
+  lead?: T;
+  account?: T;
+  contact?: T;
+  quote?: T;
+  nextAction?: T;
+  nextActionAt?: T;
+  closeReason?: T;
+  notes?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "crm-activities_select".
+ */
+export interface CrmActivitiesSelect<T extends boolean = true> {
+  title?: T;
+  activityType?: T;
+  direction?: T;
+  owner?: T;
+  occurredAt?: T;
+  body?: T;
+  lead?: T;
+  account?: T;
+  contact?: T;
+  opportunity?: T;
+  relatedTask?: T;
+  quote?: T;
+  invoice?: T;
+  servicePlan?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "crm-sequences_select".
+ */
+export interface CrmSequencesSelect<T extends boolean = true> {
+  name?: T;
+  key?: T;
+  status?: T;
+  owner?: T;
+  audience?: T;
+  trigger?: T;
+  settings?:
+    | T
+    | {
+        businessDaysOnly?: T;
+        stopOnReply?: T;
+        stopOnBooking?: T;
+        stopOnPayment?: T;
+        sendWindowStartHour?: T;
+        sendWindowEndHour?: T;
+      };
+  steps?:
+    | T
+    | {
+        stepType?: T;
+        delayAmount?: T;
+        delayUnit?: T;
+        emailTemplateKey?: T;
+        emailSubject?: T;
+        taskTitle?: T;
+        taskType?: T;
+        taskPriority?: T;
+        internalNotes?: T;
+        id?: T;
+      };
+  notes?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "crm-tasks_select".
+ */
+export interface CrmTasksSelect<T extends boolean = true> {
+  title?: T;
+  status?: T;
+  priority?: T;
+  taskType?: T;
+  owner?: T;
+  dueAt?: T;
+  completedAt?: T;
+  staleAt?: T;
+  lead?: T;
+  account?: T;
+  contact?: T;
+  opportunity?: T;
+  quote?: T;
+  invoice?: T;
+  servicePlan?: T;
+  serviceAppointment?: T;
+  notes?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "sequence-enrollments_select".
+ */
+export interface SequenceEnrollmentsSelect<T extends boolean = true> {
+  title?: T;
+  sequenceKey?: T;
+  status?: T;
+  stepIndex?: T;
+  nextRunAt?: T;
+  lastRunAt?: T;
+  owner?: T;
+  sequenceDefinition?: T;
+  lead?: T;
+  account?: T;
+  contact?: T;
+  opportunity?: T;
+  lastError?: T;
+  exitReason?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "invoices_select".
  */
 export interface InvoicesSelect<T extends boolean = true> {
   invoiceNumber?: T;
   title?: T;
+  account?: T;
   status?: T;
   issueDate?: T;
   dueDate?: T;
@@ -2252,6 +2857,7 @@ export interface InvoicesSelect<T extends boolean = true> {
  */
 export interface ServicePlansSelect<T extends boolean = true> {
   title?: T;
+  account?: T;
   status?: T;
   anchorDate?: T;
   preferredWindow?: T;
@@ -2287,6 +2893,7 @@ export interface ServicePlansSelect<T extends boolean = true> {
  */
 export interface ServiceAppointmentsSelect<T extends boolean = true> {
   title?: T;
+  account?: T;
   status?: T;
   arrivalWindow?: T;
   requestSource?: T;
@@ -2847,11 +3454,11 @@ export interface InternalOpsSetting {
    */
   annualRevenueGoal?: number | null;
   /**
-   * Value shown on the “Projected revenue” KPI card (e.g. weighted pipeline target).
+   * Value shown on the projected revenue KPI card when live internal quote data is not yet available.
    */
   projectedRevenueDisplay?: string | null;
   /**
-   * Value shown on the “MRR” KPI card.
+   * Value shown on the MRR KPI card when live service-plan data is not yet available.
    */
   mrrTargetDisplay?: string | null;
   /**
@@ -2859,7 +3466,7 @@ export interface InternalOpsSetting {
    */
   chartDisclaimer?: string | null;
   /**
-   * Extra line under the chart when HubSpot pipeline is shown (e.g. how open deal totals are computed).
+   * Extra line under the chart when live internal pipeline context is shown (for example how weighted quote totals are computed).
    */
   chartPipelineNote?: string | null;
   /**
@@ -2879,7 +3486,7 @@ export interface InternalOpsSetting {
    */
   kpiTooltipMrr?: string | null;
   /**
-   * Optional tooltips for scorecard tab rows. KPI name must match the scorecard label exactly (e.g. Revenue, MRR).
+   * Optional tooltips for scorecard tab rows. KPI name must match the scorecard label exactly (for example Revenue or MRR).
    */
   scorecardKpiTooltips?:
     | {

@@ -8,6 +8,10 @@ import * as migration_20260324_234423_add_quote_settings_versions from './202603
 import * as migration_20260325_005955_ops_liabilities_and_scorecard_rows from './20260325_005955_ops_liabilities_and_scorecard_rows';
 import * as migration_20260325_021602_customer_portal_billing_and_scheduling from './20260325_021602_customer_portal_billing_and_scheduling';
 import * as migration_20260325_030001_hubspot_quote_deal_sync from './20260325_030001_hubspot_quote_deal_sync';
+import * as migration_20260325_152321 from './20260325_152321';
+import * as migration_20260325_154218 from './20260325_154218';
+import * as migration_20260325_190500_user_account_and_customer_account_scope from './20260325_190500_user_account_and_customer_account_scope';
+import * as migration_20260326_174716_marketing_service_grid_media_refresh from './20260326_174716_marketing_service_grid_media_refresh';
 
 export const migrations = [
   {
@@ -58,6 +62,26 @@ export const migrations = [
   {
     up: migration_20260325_030001_hubspot_quote_deal_sync.up,
     down: migration_20260325_030001_hubspot_quote_deal_sync.down,
-    name: '20260325_030001_hubspot_quote_deal_sync'
+    name: '20260325_030001_hubspot_quote_deal_sync',
+  },
+  {
+    up: migration_20260325_152321.up,
+    down: migration_20260325_152321.down,
+    name: '20260325_152321',
+  },
+  {
+    up: migration_20260325_154218.up,
+    down: migration_20260325_154218.down,
+    name: '20260325_154218',
+  },
+  {
+    up: migration_20260325_190500_user_account_and_customer_account_scope.up,
+    down: migration_20260325_190500_user_account_and_customer_account_scope.down,
+    name: '20260325_190500_user_account_and_customer_account_scope',
+  },
+  {
+    up: migration_20260326_174716_marketing_service_grid_media_refresh.up,
+    down: migration_20260326_174716_marketing_service_grid_media_refresh.down,
+    name: '20260326_174716_marketing_service_grid_media_refresh'
   },
 ];

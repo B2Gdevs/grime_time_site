@@ -1,3 +1,6 @@
 [submodule "vendor/repo-planner"]
 	path = vendor/repo-planner
 	url = https://github.com/MagicbornStudios/RepoPlanner.git
+[submodule "vendor/image-gen-mcp"]
+	path = vendor/image-gen-mcp
+	url = https://github.com/lansespirit/image-gen-mcp

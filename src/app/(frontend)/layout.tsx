@@ -5,6 +5,7 @@ import { cn } from '@/utilities/ui'
 import React from 'react'
 
 import { AdminBar } from '@/components/AdminBar'
+import { AdminImpersonationToolbarShell } from '@/components/admin-impersonation/AdminImpersonationToolbarShell'
 import { Footer } from '@/Footer/Component'
 import { Header } from '@/Header/Component'
 import { Providers } from '@/providers'
@@ -44,6 +45,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               preview: isEnabled,
             }}
           />
+          <AdminImpersonationToolbarShell />
 
           <Header />
           {children}

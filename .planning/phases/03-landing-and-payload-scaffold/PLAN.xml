@@ -24,6 +24,18 @@
       <description>Seed entrypoint and idempotent content upsert.</description>
       <keywords>seed,bootstrap</keywords>
     </file>
+    <file path="src/blocks/ServiceGrid/config.ts">
+      <description>Reusable service-card schema for image-led marketing sections.</description>
+      <keywords>blocks,services,media</keywords>
+    </file>
+    <file path="src/blocks/ServiceGrid/Component.tsx">
+      <description>Compact service-card renderer that should stay Payload-driven and image-capable.</description>
+      <keywords>blocks,ui,services</keywords>
+    </file>
+    <file path="src/app/(frontend)/[slug]/page.tsx">
+      <description>Public page renderer; homepage should prefer seeded Payload layout blocks over hardcoded one-off panels.</description>
+      <keywords>frontend,pages,layout</keywords>
+    </file>
     <file path="src/endpoints/seed/public-support-pages.ts">
       <description>Seeded customer-facing privacy, terms, refund, and contact SLA pages.</description>
       <keywords>seed,legal,support</keywords>
@@ -52,9 +64,18 @@
       <description>Publish customer-facing support/legal pages in Payload for privacy, terms, refund handling, and contact response standards.</description>
       <status>done</status>
     </task>
+    <task id="03-marketing-imagery" owner="team">
+      <description>Replace text-only or hardcoded marketing surfaces with Payload-driven image-led sections, seeded service visuals, and cleaner about/contact storytelling that matches the exterior-cleaning brand.</description>
+      <status>in-progress</status>
+    </task>
+    <task id="03-contact-ux-refresh" owner="team">
+      <description>Refactor `/contact` into a compact, high-contrast, icon-led support/request surface with less copy, obvious next actions, visible logo branding in the form/request card, and tab-driven detail content instead of stacked loose cards.</description>
+      <status>planned</status>
+    </task>
   </tasks>
   <questions>
     <question id="q-proof-model" status="open">Should testimonials be a dedicated collection, a reusable block, or a global for fastest admin editing?</question>
     <question id="q-pricing-page" status="open">Will pricing stay estimate-only messaging or include starting-price ranges on the public site?</question>
+    <question id="q-contact-tab-model" status="resolved">Use compact tabs with a single detail panel for long-form support text on `/contact`; avoid scattered standalone text cards.</question>
   </questions>
 </phase-plan>

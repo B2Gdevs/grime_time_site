@@ -1,6 +1,7 @@
 import type { CollectionConfig } from 'payload'
 
 import { isAdmin } from '@/access/isAdmin'
+import { createAssignCustomerAccountHook } from '@/lib/customers/accountRelationship'
 import { buildCustomerOwnershipWhere } from '@/lib/customers/access'
 import { billingDocumentStatusOptions } from '@/lib/services/constants'
 
@@ -30,6 +31,15 @@ export const Invoices: CollectionConfig = {
       name: 'title',
       type: 'text',
       required: true,
+    },
+    {
+      name: 'account',
+      type: 'relationship',
+      relationTo: 'accounts',
+      admin: {
+        description: 'Portal company or household account associated with this invoice.',
+        position: 'sidebar',
+      },
     },
     {
       type: 'row',
@@ -193,4 +203,7 @@ export const Invoices: CollectionConfig = {
       type: 'textarea',
     },
   ],
+  hooks: {
+    beforeValidate: [createAssignCustomerAccountHook()],
+  },
 }

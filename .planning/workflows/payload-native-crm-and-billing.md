@@ -1,7 +1,7 @@
 # Payload-native CRM, billing, and lifecycle automation
 
 **Owner:** TBD  
-**Last reviewed:** 2026-03-24  
+**Last reviewed:** 2026-03-25  
 **Direction:** Keep Grime Time operationally in-house. Payload is the CRM system of record. Resend handles outbound email delivery. Stripe handles billing and payments.
 
 ## Product posture
@@ -68,6 +68,15 @@ These are the main business records the app should own directly.
 
 Use Stripe for payment rails, but keep business meaning in Payload.
 
+Recommended customer-facing default:
+
+- Stripe Hosted Invoice Page for invoice payment
+- Stripe customer portal as the standard self-serve path for customers who have an account context
+- Stripe subscriptions only when the recurring amount is stable
+- Payload-led monthly consolidated invoicing for commercial work that varies inside a 30-day service window
+- explicit support for onsite and out-of-band payment recording
+- explicit support for discounts, credits, and refunds as first-party billing adjustments
+
 ### Stripe responsibilities
 
 - checkout/payment links
@@ -82,6 +91,15 @@ Use Stripe for payment rails, but keep business meaning in Payload.
 - subscription/service-plan policy
 - dunning and reminder state
 - operational meaning of paid / overdue / canceled
+- onsite, check, bank-transfer, and other out-of-band payment records
+
+### Billing posture by account type
+
+- **Residential one-off:** invoice or payment link, usually due on receipt
+- **Residential recurring autopay:** Stripe subscription with saved payment method
+- **Commercial fixed recurring amount:** Stripe subscription, with either autopay or send-invoice depending on AP preference
+- **Commercial variable monthly billing:** monthly consolidated invoice with send-invoice terms, defaulting to net 30
+- **No-login customers:** billing still works via Stripe-hosted links; app login is optional, not required
 
 ### Required env contract
 

@@ -27,9 +27,9 @@ import { contact as contactPageData } from './contact-page'
 import { home } from './home'
 import { image1 } from './image-1'
 import { image2 } from './image-2'
-import { imageHero1 } from './image-hero-1'
 import { imageSeedDriveway } from './image-seed-driveway'
 import { imageSeedHouse } from './image-seed-house'
+import { imageSeedProperty } from './image-seed-property'
 import { post1 } from './post-1'
 import { post2 } from './post-2'
 import { post3 } from './post-3'
@@ -57,11 +57,6 @@ const SEED_MEDIA = [
     data: image2,
   },
   {
-    filename: 'image-hero1.webp',
-    url: 'https://raw.githubusercontent.com/payloadcms/payload/refs/heads/main/templates/website/src/endpoints/seed/image-hero1.webp',
-    data: imageHero1,
-  },
-  {
     filename: 'seed-grime-house.jpg',
     url: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1920&q=80',
     data: imageSeedHouse,
@@ -70,6 +65,11 @@ const SEED_MEDIA = [
     filename: 'seed-grime-driveway.jpg',
     url: 'https://images.unsplash.com/photo-1565538810643-b5bdb714032a?auto=format&fit=crop&w=1920&q=80',
     data: imageSeedDriveway,
+  },
+  {
+    filename: 'seed-grime-property.jpg',
+    url: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1920&q=80',
+    data: imageSeedProperty,
   },
 ] as const
 
@@ -207,9 +207,9 @@ async function runSeed({
     image1Doc,
     image2Doc,
     image3Doc,
-    imageHomeDoc,
     imageHouseDoc,
     imageDrivewayDoc,
+    imagePropertyDoc,
   ] = await Promise.all(
     mediaDocs.map((m) => payload.findByID({ collection: 'media', id: m.id, depth: 0, req })),
   )
@@ -296,11 +296,11 @@ async function runSeed({
     'pages',
     'home',
     home({
-      heroImage: imageHomeDoc,
-      metaImage: image2Doc,
+      heroImage: imageDrivewayDoc,
+      metaImage: imageHouseDoc,
       galleryTop: imageHouseDoc,
-      galleryMid: image1Doc,
-      galleryBottom: imageDrivewayDoc,
+      galleryMid: imageDrivewayDoc,
+      galleryBottom: imagePropertyDoc,
     }) as Record<string, unknown>,
     req,
   )
@@ -309,7 +309,7 @@ async function runSeed({
     payload,
     'pages',
     'contact',
-    contactPageData({ contactForm }) as Record<string, unknown>,
+    contactPageData({ contactForm, heroImage: imagePropertyDoc }) as Record<string, unknown>,
     req,
   ).then(({ id }) => payload.findByID({ collection: 'pages', id, depth: 0, req }))
 
@@ -317,7 +317,7 @@ async function runSeed({
     payload,
     'pages',
     'about',
-    aboutPageData() as Record<string, unknown>,
+    aboutPageData({ heroImage: imageHouseDoc, supportImage: imagePropertyDoc }) as Record<string, unknown>,
     req,
   ).then(({ id }) => payload.findByID({ collection: 'pages', id, depth: 0, req }))
 

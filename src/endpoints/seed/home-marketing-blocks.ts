@@ -1,8 +1,15 @@
-/** Matches Payload Lexical `root.children` typing used in seed block content. */
+import type { Media } from '@/payload-types'
+
 type LexicalChild = {
   type: string
   version: number
   [key: string]: unknown
+}
+
+type BuildHomeMarketingBlocksArgs = {
+  drivewayImage: Media
+  houseImage: Media
+  propertyImage: Media
 }
 
 const root = (children: LexicalChild[]) => ({
@@ -44,7 +51,11 @@ const paragraph = (value: string) => ({
   version: 1,
 })
 
-export function buildHomeMarketingBlocks() {
+export function buildHomeMarketingBlocks({
+  drivewayImage,
+  houseImage,
+  propertyImage,
+}: BuildHomeMarketingBlocksArgs) {
   return [
     {
       blockType: 'content' as const,
@@ -53,12 +64,9 @@ export function buildHomeMarketingBlocks() {
           enableLink: false,
           richText: {
             root: root([
-              heading('h2', 'Why Grime Time gets called back'),
+              heading('h2', 'Clean visuals, clear scope, and less guesswork for the customer.'),
               paragraph(
-                'Homeowners choose us because we protect the surfaces first, explain the scope before we start, and leave the property looking better than the quote promised. We are not trying to race through a wash with maximum pressure and minimum care.',
-              ),
-              paragraph(
-                'Residential work is the core right now: siding, driveways, porches, patios, and docks. Commercial work is the next lane, but we are still building that side carefully instead of pretending every property fits the same playbook.',
+                'The public site should feel like the service itself: straightforward, polished, and focused on the property. Customers should see the kinds of surfaces we clean, understand how pricing moves, and know the next step without reading a wall of filler copy.',
               ),
             ]),
           },
@@ -67,45 +75,8 @@ export function buildHomeMarketingBlocks() {
       ],
     },
     {
-      blockType: 'content' as const,
-      columns: [
-        {
-          enableLink: false,
-          richText: {
-            root: root([
-              heading('h3', 'Soft-wash where it matters'),
-              paragraph(
-                'Siding, trim, soffits, painted surfaces, and delicate materials get a lower-pressure approach built around cleaning without forcing damage.',
-              ),
-            ]),
-          },
-          size: 'oneThird' as const,
-        },
-        {
-          enableLink: false,
-          richText: {
-            root: root([
-              heading('h3', 'Concrete done with intention'),
-              paragraph(
-                'Driveways, walkways, and patios still need real surface cleaning, but the quote should reflect stains, runoff, edges, and detail work instead of a lazy flat rate.',
-              ),
-            ]),
-          },
-          size: 'oneThird' as const,
-        },
-        {
-          enableLink: false,
-          richText: {
-            root: root([
-              heading('h3', 'Clear scope before arrival'),
-              paragraph(
-                'We want the customer to know the service window, the access needs, and what is included before the crew unloads anything at the property.',
-              ),
-            ]),
-          },
-          size: 'oneThird' as const,
-        },
-      ],
+      blockType: 'mediaBlock' as const,
+      media: drivewayImage.id,
     },
     {
       blockType: 'content' as const,
@@ -114,18 +85,64 @@ export function buildHomeMarketingBlocks() {
           enableLink: false,
           richText: {
             root: root([
-              heading('h2', 'What a quote should actually cover'),
+              heading('h3', 'Driveways and concrete should look visibly better fast.'),
               paragraph(
-                'Instant estimates should get the customer close, not trap the business in bad pricing. We start with square footage, then adjust for stories, condition, access, setup time, and recurrence.',
-              ),
-              paragraph(
-                'That means a driveway estimate can move if there is heavy buildup or edge detail, and a house wash can move if the property is taller, tighter, or dirtier than the first form makes it look.',
+                'Flatwork is one of the clearest proof points on the site because customers can immediately see the difference. That makes it the right place to show action imagery, not just talk about square footage.',
               ),
             ]),
           },
-          size: 'full' as const,
+          size: 'half' as const,
+        },
+        {
+          enableLink: false,
+          richText: {
+            root: root([
+              heading('h3', 'House washes need trust more than hype.'),
+              paragraph(
+                'House washing copy should emphasize soft-wash judgment, surface care, and communication. The visuals should show a clean property outcome instead of generic contractor stock that does not match the work.',
+              ),
+            ]),
+          },
+          size: 'half' as const,
         },
       ],
+    },
+    {
+      blockType: 'mediaBlock' as const,
+      media: houseImage.id,
+    },
+    {
+      blockType: 'content' as const,
+      columns: [
+        {
+          enableLink: false,
+          richText: {
+            root: root([
+              heading('h2', 'Built to look professional before the customer ever books.'),
+              paragraph(
+                'The brand should read clean and business-minded: strong imagery, restrained backgrounds, and focused service cards that tell the customer exactly what is being cleaned and why that lane matters.',
+              ),
+            ]),
+          },
+          size: 'twoThirds' as const,
+        },
+        {
+          enableLink: false,
+          richText: {
+            root: root([
+              heading('h3', 'What we show'),
+              paragraph(
+                'Driveways, siding, porches, docks, service lanes, and other high-contrast surfaces where the cleaning result is easy to understand.',
+              ),
+            ]),
+          },
+          size: 'oneThird' as const,
+        },
+      ],
+    },
+    {
+      blockType: 'mediaBlock' as const,
+      media: propertyImage.id,
     },
     {
       blockType: 'cta' as const,
@@ -151,7 +168,7 @@ export function buildHomeMarketingBlocks() {
         root: root([
           heading('h3', 'Ready to scope the property?'),
           paragraph(
-            'Tell us what needs to be cleaned, the rough size of the area, and anything unusual about access or buildup. We will turn that into a real next step instead of a generic contact form dead end.',
+            'Start with the instant quote for a range, then let us confirm the real scope and service window before the job is scheduled.',
           ),
         ]),
       },

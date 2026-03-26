@@ -89,6 +89,20 @@
         <command>See src/endpoints/seed/public-support-pages.ts and src/endpoints/seed/index.ts</command>
       </commands>
     </task>
+    <task id="03-06" agent-id="" status="in-progress">
+      <goal>Define and use a generated-image workflow for hero sections, cards, features, and atmospheric backgrounds so marketing art can be produced quickly and stored cleanly in Payload media or `public/`.</goal>
+      <keywords>images,media,marketing,mcp</keywords>
+      <commands>
+        <command>See .planning/workflows/image-generation-mcp-and-media-workflow.md</command>
+      </commands>
+    </task>
+    <task id="03-07" agent-id="" status="planned">
+      <goal>Redesign `/contact` for clarity and stronger visual hierarchy: remove faded treatment, reduce copy density, add brand logo presence in the request card, increase icon-led affordances, and replace loose text-card stacks with compact tabs that drive a single detail panel for long-form guidance.</goal>
+      <keywords>contact,ux,tabs,brand,icons</keywords>
+      <commands>
+        <command>See src/app/(frontend)/contact/page.tsx and .planning/workflows/customer-site-content-and-engagebay.md</command>
+      </commands>
+    </task>
   </phase>
   <phase id="04">
     <task id="04-01" agent-id="" status="in-progress">
@@ -113,10 +127,24 @@
       </commands>
     </task>
     <task id="04-04" agent-id="" status="in-progress">
-      <goal>Split customer vs admin access flows so customer login stays customer-only, admin sign-in stays on Payload admin, the admin ops dashboard lives on `/ops`, and the customer portal nav stays focused on estimates, invoices, schedule, and account settings.</goal>
+      <goal>Split customer vs admin access flows so customer login stays customer-only, admin sign-in stays on Payload admin, the admin ops dashboard lives on `/ops`, the customer portal nav stays focused on estimates, invoices, schedule, and account settings, and effective-user auth can render customer scope cleanly when admins impersonate users.</goal>
       <keywords>auth,portal,admin,customer,dashboard</keywords>
       <commands>
         <command>See src/app/(portal)/dashboard/page.tsx, src/components/app-sidebar.tsx, src/app/(portal)/ops/page.tsx</command>
+      </commands>
+    </task>
+    <task id="04-05" agent-id="" status="done">
+      <goal>Implement admin impersonation with a floating toolbar that persists across frontend and portal pages, keeps the real admin identity, and swaps the effective user experience without exposing internal views to impersonated non-admins.</goal>
+      <keywords>auth,impersonation,toolbar,portal</keywords>
+      <commands>
+        <command>Use a first-party auth context plus internal admin-only impersonation routes; keep planning aligned with phase 07 company-account CRM scope.</command>
+      </commands>
+    </task>
+    <task id="04-06" agent-id="" status="done">
+      <goal>Vendor and wire an image-generation MCP server with a repo-local Python environment, root `.env` config passthrough, Cursor/Codex setup, and a dev-process hook so generated imagery becomes part of the normal content workflow.</goal>
+      <keywords>mcp,images,python,cursor,codex</keywords>
+      <commands>
+        <command>See .planning/workflows/image-generation-mcp-and-media-workflow.md</command>
       </commands>
     </task>
   </phase>
@@ -219,6 +247,108 @@
       <keywords>ops,scorecard,calendar,portal,layout</keywords>
       <commands>
         <command>See src/app/(portal)/ops/page.tsx, src/components/data-table.tsx, src/components/portal/OperatingDayCalendar.tsx, src/endpoints/seed/index.ts</command>
+      </commands>
+    </task>
+  </phase>
+  <phase id="07">
+    <task id="07-01" agent-id="" status="in-progress">
+      <goal>Define and implement the first-party CRM schema: leads, accounts, contacts, opportunities, activities, tasks, and sequence enrollments linked to quotes, invoices, service plans, appointments, and users, including company-account membership that can power customer login scope.</goal>
+      <keywords>crm,payload,collections,schema</keywords>
+      <commands>
+        <command>See .planning/phases/07-first-party-crm-billing-and-automation/PLAN.xml</command>
+      </commands>
+    </task>
+    <task id="07-02" agent-id="" status="in-progress">
+      <goal>Build internal CRM API routes and query helpers for queues, search, list/detail views, owner assignment, stale follow-up detection, activity timeline writes, and compact dashboard summaries.</goal>
+      <keywords>crm,api,search,queue</keywords>
+      <commands>
+        <command>See src/app/api/internal/crm/workspace/route.ts, src/app/api/internal/crm/record/route.ts, and src/lib/crm/workspace/*</command>
+      </commands>
+    </task>
+    <task id="07-03" agent-id="" status="in-progress">
+      <goal>Replace placeholder ops surfaces with a compact CRM workspace using shared tables, list rows, detail panes, status badges, icons, tooltips, priority sorting, and stale-contact follow-up indicators.</goal>
+      <keywords>crm,ux,ops,compact</keywords>
+      <commands>
+        <command>See src/app/(portal)/ops/page.tsx, src/components/portal/command-center/*, and src/components/portal/crm/*</command>
+      </commands>
+    </task>
+    <task id="07-04" agent-id="" status="in-progress">
+      <goal>Implement Stripe-backed billing sync: webhook ingestion, idempotent invoice/subscription reconciliation, customer billing actions, hosted Stripe invoice/portal flows, commercial terms billing, and portal-visible payment state.</goal>
+      <keywords>stripe,webhooks,billing,invoices</keywords>
+      <commands>
+        <command>Use STRIPE_SECRET_KEY, STRIPE_ACCOUNT_ID, STRIPE_WEBHOOK_SECRET</command>
+        <command>See .planning/workflows/stripe-billing-and-customer-payment-operations.md</command>
+      </commands>
+    </task>
+    <task id="07-05" agent-id="" status="planned">
+      <goal>Implement the fastest first-party sequence engine path with Payload jobs and Resend templates for lead follow-up, quote reminders, appointment confirmations, and billing reminders delivered to each worker's normal inbox (personal or company email) before optional mailbox OAuth integrations.</goal>
+      <keywords>resend,jobs,sequences,automation</keywords>
+      <commands>
+        <command>Use RESEND_API_KEY and CRON_SECRET</command>
+      </commands>
+    </task>
+    <task id="07-06" agent-id="" status="in-progress">
+      <goal>Seed realistic demo data and add unit, integration, and Playwright coverage for CRM flows, Stripe webhook handling, and customer portal account/billing/schedule behavior.</goal>
+      <keywords>seed,tests,playwright,crm</keywords>
+      <commands>
+        <command>cmd /c npm run test:int &amp;&amp; cmd /c npm run test:e2e</command>
+      </commands>
+    </task>
+    <task id="07-07" agent-id="" status="in-progress">
+      <goal>Define the day-to-day operating model: role matrix, ownership rules, queue priorities, SLA timers (including support/refund classes), and required next-action fields so staff always know what to do each day.</goal>
+      <keywords>ops,roles,sla,workflow</keywords>
+      <commands>
+        <command>See .planning/workflows/operating-rhythm-roles-and-reminders.md</command>
+      </commands>
+    </task>
+    <task id="07-08" agent-id="" status="planned">
+      <goal>Enforce strict data/UI separation boundaries: public and customer views only see allowed account-scoped data; admin-only docs, queues, and cross-user/company visibility remain staff-only, including impersonation-safe guards.</goal>
+      <keywords>auth,rbac,customer,admin,security</keywords>
+      <commands>
+        <command>See src/lib/auth/getAuthContext.ts, src/components/app-sidebar.tsx, src/app/(portal)/docs/*, src/app/(portal)/ops/*</command>
+      </commands>
+    </task>
+    <task id="07-09" agent-id="" status="planned">
+      <goal>Operationalize local MCP usage for Codex/Cursor with a repeatable verification checklist (endpoint reachable, key valid, server list healthy, and image-gen stdio launchable from repo scripts).</goal>
+      <keywords>mcp,codex,cursor,devtools,verification</keywords>
+      <commands>
+        <command>cmd /c npm run dev</command>
+        <command>cmd /c npm run image-mcp:stdio</command>
+      </commands>
+    </task>
+    <task id="07-10" agent-id="" status="planned">
+      <goal>Design and implement discount policy support for account-wide defaults and user-level overrides, with clear precedence, audit history, and safe staff-only controls.</goal>
+      <keywords>billing,discounts,accounts,users,policy</keywords>
+      <commands>
+        <command>See .planning/workflows/operating-rhythm-roles-and-reminders.md and .planning/phases/07-first-party-crm-billing-and-automation/PLAN.xml</command>
+      </commands>
+    </task>
+    <task id="07-11" agent-id="" status="planned">
+      <goal>Refactor the portal shell to conventional shadcn app-layout patterns so sidebar, inset content, and admin impersonation toolbar do not overlap; ensure the toolbar remains top-layer and visible.</goal>
+      <keywords>portal,sidebar,layout,toolbar,shadcn</keywords>
+      <commands>
+        <command>See src/app/(portal)/layout.tsx, src/components/app-sidebar.tsx, src/components/admin-impersonation/*</command>
+      </commands>
+    </task>
+    <task id="07-12" agent-id="" status="planned">
+      <goal>Split oversized command-center sections into first-class `/ops/*` routes (CRM workspace, scorecard, milestones, assets, today board), and keep command center focused on the currently logged-in worker's duties with deep links/query params into those pages.</goal>
+      <keywords>ops,information-architecture,routing,ux,crm</keywords>
+      <commands>
+        <command>See src/app/(portal)/ops/page.tsx and src/components/portal/command-center/*</command>
+      </commands>
+    </task>
+    <task id="07-13" agent-id="" status="planned">
+      <goal>Implement deterministic preview identity and nav labeling: `Customer home` should use a non-admin `test_user` effective context, show context labels in sidebar (`(admin)` / `(test_user)`), and hide admin-only docs/settings when viewing customer scope.</goal>
+      <keywords>impersonation,sidebar,preview,auth,seed</keywords>
+      <commands>
+        <command>See src/app/(portal)/layout.tsx, src/components/app-sidebar.tsx, src/components/admin-impersonation/*, src/endpoints/seed/index.ts</command>
+      </commands>
+    </task>
+    <task id="07-14" agent-id="" status="in-progress">
+      <goal>Adopt and enforce frontend/code-quality conventions: stronger icon usage where helpful, reduce copy-heavy/faded UI patterns, extract large files, centralize repeated literals into constants/typed unions, and formalize reusable utilities across ops/customer surfaces.</goal>
+      <keywords>standards,refactor,icons,constants,enums,utilities</keywords>
+      <commands>
+        <command>See .planning/workflows/frontend-and-code-quality-conventions.md</command>
       </commands>
     </task>
   </phase>

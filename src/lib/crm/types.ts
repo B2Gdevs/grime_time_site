@@ -30,6 +30,7 @@ export type QuoteDealSyncInput = {
   customerEmail?: string | null
   customerName?: string | null
   customerPhone?: string | null
+  customerUser?: number | string | { id?: null | number | string } | null
   id?: number | string
   internalNotes?: string | null
   jobSize?: string | null
@@ -78,6 +79,7 @@ export type CrmProviderSummary = {
 }
 
 export type SyncFormSubmissionArgs = {
+  req: import('payload').PayloadRequest
   rows: SubmissionRow[]
 }
 
@@ -86,6 +88,7 @@ export type SyncQuoteArgs = {
   operation: 'create' | 'update'
   previousStatus?: null | string
   quote: QuoteDealSyncInput
+  req: import('payload').PayloadRequest
 }
 
 export interface CrmProvider {

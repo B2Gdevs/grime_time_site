@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phase-plan>
+  <meta>
+    <phase-id>07</phase-id>
+    <phase-name>First-party CRM, billing, and automation</phase-name>
+    <date>2026-03-25</date>
+  </meta>
+  <purpose>Build the first complete in-house CRM layer for Grime Time by mirroring the useful structure of HubSpot inside Payload and Next.js: linked business records, search and queue views, compact operator UI, Stripe billing sync, and Payload-jobs-driven Resend sequences.</purpose>
+  <scope>In scope: first-party CRM schema, compact `/ops` CRM workspace, owner assignment, pipeline and stale-follow-up views, multi-role employee duties, strict customer/admin data boundaries, fastest reminder delivery to workers' normal inboxes, Stripe webhook reconciliation into billing records, Payload jobs and Resend sequences, demo data, and test coverage. Out of scope: reintroducing HubSpot or EngageBay, rebuilding every HubSpot setting screen, or exposing admin-only CRM controls in the customer portal.</scope>
+  <files>
+    <file path=".planning/workflows/hubspot-capability-map-and-first-party-crm.md">
+      <description>Capability map from HubSpot primitives into first-party Payload CRM, Stripe sync, and sequence automation.</description>
+      <keywords>crm,hubspot,stripe,resend</keywords>
+    </file>
+    <file path=".planning/workflows/payload-native-crm-and-billing.md">
+      <description>Product direction and design rules for the in-house CRM, billing, and lifecycle automation.</description>
+      <keywords>crm,billing,automation</keywords>
+    </file>
+    <file path=".planning/workflows/stripe-billing-and-customer-payment-operations.md">
+      <description>Billing operating model for Stripe-hosted invoices, portal-first self-service, subscriptions, refunds/credits, and onsite/out-of-band payment handling.</description>
+      <keywords>stripe,billing,invoices,payments</keywords>
+    </file>
+    <file path=".planning/workflows/crm-and-integrations.md">
+      <description>System-of-record boundaries for Payload, Stripe, Resend, Supabase, and jobs.</description>
+      <keywords>crm,integrations,payload</keywords>
+    </file>
+    <file path=".planning/workflows/operating-rhythm-roles-and-reminders.md">
+      <description>Daily operating model for role duties, queue triage rhythm, SLA expectations, and reminder delivery policy.</description>
+      <keywords>ops,roles,sla,reminders</keywords>
+    </file>
+    <file path=".planning/workflows/frontend-and-code-quality-conventions.md">
+      <description>Frontend and code-quality standards for icon usage, file-size guardrails, literal centralization, and reusable extraction patterns.</description>
+      <keywords>standards,quality,refactor,ui</keywords>
+    </file>
+    <file path="src/payload.config.ts">
+      <description>Payload collections, globals, jobs, email adapter, and MCP/plugin boundaries.</description>
+      <keywords>payload,jobs,resend</keywords>
+    </file>
+    <file path="src/lib/crm/index.ts">
+      <description>Current CRM boundary where third-party sync is disabled and first-party CRM should take over.</description>
+      <keywords>crm,boundary</keywords>
+    </file>
+    <file path="src/lib/crm/schema.ts">
+      <description>Shared CRM option sets for status, priority, sources, tasks, and automation enrollment state.</description>
+      <keywords>crm,schema,options</keywords>
+    </file>
+    <file path="src/app/(portal)/ops/page.tsx">
+      <description>Admin CRM workspace and compact operating console target.</description>
+      <keywords>ops,crm,portal</keywords>
+    </file>
+    <file path="src/components/portal/command-center/ops-command-center.tsx">
+      <description>Compact non-overlapping command-center shell for ops sections, including the CRM workspace tab.</description>
+      <keywords>ops,crm,ui</keywords>
+    </file>
+    <file path="src/components/portal/crm/CrmWorkspace.tsx">
+      <description>First-party CRM tab surface using queue groups, metric chips, and inline detail loading.</description>
+      <keywords>crm,ops,ui</keywords>
+    </file>
+    <file path="src/app/api/internal/crm/workspace/route.ts">
+      <description>Admin-only queue/summary feed for the compact CRM workspace.</description>
+      <keywords>crm,api,queue</keywords>
+    </file>
+    <file path="src/app/api/internal/crm/record/route.ts">
+      <description>Admin-only record detail feed for CRM list/detail interactions.</description>
+      <keywords>crm,api,detail</keywords>
+    </file>
+    <file path="src/app/api/internal/crm/activity/route.ts">
+      <description>Admin-only CRM activity mutation route for inline note logging from the workspace.</description>
+      <keywords>crm,api,activities,notes</keywords>
+    </file>
+    <file path="src/lib/crm/workspace/index.ts">
+      <description>Shared server-side query and detail helpers backing `/ops` and internal CRM APIs.</description>
+      <keywords>crm,queries,detail</keywords>
+    </file>
+    <file path="src/lib/crm/workspace/activity.ts">
+      <description>CRM activity-note creation helpers that map selected records into first-party timeline entries.</description>
+      <keywords>crm,activities,notes</keywords>
+    </file>
+    <file path="src/components/app-sidebar.tsx">
+      <description>Portal navigation rules separating admin CRM tools from customer account tasks.</description>
+      <keywords>portal,nav,customer,admin</keywords>
+    </file>
+    <file path="src/app/(portal)/layout.tsx">
+      <description>Portal shell composition (sidebar/inset/toolbar layering) that must avoid overlap and preserve conventional app chrome behavior.</description>
+      <keywords>portal,layout,sidebar,toolbar</keywords>
+    </file>
+    <file path="src/components/portal/crm/CrmCommandCenterDetail.tsx">
+      <description>Structured CRM detail rail with summary/related tabs and compact record context.</description>
+      <keywords>crm,ui,detail</keywords>
+    </file>
+    <file path="src/components/portal/crm/CrmWorkspaceNoteComposer.tsx">
+      <description>Inline internal note composer for the CRM detail rail.</description>
+      <keywords>crm,ui,notes</keywords>
+    </file>
+    <file path="src/collections/Quotes/index.ts">
+      <description>Existing quote records that should feed internal opportunities and follow-up state.</description>
+      <keywords>quotes,crm,pipeline</keywords>
+    </file>
+    <file path="src/collections/Accounts/index.ts">
+      <description>First-party account records for households and commercial relationships.</description>
+      <keywords>crm,accounts</keywords>
+    </file>
+    <file path="src/collections/Contacts/index.ts">
+      <description>First-party contact records for people, consent state, and preferred communication method.</description>
+      <keywords>crm,contacts</keywords>
+    </file>
+    <file path="src/collections/Leads/index.ts">
+      <description>Inbound lead records before conversion.</description>
+      <keywords>crm,leads</keywords>
+    </file>
+    <file path="src/collections/Opportunities/index.ts">
+      <description>Quote and pipeline opportunity records.</description>
+      <keywords>crm,opportunities</keywords>
+    </file>
+    <file path="src/collections/CrmActivities/index.ts">
+      <description>Activity timeline records for notes, calls, and system events.</description>
+      <keywords>crm,activities</keywords>
+    </file>
+    <file path="src/collections/CrmSequences/index.ts">
+      <description>Sequence-definition builder records for in-app follow-up automation design.</description>
+      <keywords>crm,sequences,builder</keywords>
+    </file>
+    <file path="src/collections/CrmTasks/index.ts">
+      <description>Task records for follow-up, billing, and schedule work.</description>
+      <keywords>crm,tasks</keywords>
+    </file>
+    <file path="src/collections/SequenceEnrollments/index.ts">
+      <description>Sequence enrollment records for Payload jobs and Resend automation.</description>
+      <keywords>crm,sequences,automation</keywords>
+    </file>
+    <file path="src/collections/Invoices/index.ts">
+      <description>Internal invoice records that must reconcile with Stripe webhook events.</description>
+      <keywords>billing,invoices,stripe</keywords>
+    </file>
+    <file path="src/collections/ServicePlans/index.ts">
+      <description>Recurring-plan records that will carry subscription state and billing cadence.</description>
+      <keywords>subscriptions,billing</keywords>
+    </file>
+    <file path="src/collections/ServiceAppointments/index.ts">
+      <description>Service schedule records that connect CRM ownership, customer portal scheduling, and ops calendar views.</description>
+      <keywords>schedule,appointments,crm</keywords>
+    </file>
+    <file path=".env.example">
+      <description>Environment contract for Stripe, Resend, cron, and optional Payload MCP setup.</description>
+      <keywords>env,stripe,resend</keywords>
+    </file>
+  </files>
+  <keywords>
+    <keyword>crm</keyword>
+    <keyword>stripe</keyword>
+    <keyword>resend</keyword>
+    <keyword>automation</keyword>
+    <keyword>ops</keyword>
+  </keywords>
+  <commands>
+    <command>cmd /c npm run generate:types</command>
+    <command>cmd /c npx tsc --noEmit --pretty false</command>
+    <command>cmd /c npm run build</command>
+    <command>cmd /c npm run planning -- snapshot</command>
+  </commands>
+  <tasks>
+    <task id="07-crm-schema" owner="team">
+      <description>Create the first-party CRM collections, relationships, stages, assignment rules, commercial-account fields, and shared field vocabulary needed for leads through retained customers. Initial collection scaffold plus first-pass form/quote lifecycle writes are now in repo; company-account user membership and account-linked customer documents are now wired into `users`, quotes, invoices, service plans, and service appointments, while the next pass deepens conversion rules, queue helpers, sequence definitions, and derived lifecycle behavior.</description>
+      <status>in-progress</status>
+    </task>
+    <task id="07-crm-api" owner="team">
+      <description>Build internal CRM API routes and query helpers for queue views, stale follow-up, task management, notes, activities, and detail summaries. Queue/detail GET routes plus search, task updates, opportunity stage actions, and note creation now exist; broader mutations and saved views remain.</description>
+      <status>in-progress</status>
+    </task>
+    <task id="07-crm-ui" owner="team">
+      <description>Turn `/ops` into the compact CRM workspace with queue tables, tabs, tab groups, button groups, icons, badges, info icons, tooltips, priorities, and a non-overlapping list/detail layout that avoids overflow-heavy interactions. The first compact workspace tab is now live with search, stale-only filtering, quick actions, a structured detail rail, inline note logging, richer company detail, and an impersonation-aware customer preview toolbar that stays visible across frontend and portal routes; broader operator actions and stronger filtering still remain.</description>
+      <status>in-progress</status>
+    </task>
+    <task id="07-billing-sync" owner="team">
+      <description>Implement Stripe webhook ingestion and idempotent reconciliation so internal invoice and service-plan state is trustworthy. The target billing model is now explicit: Stripe-hosted invoice pages and portal-first customer self-service, monthly consolidated invoicing for variable commercial terms accounts, subscriptions for stable recurring amounts, and first-party support for onsite/out-of-band payment recording plus refund/credit adjustments.</description>
+      <status>in-progress</status>
+    </task>
+    <task id="07-sequences" owner="team">
+      <description>Implement Payload-jobs-driven Resend sequences with the fastest practical path first: reminders and digests to each worker's preferred existing inbox, then optional mailbox-provider OAuth expansion after core queue reliability.</description>
+      <status>planned</status>
+    </task>
+    <task id="07-demo-and-tests" owner="team">
+      <description>Populate demo data and cover the CRM, billing, and customer account flows with unit, integration, and Playwright tests. CRM workspace integration tests and Playwright admin/frontend coverage are now in repo; realistic seeded scenarios are still missing.</description>
+      <status>in-progress</status>
+    </task>
+    <task id="07-operating-rhythm" owner="team">
+      <description>Define the role matrix and operating rhythm so staff know expected daily duties, queue order, SLA response windows, escalation ownership, and support/refund policy queue behavior. Employees can hold multiple roles, and queue responsibilities are additive.</description>
+      <status>in-progress</status>
+    </task>
+    <task id="07-boundary-hardening" owner="team">
+      <description>Codify and enforce boundary policy: public users and logged-in customers only see public + self/account-scoped data; customer-company admins can manage users within their own company only; staff/admin views can access cross-account data and internal docs.</description>
+      <status>planned</status>
+    </task>
+    <task id="07-mcp-operational-readiness" owner="team">
+      <description>Keep local MCP usage repeatable for Codex/Cursor by documenting and validating endpoint/key/transport health checks for payload_local and image_gen_local.</description>
+      <status>planned</status>
+    </task>
+    <task id="07-portal-shell-hardening" owner="team">
+      <description>Use conventional shadcn app-shell patterns for sidebar and content insets so the portal avoids overlay collisions, horizontal overflow, and hidden admin toolbar controls.</description>
+      <status>planned</status>
+    </task>
+    <task id="07-ops-route-split" owner="team">
+      <description>Promote CRM workspace, scorecard, milestones, assets, and today board into first-class `/ops/*` routes. Keep command center as a current-user execution hub with deep links and URL query params into those pages.</description>
+      <status>planned</status>
+    </task>
+    <task id="07-preview-identity-and-nav-context" owner="team">
+      <description>Enforce deterministic customer preview in staff portal: `Customer home` binds to a stable non-admin `test_user` context, sidebar labels show active context (`admin` vs preview user), and admin-only nav/docs/settings hide while previewing customer scope.</description>
+      <status>planned</status>
+    </task>
+    <task id="07-engineering-conventions-adoption" owner="team">
+      <description>Apply and enforce coding conventions for shared UI/system quality: icon usage standards, reduced copy-heavy/faded UI patterns, large-file extraction, constants/typed unions for repeated literals, and reusable utilities for recurring patterns.</description>
+      <status>in-progress</status>
+    </task>
+  </tasks>
+  <questions>
+    <question id="q-lead-vs-contact" status="open">Should a new inbound form always start as a `lead`, with promotion to `contact` plus `account` only after qualification, or should residential requests create both immediately?</question>
+    <question id="q-owner-routing" status="open">What default owner-routing rules should assign new leads, tasks, and overdue billing follow-up before a more advanced round-robin system exists?</question>
+    <question id="q-sequence-governance" status="open">Which sequence steps should remain fully automatic, and which should create internal tasks instead of auto-sending customer email?</question>
+    <question id="q-commercial-workflow" status="open">Which commercial-specific queue and billing fields must be visible by default in `/ops` so companies are not buried behind residential assumptions?</question>
+    <question id="q-queue-actions" status="open">After task completion, opportunity-stage advancement, and note entry, which inline CRM actions should land next: owner reassignment, lead qualification, or customer outreach logging?</question>
+    <question id="q-billing-defaults" status="open">Which accounts should default to Stripe autopay versus send-invoice terms, and when should monthly consolidated invoicing be required instead of a subscription?</question>
+    <question id="q-billing-admin-actions" status="open">Which billing adjustments need first-class admin quick actions earliest: paid onsite, paid by check, discount, courtesy credit, refund, or write-off?</question>
+    <question id="q-impersonation-scope" status="resolved">Day-one impersonation scope is the marketing site plus the customer portal routes for dashboard, estimates, invoices, schedule, and account management. Internal staff views such as `/ops` and admin docs redirect out when the effective user is non-admin.</question>
+    <question id="q-worker-email-source" status="resolved">Fastest rollout: reminders go to each worker's preferred existing email address (personal or company) via Resend delivery, without requiring Google/Microsoft mailbox OAuth for day one.</question>
+    <question id="q-role-model" status="resolved">Employees may hold multiple internal roles simultaneously; queue permissions and duties are additive across assigned roles.</question>
+    <question id="q-boundary-policy" status="resolved">Anything that exposes cross-user or cross-company data, internal docs, or operational controls is admin/staff-only. Customer and public surfaces remain constrained to public + self/account-scoped data.</question>
+    <question id="q-support-sla-final" status="open">Confirm final SLA targets for support classes: general support, billing support, refund requests, and policy/privacy requests.</question>
+    <question id="q-refund-policy-routing" status="open">Define who can approve, deny, and finalize refund outcomes, and which steps require ops-admin versus billing-followup role ownership.</question>
+    <question id="q-discount-rule-hierarchy" status="open">Confirm discount hierarchy and constraints: should user-level overrides always take precedence over account-level defaults, and do both allow percentage + flat amount variants?</question>
+    <question id="q-company-admin-billing-scope" status="resolved">Company-admin customers can manage users and company-admin membership within their company and can view company billing context including invoices, subscriptions, and payment methods.</question>
+    <question id="q-ops-ia-split" status="resolved">CRM workspace and other dense ops sections should be split into dedicated `/ops/*` routes instead of being crowded inside one command-center surface.</question>
+    <question id="q-command-center-role" status="resolved">Internal command center should focus on currently logged-in worker duties and link out to specialized ops pages via URLs and query params.</question>
+    <question id="q-toolbar-layering" status="resolved">Admin impersonation toolbar should remain top-layer and visible; sidebar/content layout must not obscure it.</question>
+    <question id="q-preview-default-user" status="resolved">Staff `Customer home` should default to a stable non-admin `test_user` preview identity for repeatable customer-flow checks.</question>
+    <question id="q-seed-user-contract" status="resolved">Seed contract should retain three admin staff users (`bg@`, `pb@`, `de@`) and one non-admin preview user (`test_user`) for deterministic testing.</question>
+    <question id="q-file-size-guardrails" status="resolved">Adopt soft file-size guardrails and extraction triggers to prevent growth of monolithic components/routes.</question>
+    <question id="q-literal-centralization" status="resolved">Repeated status/stage/role and UI label literals should move to shared constants/typed unions instead of ad hoc strings spread across files.</question>
+  </questions>
+  <decisions>
+    <decision>D-crm-001</decision>
+    <decision>D-crm-002</decision>
+    <decision>D-crm-003</decision>
+    <decision>D-crm-004</decision>
+    <decision>D-crm-005</decision>
+    <decision>D-crm-006</decision>
+    <decision>D-billing-001</decision>
+    <decision>D-billing-002</decision>
+    <decision>D-billing-003</decision>
+    <decision>D-ux-004</decision>
+    <decision>D-crm-007</decision>
+    <decision>D-auth-003</decision>
+    <decision>D-crm-008</decision>
+    <decision>D-devtools-003</decision>
+    <decision>D-ux-006</decision>
+    <decision>D-auth-004</decision>
+    <decision>D-eng-001</decision>
+  </decisions>
+</phase-plan>

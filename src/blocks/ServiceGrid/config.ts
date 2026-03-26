@@ -9,6 +9,10 @@ export const ServiceGrid: Block = {
   },
   fields: [
     {
+      name: 'eyebrow',
+      type: 'text',
+    },
+    {
       name: 'heading',
       type: 'text',
       required: true,
@@ -25,6 +29,10 @@ export const ServiceGrid: Block = {
       labels: { singular: 'Service', plural: 'Services' },
       fields: [
         {
+          name: 'eyebrow',
+          type: 'text',
+        },
+        {
           name: 'name',
           type: 'text',
           required: true,
@@ -33,6 +41,31 @@ export const ServiceGrid: Block = {
           name: 'summary',
           type: 'textarea',
           required: true,
+        },
+        {
+          name: 'media',
+          type: 'upload',
+          relationTo: 'media',
+        },
+        {
+          name: 'pricingHint',
+          type: 'text',
+        },
+        {
+          name: 'highlights',
+          type: 'array',
+          labels: {
+            singular: 'Highlight',
+            plural: 'Highlights',
+          },
+          maxRows: 3,
+          fields: [
+            {
+              name: 'text',
+              type: 'text',
+              required: true,
+            },
+          ],
         },
       ],
     },

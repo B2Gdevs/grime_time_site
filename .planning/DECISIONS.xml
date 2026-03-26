@@ -36,6 +36,17 @@
       <file path="src/app/(frontend)/contact/page.tsx" />
     </references>
   </decision>
+  <decision id="D-content-002">
+    <title>Marketing imagery should stay Payload-driven, not trapped in homepage-only React content</title>
+    <summary>Hero art, service cards, supporting proof, and background imagery should be seeded into Payload page layout blocks and media records wherever practical. Avoid leaving core public messaging inside home-only hardcoded React panels that editors cannot reshape through the normal page model.</summary>
+    <impact>The homepage can still keep specialized components when they materially improve UX, but the primary public narrative and service proof should live in reusable blocks and seeded media relationships. This keeps the site closer to the Payload website-template pattern and makes generated or uploaded images usable across pages.</impact>
+    <references>
+      <file path="src/app/(frontend)/[slug]/page.tsx" />
+      <file path="src/endpoints/seed/home.ts" />
+      <file path="src/blocks/ServiceGrid/config.ts" />
+      <file path=".planning/workflows/image-generation-mcp-and-media-workflow.md" />
+    </references>
+  </decision>
   <decision id="D-crm-003">
     <title>Ops dashboard is Payload-first, not external-CRM-gated</title>
     <summary>`/ops` should operate from Payload business records, scheduled work, scorecards, and later an internal follow-up queue. External CRM reads are no longer part of the intended operating model.</summary>
@@ -68,6 +79,36 @@
       <file path=".env.example" />
     </references>
   </decision>
+  <decision id="D-crm-005">
+    <title>Mirror HubSpot CRM primitives in a first-party Payload model</title>
+    <summary>The in-house CRM should copy the useful shape of HubSpot, not its vendor dependency: records, properties, associations, owners, pipelines, activities, tasks, search, and sequences all become first-party collections, globals, API routes, and jobs.</summary>
+    <impact>Schema and UI work should optimize for compact operator workflows, strong linking between business records, and consistent list/detail interactions. We are not rebuilding every HubSpot feature; we are deliberately implementing the core operating primitives the team needs inside Payload and Next.js.</impact>
+    <references>
+      <file path=".planning/workflows/hubspot-capability-map-and-first-party-crm.md" />
+      <file path=".planning/workflows/payload-native-crm-and-billing.md" />
+      <file path="src/app/(portal)/ops/page.tsx" />
+      <file path="src/payload.config.ts" />
+    </references>
+  </decision>
+  <decision id="D-crm-006">
+    <title>Accounts represent both households and companies, with commercial depth built in</title>
+    <summary>The `accounts` model is the shared first-party record for residential households and commercial companies. Commercial relationships need extra billing, AP, tax-exemption, and multi-location fields instead of being treated like a thin variant of a homeowner record.</summary>
+    <impact>Pipeline, billing, scheduling, and sequence logic can stay unified while still supporting commercial operating needs. UI labels can say “Account” broadly and surface “Company” language where context is commercial.</impact>
+    <references>
+      <file path="src/collections/Accounts/index.ts" />
+      <file path=".planning/workflows/hubspot-capability-map-and-first-party-crm.md" />
+    </references>
+  </decision>
+  <decision id="D-ux-004">
+    <title>CRM workspace UX favors compact tabbed layouts over overlapping panels</title>
+    <summary>The first-party CRM should avoid overlapping sheets and accidental overflow. Prefer tabs, tab groups, button groups, inline detail panes, badges, info icons, and tooltips inside stable layout regions.</summary>
+    <impact>`/ops` and future CRM routes should use dense, business-oriented layouts that remain readable on desktop and resilient on smaller viewports. If a section can stay in-page with tabs or button groups, do that before adding dialogs or overlay stacks.</impact>
+    <references>
+      <file path="src/components/data-table.tsx" />
+      <file path="src/app/(portal)/ops/page.tsx" />
+      <file path=".planning/phases/07-first-party-crm-billing-and-automation/PLAN.xml" />
+    </references>
+  </decision>
   <decision id="D-billing-001">
     <title>Stripe handles payments; Payload owns billing state</title>
     <summary>Stripe will process payment methods, invoices, subscriptions, checkout, and webhook events. Payload remains the business-facing source of truth for invoice context, customer-visible billing history, subscription policy, and operational status.</summary>
@@ -77,6 +118,18 @@
       <file path=".env.example" />
       <file path="src/collections/Invoices/index.ts" />
       <file path="src/collections/ServicePlans/index.ts" />
+    </references>
+  </decision>
+  <decision id="D-billing-002">
+    <title>Default billing UX is Stripe-hosted, portal-first for account holders, and supports internal adjustments</title>
+    <summary>Customer-facing payment flows should default to Stripe Hosted Invoice Pages plus Stripe customer portal sessions as the standard self-serve path for customers who have an account context. Grime Time logins remain optional for billing, so no-login invoice payment still works. Commercial terms accounts must support send-invoice net terms and monthly consolidated invoicing, while admins can still record onsite or out-of-band payments, discounts, credits, and refunds without storing bank details in-app.</summary>
+    <impact>This keeps payment-method storage, bank-account handling, invoice delivery, refunds, credit notes, and self-serve billing changes inside Stripe where possible, which is faster to ship and easier to maintain. Payload still needs expanded billing-policy fields, invoice reconciliation data, adjustment history, and internal payment-event tracking so `/ops` and customer views reflect real business state even when payment happens outside Stripe-hosted payment flows.</impact>
+    <references>
+      <file path=".planning/workflows/stripe-billing-and-customer-payment-operations.md" />
+      <file path=".planning/workflows/payload-native-crm-and-billing.md" />
+      <file path="src/collections/Invoices/index.ts" />
+      <file path="src/collections/ServicePlans/index.ts" />
+      <file path=".env.example" />
     </references>
   </decision>
   <decision id="D-quotes-001">
@@ -146,6 +199,21 @@
       <file path="src/app/(portal)/account/page.tsx" />
     </references>
   </decision>
+  <decision id="D-auth-002">
+    <title>Admin impersonation uses effective-user scope while preserving the real admin identity</title>
+    <summary>Admins need to preview the real customer experience without losing their own admin session. The app should keep the authenticated admin as the real actor, but allow a first-party impersonation state that swaps the effective user for customer-facing routes and data. A floating toolbar should persist across pages so the admin can switch, stop impersonation, or jump between customer views.</summary>
+    <impact>Customer-facing layouts and routes should read an effective auth context, while internal admin-only routes still validate the real admin. When the effective user is non-admin, internal portal views such as `/ops` or admin docs should redirect out of those views instead of leaking staff-only screens.</impact>
+    <references>
+      <file path=".planning/TASK-REGISTRY.xml" />
+      <file path="src/app/(portal)/layout.tsx" />
+      <file path="src/app/api/internal/impersonation/start/route.ts" />
+      <file path="src/app/api/internal/impersonation/stop/route.ts" />
+      <file path="src/components/admin-impersonation/AdminImpersonationToolbar.tsx" />
+      <file path="src/components/app-sidebar.tsx" />
+      <file path="src/lib/auth/getAuthContext.ts" />
+      <file path="src/lib/auth/getCurrentPayloadUser.ts" />
+    </references>
+  </decision>
   <decision id="D-service-plan-001">
     <title>Recurring plan defaults live in draftable Payload global `servicePlanSettings`</title>
     <summary>Default recurring-plan terms are configurable in Payload global `servicePlanSettings`: two visits per year minimum, 20% off one-off single-job pricing by default, billed across the year in equal installments, with a default six-month cadence. Staff can stage and publish changes instead of hardcoding subscription logic.</summary>
@@ -164,6 +232,118 @@
       <file path=".planning/workflows/payload-mcp-and-editor-setup.md" />
       <file path="src/payload.config.ts" />
       <file path=".env.example" />
+    </references>
+  </decision>
+  <decision id="D-devtools-002">
+    <title>Image generation MCP is vendored and launched through repo-local tooling</title>
+    <summary>The image-generation MCP server should be pinned in git as a submodule under `vendor/image-gen-mcp`, use its own `uv`-managed Python environment, and read provider settings from the repo root `.env`. Cursor, Codex, and local dev should all use the same repo-owned launcher instead of per-machine shell commands.</summary>
+    <impact>This keeps the image pipeline reproducible across machines and lets `npm run dev` start the image service only when `IMAGE_GEN_MCP_ENABLED=true`. It also avoids spreading Python setup steps and secret handling across editor-specific notes. Marketing/content work can now depend on a stable in-repo image-generation path without coupling those assets to a separate manually managed service.</impact>
+    <references>
+      <file path=".planning/workflows/image-generation-mcp-and-media-workflow.md" />
+      <file path=".cursor/mcp.json" />
+      <file path=".codex/image-gen-mcp.example.toml" />
+      <file path="scripts/image-gen-mcp-setup.mjs" />
+      <file path="scripts/image-gen-mcp-start.mjs" />
+      <file path="scripts/dev-with-services.mjs" />
+      <file path="vendor/image-gen-mcp" />
+      <file path=".env.example" />
+    </references>
+  </decision>
+  <decision id="D-crm-007">
+    <title>Internal employees support multiple additive roles</title>
+    <summary>Staff users may be assigned multiple internal roles at once (for example Sales + Scheduler). Queue visibility and duties are additive, not exclusive, so small teams can share responsibilities without role conflicts.</summary>
+    <impact>Assignment logic, queue filters, and permissions should evaluate role sets instead of single-role assumptions.</impact>
+    <references>
+      <file path=".planning/workflows/operating-rhythm-roles-and-reminders.md" />
+      <file path=".planning/phases/07-first-party-crm-billing-and-automation/PLAN.xml" />
+    </references>
+  </decision>
+  <decision id="D-auth-003">
+    <title>Customer and employee data surfaces remain strictly separated</title>
+    <summary>Any view that exposes cross-user or cross-company information, internal docs, or operational controls is staff/admin-only. Customer and public surfaces must stay limited to public plus self/account-scoped data, with company-admin customers limited to their own company membership management.</summary>
+    <impact>Navigation, API routes, and access controls must continue enforcing these boundaries, including impersonation-safe behavior.</impact>
+    <references>
+      <file path=".planning/workflows/operating-rhythm-roles-and-reminders.md" />
+      <file path="src/components/app-sidebar.tsx" />
+      <file path="src/lib/auth/getAuthContext.ts" />
+      <file path="src/app/(portal)/docs/page.tsx" />
+      <file path="src/app/(portal)/ops/page.tsx" />
+    </references>
+  </decision>
+  <decision id="D-crm-008">
+    <title>Fastest reminder rollout uses Resend to worker preferred inboxes</title>
+    <summary>Day-one reminder and digest delivery uses Payload jobs with Resend sent to each worker's preferred existing email address (personal or company). Mailbox-provider OAuth integration is optional and can be added later without blocking first rollout.</summary>
+    <impact>The team can ship reliable follow-up reminders immediately while deferring Gmail/Microsoft complexity until core queue and SLA behavior is stable.</impact>
+    <references>
+      <file path=".planning/workflows/operating-rhythm-roles-and-reminders.md" />
+      <file path=".planning/workflows/payload-native-crm-and-billing.md" />
+      <file path=".env.example" />
+    </references>
+  </decision>
+  <decision id="D-devtools-003">
+    <title>MCP local usage requires operational verification checklist</title>
+    <summary>Payload and image-generation MCP setup is considered ready only when endpoint, auth key, and local transport checks pass in Codex/Cursor contexts, not just when config snippets exist.</summary>
+    <impact>Reduces confusion during planning/implementation handoffs by making MCP readiness explicitly testable.</impact>
+    <references>
+      <file path=".planning/phases/07-first-party-crm-billing-and-automation/PLAN.xml" />
+      <file path=".planning/workflows/payload-mcp-and-editor-setup.md" />
+      <file path=".codex/payload-mcp.example.toml" />
+      <file path=".codex/image-gen-mcp.example.toml" />
+    </references>
+  </decision>
+  <decision id="D-billing-003" status="open">
+    <title>Discount policy supports account defaults and user overrides</title>
+    <summary>Billing policy should support discounts at both account/company scope and user/contact scope. Current proposal is user-level override first, then account-level default, then base pricing. Final percent/flat constraints and approval flow are pending.</summary>
+    <impact>Discount calculations and invoice presentation need clear precedence, audit logging, and staff-only controls so adjustments remain explainable and reversible.</impact>
+    <references>
+      <file path=".planning/workflows/operating-rhythm-roles-and-reminders.md" />
+      <file path=".planning/phases/07-first-party-crm-billing-and-automation/PLAN.xml" />
+      <file path=".planning/TASK-REGISTRY.xml" />
+    </references>
+  </decision>
+  <decision id="D-ux-005">
+    <title>Public contact/support UX uses compact tab-detail guidance over loose card stacks</title>
+    <summary>The `/contact` page should prioritize immediate action clarity: high-contrast visual hierarchy, concise copy, visible brand mark in the request card, icon-led category cues, and compact tabs feeding one detail panel for policy/support guidance.</summary>
+    <impact>Reduces cognitive load and prevents support copy from competing with the main form action. The page becomes easier to scan and more consistent with compact operator/customer UI patterns used elsewhere.</impact>
+    <references>
+      <file path="src/app/(frontend)/contact/page.tsx" />
+      <file path=".planning/phases/03-landing-and-payload-scaffold/PLAN.xml" />
+      <file path=".planning/workflows/customer-site-content-and-engagebay.md" />
+    </references>
+  </decision>
+  <decision id="D-ux-006">
+    <title>Ops information architecture splits dense modules into dedicated routes</title>
+    <summary>The ops experience should use a conventional app shell and route-based information architecture. CRM workspace, scorecard, milestones, assets, and today board become first-class `/ops/*` pages, while the internal command center is narrowed to currently logged-in user duties with deep links/query params.</summary>
+    <impact>Reduces overflow and overlap issues, improves navigation clarity, and avoids forcing large feature surfaces into one crowded panel. Also requires sidebar/inset/toolbar layering to remain predictable and non-overlapping.</impact>
+    <references>
+      <file path="src/app/(portal)/ops/page.tsx" />
+      <file path="src/components/portal/command-center/ops-command-center.tsx" />
+      <file path="src/app/(portal)/layout.tsx" />
+      <file path="src/components/app-sidebar.tsx" />
+      <file path=".planning/workflows/admin-portal-quotes-ux.md" />
+      <file path=".planning/phases/07-first-party-crm-billing-and-automation/PLAN.xml" />
+    </references>
+  </decision>
+  <decision id="D-auth-004">
+    <title>Customer-home preview uses deterministic non-admin test identity</title>
+    <summary>When staff use `Customer home`, the portal should run in a stable non-admin preview identity (`test_user`) so customer-flow checks are repeatable. Sidebar labels should indicate context (`Ops dashboard (admin)` and `Customer home (test_user)`), and admin-only links/docs/settings must be hidden in customer preview scope.</summary>
+    <impact>Prevents ambiguous "am I really seeing customer scope?" states and avoids leaking admin navigation while previewing customer experiences. Requires predictable seed identity setup and impersonation/nav context wiring.</impact>
+    <references>
+      <file path="src/app/(portal)/layout.tsx" />
+      <file path="src/components/app-sidebar.tsx" />
+      <file path="src/components/admin-impersonation/AdminImpersonationToolbar.tsx" />
+      <file path="src/endpoints/seed/index.ts" />
+      <file path=".planning/workflows/operating-rhythm-roles-and-reminders.md" />
+    </references>
+  </decision>
+  <decision id="D-eng-001">
+    <title>Code quality favors extraction and typed shared primitives over literal sprawl</title>
+    <summary>As the app scales, feature work should follow shared engineering conventions: centralize repeated literals into constants/typed unions, extract reusable utilities/components from large files, and enforce practical file-size guardrails. UI work should also prefer clear icon-assisted affordances and avoid copy-heavy low-contrast layouts for primary actions.</summary>
+    <impact>Improves maintainability, consistency, and implementation speed across Codex/Cursor sessions while reducing regressions from duplicated string logic and oversized monolithic components.</impact>
+    <references>
+      <file path=".planning/workflows/frontend-and-code-quality-conventions.md" />
+      <file path=".planning/phases/07-first-party-crm-billing-and-automation/PLAN.xml" />
+      <file path=".planning/TASK-REGISTRY.xml" />
     </references>
   </decision>
   <decision id="D-vault-001" status="open">

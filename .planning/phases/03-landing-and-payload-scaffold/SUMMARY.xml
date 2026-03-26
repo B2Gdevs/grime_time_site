@@ -14,11 +14,16 @@
     <item>The homepage renderer now drops placeholder seed media on `home` and uses masked section shells so service, pricing, and CTA content read like intentional marketing panels instead of template leftovers.</item>
     <item>The live homepage now uses a compact code-viewer style service surface with icon-led tabs, inline `Start estimate` actions in the file rail, and a side-by-side detail pane instead of stacked service/pricing explainer grids.</item>
     <item>The seeded public-site narrative now includes a founder-story `about` page plus a homepage panel that explains the business as two young entrepreneurs building serious operating experience ahead of college.</item>
+    <item>Phase 03 now explicitly includes a media-led marketing refresh so homepage, about, and contact surfaces can use Payload-managed imagery and service proof instead of staying mostly text-only.</item>
+    <item>The homepage now renders the seeded Payload layout blocks directly instead of relying on hardcoded `HomeMarketingPanels`, and the reusable `serviceGrid` block now supports media, highlights, and pricing cues for image-led service cards.</item>
+    <item>Seed media now includes exterior-cleaning placeholder imagery with captions, the about page uses a stronger visual hero, and the shared header/footer no longer show the template Payload logo.</item>
+    <item>A new queued UX refinement is now tracked for `/contact`: stronger contrast, less copy, clearer action hierarchy, logo presence in the request card, heavier icon usage, and compact tabs with one detail panel for dense support text.</item>
   </highlights>
   <next>
-    <item>Finish the seeded homepage, about page, pricing, and proof content so the live site matches the new quote flow after the next reseed.</item>
-    <item>Reseed and review the new customer trust/support pages plus footer links on the live site.</item>
-    <item>Add a quick-edit admin path for reviews, testimonials, and before/after proof.</item>
+    <item>Replace the current placeholder property photos with generated or real Grime Time imagery for driveway action, house washing, and commercial surfaces.</item>
+    <item>Add a quick-edit admin path for reviews, testimonials, and before/after proof so the refreshed public visuals have matching trust content.</item>
+    <item>Decide whether `/contact` should stay a bespoke route or be brought fully under the Payload page-layout model like the homepage and about page.</item>
+    <item>Execute the `/contact` UX refresh using a compact tab-detail pattern and remove faded/low-emphasis presentation that currently obscures the form action.</item>
     <item>Complete launch QA across public routes, login, and admin screens after reseed.</item>
   </next>
 </phase-summary>

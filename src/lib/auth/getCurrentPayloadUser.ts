@@ -1,16 +1,10 @@
-import config from '@payload-config'
-import { getPayload } from 'payload'
-import { headers } from 'next/headers'
-
 import type { User } from '@/payload-types'
+import { getCurrentAuthContext } from '@/lib/auth/getAuthContext'
 import { isAdminUser } from '@/lib/auth/roles'
 
 export async function getCurrentPayloadUser(): Promise<User | null> {
-  const payload = await getPayload({ config })
-  const requestHeaders = await headers()
-  const { user } = await payload.auth({ headers: requestHeaders })
-
-  return (user as User | null) ?? null
+  const auth = await getCurrentAuthContext()
+  return auth.effectiveUser
 }
 
 export async function requirePayloadUser(): Promise<User> {

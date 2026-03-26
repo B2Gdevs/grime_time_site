@@ -37,6 +37,7 @@ See `.env.example` for the full list. Current integration-related env vars:
 | Customer billing + service records | [`src/collections/Invoices/index.ts`](../../src/collections/Invoices/index.ts), [`src/collections/ServicePlans/index.ts`](../../src/collections/ServicePlans/index.ts), [`src/collections/ServiceAppointments/index.ts`](../../src/collections/ServiceAppointments/index.ts) |
 | Ops dashboard | [`src/app/(portal)/ops/page.tsx`](../../src/app/(portal)/ops/page.tsx), [`src/components/data-table.tsx`](../../src/components/data-table.tsx), [`src/components/portal/OperatingDayCalendar.tsx`](../../src/components/portal/OperatingDayCalendar.tsx) |
 | Product direction / data model | [`payload-native-crm-and-billing.md`](./payload-native-crm-and-billing.md) |
+| Billing operating model | [`stripe-billing-and-customer-payment-operations.md`](./stripe-billing-and-customer-payment-operations.md) |
 
 ## Directional rules
 
@@ -45,6 +46,7 @@ See `.env.example` for the full list. Current integration-related env vars:
 3. Resend is the delivery rail, not the automation source of truth.
 4. Payload jobs should own follow-up sequences, reminders, and dunning logic.
 5. `/ops` should be powered by first-party records, not external provider toggles.
+6. Stripe customer portal is the standard self-serve billing surface when a customer account exists, but billing must still work without a Grime Time login.
 
 ## Near-term implementation
 

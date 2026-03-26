@@ -48,6 +48,14 @@
     <status>in-progress</status>
     <plans>.planning/phases/06-quoting-and-advanced-ops/</plans>
   </phase>
+  <phase id="07">
+    <title>First-party CRM, billing, and automation</title>
+    <goal>Replace the old third-party CRM mental model with a Payload-native CRM workspace, Stripe webhook billing sync, and Payload-jobs-driven Resend sequences that power compact admin and customer account surfaces.</goal>
+    <requirements>REQ-05, REQ-06</requirements>
+    <depends>05,06</depends>
+    <status>in-progress</status>
+    <plans>.planning/phases/07-first-party-crm-billing-and-automation/</plans>
+  </phase>
   <doc-flow>
     <doc name="TASK-REGISTRY.xml">Tasks by phase.</doc>
     <doc name="REQUIREMENTS.xml">PRD embedded markdown.</doc>

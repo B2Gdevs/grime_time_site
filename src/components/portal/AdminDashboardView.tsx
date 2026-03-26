@@ -8,6 +8,7 @@ import { SectionCards, type SectionCardItem } from '@/components/section-cards'
 import { SiteHeader } from '@/components/site-header'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import type { CrmWorkspaceData } from '@/lib/crm/workspace'
 import type {
   OpsAssetLadderRow,
   OpsGrowthMilestoneRow,
@@ -19,6 +20,7 @@ export function AdminDashboardView({
   assetLadderItems,
   cards,
   chartDisclaimer,
+  crmWorkspace,
   growthMilestones,
   liabilityItems,
   mergedScorecard,
@@ -30,6 +32,7 @@ export function AdminDashboardView({
   assetLadderItems: OpsAssetLadderRow[]
   cards: SectionCardItem[]
   chartDisclaimer?: string | null
+  crmWorkspace: CrmWorkspaceData
   growthMilestones: OpsGrowthMilestoneRow[]
   liabilityItems: OpsLiabilityRow[]
   mergedScorecard: OpsMergedScorecardRow[]
@@ -42,7 +45,7 @@ export function AdminDashboardView({
     <>
       <SiteHeader
         title="Ops dashboard"
-        description="Internal command center for leads, quotes, scorecards, and growth decisions."
+        description="Internal command center for CRM, quotes, schedules, scorecards, and growth decisions."
       />
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <div
@@ -53,6 +56,7 @@ export function AdminDashboardView({
 
           <DataTable
             assetLadderItems={assetLadderItems}
+            crmWorkspace={crmWorkspace}
             growthMilestones={growthMilestones}
             liabilityItems={liabilityItems}
             mergedScorecard={mergedScorecard}
@@ -70,9 +74,21 @@ export function AdminDashboardView({
               <Card className="min-w-0">
                 <CardHeader>
                   <CardTitle>Operator panel</CardTitle>
-                  <CardDescription>Quote tools, internal docs, and Payload admin.</CardDescription>
+                  <CardDescription>CRM, quote, automation, and admin controls.</CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-3">
+                  <Button asChild className="justify-start">
+                    <Link href="/admin/collections/leads">
+                      <ReceiptTextIcon className="size-4" />
+                      Open leads
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline" className="justify-start">
+                    <Link href="/admin/collections/crm-tasks">
+                      <ReceiptTextIcon className="size-4" />
+                      Open CRM tasks
+                    </Link>
+                  </Button>
                   {quotesEnabled ? (
                     <Button asChild className="justify-start">
                       <Link href="/admin/collections/quotes">
@@ -88,15 +104,15 @@ export function AdminDashboardView({
                     </Link>
                   </Button>
                   <Button asChild variant="outline" className="justify-start">
-                    <Link href="/docs/quote-system-and-texas-compliance">
+                    <Link href="/admin/collections/opportunities">
                       <FileTextIcon className="size-4" />
-                      Open quote playbook
+                      Open opportunities
                     </Link>
                   </Button>
                   <Button asChild variant="outline" className="justify-start">
-                    <Link href="/docs/business-scorecard-and-growth">
+                    <Link href="/admin/collections/crm-sequences">
                       <FileTextIcon className="size-4" />
-                      Open scorecard
+                      Open sequences
                     </Link>
                   </Button>
                   <Button asChild variant="outline" className="justify-start">

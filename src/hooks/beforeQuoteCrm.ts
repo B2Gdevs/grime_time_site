@@ -100,6 +100,7 @@ export const beforeQuoteCrm: CollectionBeforeChangeHook = async ({
       operation,
       previousStatus: typeof existingDoc?.status === 'string' ? existingDoc.status : null,
       quote: mergedQuote,
+      req,
     })
 
     return {

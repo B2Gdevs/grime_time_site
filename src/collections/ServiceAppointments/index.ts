@@ -1,6 +1,7 @@
 import type { CollectionConfig } from 'payload'
 
 import { isAdmin } from '@/access/isAdmin'
+import { createAssignCustomerAccountHook } from '@/lib/customers/accountRelationship'
 import { buildCustomerOwnershipWhere } from '@/lib/customers/access'
 import { arrivalWindowOptions, serviceAppointmentStatusOptions } from '@/lib/services/constants'
 
@@ -24,6 +25,15 @@ export const ServiceAppointments: CollectionConfig = {
       name: 'title',
       type: 'text',
       required: true,
+    },
+    {
+      name: 'account',
+      type: 'relationship',
+      relationTo: 'accounts',
+      admin: {
+        description: 'Portal company or household account associated with this appointment.',
+        position: 'sidebar',
+      },
     },
     {
       type: 'row',
@@ -179,4 +189,7 @@ export const ServiceAppointments: CollectionConfig = {
       type: 'textarea',
     },
   ],
+  hooks: {
+    beforeValidate: [createAssignCustomerAccountHook()],
+  },
 }

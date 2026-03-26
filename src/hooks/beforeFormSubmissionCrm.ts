@@ -44,7 +44,7 @@ export const beforeFormSubmissionCrm: CollectionBeforeChangeHook = async ({
   }
 
   try {
-    const result = await syncFormSubmissionToActiveCrm(rows)
+    const result = await syncFormSubmissionToActiveCrm({ req, rows })
 
     if (result.status === 'failed' || result.status === 'failed_contact') {
       req.payload.logger.error(

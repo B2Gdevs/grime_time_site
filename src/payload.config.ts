@@ -7,15 +7,23 @@ import { buildConfig, PayloadRequest } from 'payload'
 import { fileURLToPath } from 'url'
 
 import { Categories } from './collections/Categories'
+import { Accounts } from './collections/Accounts'
+import { Contacts } from './collections/Contacts'
+import { CrmActivities } from './collections/CrmActivities'
+import { CrmSequences } from './collections/CrmSequences'
+import { CrmTasks } from './collections/CrmTasks'
 import { GrowthMilestones } from './collections/GrowthMilestones'
 import { Invoices } from './collections/Invoices'
+import { Leads } from './collections/Leads'
 import { Media } from './collections/Media'
 import { OpsAssetLadderItems } from './collections/OpsAssetLadderItems'
 import { OpsLiabilityItems } from './collections/OpsLiabilityItems'
 import { OpsScorecardRows } from './collections/OpsScorecardRows'
+import { Opportunities } from './collections/Opportunities'
 import { Pages } from './collections/Pages'
 import { Posts } from './collections/Posts'
 import { Quotes } from './collections/Quotes'
+import { SequenceEnrollments } from './collections/SequenceEnrollments'
 import { ServiceAppointments } from './collections/ServiceAppointments'
 import { ServicePlans } from './collections/ServicePlans'
 import { Users } from './collections/Users'
@@ -109,6 +117,14 @@ export default buildConfig({
     Categories,
     Quotes,
     Users,
+    Accounts,
+    Contacts,
+    Leads,
+    Opportunities,
+    CrmActivities,
+    CrmSequences,
+    CrmTasks,
+    SequenceEnrollments,
     Invoices,
     ServicePlans,
     ServiceAppointments,

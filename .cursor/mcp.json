@@ -10,6 +10,15 @@
         "Authorization: Bearer REPLACE_WITH_PAYLOAD_MCP_API_KEY"
       ],
       "enabled": false
+    },
+    "image-gen-local": {
+      "command": "node",
+      "args": [
+        "scripts/image-gen-mcp-start.mjs",
+        "--transport",
+        "stdio"
+      ],
+      "enabled": false
     }
   }
 }

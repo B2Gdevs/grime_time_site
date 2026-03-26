@@ -47,6 +47,10 @@
 - [ ] Reviews / testimonials visible on the homepage and editable quickly in Payload admin.
 - [ ] Before / after proof or project-gallery content visible on at least one key landing page.
 - [ ] Contact page and schedule / quote flows reviewed on mobile.
+- [ ] `/contact` uses strong visual contrast (not faded), concise copy, and immediately clear primary action.
+- [ ] `/contact` request card includes Grime Time logo branding.
+- [ ] Long-form support/help text on `/contact` is presented with compact tabs + single detail panel, not scattered standalone cards.
+- [ ] Icon usage on `/contact` reinforces categories and actions without adding copy bloat.
 - [ ] Privacy, terms, refund, and contact-SLA pages reviewed on mobile and linked from the footer/contact flow.
 - [ ] Header nav + mobile menu reviewed.
 - [ ] SEO titles/descriptions reviewed on key pages.
@@ -62,6 +66,7 @@ The launch version should make trust and conversion obvious:
 - visible proof: reviews, testimonials, before/after work
 - service areas and FAQs that remove friction
 - quote, contact, and schedule paths that turn into internal lead records every time
+- contact support UX that is scannable in under 10 seconds (what this is for, what to do next, and where policy details live)
 
 ## References
 

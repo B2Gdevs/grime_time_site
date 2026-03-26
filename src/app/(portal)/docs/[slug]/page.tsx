@@ -37,7 +37,7 @@ export default async function DocPage({ params }: Props) {
   const { slug } = await params
   const isAdmin = userIsAdmin(user)
   if (!isAdmin) {
-    redirect('/dashboard')
+    redirect('/')
   }
   const doc = getPortalDocBySlug(slug, { isAdmin })
 

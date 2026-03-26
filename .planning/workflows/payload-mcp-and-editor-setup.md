@@ -14,6 +14,8 @@ Repo files
 - [`.env.example`](../../.env.example)
 - [`.cursor/mcp.json`](../../.cursor/mcp.json)
 - [`.codex/payload-mcp.example.toml`](../../.codex/payload-mcp.example.toml)
+- [`.codex/image-gen-mcp.example.toml`](../../.codex/image-gen-mcp.example.toml)
+- [`.planning/workflows/image-generation-mcp-and-media-workflow.md`](./image-generation-mcp-and-media-workflow.md)
 
 Current policy
 - The MCP package is installed and wired behind `PAYLOAD_MCP_ENABLED=true`.
@@ -41,6 +43,7 @@ Cursor
 Codex
 - Codex uses the user config at `~/.codex/config.toml`.
 - Copy the snippet from [`.codex/payload-mcp.example.toml`](../../.codex/payload-mcp.example.toml) into the global config and replace `REPLACE_WITH_PAYLOAD_MCP_API_KEY`.
+- If you also want the repo-local image MCP, copy the snippet from [`.codex/image-gen-mcp.example.toml`](../../.codex/image-gen-mcp.example.toml).
 
 References
 - Payload official MCP plugin docs: https://payloadcms.com/docs/plugins/mcp

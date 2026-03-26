@@ -65,7 +65,7 @@ export const Users: CollectionConfig = {
     update: adminOrSelf,
   },
   admin: {
-    defaultColumns: ['name', 'email', 'roles'],
+    defaultColumns: ['name', 'email', 'account', 'roles'],
     useAsTitle: 'name',
   },
   auth: true,
@@ -81,6 +81,23 @@ export const Users: CollectionConfig = {
     {
       name: 'company',
       type: 'text',
+    },
+    {
+      name: 'account',
+      type: 'relationship',
+      relationTo: 'accounts',
+      admin: {
+        description: 'Primary CRM account this user should view in the portal.',
+        position: 'sidebar',
+      },
+      access: {
+        create: isAdminField,
+        read: ({ req: { user }, doc }) => {
+          if (isAdminUser(user)) return true
+          return user?.id === doc?.id
+        },
+        update: isAdminField,
+      },
     },
     {
       name: 'billingAddress',

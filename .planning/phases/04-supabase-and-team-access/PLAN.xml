@@ -5,8 +5,8 @@
     <phase-name>Supabase and team access</phase-name>
     <date>2026-03-23</date>
   </meta>
-  <purpose>Bring the repo onto the real Supabase-backed database with explicit user approval for schema changes, then establish admin access and repeatable seed/bootstrap flows.</purpose>
-  <scope>In scope: Postgres adapter wiring, environment setup, approved migration runs, initial admin bootstrap, customer-vs-admin access separation, customer portal route/nav boundaries, and the ability to seed baseline content into the real database. Out of scope: public marketing polish, CRM deal sync, and editable ops globals.</scope>
+  <purpose>Bring the repo onto the real Supabase-backed database with explicit user approval for schema changes, then establish admin access, MCP/editor tooling, and repeatable bootstrap flows.</purpose>
+  <scope>In scope: Postgres adapter wiring, environment setup, approved migration runs, initial admin bootstrap, customer-vs-admin access separation, customer portal route/nav boundaries, Payload MCP/editor wiring, a vendored image-generation MCP workflow with repo-local Python isolation, and the ability to seed baseline content into the real database. Out of scope: public marketing polish, CRM deal sync, and editable ops globals.</scope>
   <files>
     <file path=".planning/workflows/content-and-seeding.md">
       <description>Seed workflow after migrations and admin access.</description>
@@ -16,9 +16,37 @@
       <description>Payload MCP enablement path and local editor configuration.</description>
       <keywords>mcp,cursor,codex</keywords>
     </file>
+    <file path=".planning/workflows/image-generation-mcp-and-media-workflow.md">
+      <description>Vendored image-generation MCP workflow, Python env isolation, editor wiring, and media-use policy.</description>
+      <keywords>mcp,images,python</keywords>
+    </file>
+    <file path="scripts/image-gen-mcp-setup.mjs">
+      <description>Repo-local bootstrap for the vendored image-generation MCP Python environment.</description>
+      <keywords>mcp,images,uv</keywords>
+    </file>
+    <file path="scripts/image-gen-mcp-start.mjs">
+      <description>Repo-local launcher used by dev tooling and MCP clients for the vendored image-generation server.</description>
+      <keywords>mcp,images,cursor,codex</keywords>
+    </file>
+    <file path="scripts/dev-with-services.mjs">
+      <description>Unified dev entrypoint that starts Next dev and optional repo-owned services such as the image-generation MCP.</description>
+      <keywords>dev,mcp,services</keywords>
+    </file>
     <file path="scripts/bootstrap-admin.ts">
       <description>First-admin bootstrap path using env credentials.</description>
       <keywords>admin,bootstrap</keywords>
+    </file>
+    <file path=".cursor/mcp.json">
+      <description>Project-level Cursor MCP config that should expose Payload and image-generation MCP entries without committing secrets.</description>
+      <keywords>cursor,mcp</keywords>
+    </file>
+    <file path=".codex/payload-mcp.example.toml">
+      <description>Codex example config for repo-local MCP servers.</description>
+      <keywords>codex,mcp</keywords>
+    </file>
+    <file path="vendor/image-gen-mcp">
+      <description>Vendored upstream image-generation MCP server pinned in git.</description>
+      <keywords>mcp,images,submodule</keywords>
     </file>
     <file path=".env.example">
       <description>Environment variable reference for admin, Supabase, and seed flows.</description>
@@ -64,6 +92,10 @@
       <description>Wire Payload MCP as an env-gated part of the dev process, keep local editor configs on the same localhost origin as Next dev, and document that route availability still depends on the approved MCP API-key migration.</description>
       <status>in-progress</status>
     </task>
+    <task id="04-image-mcp-tooling" owner="team">
+      <description>Vendor the image-generation MCP server, keep its Python environment self-contained with `uv`, pass root `.env` image provider settings into it, and make Cursor/Codex plus local dev use the same repo-owned startup path. The vendored submodule, repo-local `uv sync` bootstrap, Cursor/Codex examples, and env-gated dev startup are now in repo.</description>
+      <status>done</status>
+    </task>
     <task id="04-split-access" owner="team">
       <description>Keep customer login/customer dashboard separate from admin sign-in/admin ops so the public account flow never advertises Payload admin and the customer nav stays account-first.</description>
       <status>in-progress</status>
@@ -73,6 +105,7 @@
     <question id="q-migration-window" status="open">When should the approved migration/seed run happen against the current Supabase database?</question>
     <question id="q-admin-identity" status="open">Which email should be the long-term primary admin account in production?</question>
     <question id="q-mcp-rollout" status="open">When should the MCP API keys migration be approved so editor tooling can be enabled locally?</question>
+    <question id="q-image-mcp-dev-mode" status="resolved">The default `npm run dev` path now supports image MCP as an env-gated companion service. It only starts automatically when `IMAGE_GEN_MCP_ENABLED=true`, which keeps the normal dev loop light when the image server is not needed.</question>
     <question id="q-admin-entry" status="open">Should the team eventually get a branded `/team/login` route, or is Payload admin login the long-term admin entry point?</question>
   </questions>
 </phase-plan>

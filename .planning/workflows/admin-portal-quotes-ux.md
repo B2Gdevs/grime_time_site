@@ -2,7 +2,7 @@
 
 **Owner:** Product / ops (with dev for implementation)  
 **Tools:** Payload admin (`/admin`), portal (`/login`, `/dashboard`, `/docs`, `/schedule`), internal **Quotes** collection  
-**Last reviewed:** 2026-03-23
+**Last reviewed:** 2026-03-26
 
 **Where this lives:** Product and UX backlog. Use with [`ROADMAP.xml`](../ROADMAP.xml) and [`../phases/`](../phases/). Operational runbook: [Lead to customer](../../src/content/docs/lead-to-customer-runbook.md) (Portal **Docs**, admin only).
 
@@ -80,12 +80,17 @@ The dashboard should answer these in under 10 seconds:
 - [ ] Add strong empty states when the business has no activity yet
 - [ ] Test mobile and small-screen behavior for tabs, sidebar, and operator panel
 - [ ] Move thresholds and targets into editable Payload data after migration approval
+- [ ] Stop horizontal overflow in command-center sections and ensure no clipped/overlapped content in default desktop widths.
+- [ ] Split heavy command-center modules into first-class `/ops/*` routes (CRM, scorecard, milestones, assets, today board).
+- [ ] Keep command center as "my duties" for the current logged-in worker only, with deep links and query params to specialized routes.
 
 ### B. Portal
 
 - [ ] First-login clarity for customers and staff
 - [ ] Keep admin-only links visually distinct so customers do not chase them
 - [ ] Keep a permanent "What is this portal?" help entry
+- [ ] Move to conventional shadcn sidebar + inset layout behavior so nav and content never overlap.
+- [ ] Keep admin impersonation toolbar pinned in a visible top layer above portal chrome.
 
 ### C. Payload admin
 

@@ -1,4 +1,10 @@
+import type { Media } from '@/payload-types'
 import { RequiredDataFromCollectionSlug } from 'payload'
+
+type AboutArgs = {
+  heroImage: Media
+  supportImage: Media
+}
 
 type LexicalChild = {
   type: string
@@ -45,17 +51,36 @@ const paragraph = (value: string) => ({
   version: 1,
 })
 
-export const about = (): RequiredDataFromCollectionSlug<'pages'> => {
+export const about = ({ heroImage, supportImage }: AboutArgs): RequiredDataFromCollectionSlug<'pages'> => {
   return {
     slug: 'about',
     _status: 'published',
     hero: {
-      type: 'lowImpact',
+      type: 'mediumImpact',
+      media: heroImage.id,
+      links: [
+        {
+          link: {
+            type: 'custom',
+            appearance: 'default',
+            label: 'Start estimate',
+            url: '/#instant-quote',
+          },
+        },
+        {
+          link: {
+            type: 'custom',
+            appearance: 'outline',
+            label: 'Book online',
+            url: '/schedule',
+          },
+        },
+      ],
       richText: {
         root: root([
-          heading('h1', 'Built by two young entrepreneurs who chose real work early.'),
+          heading('h1', 'Exterior cleaning built by young operators who wanted real reps early.'),
           paragraph(
-            'Grime Time started with simple jobs, a willingness to learn fast, and the belief that real-world reps before college would make formal education more valuable, not less.',
+            'Grime Time started with simple jobs, a willingness to learn fast, and the belief that real-world experience before college would make formal education more valuable, not less.',
           ),
         ]),
       },
@@ -74,12 +99,16 @@ export const about = (): RequiredDataFromCollectionSlug<'pages'> => {
                   'The company was founded by two young entrepreneurs building something serious while they plan for college. They wanted to get ahead of a formalized education by learning how to sell, serve customers, estimate work, operate equipment, and carry responsibility in the real world first.',
                 ),
                 paragraph(
-                  'That mindset is still the point of the business: take what they already knew from doing straightforward work, then scale it into a more formidable operation with better systems, better service, and better discipline.',
+                  'That mindset still drives the business: take straightforward service work, then build something more formidable with better systems, cleaner branding, tighter estimating, and stronger customer communication.',
                 ),
               ]),
             },
           },
         ],
+      },
+      {
+        blockType: 'mediaBlock',
+        media: supportImage.id,
       },
       {
         blockType: 'content',
@@ -103,7 +132,7 @@ export const about = (): RequiredDataFromCollectionSlug<'pages'> => {
               root: root([
                 heading('h3', 'Where we are going'),
                 paragraph(
-                  'Residential exterior cleaning is the base: house washing, driveways, porches, and docks. The long-term goal is to grow into a dependable commercial operation with stronger systems, repeat work, and a business that keeps compounding while the founders keep learning.',
+                  'Residential exterior cleaning is the base: house washing, driveways, porches, and docks. The long-term goal is to grow into a dependable commercial operation with stronger systems, repeat work, monthly invoicing, and a business that keeps compounding while the founders keep learning.',
                 ),
               ]),
             },
