@@ -154,6 +154,13 @@
         <command>See src/payload.config.ts, src/utilities/payloadSecret.ts, and .env.example</command>
       </commands>
     </task>
+    <task id="04-08" agent-id="" status="done">
+      <goal>Keep Vercel production deploys on Webpack when Turbopack packaging produces an ESM/CommonJS launcher mismatch under the repo's module settings.</goal>
+      <keywords>vercel,nextjs,webpack,turbopack</keywords>
+      <commands>
+        <command>Use `next build --webpack` in package.json until the current deploy/runtime mismatch is no longer present.</command>
+      </commands>
+    </task>
   </phase>
   <phase id="05">
     <task id="05-01" agent-id="" status="in-progress">

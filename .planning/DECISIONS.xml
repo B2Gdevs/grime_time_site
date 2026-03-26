@@ -260,6 +260,16 @@
       <file path="package.json" />
     </references>
   </decision>
+  <decision id="D-stack-003">
+    <title>Production deploys stay on Webpack until the current Turbopack launcher mismatch is resolved</title>
+    <summary>The repo keeps `next build --webpack` as the production build path because the current Vercel deployment runtime hit `ERR_REQUIRE_ESM` while loading App Router server output through `___next_launcher.cjs` under the repo's `type: module` scope.</summary>
+    <impact>This preserves deploy reliability without changing the repo's module format or local dev ergonomics. Turbopack can stay enabled for development and can be reconsidered for production once the Vercel/Next.js packaging path no longer misclassifies the built server entrypoints.</impact>
+    <references>
+      <file path="package.json" />
+      <file path="next.config.ts" />
+      <file path=".planning/phases/04-supabase-and-team-access/SUMMARY.xml" />
+    </references>
+  </decision>
   <decision id="D-crm-007">
     <title>Internal employees support multiple additive roles</title>
     <summary>Staff users may be assigned multiple internal roles at once (for example Sales + Scheduler). Queue visibility and duties are additive, not exclusive, so small teams can share responsibilities without role conflicts.</summary>

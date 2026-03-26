@@ -17,12 +17,14 @@
     <item>A vendored image-generation MCP server is now part of the repo workflow under `vendor/image-gen-mcp`, with a self-contained `uv` environment, root `.env` passthrough, Cursor/Codex config examples, and an env-gated `npm run dev` hook so image tooling can run alongside Next when needed.</item>
     <item>Payload config now derives a deterministic fallback secret when `PAYLOAD_SECRET` is missing, which prevents Vercel prerender failures on public routes while still allowing an explicit secret to override it immediately.</item>
     <item>The repo now pins Node to `20.x` in `package.json` so Vercel does not silently jump to a future major version during deploys.</item>
+    <item>Production builds now use `next build --webpack` because the current Vercel deployment path hit an ESM/CommonJS launcher mismatch with Turbopack under the repo's `type: module` scope.</item>
   </highlights>
   <next>
     <item>Approve and run the database migration window before enabling any new schema-backed tooling such as Payload MCP API keys.</item>
     <item>Create the first durable admin account in the real database.</item>
     <item>After migration approval, enable Payload MCP, restart dev, and generate an API key for local editor use.</item>
     <item>Set `PAYLOAD_SECRET` explicitly in Vercel anyway; the fallback exists to keep deploys bootable, not to replace proper secret management.</item>
+    <item>Revisit Turbopack for production deploys after confirming the Vercel runtime no longer trips over the ESM/CommonJS page launcher path.</item>
     <item>Decide whether admin sign-in should remain at `/admin/login` or later get a branded dedicated team-login route.</item>
     <item>Backfill any real production customer accounts to the new portal profile fields if existing contacts need billing/service addresses immediately.</item>
     <item>Use the new image MCP workflow in phase 03 to generate and curate hero, feature, and background assets, then decide which ones belong in Payload media versus `public/`.</item>
