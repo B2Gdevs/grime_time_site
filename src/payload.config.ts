@@ -37,6 +37,7 @@ import { migrations } from './migrations'
 import { plugins } from './plugins'
 import { defaultLexical } from '@/fields/defaultLexical'
 import { getServerSideURL } from './utilities/getURL'
+import { isUsingFallbackPayloadSecret, resolvePayloadSecret } from './utilities/payloadSecret'
 import { s3Storage } from '@payloadcms/storage-s3'
 import {
   getSupabasePublicObjectUrl,
@@ -58,6 +59,13 @@ const resendApiKey = process.env.RESEND_API_KEY?.trim()
 const emailFrom = process.env.EMAIL_FROM?.trim() || 'onboarding@resend.dev'
 const emailFromName = process.env.EMAIL_FROM_NAME?.trim() || 'Grime Time'
 const payloadMcpEnabled = process.env.PAYLOAD_MCP_ENABLED === 'true'
+const payloadSecret = resolvePayloadSecret()
+
+if (isUsingFallbackPayloadSecret()) {
+  console.warn(
+    '[payload.config] PAYLOAD_SECRET is not set. Using a deterministic fallback secret so builds and runtime can initialize Payload. Set PAYLOAD_SECRET explicitly in Vercel and local envs.',
+  )
+}
 
 export default buildConfig({
   admin: {
@@ -251,7 +259,7 @@ export default buildConfig({
     }),
   ],
   globals: [Header, Footer, Pricing, InternalOpsSettings, QuoteSettings, ServicePlanSettings],
-  secret: process.env.PAYLOAD_SECRET,
+  secret: payloadSecret,
   ...(resendApiKey
     ? {
         email: resendAdapter({

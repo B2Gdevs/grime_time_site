@@ -52,6 +52,10 @@
       <description>Environment variable reference for admin, Supabase, and seed flows.</description>
       <keywords>env,supabase</keywords>
     </file>
+    <file path="src/utilities/payloadSecret.ts">
+      <description>Deterministic Payload secret resolution used to keep builds and runtime bootable when `PAYLOAD_SECRET` is missing.</description>
+      <keywords>env,vercel,secret</keywords>
+    </file>
     <file path="src/migrations/20260324_024258_add_payload_mcp_api_keys.ts">
       <description>Pending migration for Payload MCP API keys and remaining quote schema deltas.</description>
       <keywords>mcp,migration,quotes</keywords>
@@ -98,6 +102,10 @@
     </task>
     <task id="04-split-access" owner="team">
       <description>Keep customer login/customer dashboard separate from admin sign-in/admin ops so the public account flow never advertises Payload admin and the customer nav stays account-first.</description>
+      <status>in-progress</status>
+    </task>
+    <task id="04-deploy-env-guardrails" owner="team">
+      <description>Keep Vercel and local builds deterministic by documenting required env, pinning the Node runtime, and making Payload config resilient enough to prerender public routes when `PAYLOAD_SECRET` is accidentally missing.</description>
       <status>in-progress</status>
     </task>
   </tasks>

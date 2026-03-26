@@ -1,12 +1,13 @@
 declare global {
   namespace NodeJS {
     interface ProcessEnv {
-      PAYLOAD_SECRET: string
+      PAYLOAD_SECRET?: string
       SEED_LOGIN_EMAIL?: string
       SEED_LOGIN_PASSWORD?: string
       DATABASE_URL: string
       NEXT_PUBLIC_SERVER_URL: string
       VERCEL_PROJECT_PRODUCTION_URL: string
+      VERCEL_URL?: string
       QUOTES_INTERNAL_ENABLED?: string
       QUOTES_INTERNAL_EMAILS?: string
       ADMIN_EMAIL?: string

@@ -147,6 +147,13 @@
         <command>See .planning/workflows/image-generation-mcp-and-media-workflow.md</command>
       </commands>
     </task>
+    <task id="04-07" agent-id="" status="done">
+      <goal>Keep deploys deterministic by documenting the Payload/Vercel env contract, pinning Node on Vercel, and making Payload bootable during prerender when `PAYLOAD_SECRET` is accidentally missing.</goal>
+      <keywords>vercel,env,payload,deploy</keywords>
+      <commands>
+        <command>See src/payload.config.ts, src/utilities/payloadSecret.ts, and .env.example</command>
+      </commands>
+    </task>
   </phase>
   <phase id="05">
     <task id="05-01" agent-id="" status="in-progress">

@@ -249,6 +249,17 @@
       <file path=".env.example" />
     </references>
   </decision>
+  <decision id="D-stack-002">
+    <title>Payload must stay bootable during Vercel prerender even when PAYLOAD_SECRET is misconfigured</title>
+    <summary>The app should still initialize Payload during build and runtime if `PAYLOAD_SECRET` is accidentally missing in Vercel, because public pages, globals, and layout chrome depend on Payload during prerender. The config therefore derives a deterministic fallback secret from deployment/runtime context, while production is still expected to set `PAYLOAD_SECRET` explicitly.</summary>
+    <impact>This keeps deploys from failing on public prerender routes such as `/contact` while preserving a clear env contract: the fallback is a safety net, not the preferred production setup. `package.json` also pins Node to `20.x` so Vercel runtime selection stays predictable.</impact>
+    <references>
+      <file path="src/payload.config.ts" />
+      <file path="src/utilities/payloadSecret.ts" />
+      <file path=".env.example" />
+      <file path="package.json" />
+    </references>
+  </decision>
   <decision id="D-crm-007">
     <title>Internal employees support multiple additive roles</title>
     <summary>Staff users may be assigned multiple internal roles at once (for example Sales + Scheduler). Queue visibility and duties are additive, not exclusive, so small teams can share responsibilities without role conflicts.</summary>
