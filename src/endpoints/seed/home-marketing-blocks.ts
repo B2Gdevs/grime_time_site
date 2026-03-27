@@ -151,25 +151,15 @@ export function buildHomeMarketingBlocks({
           link: {
             type: 'custom' as const,
             appearance: 'default' as const,
-            label: 'Start instant quote',
-            url: '/#instant-quote',
-          },
-        },
-        {
-          link: {
-            type: 'custom' as const,
-            appearance: 'outline' as const,
-            label: 'Book online',
+            label: 'Get an instant quote',
             url: '/#instant-quote',
           },
         },
       ],
       richText: {
         root: root([
-          heading('h3', 'Ready to scope the property?'),
-          paragraph(
-            'Start with the instant quote for a range, then let us confirm the real scope and service window before the job is scheduled.',
-          ),
+          heading('h3', 'Ready when you are'),
+          paragraph('Get a live range, then we confirm scope and timing.'),
         ]),
       },
     },

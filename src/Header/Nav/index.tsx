@@ -10,8 +10,9 @@ import {
   BookOpenIcon,
   CalendarCheck2Icon,
   CircleDollarSignIcon,
-  MenuIcon,
   HomeIcon,
+  MailIcon,
+  MenuIcon,
   SearchIcon,
   SparklesIcon,
 } from 'lucide-react'
@@ -31,8 +32,23 @@ function navIconForLabel(label?: null | string) {
   if (key.includes('about')) return BookOpenIcon
   if (key.includes('service')) return SparklesIcon
   if (key.includes('pricing')) return CircleDollarSignIcon
+  if (key.includes('contact')) return MailIcon
   if (key.includes('book')) return CalendarCheck2Icon
   return SparklesIcon
+}
+
+function resolveNavHref(link: NonNullable<HeaderType['navItems']>[number]['link']) {
+  if (
+    link.type === 'reference' &&
+    typeof link.reference?.value === 'object' &&
+    link.reference?.value &&
+    'slug' in link.reference.value &&
+    link.reference.value.slug
+  ) {
+    return `${link.reference?.relationTo !== 'pages' ? `/${link.reference?.relationTo}` : ''}/${link.reference.value.slug}`
+  }
+
+  return link.url || ''
 }
 
 export const HeaderNav: React.FC<{ data: HeaderType }> = ({ data }) => {
@@ -58,20 +74,20 @@ export const HeaderNav: React.FC<{ data: HeaderType }> = ({ data }) => {
       </nav>
 
       <Link
-        className="hidden items-center rounded-lg p-2 text-foreground/80 transition-colors hover:bg-muted hover:text-foreground md:inline-flex"
+        className="hidden items-center gap-1.5 rounded-lg p-2 text-foreground/80 transition-colors hover:bg-muted hover:text-foreground md:inline-flex"
         href="/search"
       >
+        <SearchIcon className="size-4 shrink-0 text-primary" />
         <span className="sr-only">Search</span>
-        <SearchIcon className="w-4 text-primary" />
       </Link>
 
       <div className="flex items-center gap-1 md:hidden">
         <Link
-          className="inline-flex items-center rounded-lg p-2 text-foreground/80 transition-colors hover:bg-muted hover:text-foreground"
+          className="inline-flex items-center gap-1.5 rounded-lg p-2 text-foreground/80 transition-colors hover:bg-muted hover:text-foreground"
           href="/search"
         >
+          <SearchIcon className="size-4 shrink-0 text-primary" />
           <span className="sr-only">Search</span>
-          <SearchIcon className="w-4 text-primary" />
         </Link>
 
         <Sheet open={open} onOpenChange={setOpen}>
@@ -100,15 +116,19 @@ export const HeaderNav: React.FC<{ data: HeaderType }> = ({ data }) => {
             <nav className="mt-6 grid gap-2">
               {navItems.map(({ link }, i) => {
                 const Icon = navIconForLabel(link.label)
+                const href = resolveNavHref(link)
+
+                if (!href) return null
+
                 return (
                   <div key={i} onClick={() => setOpen(false)}>
-                    <CMSLink
-                      {...link}
-                      appearance="link"
-                      className="flex w-full items-center justify-start gap-2 rounded-xl border border-border/70 bg-card/70 px-3 py-3 text-left text-sm font-medium text-foreground"
+                    <Link
+                      className="flex w-full items-center gap-3 rounded-xl border border-border/70 bg-card/70 px-4 py-3 text-left text-sm font-medium text-foreground"
+                      href={href}
                     >
                       <Icon className="size-4 text-primary/90" />
-                    </CMSLink>
+                      <span>{link.label}</span>
+                    </Link>
                   </div>
                 )
               })}

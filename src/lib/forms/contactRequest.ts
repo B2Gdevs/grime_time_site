@@ -36,7 +36,7 @@ export const contactRequestSchema = z.object({
   propertyAddress: optionalTrimmedString(220),
   preferredReply: z.enum(preferredReplyOptions.map((option) => option.value)),
   requestedService: z.enum(contactServiceOptions.map((option) => option.value)),
-  message: requiredTrimmedString(10, 1400, 'Enter a short message so we know what you need.'),
+  message: requiredTrimmedString(3, 1400, 'Enter a message.'),
 })
 
 export type ContactRequestValues = z.infer<typeof contactRequestSchema>

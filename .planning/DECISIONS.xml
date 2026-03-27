@@ -362,7 +362,6 @@
     <references>
       <file path="src/app/(frontend)/[slug]/page.tsx" />
       <file path="src/blocks/ContactRequest/Component.tsx" />
-      <file path="src/components/contact/ContactGuidancePanel.tsx" />
       <file path=".planning/phases/03-landing-and-payload-scaffold/PLAN.xml" />
       <file path=".planning/workflows/customer-site-content-and-engagebay.md" />
     </references>

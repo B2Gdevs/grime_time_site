@@ -314,6 +314,17 @@
   }
 }
 
+/* Hero frosted panel: gentler drift than orbs, pairs with .noise-orb decorations */
+@keyframes hero-glass-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -6px, 0);
+  }
+}
+
 @layer components {
   .portal-main-shell {
     display: flex;
@@ -402,6 +413,10 @@
 
   .noise-orb-delayed {
     animation-delay: -6s;
+  }
+
+  .hero-glass-float {
+    animation: hero-glass-float 11s ease-in-out infinite;
   }
 }
 

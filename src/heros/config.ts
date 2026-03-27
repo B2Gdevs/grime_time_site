@@ -55,7 +55,6 @@ export const hero: Field = {
     },
     linkGroup({
       overrides: {
-        // Must be ≥ number of buttons in `src/endpoints/seed/home.ts` hero.links (seed fails ValidationError if not).
         maxRows: 4,
       },
     }),

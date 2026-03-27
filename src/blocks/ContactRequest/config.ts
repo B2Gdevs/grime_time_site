@@ -1,7 +1,7 @@
 import type { Block } from 'payload'
 
 /**
- * Renders the first-party contact experience: guidance tabs + `/api/lead-forms/contact`.
+ * Renders the first-party contact form → `/api/lead-forms/contact`.
  * Use this instead of a generic Form block so submissions stay on the CRM lead path.
  */
 export const ContactRequest: Block = {
