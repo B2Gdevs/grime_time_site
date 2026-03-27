@@ -34,9 +34,9 @@ Create **three** admin-facing identities for development and early admin (adjust
 
 | Email | Role (TBD) |
 |-------|------------|
-| `bg@grimetime.local` | Team |
-| `pb@grimetime.local` | Team |
-| `de@grimetime.local` | Team |
+| `bg@grimetime.app` | Team |
+| `pb@grimetime.app` | Team |
+| `de@grimetime.app` | Team |
 
 Use strong passwords in non-prod; rotate before production. Map real people and roles in DECISIONS or internal HR doc.
 

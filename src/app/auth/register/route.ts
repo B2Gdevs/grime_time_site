@@ -5,6 +5,7 @@ import { z } from 'zod'
 import config from '@payload-config'
 import { USERS_COLLECTION_SLUG } from '@/collections/Users'
 import type { User } from '@/payload-types'
+import { getCustomerAuthEmailIssue, normalizeCustomerAuthEmail } from '@/lib/auth/customerEmail'
 import { isAdminUser } from '@/lib/auth/roles'
 
 const registerSchema = z.object({
@@ -26,7 +27,12 @@ export async function POST(request: Request) {
     )
   }
 
-  const email = parsed.data.email.trim().toLowerCase()
+  const email = normalizeCustomerAuthEmail(parsed.data.email)
+  const emailIssue = getCustomerAuthEmailIssue(email)
+
+  if (emailIssue) {
+    return NextResponse.json({ error: emailIssue }, { status: 400 })
+  }
 
   const existingUsers = await payload.find({
     collection: USERS_COLLECTION_SLUG,

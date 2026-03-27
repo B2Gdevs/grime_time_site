@@ -148,12 +148,13 @@ export function InstantQuoteSection({ catalog }: { catalog: InstantQuoteCatalog 
 
   return (
     <section className="container my-20 scroll-mt-24" id="instant-quote">
-      <div className="relative overflow-hidden rounded-[2rem] border border-border bg-gradient-to-br from-card via-card to-secondary/40 shadow-[0_20px_80px_-50px_rgba(15,23,42,0.55)]">
-        <NoiseBackground className="opacity-85" contrast="light" />
+      <div className="relative overflow-hidden rounded-[2rem] border border-border bg-gradient-to-br from-card via-card to-secondary/40 shadow-[0_20px_80px_-50px_rgba(15,23,42,0.55)] dark:border-slate-700 dark:bg-gradient-to-br dark:from-slate-950 dark:via-slate-900 dark:to-slate-900">
+        <NoiseBackground className="opacity-85 dark:hidden" contrast="light" />
+        <NoiseBackground className="hidden opacity-55 dark:block" contrast="dark" />
 
         <div className="grid gap-0 lg:grid-cols-[1.05fr_0.95fr]">
           <div
-            className="relative border-b border-border/70 p-6 lg:border-b-0 lg:border-r lg:p-8"
+            className="relative border-b border-border/70 p-6 dark:border-slate-700 dark:bg-slate-900/75 lg:border-b-0 lg:border-r lg:p-8"
             data-tour="public-instant-quote-hero"
           >
             <div className="mb-4 flex flex-wrap items-center gap-3">
@@ -173,7 +174,7 @@ export function InstantQuoteSection({ catalog }: { catalog: InstantQuoteCatalog 
             <h2 className="max-w-xl text-2xl font-semibold tracking-tight sm:text-3xl">
               Instant quote range in under a minute
             </h2>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground dark:text-slate-300">
               Pick service, size, and condition. You get a live range now; we confirm final scope
               after review.
             </p>
@@ -190,8 +191,8 @@ export function InstantQuoteSection({ catalog }: { catalog: InstantQuoteCatalog 
                     onClick={() => form.setValue('serviceKey', item.value, { shouldValidate: true })}
                     className={`rounded-xl border p-3 text-left transition ${
                       selected
-                        ? 'border-primary bg-primary/5 shadow-sm'
-                        : 'border-border bg-background/70 hover:border-primary/40'
+                        ? 'border-primary bg-primary/10 shadow-sm dark:bg-primary/20'
+                        : 'border-border bg-background/70 hover:border-primary/40 dark:border-slate-700 dark:bg-slate-900/90 dark:hover:border-primary/60'
                     }`}
                   >
                     <div className="flex items-center justify-between gap-3">
@@ -200,7 +201,7 @@ export function InstantQuoteSection({ catalog }: { catalog: InstantQuoteCatalog 
                         {catalogItem.priceBandLabel}
                       </Badge>
                     </div>
-                    <p className="mt-2 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                    <p className="mt-2 text-[11px] uppercase tracking-[0.18em] text-muted-foreground dark:text-slate-300">
                       Minimum {formatCurrency(catalogItem.minimum)}
                     </p>
                   </button>
@@ -208,14 +209,14 @@ export function InstantQuoteSection({ catalog }: { catalog: InstantQuoteCatalog 
               })}
             </div>
 
-            <Card className="mt-5 border-primary/20 bg-primary/5 shadow-none">
+            <Card className="mt-5 border-primary/20 bg-primary/5 shadow-none dark:border-primary/40 dark:bg-slate-900/95">
               <CardHeader className="pb-2">
-                <CardDescription>Live range</CardDescription>
+                <CardDescription className="dark:text-slate-300">Live range</CardDescription>
                 <CardTitle className="text-3xl">
                   {formatCurrency(estimate.low)} to {formatCurrency(estimate.high)}
                 </CardTitle>
               </CardHeader>
-              <CardContent className="grid gap-3 text-sm text-muted-foreground sm:grid-cols-2">
+              <CardContent className="grid gap-3 text-sm text-muted-foreground dark:text-slate-300 sm:grid-cols-2">
                 <div>
                   <p className="font-medium text-foreground">What drives it</p>
                   <p>Square footage, condition, stories, and recurrence discount.</p>
@@ -228,9 +229,13 @@ export function InstantQuoteSection({ catalog }: { catalog: InstantQuoteCatalog 
             </Card>
           </div>
 
-          <div className="relative p-6 lg:p-8" data-tour="public-instant-quote-form">
+          <div className="relative bg-background/30 p-6 dark:bg-slate-950/85 lg:p-8" data-tour="public-instant-quote-form">
             <Form {...form}>
-              <form className="grid gap-4" onSubmit={form.handleSubmit(onSubmit)} noValidate>
+              <form
+                className="grid gap-4 text-foreground dark:text-slate-100 [&_input]:dark:border-slate-700 [&_input]:dark:bg-slate-950/95 [&_input]:dark:text-slate-100 [&_input::placeholder]:dark:text-slate-400 [&_textarea]:dark:border-slate-700 [&_textarea]:dark:bg-slate-950/95 [&_textarea]:dark:text-slate-100 [&_textarea::placeholder]:dark:text-slate-400"
+                onSubmit={form.handleSubmit(onSubmit)}
+                noValidate
+              >
                 <div className="grid gap-4 sm:grid-cols-2">
                   <FormField
                     control={form.control}
@@ -243,7 +248,7 @@ export function InstantQuoteSection({ catalog }: { catalog: InstantQuoteCatalog 
                         </FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
-                            <SelectTrigger>
+                            <SelectTrigger className="dark:border-slate-700 dark:bg-slate-950/95 dark:text-slate-100">
                               <SelectValue placeholder="Select service" />
                             </SelectTrigger>
                           </FormControl>
@@ -294,7 +299,7 @@ export function InstantQuoteSection({ catalog }: { catalog: InstantQuoteCatalog 
                         </FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
-                            <SelectTrigger>
+                            <SelectTrigger className="dark:border-slate-700 dark:bg-slate-950/95 dark:text-slate-100">
                               <SelectValue />
                             </SelectTrigger>
                           </FormControl>
@@ -318,7 +323,7 @@ export function InstantQuoteSection({ catalog }: { catalog: InstantQuoteCatalog 
                         <FormLabel>Condition</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
-                            <SelectTrigger>
+                            <SelectTrigger className="dark:border-slate-700 dark:bg-slate-950/95 dark:text-slate-100">
                               <SelectValue />
                             </SelectTrigger>
                           </FormControl>
@@ -342,7 +347,7 @@ export function InstantQuoteSection({ catalog }: { catalog: InstantQuoteCatalog 
                         <FormLabel>Visit frequency</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
-                            <SelectTrigger>
+                            <SelectTrigger className="dark:border-slate-700 dark:bg-slate-950/95 dark:text-slate-100">
                               <SelectValue />
                             </SelectTrigger>
                           </FormControl>
@@ -441,7 +446,7 @@ export function InstantQuoteSection({ catalog }: { catalog: InstantQuoteCatalog 
                   control={form.control}
                   name="requestScheduling"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-start gap-3 rounded-2xl border border-border/80 bg-muted/30 p-4">
+                    <FormItem className="flex flex-row items-start gap-3 rounded-2xl border border-border/80 bg-muted/30 p-4 dark:border-slate-700 dark:bg-slate-900/95">
                       <FormControl>
                         <Checkbox
                           checked={field.value}
@@ -465,7 +470,7 @@ export function InstantQuoteSection({ catalog }: { catalog: InstantQuoteCatalog 
                 />
 
                 {requestScheduling ? (
-                  <div className="grid gap-4 rounded-2xl border border-primary/20 bg-primary/5 p-4">
+                  <div className="grid gap-4 rounded-2xl border border-primary/20 bg-primary/5 p-4 dark:border-primary/40 dark:bg-slate-900/95">
                     <div className="grid gap-4 sm:grid-cols-2">
                       <FormField
                         control={form.control}
@@ -475,7 +480,7 @@ export function InstantQuoteSection({ catalog }: { catalog: InstantQuoteCatalog 
                             <FormLabel>Property type</FormLabel>
                             <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
-                                <SelectTrigger>
+                                <SelectTrigger className="dark:border-slate-700 dark:bg-slate-950/95 dark:text-slate-100">
                                   <SelectValue placeholder="Select type" />
                                 </SelectTrigger>
                               </FormControl>
@@ -499,7 +504,7 @@ export function InstantQuoteSection({ catalog }: { catalog: InstantQuoteCatalog 
                             <FormLabel>Preferred window</FormLabel>
                             <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
-                                <SelectTrigger>
+                                <SelectTrigger className="dark:border-slate-700 dark:bg-slate-950/95 dark:text-slate-100">
                                   <SelectValue placeholder="Select window" />
                                 </SelectTrigger>
                               </FormControl>
@@ -590,14 +595,14 @@ export function InstantQuoteSection({ catalog }: { catalog: InstantQuoteCatalog 
 
                 {error ? <p className="text-sm text-destructive">{error}</p> : null}
                 {feedback ? (
-                  <div className="flex items-start gap-3 rounded-2xl border border-primary/30 bg-primary/10 px-4 py-4 text-sm">
+                  <div className="flex items-start gap-3 rounded-2xl border border-primary/30 bg-primary/10 px-4 py-4 text-sm dark:border-primary/50 dark:bg-slate-900/95">
                     <SparklesIcon className="mt-0.5 size-4 shrink-0 text-primary" />
                     <p className="text-foreground">{feedback}</p>
                   </div>
                 ) : null}
 
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-muted-foreground dark:text-slate-300">
                     Scoped range now, confirmed quote after review.
                   </p>
                   <Button disabled={form.formState.isSubmitting} type="submit">

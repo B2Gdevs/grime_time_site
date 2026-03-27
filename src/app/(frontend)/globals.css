@@ -325,6 +325,18 @@
   }
 }
 
+@keyframes hero-denim-drift {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(-1.5%, 1.5%, 0);
+  }
+  100% {
+    transform: translate3d(1.5%, -1.5%, 0);
+  }
+}
+
 @layer components {
   .portal-main-shell {
     display: flex;
@@ -417,6 +429,21 @@
 
   .hero-glass-float {
     animation: hero-glass-float 11s ease-in-out infinite;
+  }
+
+  .hero-denim-noise {
+    background-image: url('/denim_background_texture.png');
+    background-size: 480px 480px;
+    background-repeat: repeat;
+    mix-blend-mode: soft-light;
+  }
+
+  .hero-denim-noise-drift {
+    background-image: url('/denim_background_texture.png');
+    background-size: 320px 320px;
+    background-repeat: repeat;
+    mix-blend-mode: overlay;
+    animation: hero-denim-drift 20s linear infinite alternate;
   }
 }
 

@@ -79,7 +79,7 @@
   </tasks>
   <questions>
     <question id="q-proof-model" status="resolved">Use a dedicated `testimonials` collection plus an optional Testimonials page block so editors can stage proof without forcing it live on public pages.</question>
-    <question id="q-pricing-page" status="open">Will pricing stay estimate-only messaging or include starting-price ranges on the public site?</question>
+    <question id="q-pricing-page" status="resolved">Public pricing stays estimate-only. Do not show package-card pricing tables on the homepage; route visitors into the instant quote estimator instead.</question>
     <question id="q-contact-tab-model" status="resolved">Use compact tabs with a single detail panel for long-form support text on `/contact`; avoid scattered standalone text cards.</question>
   </questions>
 </phase-plan>

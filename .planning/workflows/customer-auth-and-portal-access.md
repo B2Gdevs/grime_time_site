@@ -44,6 +44,7 @@ Today:
 - a missing Payload customer user is auto-created on first verified Supabase login
 - existing CRM customers can now request or complete a claim link from `/claim-account`
 - company accounts can now issue account-scoped invite links from the account surface
+- repo defaults now use `grimetime.app` for staff/preview identities and `demo.grimetime.app` for demo personas; customer auth should still use a real deliverable inbox
 - staff/admin auth still remains on Payload auth
 - quote/invoice/schedule emails still do not generate claim CTAs automatically
 - company invite authority currently uses the primary company contact or matching billing email, not a separate dedicated company-admin role

@@ -5,7 +5,7 @@ import type { User } from '@/payload-types'
 import { DEMO_EMAIL_SUFFIX } from '@/lib/demo/constants'
 
 /**
- * Accounts linked to any demo portal user (`*@demo.grimetime.local`).
+ * Accounts linked to any demo portal user (`*@demo.grimetime.app`).
  * Used to scope /ops + CRM when an admin turns demo mode on.
  */
 export async function resolveDemoAccountIds(payload: Payload, user: User): Promise<number[]> {

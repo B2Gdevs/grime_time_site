@@ -1,6 +1,7 @@
 import type { File, Payload, PayloadRequest } from 'payload'
 
 import { portalPreviewTestUserEmail } from '@/lib/auth/previewIdentity'
+import { DEFAULT_STAFF_EMAILS } from '@/lib/brand/emailDefaults'
 import {
   displayNameForSeedEmail,
   parseQuotesInternalEmailAllowlist,
@@ -136,9 +137,9 @@ async function runSeed({
   )
 
   const defaultTeamNames: Record<string, string> = {
-    'bg@grimetime.local': 'BG',
-    'pb@grimetime.local': 'PB',
-    'de@grimetime.local': 'DE',
+    [DEFAULT_STAFF_EMAILS[0]]: 'BG',
+    [DEFAULT_STAFF_EMAILS[1]]: 'PB',
+    [DEFAULT_STAFF_EMAILS[2]]: 'DE',
   }
 
   for (const email of ['demo-author@example.com', 'demo-author@payloadcms.com'] as const) {
@@ -423,8 +424,8 @@ async function runSeed({
           {
             link: {
               type: 'custom',
-              label: 'Pricing',
-              url: '/#pricing',
+              label: 'Get quote',
+              url: '/#instant-quote',
             },
           },
           {
@@ -519,66 +520,10 @@ async function runSeed({
     payload.updateGlobal({
       slug: 'pricing',
       data: {
-        sectionTitle: 'Packages & pricing',
+        sectionTitle: 'Quote estimator',
         sectionIntro:
           'Starting points for typical homes — final price depends on size, soil level, and access. Request a quote for an exact number.',
-        plans: [
-          {
-            name: 'Essential wash',
-            tagline: 'Great for maintenance',
-            price: 'From $149',
-            priceNote: 'Typical small home / partial facade',
-            highlighted: false,
-            features: [
-              { text: 'Soft wash siding & trim' },
-              { text: 'Mildew & dust removal' },
-              { text: 'Walkthrough photo summary' },
-            ],
-            link: {
-              type: 'custom',
-              label: 'Get info',
-              url: '/contact',
-              appearance: 'outline',
-            },
-          },
-          {
-            name: 'Full exterior',
-            tagline: 'Most popular',
-            price: 'From $279',
-            priceNote: 'Average single-story home',
-            highlighted: true,
-            features: [
-              { text: 'Everything in Essential' },
-              { text: 'Gutters & soffits rinsed' },
-              { text: 'Concrete entryway rinse' },
-              { text: 'Priority scheduling window' },
-            ],
-            link: {
-              type: 'custom',
-              label: 'Book / quote',
-              url: '/#instant-quote',
-              appearance: 'default',
-            },
-          },
-          {
-            name: 'Property refresh',
-            tagline: 'Larger or heavily soiled',
-            price: 'Custom',
-            priceNote: 'Multi-story, stone, heavy organic growth',
-            highlighted: false,
-            features: [
-              { text: 'Site visit or photo estimate' },
-              { text: 'Add-ons: roof, deck, fence' },
-              { text: 'Commercial & HOA welcome' },
-            ],
-            link: {
-              type: 'custom',
-              label: 'Request quote',
-              url: '/contact',
-              appearance: 'outline',
-            },
-          },
-        ],
+        plans: [],
       },
       req,
     }),
@@ -714,7 +659,9 @@ async function runSeed({
     })
   }
 
-  if (process.env.DEMO_SEED === 'true') {
+  if (process.env.SEED_SKIP_DEMO === 'true') {
+    payload.logger.info('Seed: skipping demo fixtures (SEED_SKIP_DEMO=true).')
+  } else {
     const { seedDemoData } = await import('./demo-seed')
     await seedDemoData({ payload, req })
   }

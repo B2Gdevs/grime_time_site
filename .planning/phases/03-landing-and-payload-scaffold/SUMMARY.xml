@@ -17,6 +17,7 @@
     <item>The contact request form now includes topic, reply preference, and property address fields so support requests route cleanly while compact guidance tabs keep long policy detail out of the main mobile flow.</item>
     <item>Testimonials are managed through a dedicated `testimonials` collection and optional Testimonials page block, and admin media generation is available directly from the `media` create view through the prompt-to-media sidebar control.</item>
     <item>The image-generation workflow is now documented and executable through the repo MCP/media tooling, including `npm run generate:marketing-images` and the shared prompt manifest.</item>
+    <item>The homepage no longer renders package-card pricing, and the seeded header now sends visitors straight to the instant quote estimator as the public pricing path.</item>
   </highlights>
   <next>
     <item>Replace placeholder property photos with generated or real Grime Time imagery before public-launch positioning. Prompts, batches, and wiring live in `src/lib/media/image-generation-manifest.ts` and `npm run generate:marketing-images`.</item>

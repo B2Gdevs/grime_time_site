@@ -8,6 +8,7 @@ import { AuthError } from '@/components/auth/auth-error'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { getCustomerAuthEmailIssue, normalizeCustomerAuthEmail } from '@/lib/auth/customerEmail'
 import { isAdminUser } from '@/lib/auth/roles'
 import { getSupabaseBrowserClient } from '@/lib/supabase/browser'
 
@@ -43,8 +44,15 @@ export function PasswordSignInForm({ nextPath }: Props) {
     setError(null)
 
     const form = new FormData(event.currentTarget)
-    const email = String(form.get('email') || '').trim().toLowerCase()
+    const email = normalizeCustomerAuthEmail(String(form.get('email') || ''))
     const password = String(form.get('password') || '')
+    const emailIssue = getCustomerAuthEmailIssue(email)
+
+    if (emailIssue) {
+      setError(emailIssue)
+      setPending(false)
+      return
+    }
 
     try {
       const supabase = getSupabaseBrowserClient()

@@ -7,6 +7,7 @@ import { AuthNotice } from '@/components/auth/AuthNotice'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { getCustomerAuthEmailIssue, normalizeCustomerAuthEmail } from '@/lib/auth/customerEmail'
 import { getSupabaseBrowserClient } from '@/lib/supabase/browser'
 import { getClientSideURL } from '@/utilities/getURL'
 
@@ -26,7 +27,14 @@ export function MagicLinkSignInForm({ nextPath }: Props) {
     setSuccess(null)
 
     const form = new FormData(event.currentTarget)
-    const email = String(form.get('email') || '').trim().toLowerCase()
+    const email = normalizeCustomerAuthEmail(String(form.get('email') || ''))
+    const emailIssue = getCustomerAuthEmailIssue(email)
+
+    if (emailIssue) {
+      setError(emailIssue)
+      setPending(false)
+      return
+    }
 
     try {
       const supabase = getSupabaseBrowserClient()

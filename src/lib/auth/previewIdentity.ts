@@ -1,4 +1,5 @@
 import type { User } from '@/payload-types'
+import { DEFAULT_PORTAL_PREVIEW_TEST_USER_EMAIL } from '@/lib/brand/emailDefaults'
 
 /**
  * Seeded non-admin account for repeatable customer-flow checks (D-auth-004).
@@ -6,7 +7,7 @@ import type { User } from '@/payload-types'
  */
 export function portalPreviewTestUserEmail(): string {
   return (process.env.PORTAL_PREVIEW_TEST_USER_EMAIL?.trim().toLowerCase() ||
-    'test_user@grimetime.local') as string
+    DEFAULT_PORTAL_PREVIEW_TEST_USER_EMAIL) as string
 }
 
 export function isPortalPreviewTestUser(user: Pick<User, 'email'> | null | undefined): boolean {

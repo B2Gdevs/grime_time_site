@@ -6,7 +6,7 @@
 <blockers>
   <blocker id="BLK-demo-seed-001" status="resolved">
     <title>Demo personas and seed data incomplete</title>
-    <summary>Resolved: run `DEMO_SEED=true npm run seed` (dev only) to upsert fixtures; use admin toolbar **Demo data** toggle + `?demo=1` for marketing tours. Ongoing QA: verify Stripe test objects and copy after schema changes.</summary>
+    <summary>Resolved: `npm run seed` upserts demo fixtures by default; use `npm run seed:baseline` or `SEED_SKIP_DEMO=true` to skip. Use admin toolbar **Demo data** toggle + `?demo=1` for marketing tours. Ongoing QA: verify Stripe test objects and copy after schema changes.</summary>
     <task-ref>03-09</task-ref>
     <decision-ref>D-demo-001</decision-ref>
   </blocker>

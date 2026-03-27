@@ -9,6 +9,7 @@ import { readErrorMessage } from '@/components/auth/read-error-message'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { getCustomerAuthEmailIssue, normalizeCustomerAuthEmail } from '@/lib/auth/customerEmail'
 import { getSupabaseBrowserClient } from '@/lib/supabase/browser'
 import { getClientSideURL } from '@/utilities/getURL'
 
@@ -26,8 +27,15 @@ export function CreateAccountForm() {
 
     const form = new FormData(event.currentTarget)
     const name = String(form.get('name') || '').trim()
-    const email = String(form.get('email') || '').trim().toLowerCase()
+    const email = normalizeCustomerAuthEmail(String(form.get('email') || ''))
     const password = String(form.get('password') || '')
+    const emailIssue = getCustomerAuthEmailIssue(email)
+
+    if (emailIssue) {
+      setError(emailIssue)
+      setPending(false)
+      return
+    }
 
     try {
       const registerResponse = await fetch('/auth/register', {
@@ -38,8 +46,9 @@ export function CreateAccountForm() {
         method: 'POST',
       })
 
-      if (!registerResponse.ok && registerResponse.status !== 409) {
-        const registerPayload = await registerResponse.json().catch(() => null)
+      const registerPayload = await registerResponse.json().catch(() => null)
+
+      if (!registerResponse.ok) {
         throw new Error(readErrorMessage(registerPayload, 'Could not create your account profile.'))
       }
 

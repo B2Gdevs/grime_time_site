@@ -37,7 +37,7 @@ export const home: (args: HomeArgs) => RequiredDataFromCollectionSlug<'pages'> =
                   format: 0,
                   mode: 'normal',
                   style: '',
-                  text: 'Straight numbers, clear scope, and a live range before we lock the job.',
+                  text: 'We are the most transparent when it comes to pricing services for our customers.',
                   version: 1,
                 },
               ],
@@ -166,10 +166,6 @@ export const home: (args: HomeArgs) => RequiredDataFromCollectionSlug<'pages'> =
             ],
           },
         ],
-      },
-      {
-        blockType: 'pricingTable',
-        dataSource: 'global',
       },
     ],
     meta: {

@@ -142,7 +142,7 @@ export async function ensureContactAndAccount(req: PayloadRequest, args: EnsureC
         collection: 'contacts',
         data: {
           account: account.id,
-          email: email ?? `${Date.now()}@grimetime.local`,
+          email: email ?? `${Date.now()}@grimetime.app`,
           fullName: name,
           lastContactAt: new Date().toISOString(),
           linkedUser: linkedUserId ?? undefined,

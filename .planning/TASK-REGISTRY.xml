@@ -10,7 +10,7 @@
     </task>
   </phase>
   <phase id="02">
-    <task id="02-01" agent-id="" status="in-progress">
+    <task id="02-01" agent-id="" status="done">
       <goal>Maintain PRD + roadmap alignment (Payload template, Supabase PG, Vercel, three seed emails).</goal>
       <keywords>prd,payload,supabase</keywords>
       <commands>
@@ -24,7 +24,7 @@
         <command>See .planning/workflows/crm-and-integrations.md</command>
       </commands>
     </task>
-    <task id="02-03" agent-id="" status="in-progress">
+    <task id="02-03" agent-id="" status="done">
       <goal>Draft workflow runbooks: lead-to-customer, team login and tool access, CRM touchpoints.</goal>
       <keywords>workflows,runbooks</keywords>
       <commands>
@@ -104,7 +104,7 @@
       </commands>
     </task>
     <task id="03-09" agent-id="" status="done">
-      <goal>Demo-ready fixtures: gated `DEMO_SEED` seed (`src/endpoints/seed/demo-seed.ts`), eight `@demo.grimetime.local` personas, CRM + billing + Stripe test sync, demo mode cookie (`grime_demo_mode`) scoping `/ops` + CRM for admins, tours gated per `demo-data-and-flows.md`.</goal>
+      <goal>Demo-ready fixtures: `npm run seed` runs `src/endpoints/seed/demo-seed.ts` by default; `npm run seed:baseline` or `SEED_SKIP_DEMO=true` skips demo upserts. Eight `@demo.grimetime.app` personas, CRM + billing + Stripe test sync, demo mode cookie (`grime_demo_mode`) scoping `/ops` + CRM for admins, tours gated per `demo-data-and-flows.md`.</goal>
       <keywords>demo,seed,launch,qa</keywords>
       <commands>
         <command>See .planning/workflows/demo-data-and-flows.md and DECISIONS D-demo-001</command>

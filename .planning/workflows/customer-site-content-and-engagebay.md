@@ -44,6 +44,7 @@
 ## Content checklist
 
 - [x] Published **home** with real hero, services, trust, service area, and CTA.
+- [x] Public pricing stays estimate-led through the instant quote estimator, not a homepage package table.
 - [x] Shared visual system feels deliberate across public site, customer login, and admin login.
 - [ ] Reviews / testimonials visible on the homepage and editable quickly in Payload admin.
 - [x] Before / after proof or project-gallery content visible on at least one key landing page.

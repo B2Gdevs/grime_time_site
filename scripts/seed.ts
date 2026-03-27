@@ -9,7 +9,8 @@
  *
  * Loads `.env` from the project root via dotenv (see package.json script).
  *
- * Optional: `DEMO_SEED=true` also upserts demo CRM/billing personas (`src/endpoints/seed/demo-seed.ts`) — dev/staging only.
+ * Demo CRM/billing fixtures run by default (`src/endpoints/seed/demo-seed.ts`). To skip them:
+ * `npm run seed:baseline` or `SEED_SKIP_DEMO=true npm run seed`.
  */
 import 'dotenv/config'
 

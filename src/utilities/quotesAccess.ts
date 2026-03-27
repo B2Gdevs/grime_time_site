@@ -1,4 +1,5 @@
 import { authEntityEmail, isAdminUser, type RoleCarrier } from '@/lib/auth/roles'
+import { DEFAULT_STAFF_EMAILS } from '@/lib/brand/emailDefaults'
 
 /**
  * Internal quote tools: gated by env (see `quote-system-and-texas-compliance.md`).
@@ -36,7 +37,7 @@ function uniqueEmails(emails: string[]): string[] {
 export function resolveSeedStaffEmails(): string[] {
   const fromEnv = uniqueEmails(parseQuotesInternalEmailAllowlist())
   if (fromEnv.length > 0) return fromEnv
-  return ['bg@grimetime.local', 'pb@grimetime.local', 'de@grimetime.local']
+  return [...DEFAULT_STAFF_EMAILS]
 }
 
 /** Display name for seed users when not using fixed team roster. */

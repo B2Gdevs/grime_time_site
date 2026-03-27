@@ -26,7 +26,7 @@
   </phase>
   <phase id="04">
     <title>Supabase + team access</title>
-    <goal>Wire Postgres to Supabase; env for prod/dev; seed users bg@ / pb@ / de@ grimetime.local; auth verified.</goal>
+    <goal>Wire Postgres to Supabase; env for prod/dev; seed users bg@ / pb@ / de@ grimetime.app; auth verified.</goal>
     <requirements>REQ-04</requirements>
     <depends>03</depends>
     <status>complete</status>

@@ -1,5 +1,5 @@
 /**
- * Canonical cast for gated demo seed (`DEMO_SEED` / TASK-REGISTRY `03-09`).
+ * Canonical cast for demo seed (runs by default with `npm run seed`; set `SEED_SKIP_DEMO=true` to skip).
  * Login: `email` + shared password. Notification routing for outbound comms: use
  * `DEMO_NOTIFICATION_EMAIL` on invoices/quotes/leads (`customerEmail` etc.), not login email.
  *
@@ -11,7 +11,7 @@ export const DEMO_CUSTOMER_PASSWORD = 'changethis' as const
 /** Dev inbox for Resend / seeded document `customerEmail` fields (not auth identity). */
 export const DEMO_NOTIFICATION_EMAIL = 'b2gdevs@gmail.com' as const
 
-export const DEMO_EMAIL_DOMAIN = 'demo.grimetime.local' as const
+export const DEMO_EMAIL_DOMAIN = 'demo.grimetime.app' as const
 
 export type DemoAccountType = 'residential' | 'hoa_multifamily' | 'commercial'
 

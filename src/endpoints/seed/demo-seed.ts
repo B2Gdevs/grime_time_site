@@ -26,7 +26,7 @@ export async function seedDemoData({
   payload: Payload
   req: PayloadRequest
 }): Promise<void> {
-  payload.logger.info('— Demo seed (DEMO_SEED): upserting personas, CRM, and billing fixtures...')
+  payload.logger.info('— Demo seed (default): upserting personas, CRM, and billing fixtures...')
 
   const staffEmails = resolveSeedStaffEmails()
   const staffUsers: { id: Id; email: string }[] = []
@@ -225,7 +225,7 @@ export async function seedDemoData({
     })
   }
 
-  const jordan = userByEmail['jordan.chen@demo.grimetime.local']
+  const jordan = userByEmail['jordan.chen@demo.grimetime.app']
   const chen = accountByKey['demo-chen-household']
   const hoa = accountByKey['demo-sunset-ridge-hoa']
   const retail = accountByKey['demo-lakeside-retail']
@@ -370,7 +370,7 @@ export async function seedDemoData({
   const stageRows: StageRow[] = [
     {
       accountKey: 'demo-chen-household',
-      contactEmail: 'jordan.chen@demo.grimetime.local',
+      contactEmail: 'jordan.chen@demo.grimetime.app',
       stage: 'new_lead',
       status: 'open',
       title: 'Chen — new lead intake (demo)',
@@ -378,7 +378,7 @@ export async function seedDemoData({
     },
     {
       accountKey: 'demo-sunset-ridge-hoa',
-      contactEmail: 'morgan.park@demo.grimetime.local',
+      contactEmail: 'morgan.park@demo.grimetime.app',
       stage: 'qualified',
       status: 'open',
       title: 'Sunset Ridge — perimeter wash (demo)',
@@ -386,7 +386,7 @@ export async function seedDemoData({
     },
     {
       accountKey: 'demo-lakeside-retail',
-      contactEmail: 'casey.nguyen@demo.grimetime.local',
+      contactEmail: 'casey.nguyen@demo.grimetime.app',
       stage: 'quoted',
       status: 'open',
       title: 'Lakeside — storefront refresh (demo)',
@@ -394,7 +394,7 @@ export async function seedDemoData({
     },
     {
       accountKey: 'demo-lakeside-retail',
-      contactEmail: 'drew.okonkwo@demo.grimetime.local',
+      contactEmail: 'drew.okonkwo@demo.grimetime.app',
       stage: 'follow_up',
       status: 'open',
       title: 'Lakeside — dock bay cleaning (demo)',
@@ -402,7 +402,7 @@ export async function seedDemoData({
     },
     {
       accountKey: 'demo-sunset-ridge-hoa',
-      contactEmail: 'riley.torres@demo.grimetime.local',
+      contactEmail: 'riley.torres@demo.grimetime.app',
       stage: 'scheduling',
       status: 'open',
       title: 'Sunset Ridge — clubhouse schedule (demo)',
@@ -410,7 +410,7 @@ export async function seedDemoData({
     },
     {
       accountKey: 'demo-chen-household',
-      contactEmail: 'sam.chen@demo.grimetime.local',
+      contactEmail: 'sam.chen@demo.grimetime.app',
       stage: 'won',
       status: 'won',
       title: 'Chen — patio detail (won) (demo)',
@@ -418,7 +418,7 @@ export async function seedDemoData({
     },
     {
       accountKey: 'demo-lakeside-retail',
-      contactEmail: 'jamie.patel@demo.grimetime.local',
+      contactEmail: 'jamie.patel@demo.grimetime.app',
       stage: 'lost',
       status: 'lost',
       title: 'Lakeside — competitor bid (lost) (demo)',
@@ -567,7 +567,7 @@ export async function seedDemoData({
       req,
       where: { title: { equals: 'HOA — common area rinse (demo)' } },
     })
-    const morgan = userByEmail['morgan.park@demo.grimetime.local']
+    const morgan = userByEmail['morgan.park@demo.grimetime.app']
     if (morgan) {
       const adata = {
         account: hoa.id,
@@ -616,7 +616,7 @@ export async function seedDemoData({
         balanceDue: 0,
         customerName: 'Jordan Chen',
         customerUser: jordan.id,
-        email: 'jordan.chen@demo.grimetime.local',
+        email: 'jordan.chen@demo.grimetime.app',
         invoiceNumber: 'DEMO-INV-0001',
         status: 'paid',
         title: 'Chen — spring wash (demo)',
@@ -626,7 +626,7 @@ export async function seedDemoData({
         balanceDue: 129,
         customerName: 'Jordan Chen',
         customerUser: jordan.id,
-        email: 'jordan.chen@demo.grimetime.local',
+        email: 'jordan.chen@demo.grimetime.app',
         invoiceNumber: 'DEMO-INV-REFUND',
         status: 'refunded',
         title: 'Chen — dispute credit (demo)',
@@ -635,13 +635,13 @@ export async function seedDemoData({
     )
   }
 
-  const jamie = userByEmail['jamie.patel@demo.grimetime.local']
+  const jamie = userByEmail['jamie.patel@demo.grimetime.app']
   if (retail && jamie) {
     invoicesSeed.push({
       balanceDue: 420,
       customerName: 'Jamie Patel',
       customerUser: jamie.id,
-      email: 'jamie.patel@demo.grimetime.local',
+      email: 'jamie.patel@demo.grimetime.app',
       invoiceNumber: 'DEMO-INV-0002',
       status: 'open',
       title: 'Lakeside — invoice open (demo)',
@@ -768,6 +768,6 @@ export async function seedDemoData({
   }
 
   payload.logger.info(
-    `— Demo seed finished (Stripe invoice sync attempts: ${stripeSyncCount}). Log in as *@demo.grimetime.local / ${DEMO_CUSTOMER_PASSWORD}.`,
+    `— Demo seed finished (Stripe invoice sync attempts: ${stripeSyncCount}). Log in as *@demo.grimetime.app / ${DEMO_CUSTOMER_PASSWORD}.`,
   )
 }

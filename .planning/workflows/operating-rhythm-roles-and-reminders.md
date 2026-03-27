@@ -137,9 +137,9 @@ Company-admin customers cannot:
 - Keep one stable non-admin preview account for daily customer-view checks: `test_user`.
 - `test_user` must never carry admin/staff roles.
 - Keep the seeded staff/admin set available for internal testing and ownership:
-  - `bg@grimetime.local` (admin)
-  - `pb@grimetime.local` (admin)
-  - `de@grimetime.local` (admin)
+  - `bg@grimetime.app` (admin)
+  - `pb@grimetime.app` (admin)
+  - `de@grimetime.app` (admin)
 - In staff portal navigation:
   - show `Ops dashboard (admin)` for internal context
   - show `Customer home (test_user)` for customer-preview context

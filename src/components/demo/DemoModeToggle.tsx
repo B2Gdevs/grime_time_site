@@ -23,7 +23,7 @@ export function DemoModeToggle() {
         router.refresh()
       }}
       size="sm"
-      title="When on, /ops and CRM show only @demo.grimetime.local fixtures; enables tours for admins."
+      title="When on, /ops and CRM show only @demo.grimetime.app fixtures; enables tours for admins."
       type="button"
       variant={demoMode ? 'default' : 'outline'}
     >
