@@ -32,3 +32,23 @@ export type OpsMergedScorecardRow = {
   name: string
   target: string
 }
+
+export type OpsDashboardDutyItemTone = 'default' | 'warning'
+
+export type OpsDashboardDutyItem = {
+  href: string
+  id: string
+  meta: string
+  subtitle: string
+  title: string
+  tone: OpsDashboardDutyItemTone
+}
+
+export type OpsDashboardDutySection = {
+  description: string
+  id: 'billing' | 'crm' | 'today'
+  items: OpsDashboardDutyItem[]
+  roleSummary?: string
+  rhythmSummary?: string
+  title: string
+}

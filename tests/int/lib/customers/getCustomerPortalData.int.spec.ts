@@ -57,8 +57,12 @@ describe('getCustomerPortalData', () => {
       data: {
         accountType: 'commercial',
         billingEmail: `${testRunKey}.billing@example.com`,
+        billingMode: 'send_invoice_terms',
+        billingRollupMode: 'monthly_consolidated',
+        billingTermsDays: 30,
         customerUser: primaryUser.id,
         name: `${testRunKey} account`,
+        portalAccessMode: 'app_and_stripe',
         status: 'active',
       },
     })
@@ -157,5 +161,9 @@ describe('getCustomerPortalData', () => {
 
     expect(snapshot.invoices.some((invoice) => invoice.title === `${testRunKey} invoice`)).toBe(true)
     expect(snapshot.estimates.some((estimate) => estimate.title === `${testRunKey} quote`)).toBe(true)
+    expect(snapshot.billing.billingMode).toBe('send_invoice_terms')
+    expect(snapshot.billing.billingRollupMode).toBe('monthly_consolidated')
+    expect(snapshot.billing.billingTermsDays).toBe(30)
+    expect(snapshot.billing.canManageInStripe).toBe(true)
   })
 })

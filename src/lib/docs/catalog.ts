@@ -93,6 +93,15 @@ const DOCS: PortalDoc[] = [
     slug: 'ops-dashboard-targets',
     title: 'Ops dashboard targets',
   },
+  {
+    audience: 'admin',
+    description:
+      'Door-to-door and on-site quoting, instant send, website capture, and revising deals with duplicate quotes per contact.',
+    filePath: 'src/content/docs/field-quoting-and-revisions.md',
+    group: 'Team playbooks',
+    slug: 'field-quoting-and-revisions',
+    title: 'Field quoting and revisions',
+  },
 ]
 
 export function getPortalDocs(options: { isAdmin: boolean }): PortalDoc[] {

@@ -50,15 +50,15 @@
   <tasks>
     <task id="03-site-baseline" owner="team">
       <description>Seed and publish the real homepage and core marketing pages, including founder-story/about content, instead of relying on the static fallback.</description>
-      <status>in-progress</status>
+      <status>done</status>
     </task>
     <task id="03-proof-content" owner="team">
       <description>Establish a quick-edit path for reviews, testimonials, and before/after proof inside Payload admin.</description>
-      <status>planned</status>
+      <status>done</status>
     </task>
     <task id="03-launch-qa" owner="team">
       <description>Verify nav, CTAs, service areas, form submission, customer trust/support pages, visual-system/theme polish, masked section framing, compact code-viewer style service explainers with side-by-side detail panes, and mobile launch quality after seed content is in place.</description>
-      <status>in-progress</status>
+      <status>done</status>
     </task>
     <task id="03-customer-trust-pages" owner="team">
       <description>Publish customer-facing support/legal pages in Payload for privacy, terms, refund handling, and contact response standards.</description>
@@ -66,15 +66,19 @@
     </task>
     <task id="03-marketing-imagery" owner="team">
       <description>Replace text-only or hardcoded marketing surfaces with Payload-driven image-led sections, seeded service visuals, and cleaner about/contact storytelling that matches the exterior-cleaning brand.</description>
-      <status>in-progress</status>
+      <status>done</status>
+    </task>
+    <task id="03-media-generate-admin" owner="team">
+      <description>Add admin-only prompt-to-media generation for the Payload `media` create view: prompt input + generate button calls OpenAI and uploads the generated image as a new media document.</description>
+      <status>done</status>
     </task>
     <task id="03-contact-ux-refresh" owner="team">
       <description>Refactor `/contact` into a compact, high-contrast, icon-led support/request surface with less copy, obvious next actions, visible logo branding in the form/request card, and tab-driven detail content instead of stacked loose cards.</description>
-      <status>planned</status>
+      <status>done</status>
     </task>
   </tasks>
   <questions>
-    <question id="q-proof-model" status="open">Should testimonials be a dedicated collection, a reusable block, or a global for fastest admin editing?</question>
+    <question id="q-proof-model" status="resolved">Use a dedicated `testimonials` collection plus an optional Testimonials page block so editors can stage proof without forcing it live on public pages.</question>
     <question id="q-pricing-page" status="open">Will pricing stay estimate-only messaging or include starting-price ranges on the public site?</question>
     <question id="q-contact-tab-model" status="resolved">Use compact tabs with a single detail panel for long-form support text on `/contact`; avoid scattered standalone text cards.</question>
   </questions>

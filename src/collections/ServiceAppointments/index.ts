@@ -1,6 +1,8 @@
 import type { CollectionConfig } from 'payload'
 
 import { isAdmin } from '@/access/isAdmin'
+import { afterServiceAppointmentAutomation } from '@/hooks/afterServiceAppointmentAutomation'
+import { appointmentBillableStatusOptions } from '@/lib/billing/constants'
 import { createAssignCustomerAccountHook } from '@/lib/customers/accountRelationship'
 import { buildCustomerOwnershipWhere } from '@/lib/customers/access'
 import { arrivalWindowOptions, serviceAppointmentStatusOptions } from '@/lib/services/constants'
@@ -181,6 +183,80 @@ export const ServiceAppointments: CollectionConfig = {
       relationTo: 'service-plans',
     },
     {
+      type: 'row',
+      fields: [
+        {
+          name: 'billableStatus',
+          type: 'select',
+          defaultValue: 'ready_to_bill',
+          options: appointmentBillableStatusOptions.map((option) => ({ ...option })),
+          admin: {
+            width: '25%',
+          },
+        },
+        {
+          name: 'billableAmount',
+          type: 'number',
+          min: 0,
+          admin: {
+            step: 0.01,
+            width: '25%',
+          },
+        },
+        {
+          name: 'billingBatchKey',
+          type: 'text',
+          admin: {
+            width: '25%',
+          },
+        },
+        {
+          name: 'invoice',
+          type: 'relationship',
+          relationTo: 'invoices',
+          admin: {
+            width: '25%',
+          },
+        },
+        {
+          name: 'completedAt',
+          type: 'date',
+          admin: {
+            width: '25%',
+          },
+        },
+      ],
+    },
+    {
+      type: 'row',
+      fields: [
+        {
+          name: 'onsitePaymentCaptured',
+          type: 'checkbox',
+          defaultValue: false,
+          admin: {
+            width: '34%',
+          },
+        },
+        {
+          name: 'onsitePaymentAmount',
+          type: 'number',
+          min: 0,
+          admin: {
+            step: 0.01,
+            width: '33%',
+          },
+        },
+        {
+          name: 'onsitePaymentReference',
+          type: 'text',
+          admin: {
+            width: '33%',
+          },
+        },
+      ],
+    },
+    {
       name: 'customerNotes',
       type: 'textarea',
     },
@@ -190,6 +266,7 @@ export const ServiceAppointments: CollectionConfig = {
     },
   ],
   hooks: {
+    afterChange: [afterServiceAppointmentAutomation],
     beforeValidate: [createAssignCustomerAccountHook()],
   },
 }

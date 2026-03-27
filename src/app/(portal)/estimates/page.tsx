@@ -27,8 +27,20 @@ export default async function EstimatesPage() {
           </Button>
         }
       />
-      <div className="flex flex-1 flex-col px-4 py-6 lg:px-6">
+      <div className="flex flex-1 flex-col px-4 py-6 lg:px-6" data-tour="portal-page-body">
         <div className="grid gap-4">
+          <Card className="border-dashed bg-muted/30">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">First time signing in?</CardTitle>
+              <CardDescription>
+                If we emailed you a quote or invoice before you had portal access, use{' '}
+                <Link className="font-medium underline underline-offset-2" href="/claim-account">
+                  Claim account
+                </Link>{' '}
+                with the same email and we will send a secure link to finish setup.
+              </CardDescription>
+            </CardHeader>
+          </Card>
           {portal.estimates.length === 0 ? (
             <Card>
               <CardHeader>

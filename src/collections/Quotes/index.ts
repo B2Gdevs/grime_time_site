@@ -1,6 +1,7 @@
 import type { Access, CollectionConfig } from 'payload'
 
 import { beforeQuoteCrm } from '@/hooks/beforeQuoteCrm'
+import { afterQuoteAutomation } from '@/hooks/afterQuoteAutomation'
 import { QUOTE_CRM_SYNC_STATUS_OPTIONS } from '@/lib/crm/types'
 import {
   QUOTE_PROPERTY_TYPE_OPTIONS,
@@ -491,6 +492,7 @@ export const Quotes: CollectionConfig = {
     },
   ],
   hooks: {
+    afterChange: [afterQuoteAutomation],
     beforeValidate: [
       createAssignCustomerAccountHook(),
       ({ data }) => {

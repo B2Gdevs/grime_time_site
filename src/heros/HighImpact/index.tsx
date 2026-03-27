@@ -5,7 +5,6 @@ import React, { useEffect } from 'react'
 
 import type { Page } from '@/payload-types'
 
-import { InteractiveGridPattern } from '@/components/InteractiveGridPattern'
 import { CMSLink } from '@/components/Link'
 import { Media } from '@/components/Media'
 import RichText from '@/components/RichText'
@@ -26,7 +25,7 @@ export const HighImpactHero: React.FC<Page['hero']> = ({ links, media, richText 
 
   return (
     <div
-      className="relative -mt-[10.4rem] flex min-h-[88vh] items-end overflow-hidden text-white"
+      className="relative -mt-[8rem] flex min-h-[72vh] items-end overflow-hidden text-white sm:-mt-[9rem] sm:min-h-[80vh] lg:-mt-[10.4rem] lg:min-h-[88vh]"
       data-theme="dark"
     >
       <div className="absolute inset-0 -z-10 select-none">
@@ -34,23 +33,20 @@ export const HighImpactHero: React.FC<Page['hero']> = ({ links, media, richText 
           <Media fill imgClassName="object-cover opacity-30 saturate-[1.1]" priority resource={media} />
         )}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(86,175,255,0.18),transparent_42%),linear-gradient(180deg,rgba(7,13,25,0.2)_0%,rgba(7,13,25,0.84)_42%,rgba(7,13,25,0.98)_100%)]" />
-        <div className="absolute inset-0 opacity-85 [mask-image:radial-gradient(circle_at_center,white,transparent_86%)]">
-          <InteractiveGridPattern className="scale-[1.05]" squares={[28, 18]} />
-        </div>
         <div className="absolute -left-16 top-28 h-56 w-56 rounded-full bg-primary/20 blur-3xl" />
         <div className="absolute bottom-10 right-0 h-72 w-72 rounded-full bg-secondary/20 blur-3xl" />
       </div>
 
-      <div className="container relative z-10 flex w-full pb-14 pt-36">
-        <div className="grid w-full gap-10 lg:grid-cols-[minmax(0,1.2fr)_18rem] lg:items-end">
+      <div className="container relative z-10 flex w-full pb-10 pt-28 sm:pb-12 sm:pt-32 lg:pb-14 lg:pt-36">
+        <div className="grid w-full">
           <div className="max-w-4xl">
-            <div className="mb-5 inline-flex items-center rounded-full border border-white/15 bg-white/8 px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-white/80 backdrop-blur-sm">
+            <div className="mb-4 inline-flex items-center rounded-full border border-white/15 bg-white/8 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.22em] text-white/80 backdrop-blur-sm sm:mb-5 sm:px-4 sm:py-2 sm:text-xs">
               Residential exterior cleaning
             </div>
 
             <div
               className={cn(
-                'font-sans text-[clamp(4.5rem,16vw,9.5rem)] font-black uppercase leading-[0.88] tracking-[-0.06em] text-white drop-shadow-[0_18px_48px_rgba(0,0,0,0.35)]',
+                'font-sans text-[clamp(3.2rem,17vw,9.5rem)] font-black uppercase leading-[0.9] tracking-[-0.06em] text-white drop-shadow-[0_18px_48px_rgba(0,0,0,0.35)]',
                 mediaUrl ? 'text-transparent bg-clip-text' : '',
               )}
               style={
@@ -66,10 +62,10 @@ export const HighImpactHero: React.FC<Page['hero']> = ({ links, media, richText 
               Grime Time
             </div>
 
-            <div className="mt-6 max-w-2xl rounded-[2rem] border border-white/12 bg-white/8 p-6 shadow-2xl shadow-black/25 backdrop-blur-md">
+            <div className="mt-4 max-w-xl rounded-[1.25rem] border border-white/12 bg-white/8 p-3.5 shadow-2xl shadow-black/25 backdrop-blur-md sm:mt-5 sm:rounded-[1.4rem] sm:p-4">
               {richText ? (
                 <RichText
-                  className="[&_h1]:hidden [&_p]:mb-0 [&_p]:text-lg [&_p]:leading-relaxed [&_p]:text-white/84"
+                  className="[&_h1]:hidden [&_p]:mb-0 [&_p]:text-sm [&_p]:leading-relaxed [&_p]:text-white/84 sm:[&_p]:text-base"
                   data={richText}
                   enableGutter={false}
                   enableProse={false}
@@ -78,32 +74,16 @@ export const HighImpactHero: React.FC<Page['hero']> = ({ links, media, richText 
             </div>
 
             {Array.isArray(links) && links.length > 0 && (
-              <ul className="mt-7 flex flex-wrap gap-4">
+              <ul className="mt-6 grid gap-3 sm:mt-7 sm:flex sm:flex-wrap sm:gap-4">
                 {links.map(({ link }, i) => {
                   return (
-                    <li key={i}>
+                    <li key={i} className="sm:w-auto">
                       <CMSLink {...link} />
                     </li>
                   )
                 })}
               </ul>
             )}
-          </div>
-
-          <div className="grid gap-3">
-            {[
-              'House washing',
-              'Driveways and flatwork',
-              'Porches and patios',
-              'Docks and waterfront surfaces',
-            ].map((service) => (
-              <div
-                key={service}
-                className="rounded-2xl border border-white/12 bg-black/30 px-4 py-3 text-sm font-medium text-white/88 backdrop-blur-sm"
-              >
-                {service}
-              </div>
-            ))}
           </div>
         </div>
       </div>

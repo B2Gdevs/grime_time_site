@@ -18,7 +18,7 @@ export function AssetsPanel({
   setDetail: (value: DetailState) => void
 }) {
   return (
-    <Card>
+    <Card data-tour="portal-assets-panel">
       <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-2 space-y-0">
         <div>
           <CardTitle>Asset ladder</CardTitle>

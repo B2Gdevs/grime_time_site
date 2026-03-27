@@ -20,6 +20,10 @@
       <description>Vendored image-generation MCP workflow, Python env isolation, editor wiring, and media-use policy.</description>
       <keywords>mcp,images,python</keywords>
     </file>
+    <file path=".planning/workflows/customer-auth-and-portal-access.md">
+      <description>Customer-auth architecture, Supabase magic-link/reset plan, and portal access/claim-flow gaps.</description>
+      <keywords>auth,portal,supabase,magic-link</keywords>
+    </file>
     <file path="scripts/image-gen-mcp-setup.mjs">
       <description>Repo-local bootstrap for the vendored image-generation MCP Python environment.</description>
       <keywords>mcp,images,uv</keywords>
@@ -76,6 +80,30 @@
       <description>Customer-only login flow and post-login routing.</description>
       <keywords>auth,customer,login</keywords>
     </file>
+    <file path="src/lib/auth/getAuthContext.ts">
+      <description>Current auth resolution path that will need a Supabase-customer / Payload-admin hybrid model.</description>
+      <keywords>auth,portal,sessions</keywords>
+    </file>
+    <file path="src/lib/supabase/server.ts">
+      <description>Supabase SSR auth helper used for server-side customer session resolution.</description>
+      <keywords>supabase,auth,server</keywords>
+    </file>
+    <file path="src/lib/supabase/browser.ts">
+      <description>Supabase browser auth helper used by public customer auth forms.</description>
+      <keywords>supabase,auth,browser</keywords>
+    </file>
+    <file path="src/app/auth/confirm/route.ts">
+      <description>Magic-link and password-reset callback route for customer auth.</description>
+      <keywords>auth,magic-link,reset</keywords>
+    </file>
+    <file path="src/app/(frontend)/forgot-password/page.tsx">
+      <description>Public forgot-password screen for customer auth.</description>
+      <keywords>auth,forgot-password</keywords>
+    </file>
+    <file path="src/app/(frontend)/reset-password/page.tsx">
+      <description>Public reset-password screen for customer auth.</description>
+      <keywords>auth,reset-password</keywords>
+    </file>
   </files>
   <keywords>
     <keyword>supabase</keyword>
@@ -86,19 +114,19 @@
   <tasks>
     <task id="04-db-approval" owner="team">
       <description>Run Payload migrations only with explicit user approval and confirm the database is ready for seed content.</description>
-      <status>in-progress</status>
+      <status>done</status>
     </task>
     <task id="04-admin-bootstrap" owner="team">
       <description>Create and verify the first admin account using the bootstrap script or admin login flow.</description>
-      <status>planned</status>
+      <status>done</status>
     </task>
     <task id="04-seed-readiness" owner="team">
       <description>Confirm the environment is ready to seed baseline marketing content and users into the real database.</description>
-      <status>planned</status>
+      <status>done</status>
     </task>
     <task id="04-mcp-tooling" owner="team">
       <description>Wire Payload MCP as an env-gated part of the dev process, keep local editor configs on the same localhost origin as Next dev, and document that route availability still depends on the approved MCP API-key migration.</description>
-      <status>in-progress</status>
+      <status>done</status>
     </task>
     <task id="04-image-mcp-tooling" owner="team">
       <description>Vendor the image-generation MCP server, keep its Python environment self-contained with `uv`, pass root `.env` image provider settings into it, and make Cursor/Codex plus local dev use the same repo-owned startup path. The vendored submodule, repo-local `uv sync` bootstrap, Cursor/Codex examples, and env-gated dev startup are now in repo.</description>
@@ -106,14 +134,18 @@
     </task>
     <task id="04-split-access" owner="team">
       <description>Keep customer login/customer dashboard separate from admin sign-in/admin ops so the public account flow never advertises Payload admin and the customer nav stays account-first.</description>
-      <status>in-progress</status>
+      <status>done</status>
     </task>
     <task id="04-deploy-env-guardrails" owner="team">
       <description>Keep Vercel and local builds deterministic by documenting required env, pinning the Node runtime, and making Payload config resilient enough to prerender public routes when `PAYLOAD_SECRET` is accidentally missing.</description>
-      <status>in-progress</status>
+      <status>done</status>
     </task>
     <task id="04-deploy-bundler-compat" owner="team">
       <description>Use Webpack for production builds when the current Vercel + Next.js Turbopack packaging path produces an ESM/CommonJS launcher mismatch against the repo's module scope. Revisit after upstream compatibility improves.</description>
+      <status>done</status>
+    </task>
+    <task id="04-customer-auth-modernization" owner="team">
+      <description>Move customer/public auth onto Supabase Auth so the site can support email/password, magic links, password reset, claim-account, and company-invite flows while Payload admin auth remains staff-only. The repo now includes the hybrid auth bridge, public forgot/reset screens, shared claim/invite token storage on Payload `users`, claim preview/completion routes, compact login modules, company-account invite acceptance, and lifecycle email CTAs that drive existing customers into the same claim/invite flow.</description>
       <status>done</status>
     </task>
   </tasks>
@@ -123,5 +155,6 @@
     <question id="q-mcp-rollout" status="open">When should the MCP API keys migration be approved so editor tooling can be enabled locally?</question>
     <question id="q-image-mcp-dev-mode" status="resolved">The default `npm run dev` path now supports image MCP as an env-gated companion service. It only starts automatically when `IMAGE_GEN_MCP_ENABLED=true`, which keeps the normal dev loop light when the image server is not needed.</question>
     <question id="q-admin-entry" status="open">Should the team eventually get a branded `/team/login` route, or is Payload admin login the long-term admin entry point?</question>
+    <question id="q-customer-signup-policy" status="in-progress">Public self-signup currently remains available alongside claim/invite flows, but the active product direction is shifting toward claim/invite-first access for existing customers and company users. Keep both paths working until the business decides whether open signup should be removed.</question>
   </questions>
 </phase-plan>

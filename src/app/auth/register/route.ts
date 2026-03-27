@@ -4,6 +4,8 @@ import { z } from 'zod'
 
 import config from '@payload-config'
 import { USERS_COLLECTION_SLUG } from '@/collections/Users'
+import type { User } from '@/payload-types'
+import { isAdminUser } from '@/lib/auth/roles'
 
 const registerSchema = z.object({
   email: z.string().email(),
@@ -40,10 +42,16 @@ export async function POST(request: Request) {
   })
 
   if (existingUsers.totalDocs > 0) {
-    return NextResponse.json(
-      { error: 'An account with that email already exists. Try signing in instead.' },
-      { status: 409 },
-    )
+    const existingUser = (existingUsers.docs[0] as User | undefined) ?? null
+
+    if (existingUser && isAdminUser(existingUser)) {
+      return NextResponse.json(
+        { error: 'That email is reserved for staff sign-in. Use /admin/login instead.' },
+        { status: 409 },
+      )
+    }
+
+    return NextResponse.json({ success: true, userExists: true })
   }
 
   const userCount = await payload.find({

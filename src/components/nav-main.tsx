@@ -22,7 +22,7 @@ export function NavMain({
   }[]
 }) {
   return (
-    <SidebarGroup>
+    <SidebarGroup data-tour="portal-nav-main">
       <SidebarGroupLabel>Workspace</SidebarGroupLabel>
       <SidebarGroupContent>
         <SidebarMenu>

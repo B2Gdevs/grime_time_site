@@ -17,7 +17,7 @@ export function MilestonesPanel({
   setDetail: (value: DetailState) => void
 }) {
   return (
-    <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
+    <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]" data-tour="portal-milestones-panel">
       <Card>
         <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-2 space-y-0">
           <div>

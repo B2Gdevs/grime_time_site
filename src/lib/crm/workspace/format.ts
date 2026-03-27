@@ -13,6 +13,11 @@ import {
   CRM_TASK_STATUS_OPTIONS,
   CRM_TASK_TYPE_OPTIONS,
 } from '@/lib/crm/schema'
+import {
+  CRM_TASK_SLA_CLASS_OPTIONS,
+  CRM_TASK_SOURCE_TYPE_OPTIONS,
+  OPERATING_ROLE_OPTIONS,
+} from '@/lib/ops/policies/operatingRhythm'
 import type { User } from '@/payload-types'
 
 const PRIORITY_LABELS = Object.fromEntries(CRM_PRIORITY_OPTIONS.map((item) => [item.value, item.label]))
@@ -33,6 +38,11 @@ const OPPORTUNITY_STAGE_LABELS = Object.fromEntries(
 )
 const TASK_STATUS_LABELS = Object.fromEntries(CRM_TASK_STATUS_OPTIONS.map((item) => [item.value, item.label]))
 const TASK_TYPE_LABELS = Object.fromEntries(CRM_TASK_TYPE_OPTIONS.map((item) => [item.value, item.label]))
+const TASK_SOURCE_LABELS = Object.fromEntries(
+  CRM_TASK_SOURCE_TYPE_OPTIONS.map((item) => [item.value, item.label]),
+)
+const TASK_SLA_LABELS = Object.fromEntries(CRM_TASK_SLA_CLASS_OPTIONS.map((item) => [item.value, item.label]))
+const ROLE_TAG_LABELS = Object.fromEntries(OPERATING_ROLE_OPTIONS.map((item) => [item.value, item.label]))
 const SEQUENCE_STATUS_LABELS = Object.fromEntries(
   CRM_SEQUENCE_STATUS_OPTIONS.map((item) => [item.value, item.label]),
 )
@@ -156,6 +166,18 @@ export function taskStatusLabel(value: null | string | undefined): string {
 
 export function taskTypeLabel(value: null | string | undefined): string {
   return labelFromMap(TASK_TYPE_LABELS, value)
+}
+
+export function taskSourceLabel(value: null | string | undefined): string {
+  return labelFromMap(TASK_SOURCE_LABELS, value, 'Manual')
+}
+
+export function taskSlaLabel(value: null | string | undefined): string {
+  return labelFromMap(TASK_SLA_LABELS, value, 'Unclassified SLA')
+}
+
+export function roleTagLabel(value: null | string | undefined): string {
+  return labelFromMap(ROLE_TAG_LABELS, value, 'Unknown role')
 }
 
 export function sequenceEnrollmentStatusLabel(value: null | string | undefined): string {

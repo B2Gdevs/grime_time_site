@@ -24,6 +24,20 @@ export const Media: CollectionConfig = {
     update: authenticated,
   },
   fields: [
+    ...(process.env.PROVIDERS__OPENAI__ENABLED === 'true'
+      ? [
+          {
+            name: 'openaiPromptGenerator',
+            type: 'ui',
+            admin: {
+              components: {
+                Field: '@/components/media-generate/PromptToMediaField',
+              },
+              position: 'sidebar',
+            },
+          } as const,
+        ]
+      : []),
     {
       name: 'alt',
       type: 'text',

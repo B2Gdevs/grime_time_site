@@ -2,6 +2,7 @@ import type { PayloadRequest, Where } from 'payload'
 
 import type { Account, Contact, CrmTask, Opportunity } from '@/payload-types'
 
+import { resolveDefaultCrmOwner } from './ownerRouting'
 import { numericRelationId, relationId } from './relationship'
 
 type EnsureCrmPartyArgs = {
@@ -32,7 +33,7 @@ async function findFirstByWhere<T>(args: {
 }
 
 export async function ensureContactAndAccount(req: PayloadRequest, args: EnsureCrmPartyArgs) {
-  const ownerId = numericRelationId(args.owner)
+  const explicitOwnerId = numericRelationId(args.owner)
   const linkedUserId = numericRelationId(args.linkedUser)
   const email = args.billingEmail?.trim().toLowerCase() ?? null
   const name = args.customerName?.trim() || email || 'Unnamed account'
@@ -66,6 +67,24 @@ export async function ensureContactAndAccount(req: PayloadRequest, args: EnsureC
             },
           })
         : null
+
+  const ownerId = await resolveDefaultCrmOwner({
+    accountOwner: existingAccount?.id
+      ? (
+          await findFirstByWhere<{ owner?: null | number | string }>({
+            collection: 'accounts',
+            req,
+            where: {
+              id: {
+                equals: existingAccount.id,
+              },
+            },
+          })
+        )?.owner
+      : null,
+    preferredOwner: explicitOwnerId,
+    req,
+  })
 
   const account = (existingAccount?.id
     ? await req.payload.update({

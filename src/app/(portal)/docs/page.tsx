@@ -43,7 +43,7 @@ export default async function DocsIndexPage() {
       />
       <div className="flex flex-1 flex-col">
         <div className="grid gap-6 px-4 py-6 lg:px-6 xl:grid-cols-[1.1fr_1.9fr]">
-          <Card>
+          <Card data-tour="portal-docs-index">
             <CardHeader>
               <CardTitle>Available guides</CardTitle>
               <CardDescription>Choose a document to open it in the docs reader.</CardDescription>
@@ -69,7 +69,7 @@ export default async function DocsIndexPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card data-tour="portal-docs-reader">
             <CardHeader>
               <CardTitle>{featured?.title ?? 'No docs yet'}</CardTitle>
               <CardDescription>

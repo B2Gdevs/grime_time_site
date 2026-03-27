@@ -12,6 +12,14 @@ type ParsedSubmission = {
   priority: 'high' | 'medium'
   propertyAddress: null | string
   propertyType: null | string
+  requestKind:
+    | 'billing_support'
+    | 'general_support'
+    | 'policy_privacy'
+    | 'refund_request'
+    | 'sales'
+    | 'scheduling_support'
+    | 'service_follow_up'
   serviceType: null | string
   shouldCreateOpportunity: boolean
   source: 'contact_request' | 'instant_quote' | 'manual' | 'schedule_request'
@@ -59,29 +67,55 @@ function inferPriority(source: ParsedSubmission['source'], accountType: ParsedSu
   return 'medium'
 }
 
-function inferStaleDays(source: ParsedSubmission['source'], accountType: ParsedSubmission['accountType']) {
-  if (accountType === 'commercial') return 1
-  if (source === 'instant_quote' || source === 'schedule_request') return 1
+function inferRequestKind(args: {
+  notes: null | string
+  schedulingRequested: boolean
+  serviceType: null | string
+  source: ParsedSubmission['source']
+}): ParsedSubmission['requestKind'] {
+  const serviceType = args.serviceType?.toLowerCase() ?? ''
+  const notes = args.notes?.toLowerCase() ?? ''
+
+  if (args.source === 'instant_quote' && args.schedulingRequested) return 'scheduling_support'
+  if (args.source === 'instant_quote') return 'sales'
+  if (args.source === 'schedule_request') return 'scheduling_support'
+  if (serviceType.includes('billing or refund')) {
+    return notes.includes('refund') || notes.includes('credit') ? 'refund_request' : 'billing_support'
+  }
+  if (serviceType.includes('privacy') || serviceType.includes('policy') || serviceType.includes('terms')) {
+    return 'policy_privacy'
+  }
+  if (serviceType.includes('existing service follow-up')) return 'service_follow_up'
+  if (serviceType.includes('scheduling question')) return 'scheduling_support'
+  if (serviceType.includes('general question')) return 'general_support'
+  return 'sales'
+}
+
+function inferStaleDays(args: {
+  accountType: ParsedSubmission['accountType']
+  requestKind: ParsedSubmission['requestKind']
+  source: ParsedSubmission['source']
+}) {
+  if (args.accountType === 'commercial') return 1
+  if (args.source === 'instant_quote' || args.source === 'schedule_request') return 1
+  if (args.requestKind === 'policy_privacy' || args.requestKind === 'refund_request') return 1
   return 2
 }
 
 function shouldCreateOpportunity(args: {
   accountType: ParsedSubmission['accountType']
-  serviceType: null | string
+  requestKind: ParsedSubmission['requestKind']
   source: ParsedSubmission['source']
 }) {
   if (args.accountType === 'commercial') return true
   if (args.source === 'instant_quote' || args.source === 'schedule_request') return true
+  return args.requestKind === 'sales'
+}
 
-  const serviceType = args.serviceType?.toLowerCase() ?? ''
-  return ![
-    'general question',
-    'existing service follow-up',
-    'billing or refund question',
-    'privacy or data request',
-    'terms or policy question',
-    'scheduling question',
-  ].includes(serviceType)
+function isSchedulingRequestedFlag(value: null | string) {
+  if (!value) return false
+  const normalized = value.trim().toLowerCase()
+  return normalized === 'yes' || normalized === 'true'
 }
 
 export function parseSubmissionRows(rows: SubmissionRow[]): ParsedSubmission {
@@ -89,8 +123,23 @@ export function parseSubmissionRows(rows: SubmissionRow[]): ParsedSubmission {
   const source = normalizeSource(firstValue(normalizedRows, ['leadsource']))
   const propertyType = firstValue(normalizedRows, ['propertytype'])
   const serviceType = firstValue(normalizedRows, ['servicetype'])
+  const schedulingRequested = isSchedulingRequestedFlag(
+    firstValue(normalizedRows, ['schedulingrequested']),
+  )
   const accountType = inferAccountType({
     propertyType,
+    serviceType,
+    source,
+  })
+  const details = firstValue(normalizedRows, ['details'])
+  const schedulingNotes = firstValue(normalizedRows, ['notes'])
+  const message = firstValue(normalizedRows, ['message'])
+  const notes =
+    [details, schedulingNotes, message].filter(Boolean).join('\n\n') ||
+    firstValue(normalizedRows, ['estimatedrange'])
+  const requestKind = inferRequestKind({
+    notes,
+    schedulingRequested,
     serviceType,
     source,
   })
@@ -102,22 +151,25 @@ export function parseSubmissionRows(rows: SubmissionRow[]): ParsedSubmission {
     customerEmail: firstValue(normalizedRows, ['email']),
     customerName,
     customerPhone: firstValue(normalizedRows, ['phone', 'phone_number', 'mobile', 'cell']),
-    notes:
-      firstValue(normalizedRows, ['message', 'details', 'notes']) ??
-      firstValue(normalizedRows, ['estimatedrange']),
+    notes,
     plaintext: submissionRowsToPlaintext(rows),
     preferredReply: firstValue(normalizedRows, ['preferredreply']),
     priority: inferPriority(source, accountType),
     propertyAddress: firstValue(normalizedRows, ['propertyaddress', 'address']),
     propertyType,
+    requestKind,
     serviceType,
     shouldCreateOpportunity: shouldCreateOpportunity({
       accountType,
-      serviceType,
+      requestKind,
       source,
     }),
     source,
-    staleDays: inferStaleDays(source, accountType),
+    staleDays: inferStaleDays({
+      accountType,
+      requestKind,
+      source,
+    }),
     targetDate: firstValue(normalizedRows, ['targetdate']),
     title: customerName ? `${customerName} - ${titleService}` : `Lead - ${titleService}`,
   }

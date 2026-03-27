@@ -2,7 +2,10 @@ export const billingDocumentStatusOptions = [
   { label: 'Draft', value: 'draft' },
   { label: 'Open', value: 'open' },
   { label: 'Paid', value: 'paid' },
+  { label: 'Partially paid', value: 'partially_paid' },
   { label: 'Overdue', value: 'overdue' },
+  { label: 'Refunded', value: 'refunded' },
+  { label: 'Uncollectible', value: 'uncollectible' },
   { label: 'Void', value: 'void' },
 ] as const
 

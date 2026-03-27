@@ -8,17 +8,12 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import type {
-  CrmRecordDetail,
-  CrmWorkspaceData,
-  CrmWorkspaceQueueItem,
-  CrmWorkspaceQueueKey,
-} from '@/lib/crm/workspace'
+import type { CrmWorkspaceData, CrmWorkspaceQueueKey } from '@/lib/crm/workspace'
 
-import { crmDetailToPanelState } from './detail-state'
 import { CrmWorkspaceMetrics } from './CrmWorkspaceMetrics'
 import { CrmWorkspaceQueueList } from './CrmWorkspaceQueueList'
 import { CrmWorkspaceToolbar } from './CrmWorkspaceToolbar'
+import { useCrmWorkspace } from './useCrmWorkspace'
 
 const crmOverviewDetail: DetailState = {
   body:
@@ -52,169 +47,34 @@ export function CrmWorkspace({
   initialData: CrmWorkspaceData
   setDetail: (value: DetailState) => void
 }) {
-  const [workspace, setWorkspace] = React.useState(initialData)
-  const [selectedQueue, setSelectedQueue] = React.useState<CrmWorkspaceQueueKey>(
-    initialData.queues[0]?.key ?? 'attention',
-  )
-  const [searchValue, setSearchValue] = React.useState(initialData.searchQuery ?? '')
-  const [staleOnly, setStaleOnly] = React.useState(false)
-  const [activeItemId, setActiveItemId] = React.useState<null | string>(null)
-  const [actionLoadingKey, setActionLoadingKey] = React.useState<null | string>(null)
-  const [loadingItemId, setLoadingItemId] = React.useState<null | string>(null)
-  const deferredSearchValue = React.useDeferredValue(searchValue)
-  const [isRefreshing, startRefresh] = React.useTransition()
-
-  const activeQueue =
-    workspace.queues.find((queue) => queue.key === selectedQueue) ??
-    workspace.queues[0] ?? {
-      description: '',
-      emptyMessage: 'No CRM data available.',
-      items: [],
-      key: 'attention' as const,
-      label: 'Needs attention',
-    }
-  const visibleQueue = {
-    ...activeQueue,
-    emptyMessage: staleOnly
-      ? `No stale items are currently showing in ${activeQueue.label.toLowerCase()}.`
-      : activeQueue.emptyMessage,
-    items: staleOnly ? activeQueue.items.filter((item) => item.stale) : activeQueue.items,
-  }
-
-  const fetchWorkspace = React.useCallback(async (searchQuery: string) => {
-    const params = new URLSearchParams()
-    if (searchQuery.trim()) {
-      params.set('q', searchQuery.trim())
-    }
-
-    const response = await fetch(`/api/internal/crm/workspace${params.size > 0 ? `?${params.toString()}` : ''}`, {
-      cache: 'no-store',
-    })
-
-    if (!response.ok) {
-      return null
-    }
-
-    return (await response.json()) as CrmWorkspaceData
-  }, [])
-
-  const handleRefresh = React.useCallback(() => {
-    startRefresh(async () => {
-      const nextWorkspace = await fetchWorkspace(searchValue)
-      if (nextWorkspace) {
-        setWorkspace(nextWorkspace)
-      }
-    })
-  }, [fetchWorkspace, searchValue])
-
-  const handleSelectItem = React.useCallback(
-    async (item: CrmWorkspaceQueueItem) => {
-      const itemKey = `${item.kind}:${item.id}`
-      setActiveItemId(itemKey)
-      setLoadingItemId(itemKey)
-
-      try {
-        const loadDetail = async () => {
-          const response = await fetch(`/api/internal/crm/record?type=${item.kind}&id=${item.id}`, {
-            cache: 'no-store',
-          })
-
-          if (!response.ok) {
-            return null
-          }
-
-          return (await response.json()) as CrmRecordDetail
-        }
-
-        const detail = await loadDetail()
-
-        if (!detail) {
-          return
-        }
-
-        const toDetailState = (value: CrmRecordDetail): DetailState =>
-          crmDetailToPanelState(value, async () => {
-            const nextDetail = await loadDetail()
-            return nextDetail ? toDetailState(nextDetail) : null
-          })
-
-        setDetail(toDetailState(detail))
-      } finally {
-        setLoadingItemId(null)
-      }
-    },
-    [setDetail],
-  )
-
-  const handleAction = React.useCallback(
-    async (item: CrmWorkspaceQueueItem, action: NonNullable<CrmWorkspaceQueueItem['actions']>[number]) => {
-      const actionKey = `${item.kind}:${item.id}:${action.kind}:${action.nextStage ?? ''}`
-      setActionLoadingKey(actionKey)
-
-      try {
-        let response: Response | null = null
-
-        if (action.kind === 'complete-task') {
-          response = await fetch('/api/internal/crm/task', {
-            body: JSON.stringify({ id: Number(item.id), status: 'completed' }),
-            headers: { 'Content-Type': 'application/json' },
-            method: 'PATCH',
-          })
-        }
-
-        if (action.kind === 'set-task-in-progress') {
-          response = await fetch('/api/internal/crm/task', {
-            body: JSON.stringify({ id: Number(item.id), status: 'in_progress' }),
-            headers: { 'Content-Type': 'application/json' },
-            method: 'PATCH',
-          })
-        }
-
-        if (action.kind === 'advance-opportunity' && action.nextStage) {
-          response = await fetch('/api/internal/crm/opportunity', {
-            body: JSON.stringify({ id: Number(item.id), stage: action.nextStage }),
-            headers: { 'Content-Type': 'application/json' },
-            method: 'PATCH',
-          })
-        }
-
-        if (!response?.ok) {
-          return
-        }
-
-        const nextWorkspace = await fetchWorkspace(searchValue)
-        if (nextWorkspace) {
-          setWorkspace(nextWorkspace)
-        }
-
-        if (activeItemId === `${item.kind}:${item.id}`) {
-          await handleSelectItem(item)
-        }
-      } finally {
-        setActionLoadingKey(null)
-      }
-    },
-    [activeItemId, fetchWorkspace, handleSelectItem, searchValue],
-  )
-
-  React.useEffect(() => {
-    const normalizedQuery = deferredSearchValue.trim()
-    const currentQuery = workspace.searchQuery?.trim() ?? ''
-
-    if (normalizedQuery === currentQuery) {
-      return
-    }
-
-    startRefresh(async () => {
-      const nextWorkspace = await fetchWorkspace(normalizedQuery)
-      if (nextWorkspace) {
-        setWorkspace(nextWorkspace)
-      }
-    })
-  }, [deferredSearchValue, fetchWorkspace, workspace.searchQuery])
+  const {
+    activeItemId,
+    actionLoadingKey,
+    activeQueue,
+    isRefreshing,
+    loadingItemId,
+    onAction,
+    onRefresh,
+    onSearchChange,
+    onSelectItem,
+    onCommercialOnlyChange,
+    onOwnerScopeChange,
+    onStaleOnlyChange,
+    ownerScope,
+    searchValue,
+    selectedQueue,
+    setSelectedQueue,
+    commercialOnly,
+    staleOnly,
+    visibleQueue,
+    workspace,
+  } = useCrmWorkspace({
+    initialData,
+    setDetail,
+  })
 
   return (
-    <Card className="border shadow-sm">
+    <Card className="border shadow-sm" data-tour="portal-crm-workspace">
       <CardHeader className="pb-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
@@ -242,7 +102,7 @@ export function CrmWorkspace({
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <Button variant="outline" size="sm" className="h-8 text-xs" onClick={handleRefresh} disabled={isRefreshing}>
+            <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => void onRefresh()} disabled={isRefreshing}>
               <RefreshCcwIcon className="size-3.5" />
               Refresh
             </Button>
@@ -258,8 +118,12 @@ export function CrmWorkspace({
 
         <div className="grid gap-3">
           <CrmWorkspaceToolbar
-            onSearchChange={setSearchValue}
-            onStaleOnlyChange={setStaleOnly}
+            commercialOnly={commercialOnly}
+            onCommercialOnlyChange={onCommercialOnlyChange}
+            onOwnerScopeChange={onOwnerScopeChange}
+            onSearchChange={onSearchChange}
+            onStaleOnlyChange={onStaleOnlyChange}
+            ownerScope={ownerScope}
             searchValue={searchValue}
             staleOnly={staleOnly}
           />
@@ -289,8 +153,8 @@ export function CrmWorkspace({
             activeItemId={activeItemId}
             actionLoadingKey={actionLoadingKey}
             loadingItemId={loadingItemId}
-            onAction={handleAction}
-            onSelect={handleSelectItem}
+            onAction={(item, action) => void onAction(item, action)}
+            onSelect={onSelectItem}
             queue={visibleQueue}
           />
         </div>

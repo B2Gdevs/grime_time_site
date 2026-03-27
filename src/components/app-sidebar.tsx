@@ -1,19 +1,10 @@
 'use client'
 
-import {
-  FileTextIcon,
-  HomeIcon,
-  LayoutDashboardIcon,
-  LifeBuoyIcon,
-  CalendarClockIcon,
-  ReceiptTextIcon,
-  UserRoundCogIcon,
-  Settings2Icon,
-  ShieldIcon,
-} from 'lucide-react'
+import { Suspense } from 'react'
 
 import { NavDocuments } from '@/components/nav-documents'
 import { NavMain } from '@/components/nav-main'
+import { TourLauncher } from '@/components/tours/TourLauncher'
 import { NavSecondary } from '@/components/nav-secondary'
 import { NavUser } from '@/components/nav-user'
 import {
@@ -25,11 +16,19 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar'
+import { usePortalStaffRoute } from '@/lib/auth/portalNavSurface'
+import {
+  buildCustomerScopeLabel,
+  buildPortalDashboardUrl,
+  buildPortalMainNav,
+  buildPortalSecondaryNav,
+} from '@/lib/navigation/portalSidebar'
 
 export function AppSidebar({
   documents,
-  isAdmin,
-  quotesEnabled,
+  effectiveUserEmail,
+  isRealAdmin,
+  quotesEligible,
   user,
   ...props
 }: React.ComponentProps<typeof Sidebar> & {
@@ -37,99 +36,38 @@ export function AppSidebar({
     name: string
     url: string
   }[]
-  isAdmin: boolean
-  quotesEnabled: boolean
+  /** Logged-in user email (effective user, including impersonation). */
+  effectiveUserEmail: string
+  /** True when the authenticated account has admin privileges (real session, not effective role). */
+  isRealAdmin: boolean
+  /** Show internal Quotes shortcut when staff chrome is active and env allows. */
+  quotesEligible: boolean
   user: {
     email: string
     name: string
   }
 }) {
-  const dashboardUrl = isAdmin ? '/ops' : '/dashboard'
+  const isStaffRoute = usePortalStaffRoute()
+  const staffShell = isRealAdmin && isStaffRoute
 
-  const navMain = isAdmin
-    ? [
-        {
-          icon: LayoutDashboardIcon,
-          title: 'Ops dashboard',
-          url: '/ops',
-        },
-        {
-          icon: HomeIcon,
-          title: 'Customer home',
-          url: '/dashboard',
-        },
-      ]
-    : [
-        {
-          icon: LayoutDashboardIcon,
-          title: 'Dashboard',
-          url: '/dashboard',
-        },
-        {
-          icon: ReceiptTextIcon,
-          title: 'Estimates',
-          url: '/estimates',
-        },
-        {
-          icon: FileTextIcon,
-          title: 'Invoices',
-          url: '/invoices',
-        },
-        {
-          icon: CalendarClockIcon,
-          title: 'Schedule',
-          url: '/service-schedule',
-        },
-        {
-          icon: UserRoundCogIcon,
-          title: 'Account',
-          url: '/account',
-        },
-      ]
+  const customerScopeLabel = buildCustomerScopeLabel(effectiveUserEmail)
+  const dashboardUrl = buildPortalDashboardUrl({
+    isRealAdmin,
+    isStaffRoute,
+  })
+  const navMain = buildPortalMainNav({
+    customerScopeLabel,
+    isRealAdmin,
+    isStaffRoute,
+  })
 
-  const navSecondary = [
-    {
-      icon: LifeBuoyIcon,
-      title: 'Contact',
-      url: '/contact',
-    },
-    ...(!isAdmin
-      ? [
-          {
-            icon: ReceiptTextIcon,
-            title: 'Request quote',
-            url: '/#instant-quote',
-          },
-        ]
-      : []),
-    ...(isAdmin && quotesEnabled
-      ? [
-          {
-            icon: ReceiptTextIcon,
-            title: 'Quotes',
-            url: '/admin/collections/quotes',
-          },
-        ]
-      : []),
-    ...(isAdmin
-      ? [
-          {
-            icon: Settings2Icon,
-            title: 'Quote settings',
-            url: '/admin/globals/quoteSettings',
-          },
-        ]
-      : []),
-    ...(isAdmin
-      ? [
-          {
-            icon: ShieldIcon,
-            title: 'Payload admin',
-            url: '/admin',
-          },
-        ]
-      : []),
-  ]
+  const staffDocs = staffShell ? documents : []
+
+  const navSecondary = buildPortalSecondaryNav({
+    isRealAdmin,
+    isStaffRoute,
+    quotesEligible,
+  })
 
   return (
     <Sidebar collapsible="offcanvas" {...props}>
@@ -148,12 +86,17 @@ export function AppSidebar({
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent className="portal-nav-scroll" data-portal-nav-scroll="">
+        <div className="px-2 pt-2">
+          <Suspense fallback={<div className="h-9" aria-hidden />}>
+            <TourLauncher isRealAdmin={isRealAdmin} />
+          </Suspense>
+        </div>
         <NavMain items={navMain} />
-        {documents.length > 0 ? <NavDocuments items={documents} /> : null}
+        {staffDocs.length > 0 ? <NavDocuments items={staffDocs} /> : null}
         <NavSecondary items={navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser dashboardUrl={dashboardUrl} isAdmin={isAdmin} user={user} />
+        <NavUser dashboardUrl={dashboardUrl} isRealAdmin={isRealAdmin} staffShell={staffShell} user={user} />
       </SidebarFooter>
     </Sidebar>
   )

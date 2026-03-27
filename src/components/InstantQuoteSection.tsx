@@ -1,14 +1,29 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { LoaderCircleIcon, SparklesIcon } from 'lucide-react'
+import {
+  CalendarDaysIcon,
+  DropletsIcon,
+  GaugeIcon,
+  LoaderCircleIcon,
+  MailIcon,
+  PhoneIcon,
+  RulerIcon,
+  SparklesIcon,
+  UserIcon,
+} from 'lucide-react'
+import { usePathname, useRouter } from 'next/navigation'
 import { useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { z } from 'zod'
 
 import { NoiseBackground } from '@/components/NoiseBackground'
+import { useSiteTour } from '@/components/tours/SiteTourProvider'
+import { useDemoMode } from '@/providers/DemoModeProvider'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   Form,
   FormControl,
@@ -37,6 +52,7 @@ import {
   instantQuoteStoriesOptions,
   type InstantQuoteRequestValues,
 } from '@/lib/forms/instantQuoteRequest'
+import { schedulePropertyOptions, scheduleWindowOptions } from '@/lib/forms/scheduleRequest'
 import {
   formatCurrency,
   getDefaultInstantQuoteServiceKey,
@@ -51,11 +67,17 @@ type QuoteResponse = {
   submissionId: number | string
 }
 
+type InstantQuoteFormValues = z.input<typeof instantQuoteRequestSchema>
+
 export function InstantQuoteSection({ catalog }: { catalog: InstantQuoteCatalog }) {
+  const pathname = usePathname()
+  const router = useRouter()
+  const { demoMode } = useDemoMode()
+  const { startTour } = useSiteTour()
   const [feedback, setFeedback] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const serviceOptions = useMemo(() => getInstantQuoteServiceSelectOptions(catalog), [catalog])
-  const defaultValues = useMemo<InstantQuoteRequestValues>(
+  const defaultValues = useMemo<InstantQuoteFormValues>(
     () => ({
       address: '',
       condition: 'standard',
@@ -64,6 +86,12 @@ export function InstantQuoteSection({ catalog }: { catalog: InstantQuoteCatalog 
       frequency: 'one_time',
       fullName: '',
       phone: '',
+      requestScheduling: false,
+      scheduleApproximateSize: '',
+      schedulingNotes: '',
+      schedulingPreferredWindow: 'flexible',
+      schedulingPropertyType: 'residential',
+      schedulingTargetDate: '',
       serviceKey: getDefaultInstantQuoteServiceKey(catalog),
       sqft: '1800',
       stories: '1',
@@ -71,24 +99,25 @@ export function InstantQuoteSection({ catalog }: { catalog: InstantQuoteCatalog 
     [catalog],
   )
 
-  const form = useForm<InstantQuoteRequestValues>({
+  const form = useForm<InstantQuoteFormValues>({
     resolver: zodResolver(instantQuoteRequestSchema),
     defaultValues,
   })
 
   const values = form.watch()
+  const requestScheduling = form.watch('requestScheduling')
   const estimate = useMemo(
-    () => buildInstantQuoteEstimate(values, catalog),
+    () => buildInstantQuoteEstimate(values as InstantQuoteRequestValues, catalog),
     [catalog, values.condition, values.frequency, values.serviceKey, values.sqft, values.stories],
   )
   const service = getInstantQuoteService(values.serviceKey, catalog)
 
-  async function onSubmit(submission: InstantQuoteRequestValues) {
+  async function onSubmit(submission: InstantQuoteFormValues) {
     setError(null)
     setFeedback(null)
 
     try {
-      const response = await postJsonForm<InstantQuoteRequestValues, QuoteResponse>(
+      const response = await postJsonForm<InstantQuoteFormValues, QuoteResponse>(
         '/api/lead-forms/instant-quote',
         submission,
       )
@@ -108,26 +137,48 @@ export function InstantQuoteSection({ catalog }: { catalog: InstantQuoteCatalog 
     }
   }
 
+  function startInstantQuoteTour() {
+    if (pathname === '/') {
+      document.getElementById('instant-quote')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      window.setTimeout(() => startTour('public-instant-quote'), 450)
+    } else {
+      router.push('/?tour=public-instant-quote#instant-quote')
+    }
+  }
+
   return (
     <section className="container my-20 scroll-mt-24" id="instant-quote">
       <div className="relative overflow-hidden rounded-[2rem] border border-border bg-gradient-to-br from-card via-card to-secondary/40 shadow-[0_20px_80px_-50px_rgba(15,23,42,0.55)]">
         <NoiseBackground className="opacity-85" contrast="light" />
 
         <div className="grid gap-0 lg:grid-cols-[1.05fr_0.95fr]">
-          <div className="relative border-b border-border/70 p-8 lg:border-b-0 lg:border-r lg:p-10">
-            <Badge variant="outline" className="mb-4">
-              Fast estimate
-            </Badge>
-            <h2 className="max-w-xl text-3xl font-semibold tracking-tight sm:text-4xl">
-              Instant quote range for house washing, driveways, porches, and docks
+          <div
+            className="relative border-b border-border/70 p-6 lg:border-b-0 lg:border-r lg:p-8"
+            data-tour="public-instant-quote-hero"
+          >
+            <div className="mb-4 flex flex-wrap items-center gap-3">
+              <Badge variant="outline">Fast estimate</Badge>
+              {demoMode ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 text-xs"
+                  onClick={startInstantQuoteTour}
+                >
+                  Quick tour
+                </Button>
+              ) : null}
+            </div>
+            <h2 className="max-w-xl text-2xl font-semibold tracking-tight sm:text-3xl">
+              Instant quote range in under a minute
             </h2>
-            <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground">
-              Give us your service type, approximate square footage, and job condition. We will
-              show a live range now, then push the request into our team workflow for a real scoped
-              quote.
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
+              Pick service, size, and condition. You get a live range now; we confirm final scope
+              after review.
             </p>
 
-            <div className="mt-8 grid gap-4 sm:grid-cols-2">
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
               {serviceOptions.map((item) => {
                 const catalogItem = getInstantQuoteService(item.value, catalog)
                 const selected = item.value === values.serviceKey
@@ -137,22 +188,19 @@ export function InstantQuoteSection({ catalog }: { catalog: InstantQuoteCatalog 
                     key={item.value}
                     type="button"
                     onClick={() => form.setValue('serviceKey', item.value, { shouldValidate: true })}
-                    className={`rounded-2xl border p-4 text-left transition ${
+                    className={`rounded-xl border p-3 text-left transition ${
                       selected
                         ? 'border-primary bg-primary/5 shadow-sm'
                         : 'border-border bg-background/70 hover:border-primary/40'
                     }`}
                   >
                     <div className="flex items-center justify-between gap-3">
-                      <h3 className="text-base font-semibold">{catalogItem.label}</h3>
+                      <h3 className="text-sm font-semibold">{catalogItem.label}</h3>
                       <Badge variant={selected ? 'default' : 'outline'}>
                         {catalogItem.priceBandLabel}
                       </Badge>
                     </div>
-                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                      {catalogItem.description}
-                    </p>
-                    <p className="mt-3 text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                    <p className="mt-2 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
                       Minimum {formatCurrency(catalogItem.minimum)}
                     </p>
                   </button>
@@ -160,14 +208,14 @@ export function InstantQuoteSection({ catalog }: { catalog: InstantQuoteCatalog 
               })}
             </div>
 
-            <Card className="mt-8 border-primary/20 bg-primary/5 shadow-none">
-              <CardHeader className="pb-3">
+            <Card className="mt-5 border-primary/20 bg-primary/5 shadow-none">
+              <CardHeader className="pb-2">
                 <CardDescription>Live range</CardDescription>
-                <CardTitle className="text-4xl">
+                <CardTitle className="text-3xl">
                   {formatCurrency(estimate.low)} to {formatCurrency(estimate.high)}
                 </CardTitle>
               </CardHeader>
-              <CardContent className="grid gap-4 text-sm text-muted-foreground sm:grid-cols-3">
+              <CardContent className="grid gap-3 text-sm text-muted-foreground sm:grid-cols-2">
                 <div>
                   <p className="font-medium text-foreground">What drives it</p>
                   <p>Square footage, condition, stories, and recurrence discount.</p>
@@ -176,24 +224,23 @@ export function InstantQuoteSection({ catalog }: { catalog: InstantQuoteCatalog 
                   <p className="font-medium text-foreground">Best fit</p>
                   <p>{service.recommendedFor}</p>
                 </div>
-                <div>
-                  <p className="font-medium text-foreground">Expectation</p>
-                  <p>This is a starting range. Photos, access, and stain severity can move it.</p>
-                </div>
               </CardContent>
             </Card>
           </div>
 
-          <div className="relative p-8 lg:p-10">
+          <div className="relative p-6 lg:p-8" data-tour="public-instant-quote-form">
             <Form {...form}>
-              <form className="grid gap-5" onSubmit={form.handleSubmit(onSubmit)} noValidate>
-                <div className="grid gap-5 sm:grid-cols-2">
+              <form className="grid gap-4" onSubmit={form.handleSubmit(onSubmit)} noValidate>
+                <div className="grid gap-4 sm:grid-cols-2">
                   <FormField
                     control={form.control}
                     name="serviceKey"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Service</FormLabel>
+                        <FormLabel className="inline-flex items-center gap-1.5">
+                          <DropletsIcon className="size-3.5 text-primary" />
+                          Service
+                        </FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger>
@@ -217,7 +264,10 @@ export function InstantQuoteSection({ catalog }: { catalog: InstantQuoteCatalog 
                     name="sqft"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Approx. square footage</FormLabel>
+                        <FormLabel className="inline-flex items-center gap-1.5">
+                          <RulerIcon className="size-3.5 text-primary" />
+                          Approx. square footage
+                        </FormLabel>
                         <FormControl>
                           <Input
                             inputMode="decimal"
@@ -232,13 +282,16 @@ export function InstantQuoteSection({ catalog }: { catalog: InstantQuoteCatalog 
                   />
                 </div>
 
-                <div className="grid gap-5 sm:grid-cols-3">
+                <div className="grid gap-4 sm:grid-cols-3">
                   <FormField
                     control={form.control}
                     name="stories"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Stories</FormLabel>
+                        <FormLabel className="inline-flex items-center gap-1.5">
+                          <GaugeIcon className="size-3.5 text-primary" />
+                          Stories
+                        </FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger>
@@ -307,13 +360,16 @@ export function InstantQuoteSection({ catalog }: { catalog: InstantQuoteCatalog 
                   />
                 </div>
 
-                <div className="grid gap-5 sm:grid-cols-2">
+                <div className="grid gap-4 sm:grid-cols-2">
                   <FormField
                     control={form.control}
                     name="fullName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Full name</FormLabel>
+                        <FormLabel className="inline-flex items-center gap-1.5">
+                          <UserIcon className="size-3.5 text-primary" />
+                          Full name
+                        </FormLabel>
                         <FormControl>
                           <Input placeholder="Your name" {...field} />
                         </FormControl>
@@ -326,7 +382,10 @@ export function InstantQuoteSection({ catalog }: { catalog: InstantQuoteCatalog 
                     name="email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Email</FormLabel>
+                        <FormLabel className="inline-flex items-center gap-1.5">
+                          <MailIcon className="size-3.5 text-primary" />
+                          Email
+                        </FormLabel>
                         <FormControl>
                           <Input placeholder="you@example.com" type="email" {...field} />
                         </FormControl>
@@ -336,17 +395,24 @@ export function InstantQuoteSection({ catalog }: { catalog: InstantQuoteCatalog 
                   />
                 </div>
 
-                <div className="grid gap-5 sm:grid-cols-2">
+                <div className="grid gap-4 sm:grid-cols-2">
                   <FormField
                     control={form.control}
                     name="phone"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Phone</FormLabel>
+                        <FormLabel className="inline-flex items-center gap-1.5">
+                          <PhoneIcon className="size-3.5 text-primary" />
+                          Phone
+                        </FormLabel>
                         <FormControl>
                           <Input placeholder="(555) 555-5555" type="tel" {...field} />
                         </FormControl>
-                        <FormDescription>Optional, but helpful for quick scope confirmation.</FormDescription>
+                        <FormDescription>
+                          {requestScheduling
+                            ? 'Required when you request scheduling.'
+                            : 'Optional'}
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -360,7 +426,11 @@ export function InstantQuoteSection({ catalog }: { catalog: InstantQuoteCatalog 
                         <FormControl>
                           <Input placeholder="Street address" {...field} />
                         </FormControl>
-                        <FormDescription>Optional for the instant range, helpful for the follow-up quote.</FormDescription>
+                        <FormDescription>
+                          {requestScheduling
+                            ? 'Required when you request scheduling.'
+                            : 'Optional'}
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -369,14 +439,147 @@ export function InstantQuoteSection({ catalog }: { catalog: InstantQuoteCatalog 
 
                 <FormField
                   control={form.control}
+                  name="requestScheduling"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start gap-3 rounded-2xl border border-border/80 bg-muted/30 p-4">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={(checked: boolean | 'indeterminate') =>
+                            field.onChange(checked === true)
+                          }
+                        />
+                      </FormControl>
+                      <div className="grid gap-1.5 leading-snug">
+                        <FormLabel className="flex cursor-pointer items-center gap-2 font-medium">
+                          <CalendarDaysIcon className="size-4 text-primary" />
+                          Also request scheduling
+                        </FormLabel>
+                        <FormDescription className="text-xs leading-5">
+                          Add a preferred window and property context. Phone and address are required when
+                          this is on.
+                        </FormDescription>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+
+                {requestScheduling ? (
+                  <div className="grid gap-4 rounded-2xl border border-primary/20 bg-primary/5 p-4">
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <FormField
+                        control={form.control}
+                        name="schedulingPropertyType"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Property type</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select type" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {schedulePropertyOptions.map((item) => (
+                                  <SelectItem key={item.value} value={item.value}>
+                                    {item.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="schedulingPreferredWindow"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Preferred window</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select window" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {scheduleWindowOptions.map((item) => (
+                                  <SelectItem key={item.value} value={item.value}>
+                                    {item.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <FormField
+                        control={form.control}
+                        name="schedulingTargetDate"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Preferred date (optional)</FormLabel>
+                            <FormControl>
+                              <Input type="date" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="scheduleApproximateSize"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Approximate site scope (optional)</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="Driveway length, fence line, etc."
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormDescription className="text-xs">
+                              Helpful for scoping; not a locked measurement.
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <FormField
+                      control={form.control}
+                      name="schedulingNotes"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Access notes or job details (optional)</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="Gates, algae, HOA restrictions, arrival preferences."
+                              rows={3}
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                ) : null}
+
+                <FormField
+                  control={form.control}
                   name="details"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Details we should know</FormLabel>
+                      <FormLabel>Extra details (optional)</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="Tell us about stains, algae, accessibility, HOA rules, gates, or photos you plan to send."
-                          rows={4}
+                          placeholder="Stains, algae, access notes, HOA rules."
+                          rows={3}
                           {...field}
                         />
                       </FormControl>
@@ -395,7 +598,7 @@ export function InstantQuoteSection({ catalog }: { catalog: InstantQuoteCatalog 
 
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <p className="text-sm text-muted-foreground">
-                    By submitting, you are asking for a scoped estimate and follow-up by email or phone.
+                    Scoped range now, confirmed quote after review.
                   </p>
                   <Button disabled={form.formState.isSubmitting} type="submit">
                     {form.formState.isSubmitting ? (

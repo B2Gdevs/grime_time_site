@@ -50,9 +50,35 @@ export function CustomerDashboardView({
               <span className="text-muted-foreground"> for internal tools.</span>
             </div>
           ) : null}
-          <SectionCards items={cards} />
+          {!isAdminPreview && portal.activation.showWelcomeBanner ? (
+            <div className="mx-4 rounded-lg border border-emerald-500/35 bg-emerald-500/5 px-4 py-3 text-sm text-emerald-950 dark:text-emerald-50 lg:mx-6">
+              <span className="font-medium">Welcome to your portal</span>
+              <span className="text-muted-foreground">
+                {' '}
+                Estimates, invoices, and schedule updates from Grime Time will collect here. Finish your profile so we can
+                reach you on site day.
+              </span>
+            </div>
+          ) : null}
+          {!isAdminPreview && portal.activation.suggestProfileCompletion ? (
+            <div className="mx-4 flex flex-col gap-3 rounded-lg border border-sky-500/35 bg-sky-500/5 px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between lg:mx-6">
+              <div>
+                <span className="font-medium text-sky-950 dark:text-sky-50">Complete your account</span>
+                <span className="text-muted-foreground">
+                  {' '}
+                  Add phone and a service address so scheduling and billing stay accurate.
+                </span>
+              </div>
+              <Button asChild size="sm" variant="secondary">
+                <Link href="/account">Update account</Link>
+              </Button>
+            </div>
+          ) : null}
+          <div data-tour="portal-kpi-cards">
+            <SectionCards items={cards} />
+          </div>
           <div className="grid min-w-0 gap-4 px-4 lg:px-6 xl:grid-cols-[1.6fr_1fr]">
-            <Card className="min-w-0">
+            <Card className="min-w-0" data-tour="portal-customer-quick-actions">
               <CardHeader>
                 <CardTitle>Quick actions</CardTitle>
                 <CardDescription>Handle your next service step without leaving the portal flow.</CardDescription>
@@ -112,6 +138,13 @@ export function CustomerDashboardView({
                       ? `${formatCurrency(nextInvoice.balanceDue)} due by ${formatDate(nextInvoice.dueDate)}`
                       : 'No open invoice is waiting on this account.'}
                   </div>
+                  {portal.billing.canManageInStripe ? (
+                    <div className="mt-2">
+                      <Button asChild size="sm" variant="outline">
+                        <Link href="/invoices">Manage billing</Link>
+                      </Button>
+                    </div>
+                  ) : null}
                 </div>
                 <div className="rounded-lg border px-3 py-3">
                   <div className="font-medium">Recurring service</div>

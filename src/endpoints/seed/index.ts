@@ -1,5 +1,6 @@
 import type { File, Payload, PayloadRequest } from 'payload'
 
+import { portalPreviewTestUserEmail } from '@/lib/auth/previewIdentity'
 import {
   displayNameForSeedEmail,
   parseQuotesInternalEmailAllowlist,
@@ -24,6 +25,7 @@ import {
 } from './public-support-pages'
 import { buildScheduleRequestFormData } from './schedule-request-form'
 import { contact as contactPageData } from './contact-page'
+import { defaultCrmSequences } from './crm-sequences'
 import { home } from './home'
 import { image1 } from './image-1'
 import { image2 } from './image-2'
@@ -183,6 +185,40 @@ async function runSeed({
   const postAuthor = teamUsers[0]
   if (!postAuthor) throw new Error('Seed: expected Grime Time team users')
 
+  const previewEmail = portalPreviewTestUserEmail()
+  try {
+    const existingPreview = await payload.find({
+      collection: 'users',
+      depth: 0,
+      limit: 1,
+      req,
+      where: { email: { equals: previewEmail } },
+    })
+    const previewId = existingPreview.docs[0]?.id
+    if (previewId != null) {
+      await payload.update({
+        collection: 'users',
+        id: previewId,
+        data: { name: 'Test User', roles: ['customer'] },
+        req,
+      })
+    } else {
+      await payload.create({
+        collection: 'users',
+        data: {
+          email: previewEmail,
+          name: 'Test User',
+          password: 'changethis',
+          roles: ['customer'],
+        },
+        req,
+      })
+    }
+    payload.logger.info(`— Preview customer user: ${previewEmail}`)
+  } catch (err) {
+    payload.logger.warn({ err, msg: `Seed: could not upsert preview user ${previewEmail}` })
+  }
+
   payload.logger.info(`— Upserting media...`)
 
   const buffers = await Promise.all(
@@ -309,7 +345,7 @@ async function runSeed({
     payload,
     'pages',
     'contact',
-    contactPageData({ contactForm, heroImage: imagePropertyDoc }) as Record<string, unknown>,
+    contactPageData({ heroImage: imagePropertyDoc }) as Record<string, unknown>,
     req,
   ).then(({ id }) => payload.findByID({ collection: 'pages', id, depth: 0, req }))
 
@@ -405,7 +441,7 @@ async function runSeed({
             link: {
               type: 'custom',
               label: 'Book online',
-              url: '/schedule',
+              url: '/#instant-quote',
             },
           },
         ],
@@ -520,7 +556,7 @@ async function runSeed({
             link: {
               type: 'custom',
               label: 'Book / quote',
-              url: '/schedule',
+              url: '/#instant-quote',
               appearance: 'default',
             },
           },
@@ -662,6 +698,27 @@ async function runSeed({
     })
   }
 
+  for (const sequence of defaultCrmSequences) {
+    await upsertCollectionDoc(payload, req, {
+      collection: 'crm-sequences',
+      data: {
+        audience: sequence.audience,
+        key: sequence.key,
+        name: sequence.name,
+        status: sequence.status,
+        steps: sequence.steps.map((step) => ({ ...step })),
+        trigger: sequence.trigger,
+      },
+      keyField: 'key',
+      keyValue: sequence.key,
+    })
+  }
+
+  if (process.env.DEMO_SEED === 'true') {
+    const { seedDemoData } = await import('./demo-seed')
+    await seedDemoData({ payload, req })
+  }
+
   payload.logger.info('Seed upsert finished successfully.')
 }
 
@@ -670,6 +727,7 @@ async function upsertCollectionDoc(
   req: PayloadRequest,
   args: {
     collection:
+      | 'crm-sequences'
       | 'growth-milestones'
       | 'ops-asset-ladder-items'
       | 'ops-liability-items'

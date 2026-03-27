@@ -10,7 +10,7 @@
 
 | System | Role |
 |--------|------|
-| **Public site** (Payload + Next.js) | Marketing pages, quote/contact forms, native `/schedule` request form |
+| **Public site** (Payload + Next.js) | Marketing pages, quote/contact forms; **scheduling intake** is optional on the home instant quote block (`/#instant-quote`). Legacy `/schedule` redirects there. |
 | **Payload admin** | Content, Media, Form submissions, Quotes (internal, gated) |
 | **Payload-native CRM** | Leads, contacts, accounts, activities, tasks, opportunities, and follow-up state |
 | **Resend + Stripe** | Email delivery and billing/payment rails |
@@ -24,11 +24,11 @@
 5. Staff works the lead from the internal queue and related account records.
 6. If a formal quote is needed before close, staff creates a **Quotes** record in Payload under **Internal**.
 
-## Scheduling path (`/schedule`)
+## Scheduling path (instant quote + optional scheduling)
 
-1. Visitor submits the native schedule request form.
-2. The app stores a Payload form submission through the same first-party form stack used by the quote and contact flows.
-3. Internal follow-up and scheduling tasks should be generated from Payload-native workflow logic.
+1. Visitor uses the home **Instant quote** section and may turn on **Also request scheduling** (preferred window, property type, optional date, notes).
+2. Submissions post to `/api/lead-forms/instant-quote` with `leadSource: instant_quote` and extra rows when scheduling is requested (`schedulingRequested`, `propertyType`, `preferredWindow`, etc.); CRM parses combined quote + scheduling as `scheduling_support` when scheduling is requested.
+3. The standalone `/schedule` route only redirects clients to `/#instant-quote` (the dedicated schedule API remains for legacy/testing if needed).
 4. Staff confirms the real calendar window from the internal queue and service records.
 
 ## Ownership

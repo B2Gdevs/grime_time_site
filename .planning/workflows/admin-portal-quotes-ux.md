@@ -76,6 +76,11 @@ The dashboard should answer these in under 10 seconds:
 
 - [x] Command-center shell for staff dashboard
 - [x] KPI cards, business chart, operator panel, and command tabs
+- [x] Convert KPI cards to compact number-first cards (minimal body copy; value is primary visual anchor).
+- [x] Add info-icon tooltip for each KPI with: formula, included data sources, and update cadence.
+- [x] Standardize tooltip content from one shared KPI metadata map (avoid per-card ad hoc wording).
+- [x] Add concise trend/context chips (e.g., weighted pipeline, target, tracked count) instead of paragraph text blocks.
+- [x] Keep card heights consistent across desktop breakpoints to improve scan speed.
 - [ ] Replace placeholder projected revenue and MRR targets with real business targets and documented formulas
 - [ ] Add strong empty states when the business has no activity yet
 - [ ] Test mobile and small-screen behavior for tabs, sidebar, and operator panel

@@ -1,13 +1,12 @@
-import type { Form, Media } from '@/payload-types'
+import type { Media } from '@/payload-types'
 import { RequiredDataFromCollectionSlug } from 'payload'
 
 type ContactArgs = {
-  contactForm: Form
   heroImage: Media
 }
 
+/** CMS `pages` document for `/contact` — hero + first-party contact block (lead-forms API). */
 export const contact: (args: ContactArgs) => RequiredDataFromCollectionSlug<'pages'> = ({
-  contactForm,
   heroImage,
 }) => {
   return {
@@ -30,7 +29,7 @@ export const contact: (args: ContactArgs) => RequiredDataFromCollectionSlug<'pag
             type: 'custom',
             appearance: 'outline',
             label: 'Book online',
-            url: '/schedule',
+            url: '/#instant-quote',
           },
         },
       ],
@@ -47,7 +46,7 @@ export const contact: (args: ContactArgs) => RequiredDataFromCollectionSlug<'pag
                   format: 0,
                   mode: 'normal',
                   style: '',
-                  text: 'Talk to Grime Time about the property, schedule, or scope.',
+                  text: 'Reach the team without turning everything into a quote.',
                   version: 1,
                 },
               ],
@@ -66,7 +65,7 @@ export const contact: (args: ContactArgs) => RequiredDataFromCollectionSlug<'pag
                   format: 0,
                   mode: 'normal',
                   style: '',
-                  text: 'Use this form for support, billing, property questions, custom commercial scope, or anything that does not belong in the instant quote flow.',
+                  text: 'Support, billing, refunds, privacy, policy, scheduling, or service follow-up—we log the request and reply with a real next step.',
                   version: 1,
                 },
               ],
@@ -86,169 +85,8 @@ export const contact: (args: ContactArgs) => RequiredDataFromCollectionSlug<'pag
     },
     layout: [
       {
-        blockType: 'content',
-        columns: [
-          {
-            size: 'half',
-            enableLink: false,
-            richText: {
-              root: {
-                type: 'root',
-                children: [
-                  {
-                    type: 'heading',
-                    children: [
-                      {
-                        type: 'text',
-                        detail: 0,
-                        format: 0,
-                        mode: 'normal',
-                        style: '',
-                        text: 'What to send us',
-                        version: 1,
-                      },
-                    ],
-                    direction: 'ltr',
-                    format: '',
-                    indent: 0,
-                    tag: 'h3',
-                    version: 1,
-                  },
-                  {
-                    type: 'paragraph',
-                    children: [
-                      {
-                        type: 'text',
-                        detail: 0,
-                        format: 0,
-                        mode: 'normal',
-                        style: '',
-                        text: 'The property address, what needs to be cleaned, rough size, timing, and anything unusual about access or buildup. That keeps the response tight and useful.',
-                        version: 1,
-                      },
-                    ],
-                    direction: 'ltr',
-                    format: '',
-                    indent: 0,
-                    textFormat: 0,
-                    version: 1,
-                  },
-                ],
-                direction: 'ltr',
-                format: '',
-                indent: 0,
-                version: 1,
-              },
-            },
-          },
-          {
-            size: 'half',
-            enableLink: false,
-            richText: {
-              root: {
-                type: 'root',
-                children: [
-                  {
-                    type: 'heading',
-                    children: [
-                      {
-                        type: 'text',
-                        detail: 0,
-                        format: 0,
-                        mode: 'normal',
-                        style: '',
-                        text: 'Best uses for this page',
-                        version: 1,
-                      },
-                    ],
-                    direction: 'ltr',
-                    format: '',
-                    indent: 0,
-                    tag: 'h3',
-                    version: 1,
-                  },
-                  {
-                    type: 'paragraph',
-                    children: [
-                      {
-                        type: 'text',
-                        detail: 0,
-                        format: 0,
-                        mode: 'normal',
-                        style: '',
-                        text: 'Commercial scope review, invoice questions, reschedule requests, support, and policies. If you already know the service details, the instant quote is usually faster.',
-                        version: 1,
-                      },
-                    ],
-                    direction: 'ltr',
-                    format: '',
-                    indent: 0,
-                    textFormat: 0,
-                    version: 1,
-                  },
-                ],
-                direction: 'ltr',
-                format: '',
-                indent: 0,
-                version: 1,
-              },
-            },
-          },
-        ],
-      },
-      {
-        blockType: 'formBlock',
-        enableIntro: true,
-        form: contactForm,
-        introContent: {
-          root: {
-            type: 'root',
-            children: [
-              {
-                type: 'heading',
-                children: [
-                  {
-                    type: 'text',
-                    detail: 0,
-                    format: 0,
-                    mode: 'normal',
-                    style: '',
-                    text: 'Contact the team',
-                    version: 1,
-                  },
-                ],
-                direction: 'ltr',
-                format: '',
-                indent: 0,
-                tag: 'h3',
-                version: 1,
-              },
-              {
-                type: 'paragraph',
-                children: [
-                  {
-                    type: 'text',
-                    detail: 0,
-                    format: 0,
-                    mode: 'normal',
-                    style: '',
-                    text: 'Share the property details or the account question and we will route it correctly.',
-                    version: 1,
-                  },
-                ],
-                direction: 'ltr',
-                format: '',
-                indent: 0,
-                textFormat: 0,
-                version: 1,
-              },
-            ],
-            direction: 'ltr',
-            format: '',
-            indent: 0,
-            version: 1,
-          },
-        },
+        blockType: 'contactRequest',
+        layoutVariant: 'default',
       },
     ],
     title: 'Contact',

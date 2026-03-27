@@ -5,7 +5,7 @@
     <phase-name>First-party CRM, billing, and automation</phase-name>
     <date>2026-03-25</date>
   </meta>
-  <status>in-progress</status>
+  <status>complete</status>
   <highlights>
     <item>Phase 07 is now explicit so the first-party CRM rebuild is tracked as its own numbered delivery stream instead of being hidden across phases 05 and 06.</item>
     <item>A capability map now translates HubSpot primitives into first-party Payload collections, Next.js internal APIs, Stripe webhook reconciliation, and Payload-jobs-driven Resend sequences.</item>
@@ -16,6 +16,8 @@
     <item>Focused validation also started under `07-06`: CRM workspace integration tests plus Playwright admin/frontend coverage now pass alongside typecheck and production build.</item>
     <item>The CRM workspace now supports server-backed search plus inline quick actions for task status updates and opportunity stage advancement via small admin-only mutation routes.</item>
     <item>The left detail rail is now structured for CRM records instead of flattening everything into plain text, with compact tabs, richer company fields, and inline internal note logging backed by `crm-activities`.</item>
+    <item>`07-02` is now complete for the current scope: the CRM API/query layer supports queue/detail reads, search, stale detection, task and opportunity actions, owner reassignment, lead qualification/disqualification, and owner/commercial filtering through focused admin-only routes.</item>
+    <item>`07-03` is now complete for the current scope: the CRM workspace uses compact list/detail cards with status badges, stale indicators, quick actions, owner and commercial filters, and a left-rail detail view without reverting to overlapping overlays.</item>
     <item>`07-04` billing planning is now concrete: Stripe-hosted invoices and portal-first self-service are the default customer-facing payment UX for account holders, while Payload remains the operational billing ledger and must support commercial net-30 monthly invoicing plus onsite/out-of-band payments, discounts, credits, and refunds.</item>
     <item>Company-account customer scope is now explicit instead of inferred: `users` carry an `account` relationship, quotes/invoices/service plans/appointments carry the same account reference, those records auto-resolve their account when possible, and an admin preview toolbar can impersonate customer users across the frontend and portal without exposing `/ops` or admin docs to the effective non-admin user.</item>
     <item>Phase planning now includes an explicit operating-rhythm workflow with multi-role employee duties, queue/SLA expectations, and the required next-action contract so daily ownership is not implicit.</item>
@@ -28,22 +30,29 @@
     <item>A new engineering-conventions track now exists for quality guardrails: icon-forward form/action affordances, reduced copy-heavy faded UI patterns, centralized literals via typed shared constants, and extraction triggers for large files/reusable utilities.</item>
     <item>Conventions are now measurable and pattern-backed: extraction thresholds (repeat counts and size guardrails) plus a shared catalog of preferred app patterns for ops/customer implementations.</item>
     <item>A refactor extraction roadmap now anchors the target folder structure and prioritized split queue so architecture cleanup can happen incrementally alongside feature delivery.</item>
+    <item>Portal nav context is now staff-route aware: real admins see customer-account chrome on `/dashboard` and staff chrome on `/ops` and `/docs`, with `(admin)` / `(test_user)` labels and a seeded `test_user@grimetime.local` customer for impersonation checks (`07-13` closed).</item>
+    <item>`/ops` now has both a dashboard hub and real focused `/ops/*` pages for CRM, today board, scorecard, milestones, and assets. The old redirect-only deep links were replaced by shared route loaders plus focused list/detail shells, while the main ops dashboard still accepts `?tab=` for the command-center hub.</item>
+    <item>Portal shell refactoring has started in earnest: the sidebar now uses shared nav builders, the layout uses an extracted `PortalAppShell`, and the shell CSS is closer to conventional shadcn sidebar/inset behavior with less horizontal-overflow risk.</item>
+    <item>Refactor-roadmap execution now includes shared ops UI metadata plus typed `/ops` query utilities (`parseOpsTabQuery` / `buildOpsTabUrl`) instead of leaving tab IDs and route behavior scattered across components.</item>
+    <item>Phase 07 now explicitly treats `/ops` as the duties-first staff dashboard and the focused `/ops/*` pages as the places where dense interaction happens, rather than trying to keep full work surfaces embedded inside one hub.</item>
+    <item>Phase 07 now also has an explicit client-data rule: server components own first load, while TanStack Query backs live mutable portal and ops surfaces such as CRM, billing, invites, and account updates.</item>
+    <item>`07-04` is now implemented end-to-end for the current scope: Stripe-backed billing routes, webhook reconciliation, customer billing portal access, hosted invoice flows, service-plan sync helpers, monthly consolidated invoice creation, billing-event audit entries, and compact admin billing actions all exist in the app.</item>
+    <item>`07-05` is now live for the current scope: Payload jobs run customer notifications and sequence steps through a cron-driven job endpoint, default CRM sequences are seeded, overdue invoice scans create dunning work, and quote/invoice/appointment lifecycle emails can embed portal claim/invite CTAs when the recipient has not activated access yet.</item>
+    <item>`07-08` is now enforced for the current scope: effective-user auth plus account/company guards keep customer views self/account-scoped, company-admin users limited to their own company membership, and staff-only docs/ops routes hidden during customer preview or non-admin use.</item>
+    <item>`07-12` is now closed for the current scope: `/ops` functions as the duties-first staff dashboard, while dense CRM, today-board, scorecard, milestones, and assets work happens in focused `/ops/*` routes backed by shared loaders and query helpers instead of one overloaded command-center page.</item>
+    <item>`07-09` is now closed for the current scope: `npm run verify:mcp` validates Cursor/Codex config stubs, Payload MCP endpoint reachability and auth acceptance, and image-gen stdio startup so local MCP readiness is testable instead of implicit.</item>
+    <item>`07-06` gained broader billing/customer regression coverage: the billing workspace now has focused integration coverage, customer portal billing summary assertions are explicit, and the admin impersonation browser flow verifies the customer billing-management card for company accounts.</item>
+    <item>`07-11` is now closed for the current scope: portal shell layout variables are centralized, the admin preview toolbar uses the shared shell offset, sticky ops rails respect a shared portal top offset, and focused `/ops/*` pages no longer stack a second section header card on top of the main page header.</item>
+    <item>`07-14` and `07-15` both moved forward again: portal shell dimensions now live in `src/lib/portal/layout.ts`, and repeated ops-section rail content was extracted into `src/components/portal/ops/OpsSectionCardContent.tsx` instead of being duplicated across the command-center and focused-route shells.</item>
+    <item>`07-01` is now complete for the current scope: CRM owner fallback is deterministic, support/refund/billing/policy requests map into shared task-policy builders, and `crm-tasks` now carry typed source, SLA, role-tag, next-action, and escalation metadata instead of ad hoc strings.</item>
+    <item>`07-10` is now complete for the current scope: account-wide discount defaults and user-level overrides are implemented with explicit precedence, surfaced in billing workspace UI, and seeded into demo data so billing adjustments are explainable during ops review.</item>
+    <item>`07-06` is now complete for the current scope: unit tests cover operating-rhythm and discount-policy logic, integration coverage exercises CRM/billing workspace behavior, Playwright passes against the built app, and demo seed data includes commercial billing and discount scenarios.</item>
+    <item>`07-07` is now complete for the current scope: the role matrix, SLA classes, queue priorities, escalation behavior, and refund/policy routing now live in shared operating-rhythm/task-policy modules and show up in `/ops` duty guidance.</item>
+    <item>`07-14` and `07-15` are now complete for the current scope: repeated literals moved into typed policy/meta modules, billing UI was split into smaller focused components, and shared policy/data builders now handle CRM task creation and billing discount behavior instead of embedding those rules inside larger UI or route files.</item>
+    <item>Phase 07 is now complete for the current roadmap scope: the repo has a first-party CRM workspace, Stripe-backed billing sync and controls, Payload-jobs-driven sequences, deterministic impersonation-safe boundaries, route-based `/ops` IA, operational MCP verification, demo data, and the refactor/conventions baseline needed before phase 08 AI work.</item>
   </highlights>
   <next>
-    <item>Keep `07-01` moving by tightening dedupe, promotion, and owner-routing rules across form intake, quotes, and commercial accounts, then backfill any existing production customer records that still lack the new `account` relationship.</item>
-    <item>Deepen `07-02` with richer write actions beyond note logging, especially owner reassignment, lead qualification, and broader search/filter coverage.</item>
-    <item>Deepen `07-03` with stronger commercial/company detail, richer queue states, and inline operator actions without regressing the compact non-overlapping layout.</item>
-    <item>Execute `07-04` in slices: Stripe customer and invoice mapping first, then out-of-band payment recording and billing adjustments, then commercial monthly consolidated billing, then portal-session links from the customer account.</item>
-    <item>Follow with `07-05`: Payload-jobs/Resend sequences after billing rails are stable.</item>
-    <item>Use `07-06` to seed realistic CRM scenarios and broaden coverage into billing, scheduling, and customer account flows.</item>
-    <item>Deliver `07-07` operating-rhythm outputs: role matrix, SLA table, queue priorities, and escalation ownership rules mapped to first-party task records.</item>
-    <item>Deliver `07-08` boundary hardening: audit customer/admin route guards, account scope enforcement, and company-admin membership limits.</item>
-    <item>Run `07-09` MCP operational checks in Codex/Cursor contexts so planning and implementation sessions can rely on payload_local and image_gen_local without setup drift.</item>
-    <item>Execute `07-10` discount policy design: finalize account-vs-user precedence, approval controls, and support/refund interaction before implementation.</item>
-    <item>Execute `07-11` shell hardening so sidebar/inset/toolbars behave like a conventional app layout with no overlap regressions.</item>
-    <item>Execute `07-12` ops route split and convert command center into a "my duties" hub with deep links/query params to specialized views.</item>
-    <item>Execute `07-14` conventions adoption incrementally on touched surfaces so large files shrink and repeated literal patterns are consolidated over normal feature work.</item>
-    <item>Use the measurable thresholds and pattern catalog in implementation reviews so DRY/SOLID checks are explicit instead of subjective.</item>
-    <item>Execute `07-15` roadmap slices in priority order to migrate ops/auth/crm/dashboard modules toward the target folder structure without stop-the-world rewrites.</item>
+    <item>Phase 07 is closed. The next roadmap work before AI is phase 03 marketing/media completion and any post-close maintenance or regression fixes on CRM, billing, and automation surfaces.</item>
+    <item>When phase 08 starts, reuse the now-stable phase 07 boundaries: first-party CRM data stays the system of record, customer/admin scopes remain strict, and any assistant tooling must sit on top of the existing ops/billing/query modules instead of bypassing them.</item>
   </next>
 </phase-summary>

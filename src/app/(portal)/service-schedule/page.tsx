@@ -28,7 +28,7 @@ export default async function ServiceSchedulePage() {
           </Button>
         }
       />
-      <div className="flex flex-1 flex-col px-4 py-6 lg:px-6">
+      <div className="flex flex-1 flex-col px-4 py-6 lg:px-6" data-tour="portal-page-body">
         <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
           <div className="grid gap-4">
             <Card>

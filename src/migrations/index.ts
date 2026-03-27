@@ -12,6 +12,13 @@ import * as migration_20260325_152321 from './20260325_152321';
 import * as migration_20260325_154218 from './20260325_154218';
 import * as migration_20260325_190500_user_account_and_customer_account_scope from './20260325_190500_user_account_and_customer_account_scope';
 import * as migration_20260326_174716_marketing_service_grid_media_refresh from './20260326_174716_marketing_service_grid_media_refresh';
+import * as migration_20260326_205231 from './20260326_205231';
+import * as migration_20260326_214509 from './20260326_214509';
+import * as migration_20260326_233945_billing_workspace_and_stripe_sync from './20260326_233945_billing_workspace_and_stripe_sync';
+import * as migration_20260327_120000_internal_ops_quote_weights from './20260327_120000_internal_ops_quote_weights';
+import * as migration_20260327_140500_sequence_jobs_and_relations from './20260327_140500_sequence_jobs_and_relations';
+import * as migration_20260327_141500_payload_jobs_meta from './20260327_141500_payload_jobs_meta';
+import * as migration_20260327_031119_20260327_170000_operating_rhythm_and_discount_policy from './20260327_031119_20260327_170000_operating_rhythm_and_discount_policy';
 
 export const migrations = [
   {
@@ -82,6 +89,41 @@ export const migrations = [
   {
     up: migration_20260326_174716_marketing_service_grid_media_refresh.up,
     down: migration_20260326_174716_marketing_service_grid_media_refresh.down,
-    name: '20260326_174716_marketing_service_grid_media_refresh'
+    name: '20260326_174716_marketing_service_grid_media_refresh',
+  },
+  {
+    up: migration_20260326_205231.up,
+    down: migration_20260326_205231.down,
+    name: '20260326_205231',
+  },
+  {
+    up: migration_20260326_214509.up,
+    down: migration_20260326_214509.down,
+    name: '20260326_214509',
+  },
+  {
+    up: migration_20260326_233945_billing_workspace_and_stripe_sync.up,
+    down: migration_20260326_233945_billing_workspace_and_stripe_sync.down,
+    name: '20260326_233945_billing_workspace_and_stripe_sync',
+  },
+  {
+    up: migration_20260327_120000_internal_ops_quote_weights.up,
+    down: migration_20260327_120000_internal_ops_quote_weights.down,
+    name: '20260327_120000_internal_ops_quote_weights',
+  },
+  {
+    up: migration_20260327_140500_sequence_jobs_and_relations.up,
+    down: migration_20260327_140500_sequence_jobs_and_relations.down,
+    name: '20260327_140500_sequence_jobs_and_relations',
+  },
+  {
+    up: migration_20260327_141500_payload_jobs_meta.up,
+    down: migration_20260327_141500_payload_jobs_meta.down,
+    name: '20260327_141500_payload_jobs_meta'
+  },
+  {
+    up: migration_20260327_031119_20260327_170000_operating_rhythm_and_discount_policy.up,
+    down: migration_20260327_031119_20260327_170000_operating_rhythm_and_discount_policy.down,
+    name: '20260327_031119_20260327_170000_operating_rhythm_and_discount_policy',
   },
 ];

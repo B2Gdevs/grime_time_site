@@ -107,6 +107,35 @@ export const SequenceEnrollments: CollectionConfig = {
       relationTo: 'opportunities',
     },
     {
+      type: 'row',
+      fields: [
+        {
+          name: 'quote',
+          type: 'relationship',
+          relationTo: 'quotes',
+          admin: { width: '25%' },
+        },
+        {
+          name: 'invoice',
+          type: 'relationship',
+          relationTo: 'invoices',
+          admin: { width: '25%' },
+        },
+        {
+          name: 'serviceAppointment',
+          type: 'relationship',
+          relationTo: 'service-appointments',
+          admin: { width: '25%' },
+        },
+        {
+          name: 'servicePlan',
+          type: 'relationship',
+          relationTo: 'service-plans',
+          admin: { width: '25%' },
+        },
+      ],
+    },
+    {
       name: 'lastError',
       type: 'textarea',
     },

@@ -1,5 +1,9 @@
 import type { Payload, Where } from 'payload'
 
+import { isAdminUser } from '@/lib/auth/roles'
+import { resolveDemoAccountIds } from '@/lib/demo/resolveDemoAccountIds'
+import { scopeWhereForAccount, scopeWhereForAccountsCollection } from '@/lib/demo/scopeWhere'
+
 import type {
   Account,
   Contact,
@@ -30,27 +34,77 @@ import {
   sequenceAudienceLabel,
   sequenceDefinitionStatusLabel,
   sequenceEnrollmentStatusLabel,
+  taskSlaLabel,
+  taskSourceLabel,
   taskStatusLabel,
   taskTypeLabel,
+  roleTagLabel,
 } from './format'
 import type {
   CrmWorkspaceData,
   CrmWorkspaceMetric,
+  CrmWorkspaceOwnerScope,
   CrmWorkspaceQueue,
   CrmWorkspaceQueueItem,
   CrmWorkspaceQuickAction,
 } from './types'
 
 type WorkspaceContext = {
+  commercialOnly: boolean
+  demoAccountIds: number[] | null
   now: Date
+  ownerScope: CrmWorkspaceOwnerScope
   payload: Payload
   user: User
+}
+
+const COMMERCIAL_ACCOUNT_TYPES = ['commercial', 'hoa_multifamily', 'municipal'] as const
+const DEFAULT_QUEUE_LIMIT = 24
+
+function mergeDemoWhere(
+  collection:
+    | 'accounts'
+    | 'contacts'
+    | 'crm-sequences'
+    | 'crm-tasks'
+    | 'leads'
+    | 'opportunities'
+    | 'sequence-enrollments',
+  where: Where | undefined,
+  demoAccountIds: number[] | null,
+): Where | undefined {
+  if (!demoAccountIds?.length) return where
+  if (collection === 'crm-sequences') return where
+  if (collection === 'accounts') return scopeWhereForAccountsCollection(where, demoAccountIds)
+  return scopeWhereForAccount(where, demoAccountIds)
 }
 
 function docTimestamp(value: null | string | undefined): number {
   if (!value) return 0
   const parsed = new Date(value)
   return Number.isNaN(parsed.getTime()) ? 0 : parsed.getTime()
+}
+
+function relationId(value: null | number | string | { id: number | string } | undefined): null | string {
+  if (!value) return null
+  if (typeof value === 'number' || typeof value === 'string') return String(value)
+  return value.id ? String(value.id) : null
+}
+
+function isCommercialAccountType(value: null | string | undefined): boolean {
+  return COMMERCIAL_ACCOUNT_TYPES.includes(value as (typeof COMMERCIAL_ACCOUNT_TYPES)[number])
+}
+
+function matchesOwnerScope(item: CrmWorkspaceQueueItem, ownerScope: CrmWorkspaceOwnerScope, userId: string): boolean {
+  if (ownerScope === 'all') return true
+  if (ownerScope === 'mine') return item.ownerId === userId
+  return !item.ownerId
+}
+
+function matchesCommercialScope(item: CrmWorkspaceQueueItem, commercialOnly: boolean): boolean {
+  if (!commercialOnly) return true
+  if (item.kind === 'sequence-definition') return true
+  return Boolean(item.isCommercial)
 }
 
 function compareByPriorityAndDate<T extends { priority?: null | string; sortDate?: null | string }>(a: T, b: T) {
@@ -92,6 +146,20 @@ function nextOpportunityAction(stage: Opportunity['stage']): CrmWorkspaceQuickAc
   }
 }
 
+function leadActions(status: Lead['status']): CrmWorkspaceQuickAction[] {
+  const actions: CrmWorkspaceQuickAction[] = []
+
+  if (status === 'new' || status === 'working') {
+    actions.push({ kind: 'qualify-lead', label: 'Qualify' })
+  }
+
+  if (status !== 'disqualified' && status !== 'converted') {
+    actions.push({ kind: 'disqualify-lead', label: 'Disqualify' })
+  }
+
+  return actions
+}
+
 function taskActions(status: CrmTask['status']): CrmWorkspaceQuickAction[] {
   const actions: CrmWorkspaceQuickAction[] = []
 
@@ -108,6 +176,7 @@ function taskActions(status: CrmTask['status']): CrmWorkspaceQuickAction[] {
 
 async function findDocs<T>({
   collection,
+  demoAccountIds,
   limit = 12,
   payload,
   sort,
@@ -122,12 +191,14 @@ async function findDocs<T>({
     | 'leads'
     | 'opportunities'
     | 'sequence-enrollments'
+  demoAccountIds: number[] | null
   limit?: number
   payload: Payload
   sort?: string
   user: User
   where?: Where
 }): Promise<T[]> {
+  const mergedWhere = mergeDemoWhere(collection, where, demoAccountIds)
   const result = await payload.find({
     collection,
     depth: 1,
@@ -136,14 +207,43 @@ async function findDocs<T>({
     pagination: false,
     sort,
     user,
-    where,
+    where: mergedWhere,
   })
 
   return result.docs as T[]
 }
 
+function mergeWhereClauses(...clauses: Array<undefined | Where>): undefined | Where {
+  const filtered = clauses.filter(Boolean) as Where[]
+
+  if (filtered.length === 0) return undefined
+  if (filtered.length === 1) return filtered[0]
+
+  return {
+    and: filtered,
+  }
+}
+
+function ownerScopeWhere(ownerScope: CrmWorkspaceOwnerScope, userId: number | string): undefined | Where {
+  if (ownerScope === 'all') return undefined
+  if (ownerScope === 'mine') {
+    return {
+      owner: {
+        equals: userId,
+      },
+    }
+  }
+
+  return {
+    owner: {
+      exists: false,
+    },
+  }
+}
+
 async function countDocs({
   collection,
+  demoAccountIds,
   payload,
   user,
   where,
@@ -155,15 +255,17 @@ async function countDocs({
     | 'leads'
     | 'opportunities'
     | 'sequence-enrollments'
+  demoAccountIds: number[] | null
   payload: Payload
   user: User
   where?: Where
 }) {
+  const mergedWhere = mergeDemoWhere(collection, where, demoAccountIds)
   const result = await payload.count({
     collection,
     overrideAccess: false,
     user,
-    where,
+    where: mergedWhere,
   })
 
   return result.totalDocs
@@ -171,18 +273,22 @@ async function countDocs({
 
 function mapLeadItem(lead: Lead, now: Date): CrmWorkspaceQueueItem {
   const stale = isPastDue(lead.staleAt, now) || isPastDue(lead.nextActionAt, now)
+  const accountType =
+    typeof lead.account === 'object' && lead.account ? lead.account.accountType : null
 
   return queueItem({
-    actions: [],
+    actions: leadActions(lead.status),
     badgeLabel: lead.source ? leadSourceLabel(lead.source) : null,
     href: `/admin/collections/leads/${lead.id}`,
     id: String(lead.id),
+    isCommercial: isCommercialAccountType(accountType),
     kind: 'lead',
     meta: nonEmptyParts([
       lead.customerEmail,
       lead.customerPhone,
       formatDateOnly(lead.nextActionAt) ? `Next ${formatDateOnly(lead.nextActionAt)}` : null,
     ]),
+    ownerId: relationId(lead.owner),
     priorityLabel: priorityLabel(lead.priority),
     priorityValue: lead.priority,
     stale,
@@ -196,18 +302,21 @@ function mapLeadItem(lead: Lead, now: Date): CrmWorkspaceQueueItem {
 function mapContactItem(contact: Contact, now: Date): CrmWorkspaceQueueItem {
   const stale = isPastDue(contact.staleAt, now) || isPastDue(contact.nextActionAt, now)
   const accountName = typeof contact.account === 'object' ? contact.account?.name : null
+  const accountType = typeof contact.account === 'object' ? contact.account?.accountType : null
 
   return queueItem({
     actions: [],
     badgeLabel: accountName,
     href: `/admin/collections/contacts/${contact.id}`,
     id: String(contact.id),
+    isCommercial: isCommercialAccountType(accountType),
     kind: 'contact',
     meta: nonEmptyParts([
       contact.email,
       contact.phone,
       formatDateOnly(contact.nextActionAt) ? `Next ${formatDateOnly(contact.nextActionAt)}` : null,
     ]),
+    ownerId: relationId(contact.owner),
     priorityLabel: null,
     stale,
     statusLabel: contactStatusLabel(contact.status),
@@ -228,12 +337,14 @@ function mapOpportunityItem(opportunity: Opportunity, now: Date): CrmWorkspaceQu
       ? formatCurrencyUsd(opportunity.value)
       : null
   const accountName = typeof opportunity.account === 'object' ? opportunity.account?.name : null
+  const accountType = typeof opportunity.account === 'object' ? opportunity.account?.accountType : null
 
   return queueItem({
     actions: nextOpportunityAction(opportunity.stage) ? [nextOpportunityAction(opportunity.stage) as CrmWorkspaceQuickAction] : [],
     badgeLabel: opportunity.stage ? opportunityStageLabel(opportunity.stage) : null,
     href: `/admin/collections/opportunities/${opportunity.id}`,
     id: String(opportunity.id),
+    isCommercial: isCommercialAccountType(accountType),
     kind: 'opportunity',
     meta: nonEmptyParts([
       accountName,
@@ -244,6 +355,7 @@ function mapOpportunityItem(opportunity: Opportunity, now: Date): CrmWorkspaceQu
           ? `Close ${formatDateOnly(opportunity.expectedCloseDate)}`
           : null,
     ]),
+    ownerId: relationId(opportunity.owner),
     priorityLabel: priorityLabel(opportunity.priority),
     priorityValue: opportunity.priority,
     stale,
@@ -259,24 +371,31 @@ function mapOpportunityItem(opportunity: Opportunity, now: Date): CrmWorkspaceQu
 
 function mapTaskItem(task: CrmTask, now: Date): CrmWorkspaceQueueItem {
   const stale = isPastDue(task.staleAt, now) || isPastDue(task.dueAt, now)
+  const accountType = typeof task.account === 'object' ? task.account?.accountType : null
+  const firstRoleTag =
+    Array.isArray(task.roleTags) && task.roleTags.length > 0 ? roleTagLabel(task.roleTags[0]) : null
 
   return queueItem({
     actions: taskActions(task.status),
-    badgeLabel: task.taskType ? taskTypeLabel(task.taskType) : null,
+    badgeLabel: task.slaClass ? taskSlaLabel(task.slaClass) : task.taskType ? taskTypeLabel(task.taskType) : null,
     href: `/admin/collections/crm-tasks/${task.id}`,
     id: String(task.id),
+    isCommercial: isCommercialAccountType(accountType),
     kind: 'task',
     meta: nonEmptyParts([
       formatDateOnly(task.dueAt) ? `Due ${formatDateOnly(task.dueAt)}` : null,
+      firstRoleTag,
+      task.sourceType ? taskSourceLabel(task.sourceType) : null,
       typeof task.contact === 'object' ? task.contact?.fullName : null,
       typeof task.account === 'object' ? task.account?.name : null,
     ]),
+    ownerId: relationId(task.owner),
     priorityLabel: priorityLabel(task.priority),
     priorityValue: task.priority,
     stale,
     statusLabel: taskStatusLabel(task.status),
     statusValue: task.status,
-    subtitle: task.notes?.trim() || 'Follow-up task',
+    subtitle: task.nextAction?.trim() || task.notes?.trim() || 'Follow-up task',
     title: task.title,
   })
 }
@@ -292,12 +411,14 @@ function mapAccountItem(account: Account): CrmWorkspaceQueueItem {
     badgeLabel: typeof account.activeServicePlan === 'object' ? 'Plan active' : null,
     href: `/admin/collections/accounts/${account.id}`,
     id: String(account.id),
+    isCommercial: isCommercialAccountType(account.accountType),
     kind: 'account',
     meta: nonEmptyParts([
       commercialMeta,
       account.billingEmail,
       ownerLabel(account.owner as User | number | string | null),
     ]),
+    ownerId: relationId(account.owner),
     priorityLabel: null,
     stale: false,
     statusLabel: accountStatusLabel(account.status),
@@ -313,12 +434,14 @@ function mapSequenceDefinitionItem(sequence: CrmSequence): CrmWorkspaceQueueItem
     badgeLabel: sequence.audience ? sequenceAudienceLabel(sequence.audience) : null,
     href: `/admin/collections/crm-sequences/${sequence.id}`,
     id: String(sequence.id),
+    isCommercial: false,
     kind: 'sequence-definition',
     meta: nonEmptyParts([
       sequence.trigger?.replaceAll('_', ' '),
       `${sequence.steps?.length ?? 0} step${sequence.steps?.length === 1 ? '' : 's'}`,
       ownerLabel(sequence.owner as User | number | string | null),
     ]),
+    ownerId: relationId(sequence.owner),
     priorityLabel: null,
     stale: false,
     statusLabel: sequenceDefinitionStatusLabel(sequence.status),
@@ -332,18 +455,21 @@ function mapSequenceEnrollmentItem(enrollment: SequenceEnrollment, now: Date): C
   const stale = isPastDue(enrollment.nextRunAt, now)
   const definitionName =
     typeof enrollment.sequenceDefinition === 'object' ? enrollment.sequenceDefinition?.name : enrollment.sequenceKey
+  const accountType = typeof enrollment.account === 'object' ? enrollment.account?.accountType : null
 
   return queueItem({
     actions: [],
     badgeLabel: definitionName,
     href: `/admin/collections/sequence-enrollments/${enrollment.id}`,
     id: String(enrollment.id),
+    isCommercial: isCommercialAccountType(accountType),
     kind: 'sequence-enrollment',
     meta: nonEmptyParts([
       formatDateOnly(enrollment.nextRunAt) ? `Next ${formatDateOnly(enrollment.nextRunAt)}` : null,
       typeof enrollment.contact === 'object' ? enrollment.contact?.fullName : null,
       typeof enrollment.account === 'object' ? enrollment.account?.name : null,
     ]),
+    ownerId: relationId(enrollment.owner),
     priorityLabel: null,
     stale,
     statusLabel: sequenceEnrollmentStatusLabel(enrollment.status),
@@ -353,13 +479,20 @@ function mapSequenceEnrollmentItem(enrollment: SequenceEnrollment, now: Date): C
   })
 }
 
-function filterQueueItems(items: CrmWorkspaceQueueItem[], searchQuery: string | undefined): CrmWorkspaceQueueItem[] {
-  if (!searchQuery?.trim()) {
-    return items
-  }
+function filterQueueItems(args: {
+  commercialOnly: boolean
+  items: CrmWorkspaceQueueItem[]
+  ownerScope: CrmWorkspaceOwnerScope
+  searchQuery?: string
+  userId: string
+}): CrmWorkspaceQueueItem[] {
+  const { commercialOnly, items, ownerScope, searchQuery, userId } = args
 
-  return items.filter((item) =>
-    matchText(
+  return items.filter((item) => {
+    if (!matchesOwnerScope(item, ownerScope, userId)) return false
+    if (!matchesCommercialScope(item, commercialOnly)) return false
+
+    return matchText(
       [
         item.badgeLabel,
         ...item.meta,
@@ -368,46 +501,50 @@ function filterQueueItems(items: CrmWorkspaceQueueItem[], searchQuery: string | 
         item.subtitle,
         item.title,
       ],
-      searchQuery,
-    ),
-  )
+      searchQuery ?? '',
+    )
+  })
 }
 
 async function loadAttentionQueue(context: WorkspaceContext): Promise<CrmWorkspaceQueue> {
   const nowIso = context.now.toISOString()
+  const ownerWhere = ownerScopeWhere(context.ownerScope, context.user.id)
   const [leads, contacts, opportunities] = await Promise.all([
     findDocs<Lead>({
       collection: 'leads',
-      limit: 12,
+      demoAccountIds: context.demoAccountIds,
+      limit: DEFAULT_QUEUE_LIMIT,
       payload: context.payload,
       sort: 'nextActionAt',
       user: context.user,
-      where: {
+      where: mergeWhereClauses(ownerWhere, {
         or: [{ staleAt: { less_than_equal: nowIso } }, { nextActionAt: { less_than_equal: nowIso } }],
-      },
+      }),
     }),
     findDocs<Contact>({
       collection: 'contacts',
-      limit: 12,
+      demoAccountIds: context.demoAccountIds,
+      limit: DEFAULT_QUEUE_LIMIT,
       payload: context.payload,
       sort: 'nextActionAt',
       user: context.user,
-      where: {
+      where: mergeWhereClauses(ownerWhere, {
         and: [
           { status: { equals: 'active' } },
           {
             or: [{ staleAt: { less_than_equal: nowIso } }, { nextActionAt: { less_than_equal: nowIso } }],
           },
         ],
-      },
+      }),
     }),
     findDocs<Opportunity>({
       collection: 'opportunities',
-      limit: 12,
+      demoAccountIds: context.demoAccountIds,
+      limit: DEFAULT_QUEUE_LIMIT,
       payload: context.payload,
       sort: 'nextActionAt',
       user: context.user,
-      where: {
+      where: mergeWhereClauses(ownerWhere, {
         and: [
           { status: { equals: 'open' } },
           {
@@ -417,7 +554,7 @@ async function loadAttentionQueue(context: WorkspaceContext): Promise<CrmWorkspa
             ],
           },
         ],
-      },
+      }),
     }),
   ])
 
@@ -455,17 +592,19 @@ async function loadAttentionQueue(context: WorkspaceContext): Promise<CrmWorkspa
 }
 
 async function loadPipelineQueue(context: WorkspaceContext): Promise<CrmWorkspaceQueue> {
+  const ownerWhere = ownerScopeWhere(context.ownerScope, context.user.id)
   const opportunities = await findDocs<Opportunity>({
     collection: 'opportunities',
-    limit: 12,
+    demoAccountIds: context.demoAccountIds,
+    limit: DEFAULT_QUEUE_LIMIT,
     payload: context.payload,
     sort: '-updatedAt',
     user: context.user,
-    where: {
+    where: mergeWhereClauses(ownerWhere, {
       status: {
         equals: 'open',
       },
-    },
+    }),
   })
 
   const items = opportunities
@@ -487,17 +626,19 @@ async function loadPipelineQueue(context: WorkspaceContext): Promise<CrmWorkspac
 }
 
 async function loadTasksQueue(context: WorkspaceContext): Promise<CrmWorkspaceQueue> {
+  const ownerWhere = ownerScopeWhere(context.ownerScope, context.user.id)
   const tasks = await findDocs<CrmTask>({
     collection: 'crm-tasks',
-    limit: 12,
+    demoAccountIds: context.demoAccountIds,
+    limit: DEFAULT_QUEUE_LIMIT,
     payload: context.payload,
     sort: 'dueAt',
     user: context.user,
-    where: {
+    where: mergeWhereClauses(ownerWhere, {
       status: {
         in: ['open', 'in_progress', 'waiting'],
       },
-    },
+    }),
   })
 
   const items = tasks
@@ -521,15 +662,16 @@ async function loadTasksQueue(context: WorkspaceContext): Promise<CrmWorkspaceQu
 async function loadAccountsQueue(context: WorkspaceContext): Promise<CrmWorkspaceQueue> {
   const accounts = await findDocs<Account>({
     collection: 'accounts',
-    limit: 12,
+    demoAccountIds: context.demoAccountIds,
+    limit: DEFAULT_QUEUE_LIMIT,
     payload: context.payload,
     sort: '-updatedAt',
     user: context.user,
-    where: {
+    where: mergeWhereClauses(ownerScopeWhere(context.ownerScope, context.user.id), {
       accountType: {
-        in: ['commercial', 'hoa_multifamily', 'municipal'],
+        in: [...COMMERCIAL_ACCOUNT_TYPES],
       },
-    },
+    }),
   })
 
   const items = accounts.sort(compareByUpdated).map(mapAccountItem)
@@ -544,30 +686,33 @@ async function loadAccountsQueue(context: WorkspaceContext): Promise<CrmWorkspac
 }
 
 async function loadAutomationQueue(context: WorkspaceContext): Promise<CrmWorkspaceQueue> {
+  const ownerWhere = ownerScopeWhere(context.ownerScope, context.user.id)
   const [definitions, enrollments] = await Promise.all([
     findDocs<CrmSequence>({
       collection: 'crm-sequences',
-      limit: 8,
+      demoAccountIds: context.demoAccountIds,
+      limit: 12,
       payload: context.payload,
       sort: '-updatedAt',
       user: context.user,
-      where: {
+      where: mergeWhereClauses(ownerWhere, {
         status: {
           in: ['active', 'draft'],
         },
-      },
+      }),
     }),
     findDocs<SequenceEnrollment>({
       collection: 'sequence-enrollments',
-      limit: 8,
+      demoAccountIds: context.demoAccountIds,
+      limit: 12,
       payload: context.payload,
       sort: 'nextRunAt',
       user: context.user,
-      where: {
+      where: mergeWhereClauses(ownerWhere, {
         status: {
           in: ['queued', 'active', 'paused'],
         },
-      },
+      }),
     }),
   ])
 
@@ -589,59 +734,65 @@ async function loadAutomationQueue(context: WorkspaceContext): Promise<CrmWorksp
 
 async function loadMetrics(context: WorkspaceContext): Promise<CrmWorkspaceMetric[]> {
   const nowIso = context.now.toISOString()
+  const ownerWhere = ownerScopeWhere(context.ownerScope, context.user.id)
   const [openLeads, openOpportunities, staleContacts, openTasks, activeEnrollments] = await Promise.all([
     countDocs({
       collection: 'leads',
+      demoAccountIds: context.demoAccountIds,
       payload: context.payload,
       user: context.user,
-      where: {
+      where: mergeWhereClauses(ownerWhere, {
         status: {
           in: ['new', 'working', 'qualified'],
         },
-      },
+      }),
     }),
     countDocs({
       collection: 'opportunities',
+      demoAccountIds: context.demoAccountIds,
       payload: context.payload,
       user: context.user,
-      where: {
+      where: mergeWhereClauses(ownerWhere, {
         status: {
           equals: 'open',
         },
-      },
+      }),
     }),
     countDocs({
       collection: 'contacts',
+      demoAccountIds: context.demoAccountIds,
       payload: context.payload,
       user: context.user,
-      where: {
+      where: mergeWhereClauses(ownerWhere, {
         and: [
           { status: { equals: 'active' } },
           {
             or: [{ staleAt: { less_than_equal: nowIso } }, { nextActionAt: { less_than_equal: nowIso } }],
           },
         ],
-      },
+      }),
     }),
     countDocs({
       collection: 'crm-tasks',
+      demoAccountIds: context.demoAccountIds,
       payload: context.payload,
       user: context.user,
-      where: {
+      where: mergeWhereClauses(ownerWhere, {
         status: {
           in: ['open', 'in_progress', 'waiting'],
         },
-      },
+      }),
     }),
     countDocs({
       collection: 'sequence-enrollments',
+      demoAccountIds: context.demoAccountIds,
       payload: context.payload,
       user: context.user,
-      where: {
+      where: mergeWhereClauses(ownerWhere, {
         status: {
           in: ['queued', 'active'],
         },
-      },
+      }),
     }),
   ])
 
@@ -680,16 +831,28 @@ async function loadMetrics(context: WorkspaceContext): Promise<CrmWorkspaceMetri
 }
 
 export async function loadCrmWorkspace({
+  commercialOnly = false,
+  demoMode,
+  ownerScope = 'all',
   payload,
   searchQuery,
   user,
 }: {
+  commercialOnly?: boolean
+  demoMode?: boolean
+  ownerScope?: CrmWorkspaceOwnerScope
   payload: Payload
   searchQuery?: string
   user: User
 }): Promise<CrmWorkspaceData> {
+  const demoAccountIds =
+    demoMode && isAdminUser(user) ? await resolveDemoAccountIds(payload, user) : null
+
   const context: WorkspaceContext = {
+    commercialOnly,
+    demoAccountIds,
     now: new Date(),
+    ownerScope,
     payload,
     user,
   }
@@ -704,11 +867,19 @@ export async function loadCrmWorkspace({
   ])
 
   return {
+    commercialOnly,
     generatedAt: context.now.toISOString(),
     metrics,
+    ownerScope,
     queues: [attention, pipeline, tasks, accounts, automation].map((queue) => ({
       ...queue,
-      items: filterQueueItems(queue.items, searchQuery),
+      items: filterQueueItems({
+        commercialOnly,
+        items: queue.items,
+        ownerScope,
+        searchQuery,
+        userId: String(user.id),
+      }),
     })),
     searchQuery,
   }

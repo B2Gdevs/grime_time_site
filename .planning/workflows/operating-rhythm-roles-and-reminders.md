@@ -57,7 +57,7 @@ Every actionable item must have:
 
 No stage change should finalize without a next action and due date.
 
-## SLA defaults (v1 proposal - review with team)
+## SLA defaults (v1 shipped defaults)
 
 - New lead first touch: 10 minutes during business hours; if after-hours, by next business day 8:30 AM.
 - Quote follow-up cadence: 4 hours after send, then +24 hours, then +72 hours.
@@ -69,12 +69,29 @@ Escalation v1:
 - Missed once: notify both workers.
 - Missed twice: notify `ops-admin` and pin item in overdue queue until resolved.
 
-## Support / policy SLA classes (v1 proposal)
+## Support / policy SLA classes (v1 shipped defaults)
 
 - **General support/contact:** acknowledge within 1 business day.
 - **Billing support:** acknowledge within 1 business day; resolution target 3 business days.
 - **Refund request:** acknowledge within 1 business day; decision target 5 business days.
 - **Policy/privacy request:** acknowledge within 1 business day; route to ops-admin queue immediately.
+
+## Default owner routing
+
+Until a round-robin allocator exists, CRM ownership is deterministic:
+
+1. explicit preferred owner
+2. related account owner
+3. stable seeded admin roster from `resolveSeedStaffEmails()`
+4. first created admin user
+
+This keeps new lead/task/billing records assigned even in demo and local environments.
+
+## Refund routing
+
+- `billing-followup` owns the first review and documents the issue/outcome.
+- `ops-admin` is included on the same task for approval/escalation.
+- Refund tasks should leave the queue with a concrete next action and due date, never just a status change.
 
 ## Reminder delivery policy (fastest path)
 
@@ -128,20 +145,25 @@ Company-admin customers cannot:
   - show `Customer home (test_user)` for customer-preview context
 - In preview/customer context, hide admin-only docs and links (`/docs`, Payload admin, quote settings, cross-account tools).
 
-## Discount policy (proposal to finalize)
+## Discount policy (implemented default)
 
 Support both:
 
 - **Account-level discounts:** apply to entire company/account.
 - **User-level discounts:** targeted overrides for a specific user/contact.
 
-Proposed precedence:
+Implemented precedence:
 
 1. User-level override (if present)
 2. Account-level default
 3. Standard pricing policy
 
-Open policy questions are tracked in Phase 07 plan before implementation.
+Supported variants:
+
+- percentage discounts
+- flat amount discounts
+
+Billing UI should always show whether the active discount came from the user override or the account default.
 
 ## Verification checklist
 

@@ -1,6 +1,7 @@
 import type { CollectionConfig } from 'payload'
 
 import { isAdmin } from '@/access/isAdmin'
+import { afterLeadAutomation } from '@/hooks/afterLeadAutomation'
 import {
   CRM_LEAD_SOURCE_OPTIONS,
   CRM_LEAD_STATUS_OPTIONS,
@@ -155,5 +156,8 @@ export const Leads: CollectionConfig = {
       type: 'textarea',
     },
   ],
+  hooks: {
+    afterChange: [afterLeadAutomation],
+  },
   timestamps: true,
 }

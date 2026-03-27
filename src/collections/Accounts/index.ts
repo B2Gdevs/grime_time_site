@@ -2,6 +2,12 @@ import type { CollectionConfig } from 'payload'
 
 import { isAdmin } from '@/access/isAdmin'
 import {
+  accountBillingModeOptions,
+  accountBillingRollupModeOptions,
+  accountPortalAccessModeOptions,
+} from '@/lib/billing/constants'
+import { billingDiscountTypeOptions } from '@/lib/billing/discountPolicy'
+import {
   CRM_ACCOUNT_BILLING_TERMS_OPTIONS,
   CRM_ACCOUNT_STATUS_OPTIONS,
   CRM_ACCOUNT_TYPE_OPTIONS,
@@ -107,6 +113,38 @@ export const Accounts: CollectionConfig = {
       type: 'row',
       fields: [
         {
+          name: 'billingMode',
+          type: 'select',
+          defaultValue: 'send_invoice_due_on_receipt',
+          options: accountBillingModeOptions.map((option) => ({ ...option })),
+          admin: {
+            width: '34%',
+          },
+        },
+        {
+          name: 'billingRollupMode',
+          type: 'select',
+          defaultValue: 'per_service',
+          options: accountBillingRollupModeOptions.map((option) => ({ ...option })),
+          admin: {
+            width: '33%',
+          },
+        },
+        {
+          name: 'portalAccessMode',
+          type: 'select',
+          defaultValue: 'app_and_stripe',
+          options: accountPortalAccessModeOptions.map((option) => ({ ...option })),
+          admin: {
+            width: '33%',
+          },
+        },
+      ],
+    },
+    {
+      type: 'row',
+      fields: [
+        {
           name: 'billingTerms',
           type: 'select',
           defaultValue: 'due_on_receipt',
@@ -117,13 +155,23 @@ export const Accounts: CollectionConfig = {
           },
         },
         {
+          name: 'billingTermsDays',
+          type: 'number',
+          min: 0,
+          defaultValue: 0,
+          admin: {
+            description: 'Used for send-invoice accounts. Commercial terms typically default to 30.',
+            width: '33%',
+          },
+        },
+        {
           name: 'locationCount',
           type: 'number',
           min: 1,
           defaultValue: 1,
           admin: {
             condition: (_, siblingData) => siblingData?.accountType !== 'residential',
-            width: '33%',
+            width: '16.5%',
           },
         },
         {
@@ -132,6 +180,39 @@ export const Accounts: CollectionConfig = {
           defaultValue: false,
           admin: {
             condition: (_, siblingData) => siblingData?.accountType !== 'residential',
+            width: '16.5%',
+          },
+        },
+      ],
+    },
+    {
+      type: 'row',
+      fields: [
+        {
+          name: 'defaultDiscountType',
+          type: 'select',
+          defaultValue: 'none',
+          options: billingDiscountTypeOptions.map((option) => ({ ...option })),
+          admin: {
+            description: 'Staff-only billing default for this account. User-specific overrides take precedence.',
+            width: '34%',
+          },
+        },
+        {
+          name: 'defaultDiscountValue',
+          type: 'number',
+          min: 0,
+          defaultValue: 0,
+          admin: {
+            description: 'Percent or flat amount based on the selected discount type.',
+            step: 0.01,
+            width: '33%',
+          },
+        },
+        {
+          name: 'defaultDiscountNote',
+          type: 'text',
+          admin: {
             width: '33%',
           },
         },
@@ -176,6 +257,37 @@ export const Accounts: CollectionConfig = {
           ],
         },
       ],
+    },
+    {
+      type: 'row',
+      fields: [
+        {
+          name: 'stripeCustomerID',
+          type: 'text',
+          admin: {
+            position: 'sidebar',
+            readOnly: true,
+            width: '50%',
+          },
+        },
+        {
+          name: 'stripeDefaultPaymentMethodID',
+          type: 'text',
+          admin: {
+            position: 'sidebar',
+            readOnly: true,
+            width: '50%',
+          },
+        },
+      ],
+    },
+    {
+      name: 'billingPortalLastSharedAt',
+      type: 'date',
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+      },
     },
     {
       name: 'serviceLocationSummary',

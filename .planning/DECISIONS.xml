@@ -33,7 +33,8 @@
       <file path=".planning/workflows/content-and-seeding.md" />
       <file path=".planning/workflows/customer-site-content-and-engagebay.md" />
       <file path="src/endpoints/seed/public-support-pages.ts" />
-      <file path="src/app/(frontend)/contact/page.tsx" />
+      <file path="src/app/(frontend)/[slug]/page.tsx" />
+      <file path="src/blocks/ContactRequest/Component.tsx" />
     </references>
   </decision>
   <decision id="D-content-002">
@@ -301,6 +302,21 @@
       <file path=".env.example" />
     </references>
   </decision>
+  <decision id="D-automation-001">
+    <title>Lifecycle automation runs through Payload jobs, cron, and shared customer email builders</title>
+    <summary>Lead acknowledgement, quote delivery, invoice reminders, appointment updates, and first-party CRM sequence steps should run through Payload jobs triggered by the app's cron endpoint instead of bespoke one-off route logic. Customer lifecycle emails should use shared builders and embed claim/invite CTAs whenever the recipient still needs portal access.</summary>
+    <impact>Automation state stays testable and auditable in the app, billing reminders and follow-up sequences share one execution path, and customer activation becomes part of normal quote/invoice/appointment communication rather than a separate manual support workflow.</impact>
+    <references>
+      <file path="src/app/api/cron/jobs/route.ts" />
+      <file path="src/jobs/index.ts" />
+      <file path="src/lib/email/customerLifecycle.ts" />
+      <file path="src/lib/auth/portal-access/provision.ts" />
+      <file path="src/hooks/afterQuoteAutomation.ts" />
+      <file path="src/hooks/afterInvoiceAutomation.ts" />
+      <file path="src/hooks/afterServiceAppointmentAutomation.ts" />
+      <file path="src/endpoints/seed/crm-sequences.ts" />
+    </references>
+  </decision>
   <decision id="D-devtools-003">
     <title>MCP local usage requires operational verification checklist</title>
     <summary>Payload and image-generation MCP setup is considered ready only when endpoint, auth key, and local transport checks pass in Codex/Cursor contexts, not just when config snippets exist.</summary>
@@ -308,18 +324,35 @@
     <references>
       <file path=".planning/phases/07-first-party-crm-billing-and-automation/PLAN.xml" />
       <file path=".planning/workflows/payload-mcp-and-editor-setup.md" />
+      <file path=".planning/workflows/image-generation-mcp-and-media-workflow.md" />
+      <file path="scripts/verify-mcp.mjs" />
       <file path=".codex/payload-mcp.example.toml" />
       <file path=".codex/image-gen-mcp.example.toml" />
     </references>
   </decision>
-  <decision id="D-billing-003" status="open">
+  <decision id="D-billing-003" status="resolved">
     <title>Discount policy supports account defaults and user overrides</title>
-    <summary>Billing policy should support discounts at both account/company scope and user/contact scope. Current proposal is user-level override first, then account-level default, then base pricing. Final percent/flat constraints and approval flow are pending.</summary>
-    <impact>Discount calculations and invoice presentation need clear precedence, audit logging, and staff-only controls so adjustments remain explainable and reversible.</impact>
+    <summary>Billing policy supports discounts at both account/company scope and user/contact scope. Implemented precedence is user-level override first, then account-level default, then base pricing. Both percentage and flat-amount variants are supported, and the resolved discount context is surfaced in staff billing UI.</summary>
+    <impact>Discount calculations are deterministic, explainable, and staff-only. Billing screens and seeded demo data can now show whether a discount came from an account default or user override without relying on ad hoc manual interpretation.</impact>
     <references>
       <file path=".planning/workflows/operating-rhythm-roles-and-reminders.md" />
       <file path=".planning/phases/07-first-party-crm-billing-and-automation/PLAN.xml" />
       <file path=".planning/TASK-REGISTRY.xml" />
+      <file path="src/lib/billing/discountPolicy.ts" />
+      <file path="src/collections/Accounts/index.ts" />
+      <file path="src/collections/Users/index.ts" />
+      <file path="src/components/portal/ops/OpsBillingWorkspaceCard.tsx" />
+    </references>
+  </decision>
+  <decision id="D-crm-009" status="resolved">
+    <title>Default CRM owner routing uses explicit owner, then account owner, then stable admin fallback</title>
+    <summary>Until a more advanced round-robin allocator exists, new CRM records and follow-up work use deterministic owner routing: preferred explicit owner first, then the related account owner, then the seeded admin roster, then the earliest-created admin user as the final fallback.</summary>
+    <impact>New leads, contacts, tasks, and billing follow-up records no longer land unowned. Small-team operations stay predictable across dev, demo, and production environments without inventing a pseudo-random assignment system.</impact>
+    <references>
+      <file path="src/lib/crm/internal/ownerRouting.ts" />
+      <file path="src/lib/crm/internal/records.ts" />
+      <file path=".planning/phases/07-first-party-crm-billing-and-automation/PLAN.xml" />
+      <file path=".planning/workflows/operating-rhythm-roles-and-reminders.md" />
     </references>
   </decision>
   <decision id="D-ux-005">
@@ -327,7 +360,9 @@
     <summary>The `/contact` page should prioritize immediate action clarity: high-contrast visual hierarchy, concise copy, visible brand mark in the request card, icon-led category cues, and compact tabs feeding one detail panel for policy/support guidance.</summary>
     <impact>Reduces cognitive load and prevents support copy from competing with the main form action. The page becomes easier to scan and more consistent with compact operator/customer UI patterns used elsewhere.</impact>
     <references>
-      <file path="src/app/(frontend)/contact/page.tsx" />
+      <file path="src/app/(frontend)/[slug]/page.tsx" />
+      <file path="src/blocks/ContactRequest/Component.tsx" />
+      <file path="src/components/contact/ContactGuidancePanel.tsx" />
       <file path=".planning/phases/03-landing-and-payload-scaffold/PLAN.xml" />
       <file path=".planning/workflows/customer-site-content-and-engagebay.md" />
     </references>
@@ -345,6 +380,18 @@
       <file path=".planning/phases/07-first-party-crm-billing-and-automation/PLAN.xml" />
     </references>
   </decision>
+  <decision id="D-ux-007">
+    <title>Ops KPI cards are compact, number-first, with tooltip-based metric disclosure</title>
+    <summary>The default `/ops` KPI cards should prioritize numeric value and quick trend context, not paragraph copy. Formula and composition details are disclosed through info-icon tooltips backed by shared KPI metadata.</summary>
+    <impact>Improves dashboard scan speed and consistency while preserving transparency on what each KPI includes. Also reduces repeated explanatory text and supports reusable tooltip/config patterns.</impact>
+    <references>
+      <file path="src/app/(portal)/ops/page.tsx" />
+      <file path="src/lib/ops/internalDashboardData.ts" />
+      <file path=".planning/workflows/admin-portal-quotes-ux.md" />
+      <file path=".planning/phases/06-quoting-and-advanced-ops/PLAN.xml" />
+      <file path=".planning/TASK-REGISTRY.xml" />
+    </references>
+  </decision>
   <decision id="D-auth-004">
     <title>Customer-home preview uses deterministic non-admin test identity</title>
     <summary>When staff use `Customer home`, the portal should run in a stable non-admin preview identity (`test_user`) so customer-flow checks are repeatable. Sidebar labels should indicate context (`Ops dashboard (admin)` and `Customer home (test_user)`), and admin-only links/docs/settings must be hidden in customer preview scope.</summary>
@@ -355,6 +402,28 @@
       <file path="src/components/admin-impersonation/AdminImpersonationToolbar.tsx" />
       <file path="src/endpoints/seed/index.ts" />
       <file path=".planning/workflows/operating-rhythm-roles-and-reminders.md" />
+    </references>
+  </decision>
+  <decision id="D-auth-005">
+    <title>Customer auth uses Supabase; staff auth stays on Payload</title>
+    <summary>Public/customer authentication should move to Supabase Auth so Grime Time can support email/password, passwordless magic links, and reset-password flows cleanly. Staff/admin authentication remains on Payload admin auth. Payload `users` stays the app-facing profile and authorization record for both sides.</summary>
+    <impact>This keeps customer auth UX simple while preserving the current Payload-first role/account access model. The app will need a hybrid auth context: Payload session for staff, Supabase session for customers, and a deterministic mapping back into Payload `users` plus account scope for Local API access checks and portal rendering.</impact>
+    <references>
+      <file path=".planning/workflows/customer-auth-and-portal-access.md" />
+      <file path="src/components/login-form.tsx" />
+      <file path="src/lib/auth/getAuthContext.ts" />
+      <file path="src/collections/Users/index.ts" />
+    </references>
+  </decision>
+  <decision id="D-auth-006">
+    <title>Account claim and company invites share one Payload token model</title>
+    <summary>Existing-customer claim links and company-user invites should not become separate systems. Both flows should issue the same kind of first-party token stored on the Payload `users` record, land on the same compact public auth surface, and complete by binding the verified Supabase identity back to the existing Payload user and account scope.</summary>
+    <impact>Reduces duplicated auth logic, keeps email CTA generation consistent across quotes/invoices/schedules/company invites, and makes the auth UI easier to refactor into small reusable modules instead of branching by flow in many places.</impact>
+    <references>
+      <file path=".planning/workflows/customer-auth-and-portal-access.md" />
+      <file path="src/components/login-form.tsx" />
+      <file path="src/collections/Users/index.ts" />
+      <file path="src/app/(portal)/account/page.tsx" />
     </references>
   </decision>
   <decision id="D-eng-001">
@@ -387,12 +456,96 @@
       <file path=".planning/TASK-REGISTRY.xml" />
     </references>
   </decision>
-  <decision id="D-vault-001" status="open">
-    <title>Shared passwords and API keys for third-party tools</title>
-    <summary>Requirement acknowledged: team needs one place to view and maintain logins for other systems. Do not store plaintext in content collections without an encryption and security review. Options include a team password manager, Payload encrypted fields plus RBAC, or dedicated secrets patterns.</summary>
-    <impact>May remain process plus external tool for v1; in-app vault only after threat model.</impact>
+  <decision id="D-eng-004">
+    <title>Live mutable portal and ops surfaces use server-first loading plus TanStack Query</title>
+    <summary>Server components remain the default for initial page load and stable read-mostly content, but live mutable portal and ops workflows should use TanStack Query in client islands for cache, mutation, invalidation, and refresh behavior instead of bespoke fetch-state logic in each component.</summary>
+    <impact>This keeps first render predictable while making CRM, billing, invites, and account-management interactions easier to maintain and less error-prone. It also gives the repo one shared client-data pattern instead of a mix of ad hoc `fetch`, `useEffect`, and manual refresh state across similar workflows.</impact>
+    <references>
+      <file path="src/providers/index.tsx" />
+      <file path="src/components/portal/crm/CrmWorkspace.tsx" />
+      <file path="src/components/portal/CustomerAccountForm.tsx" />
+      <file path=".planning/phases/07-first-party-crm-billing-and-automation/PLAN.xml" />
+    </references>
+  </decision>
+  <decision id="D-vault-001" status="resolved">
+    <title>Secrets and sensitive field storage</title>
+    <summary>Team secrets are managed in **Infisical**. Sensitive values in Payload use **encrypted fields** where applicable; sensitive columns at rest align with **Supabase** / Postgres encryption practices for the data plane.</summary>
+    <impact>Reduces plaintext exposure in CMS and DB; Infisical remains the source for deploy-time and team secrets; implementation details belong next to each collection/global.</impact>
     <references>
       <file path=".planning/REQUIREMENTS.xml" />
+      <file path=".env.example" />
+    </references>
+  </decision>
+  <decision id="D-content-003">
+    <title>Testimonials collection and optional marketing block</title>
+    <summary>Testimonials are stored in the **`testimonials`** collection. The **Testimonials section** block on `pages` can render selected or latest-published quotes. Until marketing is ready, **do not** add this block to public pages (or leave testimonials unpublished); the block returns **null** when there is nothing to show.</summary>
+    <impact>Editors can prepare content without exposing it; one canonical model for trust quotes when launch timing allows.</impact>
+    <references>
+      <file path="src/collections/Testimonials/index.ts" />
+      <file path="src/blocks/Testimonials/Component.tsx" />
+      <file path="src/collections/Pages/index.ts" />
+    </references>
+  </decision>
+  <decision id="D-ops-001">
+    <title>Day-to-day work centers on `/ops` and the team portal, not Payload admin</title>
+    <summary>Staff should complete quotes, invoices, CRM follow-up, and ops workflows from **`/portal`** and **`/ops`** once authenticated. **Payload admin (`/admin`)** is for CMS configuration and after-the-fact data fixes—not the primary daily loop.</summary>
+    <impact>Prioritizes portal UX, navigation, and performance (including mobile) for field use; admin remains necessary but secondary for routine operations.</impact>
+    <references>
+      <file path="src/app/(portal)/ops/page.tsx" />
+      <file path=".planning/TASK-REGISTRY.xml" />
+    </references>
+  </decision>
+  <decision id="D-crm-002">
+    <title>Inbound forms create leads first, not automatic accounts</title>
+    <summary>New public submissions should create a **`lead`** (with contact details on the lead). Automatic **`account`** / **`contact`** creation for every visitor is avoided to keep the CRM scope bounded; promotion to account/contact is explicit when qualified.</summary>
+    <impact>Scales better for anonymous and one-off traffic; follow-up still happens from lead records.</impact>
+    <references>
+      <file path="src/collections/Leads/index.ts" />
+      <file path=".planning/phases/07-first-party-crm-billing-and-automation/PLAN.xml" />
+    </references>
+  </decision>
+  <decision id="D-launch-001">
+    <title>Launch bar: real photography and mobile-first UX</title>
+    <summary>Public marketing should use **real project photography** (not placeholders) before “launched” positioning. **Mobile-first** layouts and flows are required for staff in the field and customers on phones—responsive breakpoints, touch targets, and portal readability are launch criteria alongside functional completeness.</summary>
+    <impact>Sets a clear QA bar; verify `POSTGRES_URL` / Supabase in each environment so hosted DB behavior matches expectations.</impact>
+    <references>
+      <file path=".planning/workflows/customer-site-content-and-engagebay.md" />
+      <file path=".planning/phases/03-landing-and-payload-scaffold/SUMMARY.xml" />
+    </references>
+  </decision>
+  <decision id="D-demo-001">
+    <title>Demo data and scripted flows for launch readiness</title>
+    <summary>Before launch demos, seed or fixture **realistic scenarios**: e.g. residential customer post-service, subscribed residential, fresh quote lead, support/refund paths, and staff workflows. These scenarios should be documented in a single runbook and reflected in seed or manual setup steps.</summary>
+    <impact>Aligns sales, training, and QA; drives TASK-REGISTRY work for “demo-ready” milestones.</impact>
+    <references>
+      <file path=".planning/workflows/demo-data-and-flows.md" />
+      <file path="src/endpoints/seed/index.ts" />
+      <file path="src/endpoints/seed/demo-personas.ts" />
+    </references>
+  </decision>
+  <decision id="D-ai-001">
+    <title>AI ops assistant is optional, beta, staff-only, and feature-flagged</title>
+    <summary>An **internal** assistant for **business operations** (quotes, CRM context, playbook Q&amp;A) may use **OpenAI** via **Vercel AI SDK**, **Assistant UI** / **Tool UI** patterns, and **RAG** (embeddings over approved docs). It is **not** a default customer-facing product: ship behind **`AI_OPS_ASSISTANT_ENABLED`** (or equivalent), show **Beta** in UI, gate to **staff/admin**, and require explicit security review before production enablement. Optional **vision** flows (e.g. screenshot → phone numbers) must use **confirmation** before writes, **rate limits**, and **no raw PII** in application logs. TASK-REGISTRY phase **08** tracks delivery.</summary>
+    <impact>Supersedes ad-hoc “drop in chat” experiments; ties AI work to env keys in `.env.example`, catalogued internal docs for RAG, and audit expectations.</impact>
+    <references>
+      <file path=".planning/workflows/ai-ops-assistant-beta.md" />
+      <file path=".planning/TASK-REGISTRY.xml" />
+      <file path=".planning/ROADMAP.xml" />
+    </references>
+  </decision>
+  <decision id="D-tour-001">
+    <title>Staff and customer onboarding uses optional portal tours, not migration wizards</title>
+    <summary>Guided **react-joyride** tours in the portal (registry with **staff vs customer** audience + `data-tour` selectors + grouped sidebar launcher + `?tour=` links) are the primary in-app hand-holding for `/ops` and `/dashboard`. **Completion** is stored in `localStorage` (`src/lib/tours/storage.ts`) so the **Ops overview** tour can **autolaunch once per browser session** for real admins on `/ops` (step-by-step; skippable) without replaying on every navigation. Deep staff tours (CRM, Today, scorecard/liabilities, assets) are manual only. Product direction does **not** include chat-style migration or intake wizards; business process clarity comes from tours, seed/demo data, portal Docs (e.g. `field-quoting-and-revisions.md`), and runbooks.</summary>
+    <impact>Tours must stay aligned with real UI anchors and demo personas; CRM/billing work may require copy updates (TASK-REGISTRY `03-09`, BLOCKERS `BLK-demo-seed-001`). Staff/marketing tour implementation is closed (`06-10`, `06-11`); AI assistant tour waits on phase `08` (BLOCKERS `BLK-tour-ai-001`). Shell refactors (07-11, 07-12, 07-14) must preserve `data-tour` targets or update registries in the same change set.</impact>
+    <references>
+      <file path="src/lib/tours/registry.ts" />
+      <file path="src/lib/tours/site-registry.ts" />
+      <file path="src/lib/tours/storage.ts" />
+      <file path="src/components/tours/PortalTourProvider.tsx" />
+      <file path="src/components/tours/SiteTourProvider.tsx" />
+      <file path=".planning/BLOCKERS.xml" />
+      <file path="src/content/docs/field-quoting-and-revisions.md" />
+      <file path=".planning/workflows/demo-data-and-flows.md" />
     </references>
   </decision>
 </decisions>

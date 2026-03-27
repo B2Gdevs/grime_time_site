@@ -34,6 +34,9 @@ export async function seedPortalCompany(): Promise<void> {
     collection: 'users',
     data: {
       account: null,
+      billingDiscountNote: 'Portal company courtesy credit',
+      billingDiscountType: 'flat_amount',
+      billingDiscountValue: 20,
       email: portalCompanyFixture.customerEmail,
       name: portalCompanyFixture.customerName,
       password: 'test',
@@ -46,8 +49,15 @@ export async function seedPortalCompany(): Promise<void> {
     data: {
       accountType: 'commercial',
       billingEmail: portalCompanyFixture.customerEmail,
+      billingMode: 'send_invoice_terms',
+      billingRollupMode: 'monthly_consolidated',
+      billingTermsDays: 30,
       customerUser: customer.id,
+      defaultDiscountNote: 'Commercial default',
+      defaultDiscountType: 'percent',
+      defaultDiscountValue: 10,
       name: `${runKey} account`,
+      portalAccessMode: 'app_and_stripe',
       status: 'active',
     },
   })

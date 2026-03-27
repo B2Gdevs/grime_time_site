@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Cross-phase blockers: things that are intentionally not done or that gate QA.
+  Reference this file from TASK-REGISTRY goals, phase SUMMARY next actions, and workflows.
+-->
+<blockers>
+  <blocker id="BLK-demo-seed-001" status="resolved">
+    <title>Demo personas and seed data incomplete</title>
+    <summary>Resolved: run `DEMO_SEED=true npm run seed` (dev only) to upsert fixtures; use admin toolbar **Demo data** toggle + `?demo=1` for marketing tours. Ongoing QA: verify Stripe test objects and copy after schema changes.</summary>
+    <task-ref>03-09</task-ref>
+    <decision-ref>D-demo-001</decision-ref>
+  </blocker>
+  <blocker id="BLK-tour-ai-001">
+    <title>AI ops assistant tour not scheduled</title>
+    <summary>Staff “AI beta” Joyride step is deferred until phase `08` assistant UI is stable enough to anchor `data-tour` targets. Portal and marketing tours (`06-10` / `06-11` scope) intentionally exclude AI; see `.planning/workflows/ai-ops-assistant-beta.md`.</summary>
+    <phase-ref>08</phase-ref>
+    <task-ref>08-01</task-ref>
+  </blocker>
+</blockers>

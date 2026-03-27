@@ -70,11 +70,13 @@ export interface Config {
   collections: {
     pages: Page;
     posts: Post;
+    testimonials: Testimonial;
     media: Media;
     categories: Category;
     quotes: Quote;
     users: User;
     accounts: Account;
+    'billing-events': BillingEvent;
     contacts: Contact;
     leads: Lead;
     opportunities: Opportunity;
@@ -109,11 +111,13 @@ export interface Config {
   collectionsSelect: {
     pages: PagesSelect<false> | PagesSelect<true>;
     posts: PostsSelect<false> | PostsSelect<true>;
+    testimonials: TestimonialsSelect<false> | TestimonialsSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     quotes: QuotesSelect<false> | QuotesSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     accounts: AccountsSelect<false> | AccountsSelect<true>;
+    'billing-events': BillingEventsSelect<false> | BillingEventsSelect<true>;
     contacts: ContactsSelect<false> | ContactsSelect<true>;
     leads: LeadsSelect<false> | LeadsSelect<true>;
     opportunities: OpportunitiesSelect<false> | OpportunitiesSelect<true>;
@@ -151,6 +155,7 @@ export interface Config {
     internalOpsSettings: InternalOpsSetting;
     quoteSettings: QuoteSetting;
     servicePlanSettings: ServicePlanSetting;
+    'payload-jobs-stats': PayloadJobsStat;
   };
   globalsSelect: {
     header: HeaderSelect<false> | HeaderSelect<true>;
@@ -159,6 +164,7 @@ export interface Config {
     internalOpsSettings: InternalOpsSettingsSelect<false> | InternalOpsSettingsSelect<true>;
     quoteSettings: QuoteSettingsSelect<false> | QuoteSettingsSelect<true>;
     servicePlanSettings: ServicePlanSettingsSelect<false> | ServicePlanSettingsSelect<true>;
+    'payload-jobs-stats': PayloadJobsStatsSelect<false> | PayloadJobsStatsSelect<true>;
   };
   locale: null;
   widgets: {
@@ -167,6 +173,9 @@ export interface Config {
   user: User | PayloadMcpApiKey;
   jobs: {
     tasks: {
+      sendCustomerNotification: TaskSendCustomerNotification;
+      processSequenceEnrollmentStep: TaskProcessSequenceEnrollmentStep;
+      scanOverdueInvoices: TaskScanOverdueInvoices;
       schedulePublish: TaskSchedulePublish;
       inline: {
         input: unknown;
@@ -270,6 +279,8 @@ export interface Page {
     | MediaBlock
     | ArchiveBlock
     | FormBlock
+    | ContactRequestBlock
+    | TestimonialsSectionBlock
   )[];
   meta?: {
     title?: string | null;
@@ -510,6 +521,19 @@ export interface User {
     postalCode?: string | null;
   };
   roles: ('admin' | 'customer')[];
+  /**
+   * Optional user-level billing override. This wins over account defaults.
+   */
+  billingDiscountType?: ('none' | 'percent' | 'flat_amount') | null;
+  billingDiscountValue?: number | null;
+  billingDiscountNote?: string | null;
+  supabaseAuthUserID?: string | null;
+  emailVerifiedAt?: string | null;
+  lastPortalLoginAt?: string | null;
+  portalInviteState?: ('none' | 'claim_pending' | 'invite_pending' | 'active') | null;
+  portalInviteTokenHash?: string | null;
+  portalInviteExpiresAt?: string | null;
+  portalInviteSentAt?: string | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -547,9 +571,27 @@ export interface Account {
   billingEmail?: string | null;
   accountsPayableEmail?: string | null;
   accountsPayablePhone?: string | null;
+  billingMode?:
+    | ('autopay_subscription' | 'send_invoice_terms' | 'send_invoice_due_on_receipt' | 'manual_internal')
+    | null;
+  billingRollupMode?: ('per_service' | 'monthly_consolidated' | 'subscription') | null;
+  portalAccessMode?: ('none' | 'stripe_only' | 'app_and_stripe') | null;
   billingTerms?: ('due_on_receipt' | 'net_15' | 'net_30' | 'custom') | null;
+  /**
+   * Used for send-invoice accounts. Commercial terms typically default to 30.
+   */
+  billingTermsDays?: number | null;
   locationCount?: number | null;
   taxExempt?: boolean | null;
+  /**
+   * Staff-only billing default for this account. User-specific overrides take precedence.
+   */
+  defaultDiscountType?: ('none' | 'percent' | 'flat_amount') | null;
+  /**
+   * Percent or flat amount based on the selected discount type.
+   */
+  defaultDiscountValue?: number | null;
+  defaultDiscountNote?: string | null;
   /**
    * Certificate number, internal note, or exemption reference for commercial billing.
    */
@@ -568,6 +610,9 @@ export interface Account {
     state?: string | null;
     postalCode?: string | null;
   };
+  stripeCustomerID?: string | null;
+  stripeDefaultPaymentMethodID?: string | null;
+  billingPortalLastSharedAt?: string | null;
   /**
    * Useful for multi-site commercial relationships or route notes.
    */
@@ -1008,6 +1053,19 @@ export interface ServicePlan {
   annualPlanAmount?: number | null;
   installmentAmount?: number | null;
   cadenceMonths?: number | null;
+  billingMode?:
+    | ('autopay_subscription' | 'subscription_send_invoice' | 'monthly_consolidated' | 'per_service_invoice')
+    | null;
+  collectionMethod?: ('charge_automatically' | 'send_invoice') | null;
+  billingTermsDays?: number | null;
+  autoRenew?: boolean | null;
+  paymentMethodRequired?: boolean | null;
+  stripeCustomerID?: string | null;
+  stripeSubscriptionID?: string | null;
+  stripeSubscriptionStatus?: string | null;
+  currentPeriodStart?: string | null;
+  currentPeriodEnd?: string | null;
+  nextInvoiceAt?: string | null;
   notes?: string | null;
   updatedAt: string;
   createdAt: string;
@@ -1270,6 +1328,248 @@ export interface FormBlock {
   blockType: 'formBlock';
 }
 /**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ContactRequestBlock".
+ */
+export interface ContactRequestBlock {
+  /**
+   * Layout options for this block may expand later; the site currently uses the default shell.
+   */
+  layoutVariant?: 'default' | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'contactRequest';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TestimonialsSectionBlock".
+ */
+export interface TestimonialsSectionBlock {
+  heading?: string | null;
+  intro?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  selectionMode?: ('selected' | 'featuredLatest') | null;
+  /**
+   * Used when selection mode is “Choose specific”.
+   */
+  testimonials?: (number | Testimonial)[] | null;
+  /**
+   * Used for “Latest published”.
+   */
+  limit?: number | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'testimonialsBlock';
+}
+/**
+ * Published testimonials can be shown via the Testimonials block on Pages. Leave unpublished or omit the block until you want them live.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "testimonials".
+ */
+export interface Testimonial {
+  id: number;
+  quote: string;
+  authorName: string;
+  /**
+   * Optional — e.g. neighborhood, property type.
+   */
+  authorDetail?: string | null;
+  photo?: (number | null) | Media;
+  /**
+   * Optional 1–5 stars.
+   */
+  rating?: number | null;
+  published?: boolean | null;
+  featured?: boolean | null;
+  /**
+   * Lower sorts first when using “featured + latest”.
+   */
+  sortOrder?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Audit trail for Stripe webhooks, manual payment records, credits, refunds, and billing adjustments.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "billing-events".
+ */
+export interface BillingEvent {
+  id: number;
+  eventLabel: string;
+  eventType:
+    | 'invoice_synced'
+    | 'invoice_sent'
+    | 'invoice_viewed'
+    | 'invoice_paid'
+    | 'invoice_overdue'
+    | 'payment_recorded'
+    | 'discount_applied'
+    | 'credit_issued'
+    | 'refund_issued'
+    | 'write_off_applied'
+    | 'portal_session_created'
+    | 'webhook_received'
+    | 'subscription_synced';
+  sourceSystem: 'stripe' | 'internal';
+  occurredAt: string;
+  account?: (number | null) | Account;
+  invoice?: (number | null) | Invoice;
+  servicePlan?: (number | null) | ServicePlan;
+  serviceAppointment?: (number | null) | ServiceAppointment;
+  customerUser?: (number | null) | User;
+  /**
+   * Admin or system actor responsible for the event.
+   */
+  actor?: (number | null) | User;
+  paymentSource?: ('stripe' | 'onsite' | 'check' | 'cash' | 'bank_transfer' | 'other') | null;
+  amount?: number | null;
+  currency?: string | null;
+  paymentReference?: string | null;
+  stripeEventID?: string | null;
+  stripeObjectID?: string | null;
+  processedAt?: string | null;
+  reason?: string | null;
+  notes?: string | null;
+  payloadSnapshot?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Customer-facing invoices that appear in the portal.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "invoices".
+ */
+export interface Invoice {
+  id: number;
+  invoiceNumber: string;
+  title: string;
+  /**
+   * Portal company or household account associated with this invoice.
+   */
+  account?: (number | null) | Account;
+  status: 'draft' | 'open' | 'paid' | 'partially_paid' | 'overdue' | 'refunded' | 'uncollectible' | 'void';
+  issueDate?: string | null;
+  dueDate?: string | null;
+  customerUser?: (number | null) | User;
+  customerEmail: string;
+  customerName?: string | null;
+  serviceAddress?: {
+    street1?: string | null;
+    street2?: string | null;
+    city?: string | null;
+    state?: string | null;
+    postalCode?: string | null;
+  };
+  total: number;
+  balanceDue: number;
+  /**
+   * Optional hosted invoice / payment URL.
+   */
+  paymentUrl?: string | null;
+  paymentCollectionMethod?: ('charge_automatically' | 'send_invoice') | null;
+  deliveryStatus?: ('draft' | 'queued' | 'sent' | 'viewed' | 'failed') | null;
+  paymentSource?: ('stripe' | 'onsite' | 'check' | 'cash' | 'bank_transfer' | 'other') | null;
+  billingPeriodStart?: string | null;
+  billingPeriodEnd?: string | null;
+  paidAt?: string | null;
+  discountAmount?: number | null;
+  creditAmount?: number | null;
+  refundedAmount?: number | null;
+  writeOffAmount?: number | null;
+  paidOutOfBand?: boolean | null;
+  stripeCustomerID?: string | null;
+  stripeInvoiceID?: string | null;
+  stripeInvoiceStatus?: string | null;
+  stripeHostedInvoiceURL?: string | null;
+  stripePaymentIntentID?: string | null;
+  lastStripeEventID?: string | null;
+  lastStripeSyncAt?: string | null;
+  paymentReference?: string | null;
+  lineItems?:
+    | {
+        description: string;
+        amount: number;
+        id?: string | null;
+      }[]
+    | null;
+  relatedQuote?: (number | null) | Quote;
+  notes?: string | null;
+  adjustmentReason?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Scheduled or requested customer jobs shown in the portal and ops calendar.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "service-appointments".
+ */
+export interface ServiceAppointment {
+  id: number;
+  title: string;
+  /**
+   * Portal company or household account associated with this appointment.
+   */
+  account?: (number | null) | Account;
+  status: 'requested' | 'confirmed' | 'reschedule_requested' | 'completed' | 'cancelled';
+  arrivalWindow?: ('morning' | 'afternoon' | 'flexible') | null;
+  requestSource?: ('portal' | 'admin' | 'phone' | 'subscription_auto') | null;
+  customerUser: number | User;
+  customerEmail: string;
+  customerName?: string | null;
+  serviceAddress?: {
+    street1?: string | null;
+    street2?: string | null;
+    city?: string | null;
+    state?: string | null;
+    postalCode?: string | null;
+  };
+  /**
+   * Customer-requested date before the team confirms the slot.
+   */
+  requestedDate?: string | null;
+  scheduledStart?: string | null;
+  scheduledEnd?: string | null;
+  relatedQuote?: (number | null) | Quote;
+  servicePlan?: (number | null) | ServicePlan;
+  billableStatus?: ('not_billable' | 'ready_to_bill' | 'billed' | 'paid_onsite') | null;
+  billableAmount?: number | null;
+  billingBatchKey?: string | null;
+  invoice?: (number | null) | Invoice;
+  completedAt?: string | null;
+  onsitePaymentCaptured?: boolean | null;
+  onsitePaymentAmount?: number | null;
+  onsitePaymentReference?: string | null;
+  customerNotes?: string | null;
+  internalNotes?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * Inbound lead records before qualification and account/contact conversion.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1371,16 +1671,44 @@ export interface CrmActivity {
 export interface CrmTask {
   id: number;
   title: string;
+  sourceType?: ('lead' | 'quote' | 'appointment' | 'invoice' | 'sequence' | 'support' | 'manual') | null;
   status: 'open' | 'in_progress' | 'waiting' | 'completed' | 'canceled';
   priority: 'low' | 'medium' | 'high' | 'urgent';
   taskType: 'call' | 'email' | 'text' | 'quote_follow_up' | 'billing_follow_up' | 'scheduling' | 'general';
   owner?: (number | null) | User;
+  roleTags?: ('field-tech' | 'lead-followup' | 'scheduler' | 'billing-followup' | 'ops-admin')[] | null;
+  slaClass?:
+    | (
+        | 'new_lead'
+        | 'quote_follow_up'
+        | 'scheduling'
+        | 'billing_support'
+        | 'refund_request'
+        | 'policy_privacy'
+        | 'general_support'
+        | 'invoice_overdue'
+        | 'sequence_task'
+        | 'manual_follow_up'
+      )
+    | null;
+  /**
+   * Required staff next step for this work item.
+   */
+  nextAction?: string | null;
   dueAt: string;
   completedAt?: string | null;
   /**
    * If present and before now, the task should show as stale in the queue.
    */
   staleAt?: string | null;
+  /**
+   * The current SLA acknowledgment target for this task.
+   */
+  slaTargetAt?: string | null;
+  /**
+   * When this task should escalate if unresolved.
+   */
+  escalatesAt?: string | null;
   lead?: (number | null) | Lead;
   account?: (number | null) | Account;
   contact?: (number | null) | Contact;
@@ -1390,90 +1718,6 @@ export interface CrmTask {
   servicePlan?: (number | null) | ServicePlan;
   serviceAppointment?: (number | null) | ServiceAppointment;
   notes?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * Customer-facing invoices that appear in the portal.
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "invoices".
- */
-export interface Invoice {
-  id: number;
-  invoiceNumber: string;
-  title: string;
-  /**
-   * Portal company or household account associated with this invoice.
-   */
-  account?: (number | null) | Account;
-  status: 'draft' | 'open' | 'paid' | 'overdue' | 'void';
-  issueDate?: string | null;
-  dueDate?: string | null;
-  customerUser?: (number | null) | User;
-  customerEmail: string;
-  customerName?: string | null;
-  serviceAddress?: {
-    street1?: string | null;
-    street2?: string | null;
-    city?: string | null;
-    state?: string | null;
-    postalCode?: string | null;
-  };
-  total: number;
-  balanceDue: number;
-  /**
-   * Optional hosted invoice / payment URL.
-   */
-  paymentUrl?: string | null;
-  lineItems?:
-    | {
-        description: string;
-        amount: number;
-        id?: string | null;
-      }[]
-    | null;
-  relatedQuote?: (number | null) | Quote;
-  notes?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * Scheduled or requested customer jobs shown in the portal and ops calendar.
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "service-appointments".
- */
-export interface ServiceAppointment {
-  id: number;
-  title: string;
-  /**
-   * Portal company or household account associated with this appointment.
-   */
-  account?: (number | null) | Account;
-  status: 'requested' | 'confirmed' | 'reschedule_requested' | 'completed' | 'cancelled';
-  arrivalWindow?: ('morning' | 'afternoon' | 'flexible') | null;
-  requestSource?: ('portal' | 'admin' | 'phone' | 'subscription_auto') | null;
-  customerUser: number | User;
-  customerEmail: string;
-  customerName?: string | null;
-  serviceAddress?: {
-    street1?: string | null;
-    street2?: string | null;
-    city?: string | null;
-    state?: string | null;
-    postalCode?: string | null;
-  };
-  /**
-   * Customer-requested date before the team confirms the slot.
-   */
-  requestedDate?: string | null;
-  scheduledStart?: string | null;
-  scheduledEnd?: string | null;
-  relatedQuote?: (number | null) | Quote;
-  servicePlan?: (number | null) | ServicePlan;
-  customerNotes?: string | null;
-  internalNotes?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1556,6 +1800,10 @@ export interface SequenceEnrollment {
   account?: (number | null) | Account;
   contact?: (number | null) | Contact;
   opportunity?: (number | null) | Opportunity;
+  quote?: (number | null) | Quote;
+  invoice?: (number | null) | Invoice;
+  serviceAppointment?: (number | null) | ServiceAppointment;
+  servicePlan?: (number | null) | ServicePlan;
   lastError?: string | null;
   exitReason?: string | null;
   updatedAt: string;
@@ -1920,7 +2168,12 @@ export interface PayloadJob {
     | {
         executedAt: string;
         completedAt: string;
-        taskSlug: 'inline' | 'schedulePublish';
+        taskSlug:
+          | 'inline'
+          | 'sendCustomerNotification'
+          | 'processSequenceEnrollmentStep'
+          | 'scanOverdueInvoices'
+          | 'schedulePublish';
         taskID: string;
         input?:
           | {
@@ -1953,10 +2206,27 @@ export interface PayloadJob {
         id?: string | null;
       }[]
     | null;
-  taskSlug?: ('inline' | 'schedulePublish') | null;
+  taskSlug?:
+    | (
+        | 'inline'
+        | 'sendCustomerNotification'
+        | 'processSequenceEnrollmentStep'
+        | 'scanOverdueInvoices'
+        | 'schedulePublish'
+      )
+    | null;
   queue?: string | null;
   waitUntil?: string | null;
   processing?: boolean | null;
+  meta?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1974,6 +2244,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'posts';
         value: number | Post;
+      } | null)
+    | ({
+        relationTo: 'testimonials';
+        value: number | Testimonial;
       } | null)
     | ({
         relationTo: 'media';
@@ -1994,6 +2268,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'accounts';
         value: number | Account;
+      } | null)
+    | ({
+        relationTo: 'billing-events';
+        value: number | BillingEvent;
       } | null)
     | ({
         relationTo: 'contacts';
@@ -2165,6 +2443,8 @@ export interface PagesSelect<T extends boolean = true> {
         mediaBlock?: T | MediaBlockSelect<T>;
         archive?: T | ArchiveBlockSelect<T>;
         formBlock?: T | FormBlockSelect<T>;
+        contactRequest?: T | ContactRequestBlockSelect<T>;
+        testimonialsBlock?: T | TestimonialsSectionBlockSelect<T>;
       };
   meta?:
     | T
@@ -2329,6 +2609,28 @@ export interface FormBlockSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ContactRequestBlock_select".
+ */
+export interface ContactRequestBlockSelect<T extends boolean = true> {
+  layoutVariant?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TestimonialsSectionBlock_select".
+ */
+export interface TestimonialsSectionBlockSelect<T extends boolean = true> {
+  heading?: T;
+  intro?: T;
+  selectionMode?: T;
+  testimonials?: T;
+  limit?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "posts_select".
  */
 export interface PostsSelect<T extends boolean = true> {
@@ -2357,6 +2659,22 @@ export interface PostsSelect<T extends boolean = true> {
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "testimonials_select".
+ */
+export interface TestimonialsSelect<T extends boolean = true> {
+  quote?: T;
+  authorName?: T;
+  authorDetail?: T;
+  photo?: T;
+  rating?: T;
+  published?: T;
+  featured?: T;
+  sortOrder?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2566,6 +2884,16 @@ export interface UsersSelect<T extends boolean = true> {
         postalCode?: T;
       };
   roles?: T;
+  billingDiscountType?: T;
+  billingDiscountValue?: T;
+  billingDiscountNote?: T;
+  supabaseAuthUserID?: T;
+  emailVerifiedAt?: T;
+  lastPortalLoginAt?: T;
+  portalInviteState?: T;
+  portalInviteTokenHash?: T;
+  portalInviteExpiresAt?: T;
+  portalInviteSentAt?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -2598,9 +2926,16 @@ export interface AccountsSelect<T extends boolean = true> {
   billingEmail?: T;
   accountsPayableEmail?: T;
   accountsPayablePhone?: T;
+  billingMode?: T;
+  billingRollupMode?: T;
+  portalAccessMode?: T;
   billingTerms?: T;
+  billingTermsDays?: T;
   locationCount?: T;
   taxExempt?: T;
+  defaultDiscountType?: T;
+  defaultDiscountValue?: T;
+  defaultDiscountNote?: T;
   taxExemptionReference?: T;
   serviceAddress?:
     | T
@@ -2620,10 +2955,41 @@ export interface AccountsSelect<T extends boolean = true> {
         state?: T;
         postalCode?: T;
       };
+  stripeCustomerID?: T;
+  stripeDefaultPaymentMethodID?: T;
+  billingPortalLastSharedAt?: T;
   serviceLocationSummary?: T;
   activeQuote?: T;
   activeServicePlan?: T;
   notes?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "billing-events_select".
+ */
+export interface BillingEventsSelect<T extends boolean = true> {
+  eventLabel?: T;
+  eventType?: T;
+  sourceSystem?: T;
+  occurredAt?: T;
+  account?: T;
+  invoice?: T;
+  servicePlan?: T;
+  serviceAppointment?: T;
+  customerUser?: T;
+  actor?: T;
+  paymentSource?: T;
+  amount?: T;
+  currency?: T;
+  paymentReference?: T;
+  stripeEventID?: T;
+  stripeObjectID?: T;
+  processedAt?: T;
+  reason?: T;
+  notes?: T;
+  payloadSnapshot?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2772,13 +3138,19 @@ export interface CrmSequencesSelect<T extends boolean = true> {
  */
 export interface CrmTasksSelect<T extends boolean = true> {
   title?: T;
+  sourceType?: T;
   status?: T;
   priority?: T;
   taskType?: T;
   owner?: T;
+  roleTags?: T;
+  slaClass?: T;
+  nextAction?: T;
   dueAt?: T;
   completedAt?: T;
   staleAt?: T;
+  slaTargetAt?: T;
+  escalatesAt?: T;
   lead?: T;
   account?: T;
   contact?: T;
@@ -2808,6 +3180,10 @@ export interface SequenceEnrollmentsSelect<T extends boolean = true> {
   account?: T;
   contact?: T;
   opportunity?: T;
+  quote?: T;
+  invoice?: T;
+  serviceAppointment?: T;
+  servicePlan?: T;
   lastError?: T;
   exitReason?: T;
   updatedAt?: T;
@@ -2839,6 +3215,25 @@ export interface InvoicesSelect<T extends boolean = true> {
   total?: T;
   balanceDue?: T;
   paymentUrl?: T;
+  paymentCollectionMethod?: T;
+  deliveryStatus?: T;
+  paymentSource?: T;
+  billingPeriodStart?: T;
+  billingPeriodEnd?: T;
+  paidAt?: T;
+  discountAmount?: T;
+  creditAmount?: T;
+  refundedAmount?: T;
+  writeOffAmount?: T;
+  paidOutOfBand?: T;
+  stripeCustomerID?: T;
+  stripeInvoiceID?: T;
+  stripeInvoiceStatus?: T;
+  stripeHostedInvoiceURL?: T;
+  stripePaymentIntentID?: T;
+  lastStripeEventID?: T;
+  lastStripeSyncAt?: T;
+  paymentReference?: T;
   lineItems?:
     | T
     | {
@@ -2848,6 +3243,7 @@ export interface InvoicesSelect<T extends boolean = true> {
       };
   relatedQuote?: T;
   notes?: T;
+  adjustmentReason?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2883,6 +3279,17 @@ export interface ServicePlansSelect<T extends boolean = true> {
   annualPlanAmount?: T;
   installmentAmount?: T;
   cadenceMonths?: T;
+  billingMode?: T;
+  collectionMethod?: T;
+  billingTermsDays?: T;
+  autoRenew?: T;
+  paymentMethodRequired?: T;
+  stripeCustomerID?: T;
+  stripeSubscriptionID?: T;
+  stripeSubscriptionStatus?: T;
+  currentPeriodStart?: T;
+  currentPeriodEnd?: T;
+  nextInvoiceAt?: T;
   notes?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -2914,6 +3321,14 @@ export interface ServiceAppointmentsSelect<T extends boolean = true> {
   scheduledEnd?: T;
   relatedQuote?: T;
   servicePlan?: T;
+  billableStatus?: T;
+  billableAmount?: T;
+  billingBatchKey?: T;
+  invoice?: T;
+  completedAt?: T;
+  onsitePaymentCaptured?: T;
+  onsitePaymentAmount?: T;
+  onsitePaymentReference?: T;
   customerNotes?: T;
   internalNotes?: T;
   updatedAt?: T;
@@ -3273,6 +3688,7 @@ export interface PayloadJobsSelect<T extends boolean = true> {
   queue?: T;
   waitUntil?: T;
   processing?: T;
+  meta?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -3454,11 +3870,19 @@ export interface InternalOpsSetting {
    */
   annualRevenueGoal?: number | null;
   /**
-   * Value shown on the projected revenue KPI card when live internal quote data is not yet available.
+   * Weight applied to accepted-quote dollar amounts in the weighted pipeline (KPI + chart). 1 = 100%.
+   */
+  quoteProjectionWeightAccepted?: number | null;
+  /**
+   * Weight applied to sent-quote dollar amounts in the weighted pipeline (e.g. 0.6 = 60%).
+   */
+  quoteProjectionWeightSent?: number | null;
+  /**
+   * Target label for the projected revenue KPI when there is no open weighted pipeline (shown next to $0, not as fake pipeline dollars).
    */
   projectedRevenueDisplay?: string | null;
   /**
-   * Value shown on the MRR KPI card when live service-plan data is not yet available.
+   * Target label for the MRR KPI when no active recurring plans exist (shown next to $0, not as fake MRR).
    */
   mrrTargetDisplay?: string | null;
   /**
@@ -3585,6 +4009,24 @@ export interface ServicePlanSetting {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payload-jobs-stats".
+ */
+export interface PayloadJobsStat {
+  id: number;
+  stats?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "header_select".
  */
 export interface HeaderSelect<T extends boolean = true> {
@@ -3672,6 +4114,8 @@ export interface PricingSelect<T extends boolean = true> {
  */
 export interface InternalOpsSettingsSelect<T extends boolean = true> {
   annualRevenueGoal?: T;
+  quoteProjectionWeightAccepted?: T;
+  quoteProjectionWeightSent?: T;
   projectedRevenueDisplay?: T;
   mrrTargetDisplay?: T;
   chartDisclaimer?: T;
@@ -3755,6 +4199,16 @@ export interface ServicePlanSettingsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payload-jobs-stats_select".
+ */
+export interface PayloadJobsStatsSelect<T extends boolean = true> {
+  stats?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "collections_widget".
  */
 export interface CollectionsWidget {
@@ -3762,6 +4216,44 @@ export interface CollectionsWidget {
     [k: string]: unknown;
   };
   width: 'full';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TaskSendCustomerNotification".
+ */
+export interface TaskSendCustomerNotification {
+  input: {
+    type: 'lead_acknowledgement' | 'quote_sent' | 'invoice_issued' | 'invoice_overdue' | 'appointment_update';
+    leadId?: string | null;
+    quoteId?: string | null;
+    invoiceId?: string | null;
+    appointmentId?: string | null;
+  };
+  output: {
+    sent: boolean;
+  };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TaskProcessSequenceEnrollmentStep".
+ */
+export interface TaskProcessSequenceEnrollmentStep {
+  input: {
+    enrollmentId: string;
+  };
+  output: {
+    processed: boolean;
+  };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TaskScanOverdueInvoices".
+ */
+export interface TaskScanOverdueInvoices {
+  input?: unknown;
+  output: {
+    scanned: boolean;
+  };
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

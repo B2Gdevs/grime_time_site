@@ -3,6 +3,7 @@
 import * as React from 'react'
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts'
 
+import type { OpsChartTrendPoint } from '@/lib/ops/loadOpsChartTrend'
 import { opsTrendData } from '@/lib/ops/internalDashboardData'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
@@ -60,10 +61,16 @@ function formatMetricValue(metric: MetricKey, value: number): string {
 }
 
 export function ChartAreaInteractive({
+  chartTrend,
+  chartTrendIsLive,
   disclaimer,
   pipelineSnapshotLabel,
   pipelineSnapshotValue,
 }: {
+  /** When set, replaces the static demo series with Payload-derived monthly points. */
+  chartTrend?: OpsChartTrendPoint[] | null
+  /** True when at least one series has non-zero internal data (badges the chart). */
+  chartTrendIsLive?: boolean
   /** Shown under the chart, e.g. from the Internal ops targets global. */
   disclaimer?: string | null
   /** Optional first-party KPI context shown next to the illustrative chart. */
@@ -71,7 +78,9 @@ export function ChartAreaInteractive({
   pipelineSnapshotValue?: string | null
 }) {
   const [metric, setMetric] = React.useState<MetricKey>('projectedRevenue')
-  const latestValue = opsTrendData[opsTrendData.length - 1]?.[metric] ?? 0
+  const series = chartTrend && chartTrend.length > 0 ? chartTrend : [...opsTrendData]
+  const latestValue = series[series.length - 1]?.[metric] ?? 0
+  const badgeLabel = chartTrend && chartTrend.length > 0 ? (chartTrendIsLive ? 'Internal data' : 'Internal (sparse)') : 'Illustrative'
 
   return (
     <Card className="@container/card min-w-0">
@@ -81,7 +90,7 @@ export function ChartAreaInteractive({
             <div className="flex flex-wrap items-center gap-2">
               <CardTitle>Business momentum</CardTitle>
               <span className="bg-muted text-muted-foreground rounded-md px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide">
-                Illustrative
+                {badgeLabel}
               </span>
             </div>
             <CardDescription>{metricMeta[metric].description}</CardDescription>
@@ -136,7 +145,7 @@ export function ChartAreaInteractive({
       </CardHeader>
       <CardContent className="min-w-0 px-2 pt-2 sm:px-6">
         <ChartContainer className="h-[280px] w-full" config={chartConfig}>
-          <AreaChart accessibilityLayer data={[...opsTrendData]} margin={{ left: 8, right: 8 }}>
+          <AreaChart accessibilityLayer data={[...series]} margin={{ left: 8, right: 8 }}>
             <defs>
               <linearGradient id={`fill-${metric}`} x1="0" x2="0" y1="0" y2="1">
                 <stop offset="5%" stopColor={`var(--color-${metric})`} stopOpacity={0.85} />

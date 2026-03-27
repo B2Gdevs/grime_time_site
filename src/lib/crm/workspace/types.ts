@@ -8,7 +8,13 @@ export type CrmRecordKind =
   | 'task'
 
 export type CrmWorkspaceQueueKey = 'accounts' | 'attention' | 'automation' | 'pipeline' | 'tasks'
-export type CrmWorkspaceActionKind = 'advance-opportunity' | 'complete-task' | 'set-task-in-progress'
+export type CrmWorkspaceActionKind =
+  | 'advance-opportunity'
+  | 'complete-task'
+  | 'disqualify-lead'
+  | 'qualify-lead'
+  | 'set-task-in-progress'
+export type CrmWorkspaceOwnerScope = 'all' | 'mine' | 'unassigned'
 
 export type CrmWorkspaceMetricTone = 'default' | 'positive' | 'warning'
 
@@ -24,8 +30,10 @@ export type CrmWorkspaceQueueItem = {
   badgeLabel?: null | string
   href: string
   id: string
+  isCommercial?: boolean
   kind: CrmRecordKind
   meta: string[]
+  ownerId?: null | string
   priorityLabel?: null | string
   priorityValue?: null | string
   stale: boolean
@@ -51,8 +59,10 @@ export type CrmWorkspaceQueue = {
 }
 
 export type CrmWorkspaceData = {
+  commercialOnly?: boolean
   generatedAt: string
   metrics: CrmWorkspaceMetric[]
+  ownerScope?: CrmWorkspaceOwnerScope
   queues: CrmWorkspaceQueue[]
   searchQuery?: string
 }
@@ -75,12 +85,14 @@ export type CrmRecordDetailField = {
 }
 
 export type CrmRecordDetail = {
+  canAssignOwner?: boolean
   badges: string[]
   description?: null | string
   fields: CrmRecordDetailField[]
   href?: string
   id: string
   kind: CrmRecordKind
+  ownerId?: null | string
   priorityLabel?: null | string
   relatedSections: CrmRecordDetailRelatedSection[]
   statusLabel: string

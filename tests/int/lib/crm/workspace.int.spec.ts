@@ -4,17 +4,20 @@ import { getPayload, type Payload } from 'payload'
 import config from '@/payload.config'
 import {
   advanceOpportunityStage,
+  assignCrmRecordOwner,
   createCrmActivityNote,
   loadCrmRecordDetail,
   loadCrmWorkspace,
+  updateLeadStatus,
   updateCrmTaskStatus,
 } from '@/lib/crm/workspace'
-import type { User } from '@/payload-types'
+import type { Lead, User } from '@/payload-types'
 
 const testRunKey = `workspace-${Date.now()}`
 
 let payload: Payload
 let adminUser: User
+let secondaryAdminUser: User
 let seededAccountId = 0
 let seededOpportunityId = 0
 let seededTaskId = 0
@@ -56,6 +59,15 @@ describe('crm workspace', () => {
       collection: 'users',
       data: {
         email: `${testRunKey}@example.com`,
+        password: 'test-password',
+        roles: ['admin'],
+      },
+    })) as User
+
+    secondaryAdminUser = (await createRecord<User>({
+      collection: 'users',
+      data: {
+        email: `${testRunKey}.owner@example.com`,
         password: 'test-password',
         roles: ['admin'],
       },
@@ -270,6 +282,23 @@ describe('crm workspace', () => {
     expect(taskItems).toHaveLength(0)
   })
 
+  it('filters workspace by owner scope and commercial-only mode', async () => {
+    const workspace = await loadCrmWorkspace({
+      commercialOnly: true,
+      ownerScope: 'mine',
+      payload,
+      searchQuery: testRunKey,
+      user: adminUser,
+    })
+
+    const companyItems = workspace.queues.find((queue) => queue.key === 'accounts')?.items ?? []
+    const pipelineItems = workspace.queues.find((queue) => queue.key === 'pipeline')?.items ?? []
+
+    expect(companyItems.some((item) => item.title === `${testRunKey} account`)).toBe(true)
+    expect(pipelineItems.some((item) => item.title === `${testRunKey} opportunity`)).toBe(true)
+    expect(companyItems.every((item) => item.isCommercial)).toBe(true)
+  })
+
   it('updates task status and opportunity stage through workspace actions', async () => {
     const task = await updateCrmTaskStatus({
       id: seededTaskId,
@@ -289,6 +318,94 @@ describe('crm workspace', () => {
     expect(task.completedAt).toBeTruthy()
     expect(opportunity.stage).toBe('scheduling')
     expect(opportunity.status).toBe('open')
+  }, 15000)
+
+  it('can reassign CRM owners and qualify new leads from workspace actions', async () => {
+    const contact = await payload.find({
+      collection: 'contacts',
+      limit: 1,
+      overrideAccess: true,
+      pagination: false,
+      where: {
+        fullName: {
+          equals: `${testRunKey} contact`,
+        },
+      },
+    })
+
+    const freshLead = await createRecord<Lead>({
+      collection: 'leads',
+      data: {
+        account: seededAccountId,
+        contact: Number(contact.docs[0]?.id),
+        customerEmail: `${testRunKey}.fresh@example.com`,
+        customerName: `${testRunKey} fresh`,
+        owner: adminUser.id,
+        priority: 'medium',
+        source: 'manual',
+        status: 'new',
+        title: `${testRunKey} fresh lead`,
+      },
+    })
+
+    const reassigned = await assignCrmRecordOwner({
+      id: freshLead.id,
+      kind: 'lead',
+      ownerId: Number(secondaryAdminUser.id),
+      payload,
+      user: adminUser,
+    })
+
+    const qualified = await updateLeadStatus({
+      id: freshLead.id,
+      payload,
+      status: 'qualified',
+      user: adminUser,
+    })
+
+    const leadDetail = await loadCrmRecordDetail({
+      id: freshLead.id,
+      payload,
+      type: 'lead',
+      user: adminUser,
+    })
+
+    const createdOpportunity = await payload.find({
+      collection: 'opportunities',
+      limit: 1,
+      overrideAccess: true,
+      pagination: false,
+      where: {
+        lead: {
+          equals: freshLead.id,
+        },
+      },
+    })
+
+    const createdTask = await payload.find({
+      collection: 'crm-tasks',
+      limit: 1,
+      overrideAccess: true,
+      pagination: false,
+      where: {
+        and: [
+          { lead: { equals: freshLead.id } },
+          { taskType: { equals: 'quote_follow_up' } },
+        ],
+      },
+    })
+
+    expect(
+      typeof reassigned.owner === 'object' && reassigned.owner
+        ? reassigned.owner.id
+        : reassigned.owner,
+    ).toBe(Number(secondaryAdminUser.id))
+    expect(qualified.status).toBe('qualified')
+    expect(leadDetail.ownerId).toBe(String(secondaryAdminUser.id))
+    expect(createdOpportunity.docs[0]?.id).toBeTruthy()
+    expect(createdTask.docs[0]?.id).toBeTruthy()
+    expect(createdTask.docs[0]?.nextAction).toBeTruthy()
+    expect(createdTask.docs[0]?.slaClass).toBe('quote_follow_up')
   }, 15000)
 
   it('creates CRM notes and exposes richer account detail data', async () => {

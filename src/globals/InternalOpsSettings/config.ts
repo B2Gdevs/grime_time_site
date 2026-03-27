@@ -25,11 +25,35 @@ export const InternalOpsSettings: GlobalConfig = {
       },
     },
     {
+      name: 'quoteProjectionWeightAccepted',
+      type: 'number',
+      defaultValue: 1,
+      min: 0,
+      max: 1,
+      admin: {
+        description:
+          'Weight applied to accepted-quote dollar amounts in the weighted pipeline (KPI + chart). 1 = 100%.',
+        step: 0.05,
+      },
+    },
+    {
+      name: 'quoteProjectionWeightSent',
+      type: 'number',
+      defaultValue: 0.6,
+      min: 0,
+      max: 1,
+      admin: {
+        description: 'Weight applied to sent-quote dollar amounts in the weighted pipeline (e.g. 0.6 = 60%).',
+        step: 0.05,
+      },
+    },
+    {
       name: 'projectedRevenueDisplay',
       type: 'text',
       defaultValue: '$13.6k',
       admin: {
-        description: 'Value shown on the projected revenue KPI card when live internal quote data is not yet available.',
+        description:
+          'Target label for the projected revenue KPI when there is no open weighted pipeline (shown next to $0, not as fake pipeline dollars).',
       },
     },
     {
@@ -37,7 +61,8 @@ export const InternalOpsSettings: GlobalConfig = {
       type: 'text',
       defaultValue: '$1.8k',
       admin: {
-        description: 'Value shown on the MRR KPI card when live service-plan data is not yet available.',
+        description:
+          'Target label for the MRR KPI when no active recurring plans exist (shown next to $0, not as fake MRR).',
       },
     },
     {

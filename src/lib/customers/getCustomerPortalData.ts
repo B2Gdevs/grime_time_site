@@ -2,8 +2,10 @@ import config from '@payload-config'
 import { getPayload } from 'payload'
 
 import { buildCustomerOwnershipWhere } from '@/lib/customers/access'
+import { getCurrentCustomerAccount } from '@/lib/customers/getCurrentCustomerAccount'
 import { buildSuggestedVisitDates } from '@/lib/services/subscriptionMath'
 import type {
+  Account,
   Invoice,
   Quote,
   ServiceAppointment,
@@ -24,10 +26,14 @@ export type CustomerEstimateSummary = {
 
 export type CustomerInvoiceSummary = {
   balanceDue: number
+  collectionMethod: null | string
+  deliveryStatus: null | string
   dueDate: string | null
   id: string
   invoiceNumber: string
+  paidAt: null | string
   paymentUrl: string | null
+  paymentSource: null | string
   status: string
   title: string
   total: number
@@ -57,7 +63,21 @@ export type CustomerAppointmentSummary = {
 }
 
 export type CustomerPortalSnapshot = {
+  activation: {
+    /** First ~two weeks after the Payload user row was created — show a light welcome banner. */
+    showWelcomeBanner: boolean
+    /** Prompt to finish phone, email, or service address. */
+    suggestProfileCompletion: boolean
+  }
   appointments: CustomerAppointmentSummary[]
+  billing: {
+    accountName: null | string
+    billingMode: null | string
+    billingRollupMode: null | string
+    billingTermsDays: number
+    canManageInStripe: boolean
+    portalAccessMode: null | string
+  }
   estimates: CustomerEstimateSummary[]
   invoices: CustomerInvoiceSummary[]
   plans: CustomerServicePlanSummary[]
@@ -95,13 +115,36 @@ function serviceAddressLabel(address: Quote['serviceAddress'] | Invoice['service
   )
 }
 
+function buildBillingSummary(account: Account | null): CustomerPortalSnapshot['billing'] {
+  return {
+    accountName: account?.name || null,
+    billingMode: account?.billingMode || null,
+    billingRollupMode: account?.billingRollupMode || null,
+    billingTermsDays: typeof account?.billingTermsDays === 'number' ? account.billingTermsDays : 0,
+    canManageInStripe: Boolean(account?.portalAccessMode && account.portalAccessMode !== 'none'),
+    portalAccessMode: account?.portalAccessMode || null,
+  }
+}
+
 export async function getCustomerPortalData(user: User): Promise<CustomerPortalSnapshot> {
   const payload = await getPayload({ config })
   const ownWhere = buildCustomerOwnershipWhere(user)
 
   if (!ownWhere || ownWhere === true) {
     return {
+      activation: {
+        showWelcomeBanner: false,
+        suggestProfileCompletion: true,
+      },
       appointments: [],
+      billing: {
+        accountName: null,
+        billingMode: null,
+        billingRollupMode: null,
+        billingTermsDays: 0,
+        canManageInStripe: false,
+        portalAccessMode: null,
+      },
       estimates: [],
       invoices: [],
       plans: [],
@@ -164,8 +207,26 @@ export async function getCustomerPortalData(user: User): Promise<CustomerPortalS
       user,
     }) as Promise<ServicePlanSetting>,
   ])
+  const account = await getCurrentCustomerAccount({
+    payload,
+    user,
+  })
+
+  const createdMs = user.createdAt ? new Date(user.createdAt).getTime() : 0
+  const fourteenDaysMs = 14 * 24 * 60 * 60 * 1000
+  const contactReady = Boolean(user.name?.trim() && user.email?.trim() && user.phone?.trim())
+  const addressReady = Boolean(
+    user.serviceAddress?.street1 &&
+      user.serviceAddress?.city &&
+      user.serviceAddress?.state &&
+      user.serviceAddress?.postalCode,
+  )
 
   return {
+    activation: {
+      showWelcomeBanner: createdMs > 0 && Date.now() - createdMs < fourteenDaysMs,
+      suggestProfileCompletion: !contactReady || !addressReady,
+    },
     appointments: (appointments.docs as ServiceAppointment[]).map((appointment) => ({
       arrivalWindow: appointment.arrivalWindow ?? null,
       id: String(appointment.id),
@@ -174,6 +235,7 @@ export async function getCustomerPortalData(user: User): Promise<CustomerPortalS
       status: appointment.status,
       title: appointment.title,
     })),
+    billing: buildBillingSummary(account),
     estimates: (quotes.docs as Quote[]).map((quote) => ({
       address: serviceAddressLabel(quote.serviceAddress),
       id: String(quote.id),
@@ -188,10 +250,14 @@ export async function getCustomerPortalData(user: User): Promise<CustomerPortalS
     })),
     invoices: (invoices.docs as Invoice[]).map((invoice) => ({
       balanceDue: invoice.balanceDue ?? 0,
+      collectionMethod: invoice.paymentCollectionMethod ?? null,
+      deliveryStatus: invoice.deliveryStatus ?? null,
       dueDate: invoice.dueDate ?? null,
       id: String(invoice.id),
       invoiceNumber: invoice.invoiceNumber,
-      paymentUrl: invoice.paymentUrl ?? null,
+      paidAt: invoice.paidAt ?? null,
+      paymentSource: invoice.paymentSource ?? null,
+      paymentUrl: invoice.stripeHostedInvoiceURL ?? invoice.paymentUrl ?? null,
       status: invoice.status,
       title: invoice.title,
       total: invoice.total ?? 0,
@@ -214,13 +280,8 @@ export async function getCustomerPortalData(user: User): Promise<CustomerPortalS
       visitsPerYear: plan.visitsPerYear ?? planSettings.minimumVisitsPerYear ?? 2,
     })),
     profileCompleteness: {
-      addressReady: Boolean(
-        user.serviceAddress?.street1 &&
-          user.serviceAddress?.city &&
-          user.serviceAddress?.state &&
-          user.serviceAddress?.postalCode,
-      ),
-      contactReady: Boolean(user.name?.trim() && user.email?.trim() && user.phone?.trim()),
+      addressReady,
+      contactReady,
     },
     servicePlanDefaults: {
       billingInstallmentsPerYear: planSettings.billingInstallmentsPerYear ?? 12,

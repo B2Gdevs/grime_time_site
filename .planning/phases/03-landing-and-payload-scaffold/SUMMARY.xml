@@ -3,27 +3,24 @@
   <meta>
     <phase-id>03</phase-id>
     <phase-name>Landing and Payload scaffold</phase-name>
-    <date>2026-03-23</date>
+    <date>2026-03-26</date>
   </meta>
-  <status>in-progress</status>
+  <status>complete</status>
   <highlights>
-    <item>Homepage seed content has been reworked toward a real exterior-cleaning marketing site instead of the template fallback.</item>
+    <item>Homepage seed content now drives a real exterior-cleaning marketing surface instead of the Payload template fallback.</item>
     <item>Instant quote UX is live on the homepage and posts usable lead data into Payload form submissions.</item>
-    <item>Customer-facing privacy, terms, refund, and contact-SLA pages are now seeded as Payload `pages` content and intended to be linked from the public footer/contact flow.</item>
-    <item>Launch polish is now actively tracking the shared public/admin visual system, including theme tokens, typography, and QA for login/admin shells.</item>
-    <item>The homepage renderer now drops placeholder seed media on `home` and uses masked section shells so service, pricing, and CTA content read like intentional marketing panels instead of template leftovers.</item>
-    <item>The live homepage now uses a compact code-viewer style service surface with icon-led tabs, inline `Start estimate` actions in the file rail, and a side-by-side detail pane instead of stacked service/pricing explainer grids.</item>
-    <item>The seeded public-site narrative now includes a founder-story `about` page plus a homepage panel that explains the business as two young entrepreneurs building serious operating experience ahead of college.</item>
-    <item>Phase 03 now explicitly includes a media-led marketing refresh so homepage, about, and contact surfaces can use Payload-managed imagery and service proof instead of staying mostly text-only.</item>
-    <item>The homepage now renders the seeded Payload layout blocks directly instead of relying on hardcoded `HomeMarketingPanels`, and the reusable `serviceGrid` block now supports media, highlights, and pricing cues for image-led service cards.</item>
+    <item>Customer-facing privacy, terms, refund, and contact-SLA pages are seeded as Payload `pages` content and linked from the public footer/contact flow.</item>
+    <item>The homepage renders seeded Payload layout blocks directly, and the reusable `serviceGrid` block now supports media, highlights, and pricing cues for image-led service cards.</item>
     <item>Seed media now includes exterior-cleaning placeholder imagery with captions, the about page uses a stronger visual hero, and the shared header/footer no longer show the template Payload logo.</item>
-    <item>A new queued UX refinement is now tracked for `/contact`: stronger contrast, less copy, clearer action hierarchy, logo presence in the request card, heavier icon usage, and compact tabs with one detail panel for dense support text.</item>
+    <item>The `/contact` route now uses a compact icon-led tab row with a single detail panel for guidance, a higher-contrast shell, and a stronger request card border so the form reads as the primary action.</item>
+    <item>Public mobile QA now includes a compact drawer nav, tighter hero and service spacing, overflow guards on the frontend shell, and direct browser verification that home and contact hold their layout at 390px width without horizontal scroll.</item>
+    <item>The contact request form now includes topic, reply preference, and property address fields so support requests route cleanly while compact guidance tabs keep long policy detail out of the main mobile flow.</item>
+    <item>Testimonials are managed through a dedicated `testimonials` collection and optional Testimonials page block, and admin media generation is available directly from the `media` create view through the prompt-to-media sidebar control.</item>
+    <item>The image-generation workflow is now documented and executable through the repo MCP/media tooling, including `npm run generate:marketing-images` and the shared prompt manifest.</item>
   </highlights>
   <next>
-    <item>Replace the current placeholder property photos with generated or real Grime Time imagery for driveway action, house washing, and commercial surfaces.</item>
-    <item>Add a quick-edit admin path for reviews, testimonials, and before/after proof so the refreshed public visuals have matching trust content.</item>
-    <item>Decide whether `/contact` should stay a bespoke route or be brought fully under the Payload page-layout model like the homepage and about page.</item>
-    <item>Execute the `/contact` UX refresh using a compact tab-detail pattern and remove faded/low-emphasis presentation that currently obscures the form action.</item>
-    <item>Complete launch QA across public routes, login, and admin screens after reseed.</item>
+    <item>Replace placeholder property photos with generated or real Grime Time imagery before public-launch positioning. Prompts, batches, and wiring live in `src/lib/media/image-generation-manifest.ts` and `npm run generate:marketing-images`.</item>
+    <item>Optionally add the Testimonials block to approved public pages once marketing wants live social proof; until then, published content can remain staged in admin.</item>
+    <item>Re-seed or edit the `contact` page in Payload if an older environment still carries legacy generic Form blocks instead of the first-party `contactRequest` block.</item>
   </next>
 </phase-summary>

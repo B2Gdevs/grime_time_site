@@ -2,6 +2,8 @@ import type { PayloadRequest } from 'payload'
 
 import type { Opportunity } from '@/payload-types'
 import type { CrmSyncResult, SubmissionRow } from '@/lib/crm/types'
+import { buildCrmTaskData } from '@/lib/crm/tasks/data'
+import { buildSubmissionTaskPolicy } from '@/lib/crm/tasks/policy'
 
 import { daysFromNow } from './date'
 import { ensureContactAndAccount } from './records'
@@ -77,34 +79,42 @@ export async function syncInternalFormSubmission(
       })
     : null) as null | Opportunity
 
+  const taskPolicy = buildSubmissionTaskPolicy({
+    submission: parsed,
+  })
   const task = await req.payload.create({
     collection: 'crm-tasks',
-    data: {
+    data: buildCrmTaskData({
       account: account.id,
       contact: contact.id,
-      dueAt: daysFromNow(1),
       lead: lead.id,
       notes: parsed.preferredReply
         ? `${parsed.plaintext}\n\nPreferred reply: ${parsed.preferredReply}`
         : parsed.plaintext,
       opportunity: opportunity?.id,
       owner: ownerId ?? undefined,
-      priority: parsed.priority,
-      staleAt: daysFromNow(parsed.staleDays),
-      status: 'open',
+      policy: taskPolicy,
       taskType:
         parsed.source === 'schedule_request'
           ? 'scheduling'
           : parsed.source === 'instant_quote'
             ? 'quote_follow_up'
-            : 'general',
+            : parsed.requestKind === 'billing_support' || parsed.requestKind === 'refund_request'
+              ? 'billing_follow_up'
+              : 'general',
       title:
         parsed.source === 'schedule_request'
           ? `Schedule follow-up for ${contact.fullName}`
           : parsed.source === 'instant_quote'
             ? `Quote follow-up for ${contact.fullName}`
-            : `Lead follow-up for ${contact.fullName}`,
-    },
+            : parsed.requestKind === 'refund_request'
+              ? `Refund review for ${contact.fullName}`
+              : parsed.requestKind === 'policy_privacy'
+                ? `Policy request for ${contact.fullName}`
+                : parsed.requestKind === 'billing_support'
+                  ? `Billing follow-up for ${contact.fullName}`
+                  : `Lead follow-up for ${contact.fullName}`,
+    }) as never,
     req,
   })
 

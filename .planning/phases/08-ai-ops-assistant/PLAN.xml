@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phase-plan>
+  <meta>
+    <phase-id>08</phase-id>
+    <phase-name>AI ops assistant (beta)</phase-name>
+    <date>2026-03-26</date>
+  </meta>
+  <status>planned</status>
+  <summary>
+    <item>Deliver a gated, staff-only assistant using OpenAI + Vercel AI SDK, RAG over approved docs, and Assistant UI / Tool UI patterns.</item>
+    <item>Optional vision path: screenshot to extracted contacts with confirmation before CRM writes.</item>
+    <item>Explicit guardrails: feature flag, beta labeling, audit, rate limits, kill switch.</item>
+  </summary>
+  <tasks>
+    <task ref="08-01">Architecture, env flag, DECISION D-ai-001</task>
+    <task ref="08-02">RAG embeddings + storage</task>
+    <task ref="08-03">Portal chat UI + streaming + tools</task>
+    <task ref="08-04">Vision upload path (optional)</task>
+    <task ref="08-05">Operational guardrails</task>
+    <task ref="08-06">Tests</task>
+  </tasks>
+</phase-plan>

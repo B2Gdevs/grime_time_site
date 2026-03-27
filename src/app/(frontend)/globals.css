@@ -262,10 +262,11 @@
   body.site-shell {
     @apply bg-background text-foreground min-h-[100vh] flex flex-col;
     letter-spacing: var(--tracking-normal);
+    overflow-x: hidden;
   }
 
   body.portal-shell {
-    overflow: hidden;
+    overflow-x: hidden;
   }
 
   .site-section-shell {
@@ -315,9 +316,11 @@
 
 @layer components {
   .portal-main-shell {
+    display: flex;
+    flex: 1 1 auto;
     min-height: 0;
     min-width: 0;
-    overflow: hidden;
+    overflow-x: hidden;
   }
 
   .portal-scroll {

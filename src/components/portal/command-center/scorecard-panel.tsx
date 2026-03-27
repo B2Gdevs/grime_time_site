@@ -22,7 +22,7 @@ export function ScorecardPanel({
   setDetail: (value: DetailState) => void
 }) {
   return (
-    <Card className="border shadow-sm">
+    <Card className="border shadow-sm" data-tour="portal-scorecard-panel">
       <CardHeader className="pb-2">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div>

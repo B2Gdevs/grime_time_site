@@ -15,6 +15,7 @@ Repo files
 - [`.cursor/mcp.json`](../../.cursor/mcp.json)
 - [`.codex/payload-mcp.example.toml`](../../.codex/payload-mcp.example.toml)
 - [`.codex/image-gen-mcp.example.toml`](../../.codex/image-gen-mcp.example.toml)
+- [`scripts/verify-mcp.mjs`](../../scripts/verify-mcp.mjs)
 - [`.planning/workflows/image-generation-mcp-and-media-workflow.md`](./image-generation-mcp-and-media-workflow.md)
 
 Current policy
@@ -33,12 +34,21 @@ Enablement flow
 5. Paste that API key into your local Cursor or Codex MCP config.
 6. Test with an MCP client using `POST /api/mcp`. A browser `GET /api/mcp` is not a meaningful MCP test.
 
+Verification flow
+1. Start the app server with `npm run dev`.
+2. Ensure `PAYLOAD_MCP_ENABLED=true` and `PAYLOAD_MCP_API_KEY` is present in `.env`.
+3. Run `npm run verify:mcp`.
+4. Expect `payload endpoint` to report a non-401/non-404 HTTP response and `image-gen stdio` to report a successful launcher start.
+5. If the script fails, treat the failing check as the exact repair target instead of re-debugging editor config by hand.
+
 Local endpoint
 - `http://localhost:5465/api/mcp`
 
 Cursor
-- The repo ships a disabled project-level config in [`.cursor/mcp.json`](../../.cursor/mcp.json).
-- Replace `REPLACE_WITH_PAYLOAD_MCP_API_KEY` with a real key and set `"enabled": true`.
+- The repo ships a project-level config in [`.cursor/mcp.json`](../../.cursor/mcp.json) with server names aligned to Codex: `payload_local`, `image_gen_local`.
+- **Payload:** set `PAYLOAD_MCP_API_KEY` in the repo root `.env` (create the key in Payload Admin after MCP is enabled). [scripts/payload-mcp-stdio.mjs](../../scripts/payload-mcp-stdio.mjs) runs `mcp-remote` with that secret so nothing sensitive is committed.
+- **Image gen:** same as Codex — `node scripts/image-gen-mcp-start.mjs --transport stdio` with `cwd` at the workspace root; ensure `OPENAI_API_KEY` / image MCP env in `.env` per [image-generation-mcp-and-media-workflow.md](./image-generation-mcp-and-media-workflow.md).
+- Toggle each server with `"enabled": true | false` in `.cursor/mcp.json` if you need Cursor to start without those MCPs.
 
 Codex
 - Codex uses the user config at `~/.codex/config.toml`.

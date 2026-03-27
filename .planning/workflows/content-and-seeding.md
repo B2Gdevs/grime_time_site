@@ -53,7 +53,7 @@ Treat social proof as launch-critical content, not a later nicety.
 
 - **Seed first:** include realistic placeholder testimonials, trust badges, and before/after sections in seed so the site has a complete structure.
 - **Admin next:** move testimonials and proof into the fastest acceptable Payload editing path for non-devs.
-- **Decision still open:** fastest path could be a dedicated collection, a reusable block, or a global. The planning anchor for that choice is phase `03`, task `03-03`.
+- **Current decision:** testimonials live in the dedicated `testimonials` collection and render through the optional Testimonials page block. Keep the block off public pages until marketing wants those quotes live.
 
 ## Note on revalidation
 

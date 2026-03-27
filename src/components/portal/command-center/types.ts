@@ -5,6 +5,7 @@ import type {
   OpsLiabilityRow,
   OpsMergedScorecardRow,
 } from '@/lib/ops/opsDashboardTypes'
+import type { OpsCommandCenterTabId } from '@/lib/ops/opsCommandCenterTabs'
 
 export type DetailState = {
   body?: string
@@ -19,6 +20,7 @@ export type OpsCommandCenterProps = {
   assetLadderItems: OpsAssetLadderRow[]
   crmWorkspace: CrmWorkspaceData
   growthMilestones: OpsGrowthMilestoneRow[]
+  initialTab?: OpsCommandCenterTabId
   liabilityItems: OpsLiabilityRow[]
   mergedScorecard: OpsMergedScorecardRow[]
   scorecardTooltipMap: Record<string, string>

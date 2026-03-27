@@ -31,15 +31,15 @@
         <command>See src/content/docs/lead-to-customer-runbook.md (portal Docs, admin); team-login-and-vault.md TBD</command>
       </commands>
     </task>
-    <task id="02-04" agent-id="" status="planned">
+    <task id="02-04" agent-id="" status="done">
       <goal>Define "single pane of glass": what lives in Payload admin/routes vs Stripe, Resend, and background jobs; integration map.</goal>
       <keywords>architecture,integrations,billing,email</keywords>
       <commands>
-        <command>npm run planning -- snapshot</command>
+        <command>See DECISIONS D-ops-001 (portal + /ops primary; /admin secondary) and .planning/workflows/crm-and-integrations.md</command>
       </commands>
     </task>
-    <task id="02-05" agent-id="" status="planned">
-      <goal>Security framing for shared credentials (options: 1Password, vault patterns, Payload encrypted fields) - decision prep only.</goal>
+    <task id="02-05" agent-id="" status="done">
+      <goal>Security framing for shared credentials: Infisical for team secrets; Payload encrypted fields; Supabase/Postgres for sensitive data at rest.</goal>
       <keywords>security,vault,secrets</keywords>
       <commands>
         <command># see DECISIONS.xml</command>
@@ -61,21 +61,21 @@
         <command># follow template README after clone/generate</command>
       </commands>
     </task>
-    <task id="03-02" agent-id="" status="in-progress">
+    <task id="03-02" agent-id="" status="done">
       <goal>Seed and publish the real homepage and core marketing pages for the exterior-cleaning brand.</goal>
       <keywords>landing,seo,content</keywords>
       <commands>
         <command>See .planning/phases/03-landing-and-payload-scaffold/PLAN.xml</command>
       </commands>
     </task>
-    <task id="03-03" agent-id="" status="planned">
-      <goal>Plan a quick-edit admin path for reviews, testimonials, and before/after proof so staff can update trust content without code edits.</goal>
+    <task id="03-03" agent-id="" status="done">
+      <goal>Quick-edit admin path for reviews, testimonials, and before/after proof. Testimonials: dedicated `testimonials` collection + Testimonials section block (do not place on public pages until approved).</goal>
       <keywords>testimonial,review,proof,admin</keywords>
       <commands>
-        <command>See .planning/workflows/content-and-seeding.md and customer-site-content-and-engagebay.md</command>
+        <command>See src/collections/Testimonials/index.ts, src/blocks/Testimonials/, DECISIONS D-content-003, .planning/workflows/content-and-seeding.md</command>
       </commands>
     </task>
-    <task id="03-04" agent-id="" status="in-progress">
+    <task id="03-04" agent-id="" status="done">
       <goal>Launch checklist for marketing-site readiness: nav, CTA flow, form coverage, service areas, visual system/theme polish, and mobile QA.</goal>
       <keywords>launch,qa,marketing</keywords>
       <commands>
@@ -89,44 +89,58 @@
         <command>See src/endpoints/seed/public-support-pages.ts and src/endpoints/seed/index.ts</command>
       </commands>
     </task>
-    <task id="03-06" agent-id="" status="in-progress">
+    <task id="03-06" agent-id="" status="done">
       <goal>Define and use a generated-image workflow for hero sections, cards, features, and atmospheric backgrounds so marketing art can be produced quickly and stored cleanly in Payload media or `public/`.</goal>
       <keywords>images,media,marketing,mcp</keywords>
       <commands>
         <command>See .planning/workflows/image-generation-mcp-and-media-workflow.md</command>
       </commands>
     </task>
-    <task id="03-07" agent-id="" status="planned">
+    <task id="03-08" agent-id="" status="done">
+      <goal>Add an admin-only “Generate image + create media” button on the Payload `media` create screen: admin enters prompt (optionally edits) and clicks generate, which calls OpenAI image generation and creates a new `media` document with the generated upload.</goal>
+      <keywords>media,admin,openai,upload,generation</keywords>
+      <commands>
+        <command>See src/collections/Media.ts, src/app/api/internal/media/generate/route.ts, src/components/media-generate/PromptToMediaField.tsx</command>
+      </commands>
+    </task>
+    <task id="03-09" agent-id="" status="done">
+      <goal>Demo-ready fixtures: gated `DEMO_SEED` seed (`src/endpoints/seed/demo-seed.ts`), eight `@demo.grimetime.local` personas, CRM + billing + Stripe test sync, demo mode cookie (`grime_demo_mode`) scoping `/ops` + CRM for admins, tours gated per `demo-data-and-flows.md`.</goal>
+      <keywords>demo,seed,launch,qa</keywords>
+      <commands>
+        <command>See .planning/workflows/demo-data-and-flows.md and DECISIONS D-demo-001</command>
+      </commands>
+    </task>
+    <task id="03-07" agent-id="" status="done">
       <goal>Redesign `/contact` for clarity and stronger visual hierarchy: remove faded treatment, reduce copy density, add brand logo presence in the request card, increase icon-led affordances, and replace loose text-card stacks with compact tabs that drive a single detail panel for long-form guidance.</goal>
       <keywords>contact,ux,tabs,brand,icons</keywords>
       <commands>
-        <command>See src/app/(frontend)/contact/page.tsx and .planning/workflows/customer-site-content-and-engagebay.md</command>
+        <command>See src/app/(frontend)/[slug]/page.tsx, src/blocks/ContactRequest/, src/endpoints/seed/contact-page.ts, and .planning/workflows/customer-site-content-and-engagebay.md</command>
       </commands>
     </task>
   </phase>
   <phase id="04">
-    <task id="04-01" agent-id="" status="in-progress">
+    <task id="04-01" agent-id="" status="done">
       <goal>Connect Payload to Supabase Postgres (adapter + migrations); document env for local and Vercel.</goal>
       <keywords>supabase,postgres,payload</keywords>
       <commands>
         <command># POSTGRES_URL from Supabase dashboard</command>
       </commands>
     </task>
-    <task id="04-02" agent-id="" status="planned">
+    <task id="04-02" agent-id="" status="done">
       <goal>Create and verify the initial admin user in the real Supabase-backed database after approved migrations.</goal>
       <keywords>auth,users,seed</keywords>
       <commands>
         <command>Use scripts/bootstrap-admin.ts or the Payload admin login flow after migration approval</command>
       </commands>
     </task>
-    <task id="04-03" agent-id="" status="in-progress">
+    <task id="04-03" agent-id="" status="done">
       <goal>Prepare Payload MCP and editor wiring so the same local app server can expose `/api/mcp` after approved schema work and local API key setup.</goal>
       <keywords>mcp,cursor,codex,devtools</keywords>
       <commands>
         <command>See .planning/workflows/payload-mcp-and-editor-setup.md</command>
       </commands>
     </task>
-    <task id="04-04" agent-id="" status="in-progress">
+    <task id="04-04" agent-id="" status="done">
       <goal>Split customer vs admin access flows so customer login stays customer-only, admin sign-in stays on Payload admin, the admin ops dashboard lives on `/ops`, the customer portal nav stays focused on estimates, invoices, schedule, and account settings, and effective-user auth can render customer scope cleanly when admins impersonate users.</goal>
       <keywords>auth,portal,admin,customer,dashboard</keywords>
       <commands>
@@ -161,37 +175,44 @@
         <command>Use `next build --webpack` in package.json until the current deploy/runtime mismatch is no longer present.</command>
       </commands>
     </task>
+    <task id="04-09" agent-id="" status="done">
+      <goal>Modernize customer auth by introducing Supabase-backed email/password, magic-link, reset-password, claim-account, and company-invite flows while keeping Payload admin auth for staff and preserving Payload `users` as the portal authorization/profile record.</goal>
+      <keywords>auth,supabase,magic-link,password-reset,portal</keywords>
+      <commands>
+        <command>See .planning/workflows/customer-auth-and-portal-access.md</command>
+      </commands>
+    </task>
   </phase>
   <phase id="05">
-    <task id="05-01" agent-id="" status="in-progress">
+    <task id="05-01" agent-id="" status="done">
       <goal>Lead forms + contact storage; shared first-party quote/contact/schedule/support submission path; Payload-native CRM records with no third-party CRM dependency.</goal>
       <keywords>forms,crm,leads,payload</keywords>
       <commands>
         <command>Payload form-submissions, internal CRM entities, and sequence enrollment design</command>
       </commands>
     </task>
-    <task id="05-02" agent-id="" status="in-progress">
+    <task id="05-02" agent-id="" status="done">
       <goal>Calendar booking and schedule request flow - use first-party forms with shared validation/helpers, customer portal schedule-change requests, recurring-plan cadence, and integrate the lead into Payload plus internal follow-up state.</goal>
       <keywords>booking,calendar</keywords>
       <commands>
         <command>See .planning/phases/05-customers-forms-and-ops-integrations/PLAN.xml</command>
       </commands>
     </task>
-    <task id="05-03" agent-id="" status="planned">
+    <task id="05-03" agent-id="" status="done">
       <goal>Calls / quote requests intake, internal activity timeline, and Resend-based outbound email visibility plan.</goal>
       <keywords>intake,calls,email,resend</keywords>
       <commands>
         <command>See .planning/workflows/crm-and-integrations.md</command>
       </commands>
     </task>
-    <task id="05-04" agent-id="" status="in-progress">
+    <task id="05-04" agent-id="" status="done">
       <goal>Promote Payload quotes into an in-house opportunity / pipeline model so relationship management and follow-up live inside Payload instead of a third-party CRM.</goal>
       <keywords>payload,pipeline,quotes,crm</keywords>
       <commands>
         <command>See .planning/workflows/crm-and-integrations.md and quote-system-and-texas-compliance.md</command>
       </commands>
     </task>
-    <task id="05-05" agent-id="" status="planned">
+    <task id="05-05" agent-id="" status="done">
       <goal>Build the first internal CRM workspace in Payload: leads, accounts, contacts, opportunities, activities, tasks, and follow-up queue powering `/ops` and future account views.</goal>
       <keywords>crm,payload,ops,activities</keywords>
       <commands>
@@ -205,9 +226,16 @@
         <command>See src/app/(portal)/dashboard/page.tsx, estimates/page.tsx, invoices/page.tsx, service-schedule/page.tsx, account/page.tsx</command>
       </commands>
     </task>
+    <task id="05-07" agent-id="" status="done">
+      <goal>Improve customer activation and attention capture: account-claim links from quote/invoice/schedule emails, clearer first-login states, and easier entry into the portal when a customer already exists in CRM but has not claimed access yet. (2026-03-27: dashboard welcome + profile CTA; estimates page claim hint.)</goal>
+      <keywords>portal,activation,quotes,invoices,email</keywords>
+      <commands>
+        <command>See .planning/workflows/customer-auth-and-portal-access.md</command>
+      </commands>
+    </task>
   </phase>
   <phase id="06">
-    <task id="06-01" agent-id="" status="in-progress">
+    <task id="06-01" agent-id="" status="done">
       <goal>Quoting system: internal Payload collection + env gate, plus draftable/publishable quote-settings globals that power the public instant quote math and service toggles.</goal>
       <keywords>quotes,pricing,defer</keywords>
       <commands>
@@ -221,7 +249,7 @@
         <command>See .planning/workflows/admin-portal-quotes-ux.md and src/app/(portal)/ops/page.tsx</command>
       </commands>
     </task>
-    <task id="06-03" agent-id="" status="in-progress">
+    <task id="06-03" agent-id="" status="done">
       <goal>Define KPI formulas and replace placeholder projected revenue, MRR, margin, and milestone thresholds with real business targets before moving them into editable app data.</goal>
       <keywords>scorecard,assets,equipment,tools,growth,milestones</keywords>
       <commands>
@@ -249,13 +277,6 @@
         <command>migration 20260325_005955_ops_liabilities_and_scorecard_rows; src/components/data-table.tsx, AdminDashboardView, app-sidebar; src/collections/OpsLiabilityItems, OpsScorecardRows; src/lib/ops/mergeScorecard.ts</command>
       </commands>
     </task>
-    <task id="06-07" agent-id="" status="planned">
-      <goal>Optional: internal admin API routes + portal forms for milestones, asset ladder, and liabilities if deep links to Payload admin are insufficient.</goal>
-      <keywords>portal,api,crud,ops</keywords>
-      <commands>
-        <command>See TASK-REGISTRY 06-06 (current: deep links only)</command>
-      </commands>
-    </task>
     <task id="06-08" agent-id="" status="done">
       <goal>Wire ops scorecard/liability CRUD into the live dashboard, seed default rows so `/ops` is not empty, add scheduled-job reads to the day-board calendar, and move dashboard detail panels into the left rail instead of overlay sheets.</goal>
       <keywords>ops,scorecard,calendar,portal,layout</keywords>
@@ -263,66 +284,87 @@
         <command>See src/app/(portal)/ops/page.tsx, src/components/data-table.tsx, src/components/portal/OperatingDayCalendar.tsx, src/endpoints/seed/index.ts</command>
       </commands>
     </task>
+    <task id="06-09" agent-id="" status="done">
+      <goal>Refactor `/ops` KPI cards to compact number-first presentation with shared info-icon tooltips that explain formula, composition, and data freshness; reduce paragraph copy and keep card height/scan density consistent.</goal>
+      <keywords>ops,kpi,ux,tooltips,compact</keywords>
+      <commands>
+        <command>See src/app/(portal)/ops/page.tsx, src/lib/ops/internalDashboardData.ts, and .planning/workflows/admin-portal-quotes-ux.md</command>
+      </commands>
+    </task>
+    <task id="06-10" agent-id="" status="done">
+      <goal>Portal guided tours (react-joyride): staff vs customer registry, localStorage completion, Ops overview session autolaunch for real admins, staff deep tours (CRM, Today, scorecard/liabilities, assets, milestones, portal Docs) with `?tab=` / path routing; customer surface tours (dashboard, estimates, invoices, schedule, account); sidebar launcher + portal doc alignment; marketing-site instant-quote tour (`SiteTourProvider`, button-only entry). Align with `demo-data-and-flows.md` and shell refactors (07-11, 07-12, 07-14) without breaking `data-tour` targets. QA richness gated by BLOCKERS `BLK-demo-seed-001` (`03-09`).</goal>
+      <keywords>portal,tours,joyride,staff-onboarding,demo</keywords>
+      <commands>
+        <command>See src/lib/tours/registry.ts, src/lib/tours/site-registry.ts, src/components/tours/PortalTourProvider.tsx, src/components/tours/SiteTourProvider.tsx, DECISIONS D-tour-001, .planning/BLOCKERS.xml, .planning/workflows/demo-data-and-flows.md</command>
+      </commands>
+    </task>
+    <task id="06-11" agent-id="" status="done">
+      <goal>Former backlog from `06-10` — delivered: `staff-milestones`, `staff-portal-docs`, `customer-estimates`, `customer-invoices`, `customer-schedule`, `customer-account`, site `public-instant-quote` (explicit button only). Out of scope: Payload admin shortcuts tour. AI assistant tour deferred per BLOCKERS `BLK-tour-ai-001` (phase `08`).</goal>
+      <keywords>portal,tours,joyride,backlog,docs</keywords>
+      <commands>
+        <command>See TASK-REGISTRY 06-10; src/lib/tours/registry.ts; .planning/BLOCKERS.xml</command>
+      </commands>
+    </task>
   </phase>
   <phase id="07">
-    <task id="07-01" agent-id="" status="in-progress">
+    <task id="07-01" agent-id="" status="done">
       <goal>Define and implement the first-party CRM schema: leads, accounts, contacts, opportunities, activities, tasks, and sequence enrollments linked to quotes, invoices, service plans, appointments, and users, including company-account membership that can power customer login scope.</goal>
       <keywords>crm,payload,collections,schema</keywords>
       <commands>
         <command>See .planning/phases/07-first-party-crm-billing-and-automation/PLAN.xml</command>
       </commands>
     </task>
-    <task id="07-02" agent-id="" status="in-progress">
-      <goal>Build internal CRM API routes and query helpers for queues, search, list/detail views, owner assignment, stale follow-up detection, activity timeline writes, and compact dashboard summaries.</goal>
+    <task id="07-02" agent-id="" status="done">
+      <goal>Build internal CRM API routes and query helpers for queues, search, list/detail views, owner assignment, stale follow-up detection, activity timeline writes, lead qualification/disqualification, and compact dashboard summaries.</goal>
       <keywords>crm,api,search,queue</keywords>
       <commands>
         <command>See src/app/api/internal/crm/workspace/route.ts, src/app/api/internal/crm/record/route.ts, and src/lib/crm/workspace/*</command>
       </commands>
     </task>
-    <task id="07-03" agent-id="" status="in-progress">
-      <goal>Replace placeholder ops surfaces with a compact CRM workspace using shared tables, list rows, detail panes, status badges, icons, tooltips, priority sorting, and stale-contact follow-up indicators.</goal>
+    <task id="07-03" agent-id="" status="done">
+      <goal>Replace placeholder ops surfaces with a compact CRM workspace using shared tables, list rows, detail panes, status badges, icons, tooltips, priority sorting, owner/commercial filters, and stale-contact follow-up indicators.</goal>
       <keywords>crm,ux,ops,compact</keywords>
       <commands>
         <command>See src/app/(portal)/ops/page.tsx, src/components/portal/command-center/*, and src/components/portal/crm/*</command>
       </commands>
     </task>
-    <task id="07-04" agent-id="" status="in-progress">
-      <goal>Implement Stripe-backed billing sync: webhook ingestion, idempotent invoice/subscription reconciliation, customer billing actions, hosted Stripe invoice/portal flows, commercial terms billing, and portal-visible payment state.</goal>
+    <task id="07-04" agent-id="" status="done">
+      <goal>Implement Stripe-backed billing sync: webhook ingestion, idempotent invoice/subscription reconciliation, customer billing actions, hosted Stripe invoice/portal flows, commercial terms billing, portal-visible payment state, and compact admin billing controls that do not rely on raw collection editors for daily work.</goal>
       <keywords>stripe,webhooks,billing,invoices</keywords>
       <commands>
         <command>Use STRIPE_SECRET_KEY, STRIPE_ACCOUNT_ID, STRIPE_WEBHOOK_SECRET</command>
         <command>See .planning/workflows/stripe-billing-and-customer-payment-operations.md</command>
       </commands>
     </task>
-    <task id="07-05" agent-id="" status="planned">
+    <task id="07-05" agent-id="" status="done">
       <goal>Implement the fastest first-party sequence engine path with Payload jobs and Resend templates for lead follow-up, quote reminders, appointment confirmations, and billing reminders delivered to each worker's normal inbox (personal or company email) before optional mailbox OAuth integrations.</goal>
       <keywords>resend,jobs,sequences,automation</keywords>
       <commands>
         <command>Use RESEND_API_KEY and CRON_SECRET</command>
       </commands>
     </task>
-    <task id="07-06" agent-id="" status="in-progress">
+    <task id="07-06" agent-id="" status="done">
       <goal>Seed realistic demo data and add unit, integration, and Playwright coverage for CRM flows, Stripe webhook handling, and customer portal account/billing/schedule behavior.</goal>
       <keywords>seed,tests,playwright,crm</keywords>
       <commands>
         <command>cmd /c npm run test:int &amp;&amp; cmd /c npm run test:e2e</command>
       </commands>
     </task>
-    <task id="07-07" agent-id="" status="in-progress">
+    <task id="07-07" agent-id="" status="done">
       <goal>Define the day-to-day operating model: role matrix, ownership rules, queue priorities, SLA timers (including support/refund classes), and required next-action fields so staff always know what to do each day.</goal>
       <keywords>ops,roles,sla,workflow</keywords>
       <commands>
         <command>See .planning/workflows/operating-rhythm-roles-and-reminders.md</command>
       </commands>
     </task>
-    <task id="07-08" agent-id="" status="planned">
+    <task id="07-08" agent-id="" status="done">
       <goal>Enforce strict data/UI separation boundaries: public and customer views only see allowed account-scoped data; admin-only docs, queues, and cross-user/company visibility remain staff-only, including impersonation-safe guards.</goal>
       <keywords>auth,rbac,customer,admin,security</keywords>
       <commands>
         <command>See src/lib/auth/getAuthContext.ts, src/components/app-sidebar.tsx, src/app/(portal)/docs/*, src/app/(portal)/ops/*</command>
       </commands>
     </task>
-    <task id="07-09" agent-id="" status="planned">
+    <task id="07-09" agent-id="" status="done">
       <goal>Operationalize local MCP usage for Codex/Cursor with a repeatable verification checklist (endpoint reachable, key valid, server list healthy, and image-gen stdio launchable from repo scripts).</goal>
       <keywords>mcp,codex,cursor,devtools,verification</keywords>
       <commands>
@@ -330,46 +372,90 @@
         <command>cmd /c npm run image-mcp:stdio</command>
       </commands>
     </task>
-    <task id="07-10" agent-id="" status="planned">
+    <task id="07-10" agent-id="" status="done">
       <goal>Design and implement discount policy support for account-wide defaults and user-level overrides, with clear precedence, audit history, and safe staff-only controls.</goal>
       <keywords>billing,discounts,accounts,users,policy</keywords>
       <commands>
         <command>See .planning/workflows/operating-rhythm-roles-and-reminders.md and .planning/phases/07-first-party-crm-billing-and-automation/PLAN.xml</command>
       </commands>
     </task>
-    <task id="07-11" agent-id="" status="planned">
+    <task id="07-11" agent-id="" status="done">
       <goal>Refactor the portal shell to conventional shadcn app-layout patterns so sidebar, inset content, and admin impersonation toolbar do not overlap; ensure the toolbar remains top-layer and visible.</goal>
       <keywords>portal,sidebar,layout,toolbar,shadcn</keywords>
       <commands>
         <command>See src/app/(portal)/layout.tsx, src/components/app-sidebar.tsx, src/components/admin-impersonation/*</command>
       </commands>
     </task>
-    <task id="07-12" agent-id="" status="planned">
-      <goal>Split oversized command-center sections into first-class `/ops/*` routes (CRM workspace, scorecard, milestones, assets, today board), and keep command center focused on the currently logged-in worker's duties with deep links/query params into those pages.</goal>
+    <task id="07-12" agent-id="" status="done">
+      <goal>Split oversized command-center sections into first-class `/ops/*` routes (CRM workspace, scorecard, milestones, assets, today board), keep `/ops` itself as the duties-first staff dashboard, and use compact summary cards plus deep links/query params into focused pages instead of embedding the full work surfaces back into one hub.</goal>
       <keywords>ops,information-architecture,routing,ux,crm</keywords>
       <commands>
-        <command>See src/app/(portal)/ops/page.tsx and src/components/portal/command-center/*</command>
+        <command>See src/app/(portal)/ops/page.tsx (?tab=), src/app/(portal)/ops/*/page.tsx redirects, src/components/portal/command-center/*</command>
       </commands>
     </task>
-    <task id="07-13" agent-id="" status="planned">
+    <task id="07-13" agent-id="" status="done">
       <goal>Implement deterministic preview identity and nav labeling: `Customer home` should use a non-admin `test_user` effective context, show context labels in sidebar (`(admin)` / `(test_user)`), and hide admin-only docs/settings when viewing customer scope.</goal>
       <keywords>impersonation,sidebar,preview,auth,seed</keywords>
       <commands>
-        <command>See src/app/(portal)/layout.tsx, src/components/app-sidebar.tsx, src/components/admin-impersonation/*, src/endpoints/seed/index.ts</command>
+        <command>See src/app/(portal)/layout.tsx, src/components/app-sidebar.tsx, src/lib/auth/previewIdentity.ts, src/endpoints/seed/index.ts</command>
       </commands>
     </task>
-    <task id="07-14" agent-id="" status="in-progress">
-      <goal>Adopt and enforce frontend/code-quality conventions: stronger icon usage where helpful, reduce copy-heavy/faded UI patterns, extract large files, centralize repeated literals into constants/typed unions, and formalize reusable utilities across ops/customer surfaces.</goal>
+    <task id="07-14" agent-id="" status="done">
+      <goal>Adopt and enforce frontend/code-quality conventions: stronger icon usage where helpful, reduce copy-heavy/faded UI patterns, extract large files, centralize repeated literals into constants/typed unions, formalize reusable utilities across ops/customer surfaces, and standardize server-first plus TanStack Query client-cache patterns for live mutable workflows.</goal>
       <keywords>standards,refactor,icons,constants,enums,utilities</keywords>
       <commands>
         <command>See .planning/workflows/frontend-and-code-quality-conventions.md</command>
       </commands>
     </task>
-    <task id="07-15" agent-id="" status="in-progress">
+    <task id="07-15" agent-id="" status="done">
       <goal>Execute the refactor extraction roadmap toward the target folder structure for ops/auth/crm/dashboard modules, including prioritized large-file splits, presenter/policy extraction, and typed query-param utilities for `/ops/*` routing.</goal>
       <keywords>refactor,architecture,folders,presenters,policies</keywords>
       <commands>
         <command>See .planning/workflows/refactor-extraction-roadmap.md</command>
+      </commands>
+    </task>
+  </phase>
+  <phase id="08">
+    <task id="08-01" agent-id="" status="planned">
+      <goal>Architecture + DECISION for AI ops assistant beta: scope (business operations only), env feature flag (`AI_OPS_ASSISTANT_ENABLED` or similar), staff/admin gate, OpenAI + Vercel AI SDK baseline, no customer-facing chat until promoted, explicit PII/logging redaction policy.</goal>
+      <keywords>ai,openai,vercel-sdk,feature-flag,security</keywords>
+      <commands>
+        <command>See DECISIONS D-ai-001; .planning/workflows/ai-ops-assistant-beta.md</command>
+      </commands>
+    </task>
+    <task id="08-02" agent-id="" status="planned">
+      <goal>RAG: embeddings pipeline for approved docs (portal `src/content/docs/`, selected playbooks), vector storage (e.g. Supabase `pgvector` or managed index), re-ingest on doc change, retrieval contracts for quote/CRM terminology.</goal>
+      <keywords>rag,embeddings,pgvector,docs</keywords>
+      <commands>
+        <command>See .planning/workflows/ai-ops-assistant-beta.md</command>
+      </commands>
+    </task>
+    <task id="08-03" agent-id="" status="planned">
+      <goal>Staff UI: Assistant UI + Tool UI chat shell in portal (or `/ops` subtree), **Beta** label, streaming via Vercel AI SDK, tool calls to internal read-only APIs (quotes, CRM search) behind explicit allowlists — no broad write access in v1.</goal>
+      <keywords>assistant-ui,tool-ui,chat,portal</keywords>
+      <commands>
+        <command>See .planning/workflows/ai-ops-assistant-beta.md</command>
+      </commands>
+    </task>
+    <task id="08-04" agent-id="" status="planned">
+      <goal>Optional multimodal: screenshot / image upload → vision extraction of phone numbers and notes → structured handoff to CRM lead/quote flows; rate limits; user confirmation before any write; document field use case (contacts in phone notes).</goal>
+      <keywords>vision,ocr,upload,crm,quotes</keywords>
+      <commands>
+        <command>See .planning/workflows/ai-ops-assistant-beta.md</command>
+      </commands>
+    </task>
+    <task id="08-05" agent-id="" status="planned">
+      <goal>Operational guardrails: audit logging, cost/rate limits, retention policy for chat transcripts, kill switch via env, security review before enabling in production org.</goal>
+      <keywords>audit,limits,compliance</keywords>
+      <commands>
+        <command>See DECISIONS D-ai-001</command>
+      </commands>
+    </task>
+    <task id="08-06" agent-id="" status="planned">
+      <goal>Tests: integration tests for retrieval + tool wiring; gated Playwright smoke for beta UI when flag on.</goal>
+      <keywords>test,playwright,ai</keywords>
+      <commands>
+        <command>See .planning/phases/08-ai-ops-assistant/PLAN.xml</command>
       </commands>
     </task>
   </phase>

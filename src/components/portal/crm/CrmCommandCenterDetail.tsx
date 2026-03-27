@@ -10,6 +10,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import type { CrmRecordDetail } from '@/lib/crm/workspace'
 
 import { CrmWorkspaceNoteComposer } from './CrmWorkspaceNoteComposer'
+import { CrmWorkspaceOwnerField } from './CrmWorkspaceOwnerField'
 
 function supportsActivityNotes(kind: CrmRecordDetail['kind']): boolean {
   return kind !== 'sequence-definition'
@@ -146,6 +147,8 @@ export function CrmCommandCenterDetail({
           </TabsContent>
         </Tabs>
       </div>
+
+      <CrmWorkspaceOwnerField detail={detail} reloadDetail={reloadDetail} setDetail={setDetail} />
 
       {supportsActivityNotes(detail.kind) ? (
         <CrmWorkspaceNoteComposer detail={detail} reloadDetail={reloadDetail} setDetail={setDetail} />

@@ -1,6 +1,7 @@
 import type { CollectionConfig } from 'payload'
 
 import { isAdmin } from '@/access/isAdmin'
+import { invoiceCollectionMethodOptions, servicePlanBillingModeOptions } from '@/lib/billing/constants'
 import { createAssignCustomerAccountHook } from '@/lib/customers/accountRelationship'
 import { buildCustomerOwnershipWhere } from '@/lib/customers/access'
 import { arrivalWindowOptions, servicePlanStatusOptions } from '@/lib/services/constants'
@@ -241,6 +242,112 @@ export const ServicePlans: CollectionConfig = {
             disabled: true,
             readOnly: true,
             width: '25%',
+          },
+        },
+      ],
+    },
+    {
+      type: 'row',
+      fields: [
+        {
+          name: 'billingMode',
+          type: 'select',
+          defaultValue: 'autopay_subscription',
+          options: servicePlanBillingModeOptions.map((option) => ({ ...option })),
+          admin: {
+            width: '25%',
+          },
+        },
+        {
+          name: 'collectionMethod',
+          type: 'select',
+          defaultValue: 'charge_automatically',
+          options: invoiceCollectionMethodOptions.map((option) => ({ ...option })),
+          admin: {
+            width: '25%',
+          },
+        },
+        {
+          name: 'billingTermsDays',
+          type: 'number',
+          min: 0,
+          defaultValue: 0,
+          admin: {
+            width: '25%',
+          },
+        },
+        {
+          name: 'autoRenew',
+          type: 'checkbox',
+          defaultValue: true,
+          admin: {
+            width: '25%',
+          },
+        },
+      ],
+    },
+    {
+      type: 'row',
+      fields: [
+        {
+          name: 'paymentMethodRequired',
+          type: 'checkbox',
+          defaultValue: true,
+          admin: {
+            width: '25%',
+          },
+        },
+        {
+          name: 'stripeCustomerID',
+          type: 'text',
+          admin: {
+            readOnly: true,
+            width: '25%',
+          },
+        },
+        {
+          name: 'stripeSubscriptionID',
+          type: 'text',
+          admin: {
+            readOnly: true,
+            width: '25%',
+          },
+        },
+        {
+          name: 'stripeSubscriptionStatus',
+          type: 'text',
+          admin: {
+            readOnly: true,
+            width: '25%',
+          },
+        },
+      ],
+    },
+    {
+      type: 'row',
+      fields: [
+        {
+          name: 'currentPeriodStart',
+          type: 'date',
+          admin: {
+            readOnly: true,
+            width: '33%',
+          },
+        },
+        {
+          name: 'currentPeriodEnd',
+          type: 'date',
+          admin: {
+            readOnly: true,
+            width: '33%',
+          },
+        },
+        {
+          name: 'nextInvoiceAt',
+          type: 'date',
+          admin: {
+            readOnly: true,
+            width: '34%',
           },
         },
       ],

@@ -9,7 +9,7 @@ import type { DetailState } from './types'
 
 export function TodayBoardPanel({ setDetail }: { setDetail: (value: DetailState) => void }) {
   return (
-    <Card className="border shadow-sm">
+    <Card className="border shadow-sm" data-tour="portal-today-board">
       <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-2 space-y-0">
         <div>
           <div className="flex items-center gap-2">

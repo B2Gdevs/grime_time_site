@@ -1,5 +1,11 @@
 export { createCrmActivityNote } from './activity'
-export { advanceOpportunityStage, updateCrmTaskStatus } from './actions'
+export {
+  advanceOpportunityStage,
+  assignCrmRecordOwner,
+  isOwnerAssignableKind,
+  updateCrmTaskStatus,
+  updateLeadStatus,
+} from './actions'
 export { loadCrmRecordDetail } from './detail'
 export { loadCrmWorkspace } from './queries'
 export type {
@@ -10,6 +16,7 @@ export type {
   CrmWorkspaceActionKind,
   CrmWorkspaceData,
   CrmWorkspaceMetric,
+  CrmWorkspaceOwnerScope,
   CrmWorkspaceQuickAction,
   CrmWorkspaceQueue,
   CrmWorkspaceQueueItem,

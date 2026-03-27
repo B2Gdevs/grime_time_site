@@ -1,6 +1,12 @@
 import type { CollectionConfig } from 'payload'
 
 import { isAdmin } from '@/access/isAdmin'
+import { afterInvoiceAutomation } from '@/hooks/afterInvoiceAutomation'
+import {
+  invoiceCollectionMethodOptions,
+  invoiceDeliveryStatusOptions,
+  invoicePaymentSourceOptions,
+} from '@/lib/billing/constants'
 import { createAssignCustomerAccountHook } from '@/lib/customers/accountRelationship'
 import { buildCustomerOwnershipWhere } from '@/lib/customers/access'
 import { billingDocumentStatusOptions } from '@/lib/services/constants'
@@ -173,6 +179,194 @@ export const Invoices: CollectionConfig = {
       ],
     },
     {
+      type: 'row',
+      fields: [
+        {
+          name: 'paymentCollectionMethod',
+          type: 'select',
+          defaultValue: 'send_invoice',
+          options: invoiceCollectionMethodOptions.map((option) => ({ ...option })),
+          admin: {
+            width: '34%',
+          },
+        },
+        {
+          name: 'deliveryStatus',
+          type: 'select',
+          defaultValue: 'draft',
+          options: invoiceDeliveryStatusOptions.map((option) => ({ ...option })),
+          admin: {
+            width: '33%',
+          },
+        },
+        {
+          name: 'paymentSource',
+          type: 'select',
+          options: invoicePaymentSourceOptions.map((option) => ({ ...option })),
+          admin: {
+            width: '33%',
+          },
+        },
+      ],
+    },
+    {
+      type: 'row',
+      fields: [
+        {
+          name: 'billingPeriodStart',
+          type: 'date',
+          admin: {
+            width: '33%',
+          },
+        },
+        {
+          name: 'billingPeriodEnd',
+          type: 'date',
+          admin: {
+            width: '33%',
+          },
+        },
+        {
+          name: 'paidAt',
+          type: 'date',
+          admin: {
+            width: '34%',
+          },
+        },
+      ],
+    },
+    {
+      type: 'row',
+      fields: [
+        {
+          name: 'discountAmount',
+          type: 'number',
+          min: 0,
+          defaultValue: 0,
+          admin: {
+            step: 0.01,
+            width: '25%',
+          },
+        },
+        {
+          name: 'creditAmount',
+          type: 'number',
+          min: 0,
+          defaultValue: 0,
+          admin: {
+            step: 0.01,
+            width: '25%',
+          },
+        },
+        {
+          name: 'refundedAmount',
+          type: 'number',
+          min: 0,
+          defaultValue: 0,
+          admin: {
+            step: 0.01,
+            width: '25%',
+          },
+        },
+        {
+          name: 'writeOffAmount',
+          type: 'number',
+          min: 0,
+          defaultValue: 0,
+          admin: {
+            step: 0.01,
+            width: '25%',
+          },
+        },
+      ],
+    },
+    {
+      type: 'row',
+      fields: [
+        {
+          name: 'paidOutOfBand',
+          type: 'checkbox',
+          defaultValue: false,
+          admin: {
+            width: '25%',
+          },
+        },
+        {
+          name: 'stripeCustomerID',
+          type: 'text',
+          admin: {
+            readOnly: true,
+            width: '25%',
+          },
+        },
+        {
+          name: 'stripeInvoiceID',
+          type: 'text',
+          admin: {
+            readOnly: true,
+            width: '25%',
+          },
+        },
+        {
+          name: 'stripeInvoiceStatus',
+          type: 'text',
+          admin: {
+            readOnly: true,
+            width: '25%',
+          },
+        },
+      ],
+    },
+    {
+      type: 'row',
+      fields: [
+        {
+          name: 'stripeHostedInvoiceURL',
+          type: 'text',
+          admin: {
+            readOnly: true,
+            width: '34%',
+          },
+        },
+        {
+          name: 'stripePaymentIntentID',
+          type: 'text',
+          admin: {
+            readOnly: true,
+            width: '33%',
+          },
+        },
+        {
+          name: 'lastStripeEventID',
+          type: 'text',
+          admin: {
+            readOnly: true,
+            width: '33%',
+          },
+        },
+      ],
+    },
+    {
+      type: 'row',
+      fields: [
+        {
+          name: 'lastStripeSyncAt',
+          type: 'date',
+          admin: {
+            readOnly: true,
+            width: '50%',
+          },
+        },
+        {
+          name: 'paymentReference',
+          type: 'text',
+          admin: {
+            width: '50%',
+          },
+        },
+      ],
+    },
+    {
       name: 'lineItems',
       type: 'array',
       labels: { plural: 'Line items', singular: 'Line item' },
@@ -202,8 +396,13 @@ export const Invoices: CollectionConfig = {
       name: 'notes',
       type: 'textarea',
     },
+    {
+      name: 'adjustmentReason',
+      type: 'textarea',
+    },
   ],
   hooks: {
+    afterChange: [afterInvoiceAutomation],
     beforeValidate: [createAssignCustomerAccountHook()],
   },
 }

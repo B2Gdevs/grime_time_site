@@ -6,6 +6,7 @@ import React from 'react'
 
 import { AdminBar } from '@/components/AdminBar'
 import { AdminImpersonationToolbarShell } from '@/components/admin-impersonation/AdminImpersonationToolbarShell'
+import { SiteTourProvider } from '@/components/tours/SiteTourProvider'
 import { Footer } from '@/Footer/Component'
 import { Header } from '@/Header/Component'
 import { Providers } from '@/providers'
@@ -40,16 +41,18 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body className="site-shell antialiased">
         <Providers>
-          <AdminBar
-            adminBarProps={{
-              preview: isEnabled,
-            }}
-          />
-          <AdminImpersonationToolbarShell />
+          <SiteTourProvider>
+            <AdminBar
+              adminBarProps={{
+                preview: isEnabled,
+              }}
+            />
+            <AdminImpersonationToolbarShell />
 
-          <Header />
-          {children}
-          <Footer />
+            <Header />
+            {children}
+            <Footer />
+          </SiteTourProvider>
         </Providers>
       </body>
     </html>

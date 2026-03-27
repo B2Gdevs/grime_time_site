@@ -1,8 +1,6 @@
 import type { RequiredDataFromCollectionSlug } from 'payload'
 import type { Media } from '@/payload-types'
 
-import { buildHomeMarketingBlocks } from './home-marketing-blocks'
-
 type HomeArgs = {
   heroImage: Media
   metaImage: Media
@@ -30,7 +28,7 @@ export const home: (args: HomeArgs) => RequiredDataFromCollectionSlug<'pages'> =
             type: 'custom',
             appearance: 'default',
             label: 'Book online',
-            url: '/schedule',
+            url: '/#instant-quote',
           },
         },
         {
@@ -83,7 +81,7 @@ export const home: (args: HomeArgs) => RequiredDataFromCollectionSlug<'pages'> =
                   format: 0,
                   mode: 'normal',
                   style: '',
-                  text: 'House washes, driveways, patios, docks, and repeat exterior-cleaning work for customers who want the property to look sharp without guessing their way through the process. Start with an instant estimate, then let us confirm the real scope before we schedule. ',
+                  text: 'House washing, concrete cleaning, porches, and docks with clear scope and fast scheduling for North Texas properties. ',
                   version: 1,
                 },
                 {
@@ -103,7 +101,7 @@ export const home: (args: HomeArgs) => RequiredDataFromCollectionSlug<'pages'> =
                   fields: {
                     linkType: 'custom',
                     newTab: false,
-                    url: '/schedule',
+                    url: '/#instant-quote',
                   },
                   format: '',
                   indent: 0,
@@ -115,7 +113,7 @@ export const home: (args: HomeArgs) => RequiredDataFromCollectionSlug<'pages'> =
                   format: 0,
                   mode: 'normal',
                   style: '',
-                  text: ' or jump to the ',
+                  text: ' or jump to ',
                   version: 1,
                 },
                 {
@@ -147,7 +145,7 @@ export const home: (args: HomeArgs) => RequiredDataFromCollectionSlug<'pages'> =
                   format: 0,
                   mode: 'normal',
                   style: '',
-                  text: ' section for a starting range.',
+                  text: ' for an instant range.',
                   version: 1,
                 },
               ],
@@ -212,22 +210,6 @@ export const home: (args: HomeArgs) => RequiredDataFromCollectionSlug<'pages'> =
             ],
           },
           {
-            eyebrow: 'Outdoor living',
-            media: heroImage.id,
-            name: 'Porches and outdoor living areas',
-            pricingHint: 'Minimum charge, complexity, furniture, and rail detail',
-            summary:
-              'Front porches, steps, and mixed-surface patios where detail work matters as much as raw square footage.',
-            highlights: [
-              {
-                text: 'Mixed materials and small details can take more time than the size suggests.',
-              },
-              {
-                text: 'Good place to show clean, intentional imagery instead of stock contractor shots.',
-              },
-            ],
-          },
-          {
             eyebrow: 'Waterfront surfaces',
             media: galleryBottom.id,
             name: 'Docks and waterfront surfaces',
@@ -243,22 +225,6 @@ export const home: (args: HomeArgs) => RequiredDataFromCollectionSlug<'pages'> =
               },
             ],
           },
-          {
-            eyebrow: 'Growth lane',
-            media: galleryMid.id,
-            name: 'Commercial growth path',
-            pricingHint: 'Custom scope, route density, recurrence, and liability',
-            summary:
-              'Dumpsters, service lanes, and repeat commercial flatwork are on the roadmap, but still go through custom scope review today.',
-            highlights: [
-              {
-                text: 'Commercial accounts should feel deliberate, not like an afterthought on a residential page.',
-              },
-              {
-                text: 'Monthly invoicing and recurring service windows can layer in as the commercial model matures.',
-              },
-            ],
-          },
         ],
       },
       {
@@ -270,6 +236,7 @@ export const home: (args: HomeArgs) => RequiredDataFromCollectionSlug<'pages'> =
         services: [
           {
             eyebrow: 'Step 1',
+            media: galleryMid.id,
             name: '1. Square footage',
             pricingHint: 'Base range',
             summary:
@@ -282,6 +249,7 @@ export const home: (args: HomeArgs) => RequiredDataFromCollectionSlug<'pages'> =
           },
           {
             eyebrow: 'Step 2',
+            media: galleryTop.id,
             name: '2. Surface risk and condition',
             pricingHint: 'Condition multiplier',
             summary:
@@ -294,6 +262,7 @@ export const home: (args: HomeArgs) => RequiredDataFromCollectionSlug<'pages'> =
           },
           {
             eyebrow: 'Step 3',
+            media: galleryBottom.id,
             name: '3. Access and recurrence',
             pricingHint: 'Access and schedule',
             summary:
@@ -310,11 +279,6 @@ export const home: (args: HomeArgs) => RequiredDataFromCollectionSlug<'pages'> =
         blockType: 'pricingTable',
         dataSource: 'global',
       },
-      ...buildHomeMarketingBlocks({
-        drivewayImage: galleryMid,
-        houseImage: galleryTop,
-        propertyImage: galleryBottom,
-      }),
     ],
     meta: {
       description:

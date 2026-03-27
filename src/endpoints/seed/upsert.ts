@@ -51,6 +51,7 @@ export async function upsertMediaByFilename(
       collection: 'media',
       id,
       data: args.data as never,
+      ...(args.file ? { file: args.file } : {}),
       req,
     })
     return { id: doc.id }

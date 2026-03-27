@@ -8,6 +8,7 @@ const created: Array<{ collection: string; id: number | string }> = []
 
 export const crmWorkspaceFixture = {
   accountName: `${crmRunKey} account`,
+  leadName: `${crmRunKey} lead`,
   noteBody: `${crmRunKey} note body`,
 }
 
@@ -88,7 +89,7 @@ export async function seedCrmWorkspace(): Promise<void> {
       source: 'manual',
       staleAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
       status: 'working',
-      title: `${crmRunKey} lead`,
+      title: crmWorkspaceFixture.leadName,
     },
   })
 

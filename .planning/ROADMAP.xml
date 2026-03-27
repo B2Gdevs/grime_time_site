@@ -21,7 +21,7 @@
     <goal>Payload website baseline plus seeded public marketing site, proof content, and quick-edit content paths for launch pages.</goal>
     <requirements>REQ-03</requirements>
     <depends>02</depends>
-    <status>in-progress</status>
+    <status>complete</status>
     <plans>.planning/phases/03-landing-and-payload-scaffold/</plans>
   </phase>
   <phase id="04">
@@ -29,7 +29,7 @@
     <goal>Wire Postgres to Supabase; env for prod/dev; seed users bg@ / pb@ / de@ grimetime.local; auth verified.</goal>
     <requirements>REQ-04</requirements>
     <depends>03</depends>
-    <status>in-progress</status>
+    <status>complete</status>
     <plans>.planning/phases/04-supabase-and-team-access/</plans>
   </phase>
   <phase id="05">
@@ -37,7 +37,7 @@
     <goal>Lead forms, Payload-native CRM lifecycle, scheduling, Resend follow-up, and Stripe billing handoff for quote-driven follow-up.</goal>
     <requirements>REQ-05</requirements>
     <depends>04</depends>
-    <status>in-progress</status>
+    <status>complete</status>
     <plans>.planning/phases/05-customers-forms-and-ops-integrations/</plans>
   </phase>
   <phase id="06">
@@ -45,7 +45,7 @@
     <goal>Quoting system; internal dashboard with real business targets; growth playbook; phased equipment/tool guidance; optional in-app credential vault if approved after security design.</goal>
     <requirements>REQ-06</requirements>
     <depends>05</depends>
-    <status>in-progress</status>
+    <status>complete</status>
     <plans>.planning/phases/06-quoting-and-advanced-ops/</plans>
   </phase>
   <phase id="07">
@@ -53,11 +53,20 @@
     <goal>Replace the old third-party CRM mental model with a Payload-native CRM workspace, Stripe webhook billing sync, and Payload-jobs-driven Resend sequences that power compact admin and customer account surfaces.</goal>
     <requirements>REQ-05, REQ-06</requirements>
     <depends>05,06</depends>
-    <status>in-progress</status>
+    <status>complete</status>
     <plans>.planning/phases/07-first-party-crm-billing-and-automation/</plans>
+  </phase>
+  <phase id="08">
+    <title>AI ops assistant (beta)</title>
+    <goal>Optional, feature-flagged staff assistant: RAG over internal docs, Vercel AI SDK + OpenAI, Assistant UI / Tool UI patterns, and guarded multimodal flows (e.g. screenshot to contacts) strictly scoped to business operations — not a customer-facing product until explicitly promoted.</goal>
+    <requirements>REQ-05, REQ-06</requirements>
+    <depends>07</depends>
+    <status>planned</status>
+    <plans>.planning/phases/08-ai-ops-assistant/</plans>
   </phase>
   <doc-flow>
     <doc name="TASK-REGISTRY.xml">Tasks by phase.</doc>
+    <doc name="BLOCKERS.xml">Cross-phase gates (demo seed, deferred AI tour, etc.).</doc>
     <doc name="REQUIREMENTS.xml">PRD embedded markdown.</doc>
     <doc name="workflows/README.md">Workflow doc index.</doc>
     <doc name="phases/README.md">Phase folders aligned with this roadmap.</doc>

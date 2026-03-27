@@ -10,7 +10,7 @@
 | **`/`** | **Home** - a **Page** with slug `home` from the CMS, or a small fallback while the DB is empty. |
 | **`/contact`**, **`/about`**, etc. | **Dynamic pages** rendered from the same frontend page template. |
 | **`/privacy-policy`**, **`/terms-and-conditions`**, **`/refund-policy`**, **`/contact-sla`** | Public customer-support / trust pages seeded into the same **Pages** collection. |
-| **`/schedule`** | First-party **schedule request form** built in React. It stores a Payload form submission and routes it into the internal follow-up workflow from the server-side create path. |
+| **`/schedule`** | Redirects to **`/#instant-quote`** (scheduling is optional on the home instant quote form). Legacy **`/api/lead-forms/schedule`** may still exist for older clients. |
 | **`/admin`** | **Payload admin** (staff only) for Pages, Posts, Forms, Globals, Media, and internal records. |
 
 ## How to get a real marketing site
@@ -27,8 +27,9 @@
 - **Form builder** still lives in Payload for layout-builder blocks, and those blocks POST to **`/api/form-submissions`**. Submissions are stored in the **`form-submissions`** collection (admin **Leads** group). Each row gets **`leadEmail`** / **`leadName`** from common field names and **`crmSyncStatus`** (+ timestamp/detail) during the server-side create path.
 - **Current create-path behavior:** [`src/hooks/beforeFormSubmissionCrm.ts`](../../src/hooks/beforeFormSubmissionCrm.ts) and [`src/lib/crm`](../../src/lib/crm) now keep submissions internal while the first-party CRM model replaces third-party providers.
 - **Field names (contact card):** system fields mapped are `email`, `name` / `fullName` / `firstName`, and `phone`. Everything else stays in Payload and should later feed internal activities / notes.
-- **Scheduling:** `/schedule` uses a native form and posts to `/api/lead-forms/schedule`. The form-submission create path sets `crmSyncStatus` / `crmSyncedAt` / `crmSyncDetail` while it writes internal follow-up metadata.
+- **Scheduling (public):** Optional block on the home instant quote form posts to **`/api/lead-forms/instant-quote`** with extra rows when scheduling is requested; CRM treats `instant_quote` + `schedulingRequested: Yes` as **`scheduling_support`**. Standalone **`/schedule`** redirects to **`/#instant-quote`**. **`/api/lead-forms/schedule`** remains for legacy/testing.
 - **Contact support path:** `/contact` is the non-quote catch-all and should cover general support, billing/refund, privacy, policy, scheduling, and service follow-up requests.
+- **Contact page (CMS):** `pages` slug `contact` is rendered by [`src/app/(frontend)/[slug]/page.tsx`](../../src/app/(frontend)/[slug]/page.tsx). Layout uses the **Contact request (first-party)** block ([`src/blocks/ContactRequest/Component.tsx`](../../src/blocks/ContactRequest/Component.tsx)) so submissions use `/api/lead-forms/contact` and [`src/lib/forms/contactRequest.ts`](../../src/lib/forms/contactRequest.ts)—not a generic Form block. Edit hero copy and SEO on the `contact` page in Payload.
 
 ## Shared form system
 
@@ -42,17 +43,17 @@
 
 ## Content checklist
 
-- [ ] Published **home** with real hero, services, trust, service area, and CTA.
-- [ ] Shared visual system feels deliberate across public site, customer login, and admin login.
+- [x] Published **home** with real hero, services, trust, service area, and CTA.
+- [x] Shared visual system feels deliberate across public site, customer login, and admin login.
 - [ ] Reviews / testimonials visible on the homepage and editable quickly in Payload admin.
-- [ ] Before / after proof or project-gallery content visible on at least one key landing page.
-- [ ] Contact page and schedule / quote flows reviewed on mobile.
-- [ ] `/contact` uses strong visual contrast (not faded), concise copy, and immediately clear primary action.
-- [ ] `/contact` request card includes Grime Time logo branding.
-- [ ] Long-form support/help text on `/contact` is presented with compact tabs + single detail panel, not scattered standalone cards.
-- [ ] Icon usage on `/contact` reinforces categories and actions without adding copy bloat.
-- [ ] Privacy, terms, refund, and contact-SLA pages reviewed on mobile and linked from the footer/contact flow.
-- [ ] Header nav + mobile menu reviewed.
+- [x] Before / after proof or project-gallery content visible on at least one key landing page.
+- [x] Contact page and schedule / quote flows reviewed on mobile.
+- [x] `/contact` uses strong visual contrast (not faded), concise copy, and immediately clear primary action.
+- [x] `/contact` request card includes Grime Time logo branding.
+- [x] Long-form support/help text on `/contact` is presented with compact tabs + single detail panel, not scattered standalone cards.
+- [x] Icon usage on `/contact` reinforces categories and actions without adding copy bloat.
+- [x] Privacy, terms, refund, and contact-SLA pages reviewed on mobile and linked from the footer/contact flow.
+- [x] Header nav + mobile menu reviewed.
 - [ ] SEO titles/descriptions reviewed on key pages.
 - [ ] Images in **Media** are real Grime Time assets, not stock placeholders.
 - [ ] Confirm one test form submission appears in Payload with usable follow-up metadata.

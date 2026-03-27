@@ -2,6 +2,8 @@ import type { PayloadRequest } from 'payload'
 
 import type { Opportunity } from '@/payload-types'
 import type { QuoteDealSyncInput, QuoteSyncResult } from '@/lib/crm/types'
+import { buildCrmTaskData } from '@/lib/crm/tasks/data'
+import { buildQuoteTaskPolicy } from '@/lib/crm/tasks/policy'
 
 import { daysFromNow } from './date'
 import { ensureContactAndAccount, findOpenTaskByReference, findOpportunityByQuoteId } from './records'
@@ -98,28 +100,31 @@ export async function syncInternalQuote(
     : null
 
   if (!existingTask && status !== 'lost') {
+    const taskPolicy = buildQuoteTaskPolicy({
+      accountType,
+      customerName: contact.fullName,
+      status: status === 'won' ? 'won' : 'sent',
+    })
+
     await req.payload.create({
       collection: 'crm-tasks',
-      data: {
+      data: buildCrmTaskData({
         account: account.id,
         contact: contact.id,
-        dueAt: status === 'won' ? daysFromNow(1) : daysFromNow(2),
         notes:
           status === 'won'
             ? 'Quote accepted. Coordinate schedule and next steps.'
             : 'Quote sent. Follow up if the customer has not responded.',
         opportunity: opportunity.id,
         owner: ownerId ?? undefined,
-        priority: accountType === 'commercial' ? 'high' : 'medium',
+        policy: taskPolicy,
         quote: quoteId ?? undefined,
-        staleAt: status === 'won' ? daysFromNow(2) : daysFromNow(3),
-        status: 'open',
         taskType: status === 'won' ? 'scheduling' : 'quote_follow_up',
         title:
           status === 'won'
             ? `Schedule job for ${contact.fullName}`
             : `Follow up quote for ${contact.fullName}`,
-      },
+      }) as never,
       req,
     })
   }

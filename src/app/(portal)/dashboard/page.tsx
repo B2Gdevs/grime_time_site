@@ -1,17 +1,18 @@
 import { CustomerDashboardView } from '@/components/portal/CustomerDashboardView'
 import type { SectionCardItem } from '@/components/section-cards'
-import { getCurrentPayloadUser, userIsAdmin } from '@/lib/auth/getCurrentPayloadUser'
+import { getCurrentAuthContext } from '@/lib/auth/getAuthContext'
 import { getCustomerPortalData } from '@/lib/customers/getCustomerPortalData'
 import { formatDate } from '@/lib/customers/format'
 
 export default async function DashboardPage() {
-  const user = await getCurrentPayloadUser()
+  const auth = await getCurrentAuthContext()
+  const user = auth.effectiveUser
 
   if (!user) {
     return null
   }
 
-  const isAdmin = userIsAdmin(user)
+  const isAdminPreview = auth.isRealAdmin
   const portal = await getCustomerPortalData(user)
   const nextAppointment = portal.appointments[0]
   const openInvoices = portal.invoices.filter(
@@ -53,5 +54,5 @@ export default async function DashboardPage() {
     },
   ] satisfies SectionCardItem[]
 
-  return <CustomerDashboardView cards={cards} portal={portal} isAdminPreview={isAdmin} />
+  return <CustomerDashboardView cards={cards} portal={portal} isAdminPreview={isAdminPreview} />
 }

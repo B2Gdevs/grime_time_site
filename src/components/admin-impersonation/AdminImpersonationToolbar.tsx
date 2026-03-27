@@ -15,6 +15,7 @@ import {
   UserRoundIcon,
 } from 'lucide-react'
 
+import { DemoModeToggle } from '@/components/demo/DemoModeToggle'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -27,10 +28,10 @@ type Corner = 'bottom-left' | 'bottom-right' | 'top-left' | 'top-right'
 const STORAGE_KEY = 'admin-preview-toolbar-corner'
 
 const CORNER_CLASSES: Record<Corner, string> = {
-  'bottom-left': 'bottom-4 left-4',
-  'bottom-right': 'bottom-4 right-4',
-  'top-left': 'top-4 left-4',
-  'top-right': 'top-4 right-4',
+  'bottom-left': 'bottom-[var(--portal-floating-offset)] left-[var(--portal-floating-offset)]',
+  'bottom-right': 'bottom-[var(--portal-floating-offset)] right-[var(--portal-floating-offset)]',
+  'top-left': 'top-[var(--portal-floating-offset)] left-[var(--portal-floating-offset)]',
+  'top-right': 'top-[var(--portal-floating-offset)] right-[var(--portal-floating-offset)]',
 }
 
 function readStoredCorner(): Corner {
@@ -236,7 +237,7 @@ export function AdminImpersonationToolbar({
             </div>
           </div>
 
-          <div className="mt-3 flex flex-wrap gap-2">
+          <div className="mt-3 flex flex-wrap items-center gap-2">
             {quickLinks.map((link) => (
               <Button asChild key={link.href} size="sm" type="button" variant="ghost">
                 <a href={link.href}>
@@ -245,6 +246,7 @@ export function AdminImpersonationToolbar({
                 </a>
               </Button>
             ))}
+            <DemoModeToggle />
           </div>
 
           <AnimatePresence initial={false}>

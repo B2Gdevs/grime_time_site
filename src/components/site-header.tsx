@@ -13,7 +13,10 @@ export function SiteHeader({
   title: string
 }) {
   return (
-    <header className="group-has-data-[collapsible=icon]/sidebar-wrapper:h-14 flex h-14 shrink-0 items-center border-b transition-[width,height] ease-linear">
+    <header
+      className="group-has-data-[collapsible=icon]/sidebar-wrapper:h-14 flex h-14 shrink-0 items-center border-b transition-[width,height] ease-linear"
+      data-tour="portal-header"
+    >
       <div className="flex w-full items-center justify-between gap-3 px-4 lg:px-6">
         <div className="flex min-w-0 items-center gap-3">
           <SidebarTrigger className="-ml-1" />

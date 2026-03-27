@@ -8,6 +8,7 @@ import { fileURLToPath } from 'url'
 
 import { Categories } from './collections/Categories'
 import { Accounts } from './collections/Accounts'
+import { BillingEvents } from './collections/BillingEvents'
 import { Contacts } from './collections/Contacts'
 import { CrmActivities } from './collections/CrmActivities'
 import { CrmSequences } from './collections/CrmSequences'
@@ -22,6 +23,7 @@ import { OpsScorecardRows } from './collections/OpsScorecardRows'
 import { Opportunities } from './collections/Opportunities'
 import { Pages } from './collections/Pages'
 import { Posts } from './collections/Posts'
+import { Testimonials } from './collections/Testimonials'
 import { Quotes } from './collections/Quotes'
 import { SequenceEnrollments } from './collections/SequenceEnrollments'
 import { ServiceAppointments } from './collections/ServiceAppointments'
@@ -35,6 +37,7 @@ import { QuoteSettings } from './globals/QuoteSettings/config'
 import { ServicePlanSettings } from './globals/ServicePlanSettings/config'
 import { migrations } from './migrations'
 import { plugins } from './plugins'
+import { payloadJobs } from './jobs'
 import { defaultLexical } from '@/fields/defaultLexical'
 import { getServerSideURL } from './utilities/getURL'
 import { isUsingFallbackPayloadSecret, resolvePayloadSecret } from './utilities/payloadSecret'
@@ -121,11 +124,13 @@ export default buildConfig({
   collections: [
     Pages,
     Posts,
+    Testimonials,
     Media,
     Categories,
     Quotes,
     Users,
     Accounts,
+    BillingEvents,
     Contacts,
     Leads,
     Opportunities,
@@ -289,6 +294,6 @@ export default buildConfig({
         return authHeader === `Bearer ${secret}`
       },
     },
-    tasks: [],
+    tasks: payloadJobs,
   },
 })

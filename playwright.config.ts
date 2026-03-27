@@ -6,6 +6,12 @@ import { defineConfig, devices } from '@playwright/test'
  */
 import 'dotenv/config'
 
+const playwrightBaseURL = process.env.PLAYWRIGHT_BASE_URL || 'http://127.0.0.1:3100'
+const defaultWebServerCommand =
+  process.platform === 'win32'
+    ? 'cmd /c "npm run build && npm run start -- --hostname 127.0.0.1 --port 3100"'
+    : 'npm run build && npm run start -- --hostname 127.0.0.1 --port 3100'
+
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
@@ -21,7 +27,7 @@ export default defineConfig({
   reporter: 'html',
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
-    baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000',
+    baseURL: playwrightBaseURL,
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
@@ -33,9 +39,9 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: process.env.PLAYWRIGHT_WEB_SERVER_COMMAND || 'npm run build && npm run start',
-    reuseExistingServer: true,
-    timeout: 180_000,
-    url: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000',
+    command: process.env.PLAYWRIGHT_WEB_SERVER_COMMAND || defaultWebServerCommand,
+    reuseExistingServer: false,
+    timeout: 300_000,
+    url: playwrightBaseURL,
   },
 })

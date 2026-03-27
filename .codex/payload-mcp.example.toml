@@ -1,3 +1,5 @@
+# Copy under [mcp_servers] in ~/.codex/config.toml — same behavior as Cursor `payload_local`.
+# Set PAYLOAD_MCP_API_KEY in repo root `.env` (Payload Admin → MCP API keys).
 [mcp_servers.payload_local]
-command = "npx"
-args = ["-y", "mcp-remote", "http://localhost:5465/api/mcp", "--header", "Authorization: Bearer REPLACE_WITH_PAYLOAD_MCP_API_KEY"]
+command = "node"
+args = ["scripts/payload-mcp-stdio.mjs"]

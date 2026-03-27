@@ -1,10 +1,11 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { CheckCircle2Icon, LoaderCircleIcon, MessageSquareTextIcon } from 'lucide-react'
+import { CheckCircle2Icon, LoaderCircleIcon } from 'lucide-react'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 
+import { Logo } from '@/components/Logo/Logo'
 import { Button } from '@/components/ui/button'
 import {
   Form,
@@ -23,6 +24,7 @@ import {
   preferredReplyOptions,
   type ContactRequestValues,
 } from '@/lib/forms/contactRequest'
+import { Textarea } from '@/components/ui/textarea'
 import {
   Select,
   SelectContent,
@@ -30,7 +32,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Textarea } from '@/components/ui/textarea'
 
 type ContactResponse = {
   crmSyncStatus: string | null
@@ -81,24 +82,19 @@ export function ContactRequestForm() {
   }
 
   return (
-    <div className="rounded-[1.5rem] border border-border/80 bg-background/88 p-5 shadow-sm">
-      <div className="mb-5 flex items-start justify-between gap-4">
-        <div className="grid gap-2">
+    <div className="rounded-[1.2rem] border border-primary/20 bg-background p-4 shadow-[0_16px_40px_-28px_rgba(15,23,42,0.35)] sm:p-5">
+      <div className="mb-4 flex items-start justify-between gap-4">
+        <div className="grid min-w-0 gap-1.5">
           <p className="text-xs font-medium uppercase tracking-[0.22em] text-primary">Contact</p>
-          <h2 className="text-2xl font-semibold tracking-tight">Send the team a real request</h2>
-          <p className="text-sm leading-6 text-muted-foreground">
-            This goes straight into Payload and the team follow-up queue. Use it for support,
-            billing, privacy, policy, or service questions that are not just a quote request.
-          </p>
+          <h2 className="text-xl font-semibold tracking-tight">Send a quick message</h2>
+          <p className="text-sm text-muted-foreground">We reply by email or phone.</p>
         </div>
-        <div className="rounded-2xl border border-border/70 bg-card/90 p-3 text-primary">
-          <MessageSquareTextIcon className="size-5" />
-        </div>
+        <Logo className="max-w-[10.5rem]" />
       </div>
 
       <Form {...form}>
-        <form className="grid gap-5" onSubmit={form.handleSubmit(onSubmit)} noValidate>
-          <div className="grid gap-5 md:grid-cols-2">
+        <form className="grid gap-4" onSubmit={form.handleSubmit(onSubmit)} noValidate>
+          <div className="grid gap-4 md:grid-cols-2">
             <FormField
               control={form.control}
               name="fullName"
@@ -127,48 +123,17 @@ export function ContactRequestForm() {
             />
           </div>
 
-          <div className="grid gap-5 md:grid-cols-2">
-            <FormField
-              control={form.control}
-              name="phone"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Phone</FormLabel>
-                  <FormControl>
-                    <Input placeholder="(555) 555-5555" type="tel" {...field} />
-                  </FormControl>
-                  <FormDescription>Optional, but useful if you want a call or text back.</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="propertyAddress"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Property address</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Street address" {...field} />
-                  </FormControl>
-                  <FormDescription>Helpful if this question is tied to a specific property.</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          <div className="grid gap-5 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-2">
             <FormField
               control={form.control}
               name="requestedService"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>What is this about?</FormLabel>
+                  <FormLabel>Topic</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Choose a topic" />
+                        <SelectValue placeholder="Choose the closest topic" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -179,6 +144,7 @@ export function ContactRequestForm() {
                       ))}
                     </SelectContent>
                   </Select>
+                  <FormDescription>Routes billing, refund, privacy, and service follow-up correctly.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -188,7 +154,7 @@ export function ContactRequestForm() {
               name="preferredReply"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>How should we reply?</FormLabel>
+                  <FormLabel>Reply preference</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
@@ -209,6 +175,37 @@ export function ContactRequestForm() {
             />
           </div>
 
+          <div className="grid gap-4 md:grid-cols-2">
+            <FormField
+              control={form.control}
+              name="phone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Phone</FormLabel>
+                  <FormControl>
+                    <Input placeholder="(555) 555-5555" type="tel" {...field} />
+                  </FormControl>
+                  <FormDescription>Optional</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="propertyAddress"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Property address</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Street address" {...field} />
+                  </FormControl>
+                  <FormDescription>Optional, but helpful for service or invoice questions.</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
           <FormField
             control={form.control}
             name="message"
@@ -217,8 +214,8 @@ export function ContactRequestForm() {
                 <FormLabel>Message</FormLabel>
                 <FormControl>
                   <Textarea
-                    placeholder="Tell us what you need, whether it is support, billing, privacy, policy, scheduling, or a service question."
-                    rows={6}
+                    placeholder="Tell us what you need."
+                    rows={4}
                     {...field}
                   />
                 </FormControl>
@@ -240,11 +237,9 @@ export function ContactRequestForm() {
             </div>
           ) : null}
 
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-sm leading-6 text-muted-foreground">
-              We use this to create a real follow-up record for support, billing, privacy, and service questions.
-            </p>
-            <Button className="min-w-44" disabled={form.formState.isSubmitting} type="submit">
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm leading-6 text-muted-foreground">We usually reply within 1 business day.</p>
+            <Button className="w-full min-w-44 shrink-0 sm:w-auto" disabled={form.formState.isSubmitting} type="submit">
               {form.formState.isSubmitting ? (
                 <>
                   <LoaderCircleIcon className="size-4 animate-spin" />

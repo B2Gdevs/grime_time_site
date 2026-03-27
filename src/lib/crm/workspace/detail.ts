@@ -28,9 +28,12 @@ import {
   opportunityStatusLabel,
   ownerLabel,
   priorityLabel,
+  roleTagLabel,
   sequenceAudienceLabel,
   sequenceDefinitionStatusLabel,
   sequenceEnrollmentStatusLabel,
+  taskSlaLabel,
+  taskSourceLabel,
   taskStatusLabel,
   taskTypeLabel,
 } from './format'
@@ -67,6 +70,12 @@ function recordHref(kind: CrmRecordKind, id: number): string {
     default:
       return '/admin'
   }
+}
+
+function relationId(value: null | number | string | { id: number | string } | undefined): null | string {
+  if (!value) return null
+  if (typeof value === 'number' || typeof value === 'string') return String(value)
+  return value.id ? String(value.id) : null
 }
 
 async function findRelated<T>({
@@ -124,7 +133,11 @@ function formatTaskItem(item: CrmTask): CrmRecordDetailRelatedItem {
   return relatedItem({
     id: String(item.id),
     kind: 'task',
-    meta: nonEmptyParts([taskStatusLabel(item.status), formatDateOnly(item.dueAt)]).join(' | '),
+    meta: nonEmptyParts([
+      taskStatusLabel(item.status),
+      item.slaClass ? taskSlaLabel(item.slaClass) : null,
+      formatDateOnly(item.dueAt),
+    ]).join(' | '),
     title: item.title,
   })
 }
@@ -190,6 +203,7 @@ async function loadLeadDetail(context: DetailContext, id: number): Promise<CrmRe
   ])
 
   return {
+    canAssignOwner: true,
     badges: nonEmptyParts([lead.source ? leadSourceLabel(lead.source) : null]),
     description: lead.notes || lead.serviceSummary || null,
     fields: [
@@ -205,6 +219,7 @@ async function loadLeadDetail(context: DetailContext, id: number): Promise<CrmRe
     href: recordHref('lead', id),
     id: String(lead.id),
     kind: 'lead',
+    ownerId: relationId(lead.owner) ? String(relationId(lead.owner)) : null,
     priorityLabel: priorityLabel(lead.priority),
     relatedSections: [
       { items: tasks.map(formatTaskItem), label: 'Open tasks' },
@@ -250,6 +265,7 @@ async function loadContactDetail(context: DetailContext, id: number): Promise<Cr
   const accountName = typeof contact.account === 'object' ? contact.account?.name : null
 
   return {
+    canAssignOwner: true,
     badges: contact.roles?.map((value) => value.replaceAll('_', ' ')) ?? [],
     description: contact.notes || null,
     fields: [
@@ -264,6 +280,7 @@ async function loadContactDetail(context: DetailContext, id: number): Promise<Cr
     href: recordHref('contact', id),
     id: String(contact.id),
     kind: 'contact',
+    ownerId: relationId(contact.owner) ? String(relationId(contact.owner)) : null,
     relatedSections: [
       { items: tasks.map(formatTaskItem), label: 'Tasks' },
       { items: opportunities.map(formatOpportunityItem), label: 'Opportunities' },
@@ -313,6 +330,7 @@ async function loadAccountDetail(context: DetailContext, id: number): Promise<Cr
   ])
 
   return {
+    canAssignOwner: true,
     badges: nonEmptyParts([
       accountTypeLabel(account.accountType),
       typeof account.activeServicePlan === 'object' ? 'Plan active' : null,
@@ -323,6 +341,13 @@ async function loadAccountDetail(context: DetailContext, id: number): Promise<Cr
       { label: 'Status', value: accountStatusLabel(account.status) },
       { label: 'Owner', value: ownerLabel(account.owner as User | number | string | null) || 'Unassigned' },
       { label: 'Billing email', value: account.billingEmail || 'Not provided' },
+      {
+        label: 'Default discount',
+        value:
+          account.defaultDiscountType && account.defaultDiscountType !== 'none' && Number(account.defaultDiscountValue || 0) > 0
+            ? `${account.defaultDiscountType === 'percent' ? `${account.defaultDiscountValue}%` : formatCurrencyUsd(Number(account.defaultDiscountValue || 0))}${account.defaultDiscountNote ? ` | ${account.defaultDiscountNote}` : ''}`
+            : 'No default discount',
+      },
       { label: 'AP email', value: account.accountsPayableEmail || 'Not provided' },
       { label: 'AP phone', value: account.accountsPayablePhone || 'Not provided' },
       { label: 'Billing terms', value: account.billingTerms?.replaceAll('_', ' ') || 'Not set' },
@@ -359,6 +384,7 @@ async function loadAccountDetail(context: DetailContext, id: number): Promise<Cr
     href: recordHref('account', id),
     id: String(account.id),
     kind: 'account',
+    ownerId: relationId(account.owner) ? String(relationId(account.owner)) : null,
     relatedSections: [
       { items: contacts.map(formatContactItem), label: 'Contacts' },
       { items: opportunities.map(formatOpportunityItem), label: 'Opportunities' },
@@ -397,6 +423,7 @@ async function loadOpportunityDetail(context: DetailContext, id: number): Promis
   ])
 
   return {
+    canAssignOwner: true,
     badges: nonEmptyParts([opportunity.stage ? opportunityStageLabel(opportunity.stage) : null]),
     description: opportunity.notes || opportunity.closeReason || null,
     fields: [
@@ -413,6 +440,7 @@ async function loadOpportunityDetail(context: DetailContext, id: number): Promis
     href: recordHref('opportunity', id),
     id: String(opportunity.id),
     kind: 'opportunity',
+    ownerId: relationId(opportunity.owner) ? String(relationId(opportunity.owner)) : null,
     priorityLabel: priorityLabel(opportunity.priority),
     relatedSections: [
       { items: tasks.map(formatTaskItem), label: 'Tasks' },
@@ -445,12 +473,19 @@ async function loadTaskDetail(context: DetailContext, id: number): Promise<CrmRe
   })
 
   return {
+    canAssignOwner: true,
     badges: nonEmptyParts([task.taskType ? taskTypeLabel(task.taskType) : null]),
     description: task.notes || null,
     fields: [
       { label: 'Status', value: taskStatusLabel(task.status) },
       { label: 'Priority', value: priorityLabel(task.priority) },
+      { label: 'Role tags', value: task.roleTags?.map((value) => roleTagLabel(value)).join(', ') || 'Not set' },
+      { label: 'Source', value: task.sourceType ? taskSourceLabel(task.sourceType) : 'Manual' },
+      { label: 'SLA class', value: task.slaClass ? taskSlaLabel(task.slaClass) : 'Not set' },
+      { label: 'Next action', value: task.nextAction || 'Not set' },
       { label: 'Due', value: formatDateTime(task.dueAt) || 'No due date' },
+      { label: 'SLA target', value: formatDateTime(task.slaTargetAt) || 'Not set' },
+      { label: 'Escalates', value: formatDateTime(task.escalatesAt) || 'Not set' },
       { label: 'Completed', value: formatDateTime(task.completedAt) || 'Open' },
       { label: 'Owner', value: ownerLabel(task.owner as User | number | string | null) || 'Unassigned' },
       { label: 'Lead', value: typeof task.lead === 'object' ? task.lead?.title || 'Linked' : 'Not linked' },
@@ -463,6 +498,7 @@ async function loadTaskDetail(context: DetailContext, id: number): Promise<CrmRe
     href: recordHref('task', id),
     id: String(task.id),
     kind: 'task',
+    ownerId: relationId(task.owner) ? String(relationId(task.owner)) : null,
     priorityLabel: priorityLabel(task.priority),
     relatedSections: [{ items: activities.map(formatActivityItem), label: 'Recent activity' }],
     statusLabel: taskStatusLabel(task.status),
@@ -492,6 +528,7 @@ async function loadSequenceDefinitionDetail(context: DetailContext, id: number):
   })
 
   return {
+    canAssignOwner: true,
     badges: nonEmptyParts([sequence.audience ? sequenceAudienceLabel(sequence.audience) : null]),
     description: sequence.notes || null,
     fields: [
@@ -510,6 +547,7 @@ async function loadSequenceDefinitionDetail(context: DetailContext, id: number):
     href: recordHref('sequence-definition', id),
     id: String(sequence.id),
     kind: 'sequence-definition',
+    ownerId: relationId(sequence.owner) ? String(relationId(sequence.owner)) : null,
     relatedSections: [{ items: enrollments.map(formatEnrollmentItem), label: 'Enrollments' }],
     statusLabel: sequenceDefinitionStatusLabel(sequence.status),
     subtitle: 'In-app automation definition',
@@ -527,6 +565,7 @@ async function loadSequenceEnrollmentDetail(context: DetailContext, id: number):
   })) as SequenceEnrollment
 
   return {
+    canAssignOwner: false,
     badges: nonEmptyParts([
       typeof enrollment.sequenceDefinition === 'object' ? enrollment.sequenceDefinition?.name : enrollment.sequenceKey,
     ]),
@@ -547,6 +586,7 @@ async function loadSequenceEnrollmentDetail(context: DetailContext, id: number):
     href: recordHref('sequence-enrollment', id),
     id: String(enrollment.id),
     kind: 'sequence-enrollment',
+    ownerId: relationId(enrollment.owner) ? String(relationId(enrollment.owner)) : null,
     relatedSections: [],
     statusLabel: sequenceEnrollmentStatusLabel(enrollment.status),
     subtitle: 'Live sequence enrollment',

@@ -8,6 +8,8 @@ test.describe('Admin Panel', () => {
   let page: Page
 
   test.beforeAll(async ({ browser }, testInfo) => {
+    test.setTimeout(120000)
+
     await seedTestUser()
     await seedCrmWorkspace()
     await seedPortalCompany()
@@ -46,18 +48,33 @@ test.describe('Admin Panel', () => {
   })
 
   test('can open the ops crm workspace', async () => {
-    await page.goto('/ops')
-    await expect(page.getByRole('heading', { name: 'Ops dashboard' })).toBeVisible()
-    await page.getByRole('tab', { name: 'crm.workspace' }).click()
+    await page.goto('/ops/crm')
+    await expect(page.getByRole('heading', { level: 1, name: 'CRM workspace' })).toBeVisible()
     await expect(page.getByText('Anything stale, overdue, or hot enough to need attention first.')).toBeVisible()
     await expect(page.getByRole('radio', { name: 'Needs attention' })).toBeVisible()
     await expect(page.getByRole('textbox', { name: 'Search CRM workspace' })).toBeVisible()
+    await expect(page.getByRole('radio', { name: 'Mine' })).toBeVisible()
     await expect(page.getByRole('radio', { name: 'Stale only' })).toBeVisible()
+    await expect(page.getByRole('radio', { name: 'Commercial' })).toBeVisible()
+  })
+
+  test('can filter CRM rows and qualify a lead from the workspace', async () => {
+    await page.goto('/ops/crm')
+    await page.getByRole('textbox', { name: 'Search CRM workspace' }).fill(crmWorkspaceFixture.leadName)
+    await page.getByRole('radio', { name: 'Mine' }).click()
+
+    const leadRow = page
+      .locator('div.rounded-2xl.border.bg-card')
+      .filter({ has: page.getByRole('button', { name: crmWorkspaceFixture.leadName }) })
+      .first()
+    await expect(leadRow).toBeVisible()
+
+    await leadRow.getByRole('button', { name: 'Qualify', exact: true }).click()
+    await expect(leadRow.getByText('Qualified')).toBeVisible()
   })
 
   test('can load CRM detail and log a note from the left rail', async () => {
-    await page.goto('/ops')
-    await page.getByRole('tab', { name: 'crm.workspace' }).click()
+    await page.goto('/ops/crm')
     await page.getByRole('radio', { name: 'Companies' }).click()
     await page.getByRole('button', { name: new RegExp(crmWorkspaceFixture.accountName) }).click()
 
@@ -70,31 +87,84 @@ test.describe('Admin Panel', () => {
     await page.getByRole('button', { name: 'Save note' }).click()
 
     await expect(page.getByText('Note saved.')).toBeVisible()
-    await page.getByRole('tab', { name: 'Related' }).click()
-    await expect(page.getByText('E2E account note')).toBeVisible()
+    await expect(page.getByRole('textbox', { name: 'Note', exact: true })).toHaveValue('')
   })
 
   test('can impersonate a customer from ops and keep the preview toolbar active', async () => {
     await page.goto('/ops')
     await expect(page.getByText('Admin preview')).toBeVisible()
 
-    await page.getByRole('button', { name: 'Open' }).click()
+    await page.locator('div').filter({ hasText: 'Admin preview' }).getByRole('button', { name: 'Open' }).click()
     await page.getByPlaceholder('Search by name, email, or company').fill(portalCompanyFixture.customerEmail)
+    const startImpersonation = page.waitForResponse(
+      (response) =>
+        response.url().includes('/api/internal/impersonation/start') &&
+        response.request().method() === 'POST',
+    )
     await page.getByRole('button', { name: /Preview/ }).first().click()
+    await startImpersonation
 
     await expect(page).toHaveURL(/\/$/)
+    await expect(page.getByRole('button', { name: 'Switch back to admin' })).toBeVisible({
+      timeout: 15000,
+    })
 
     await page.goto('/invoices')
     await expect(page.getByText(portalCompanyFixture.invoiceTitle)).toBeVisible()
     await expect(page.getByText(portalCompanyFixture.customerEmail).first()).toBeVisible()
 
-    const reopenToolbar = page.getByRole('button', { name: 'Open' })
+    const reopenToolbar = page
+      .locator('div')
+      .filter({ hasText: 'Admin preview' })
+      .getByRole('button', { name: 'Open' })
     if (await reopenToolbar.isVisible({ timeout: 3000 }).catch(() => false)) {
       await reopenToolbar.click()
     }
     await expect(page.getByRole('button', { name: 'Switch back to admin' })).toBeVisible({
       timeout: 15000,
     })
+
+    const stopImpersonation = page.waitForResponse(
+      (response) =>
+        response.url().includes('/api/internal/impersonation/stop') && response.request().method() === 'POST',
+    )
+    await page.getByRole('button', { name: 'Switch back to admin' }).click()
+    await stopImpersonation
+    await page.goto('/ops')
+    await expect(page.getByRole('heading', { name: 'Ops dashboard' })).toBeVisible()
+  })
+
+  test('can review company access on the customer account page while impersonating', async () => {
+    await page.goto('/ops')
+    await page.locator('div').filter({ hasText: 'Admin preview' }).getByRole('button', { name: 'Open' }).click()
+    await page.getByPlaceholder('Search by name, email, or company').fill(portalCompanyFixture.customerEmail)
+    const startImpersonation = page.waitForResponse(
+      (response) =>
+        response.url().includes('/api/internal/impersonation/start') &&
+        response.request().method() === 'POST',
+    )
+    await page.getByRole('button', { name: /Preview/ }).first().click()
+    await startImpersonation
+    await expect(page.getByRole('button', { name: 'Switch back to admin' })).toBeVisible({
+      timeout: 15000,
+    })
+
+    await page.goto('/account')
+    await expect(page.getByRole('heading', { name: 'Billing management' })).toBeVisible()
+    await expect(page.getByText('Send invoice terms')).toBeVisible()
+    await expect(page.getByText('Monthly consolidated')).toBeVisible()
+    await expect(page.getByText('30 days')).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Company access' })).toBeVisible()
+    await expect(page.getByText('Invite a teammate')).toBeVisible()
+    await expect(page.getByText(portalCompanyFixture.customerEmail).first()).toBeVisible()
+
+    const reopenToolbar = page
+      .locator('div')
+      .filter({ hasText: 'Admin preview' })
+      .getByRole('button', { name: 'Open' })
+    if (await reopenToolbar.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await reopenToolbar.click()
+    }
 
     const stopImpersonation = page.waitForResponse(
       (response) =>

@@ -6,7 +6,7 @@
     <date>2026-03-23</date>
   </meta>
   <purpose>Make the public site and customer portal operational by turning submissions, scheduling, support, estimates, invoices, and recurring-plan scheduling into first-party Payload relationships, with Resend and Stripe reserved for delivery and payment rails rather than core CRM ownership.</purpose>
-  <scope>In scope: first-party lead capture, scheduling intake, customer support intake, call and quote intake handoff, customer portal estimates/invoices/schedule/account surfaces, recurring service-plan defaults, internal CRM planning, Stripe billing direction, Resend lifecycle direction, and quote-to-opportunity planning inside Payload. Out of scope: customer-visible quote editing, finalized accounting sync, and full sequence automation implementation unless explicitly approved later.</scope>
+  <scope>In scope: first-party lead capture, scheduling intake, customer support intake, call and quote intake handoff, customer portal estimates/invoices/schedule/account surfaces, recurring service-plan defaults, internal CRM planning, Stripe billing direction, Resend lifecycle direction, quote-to-opportunity planning inside Payload, and customer activation into the portal. Out of scope: customer-visible quote editing and finalized accounting sync.</scope>
   <files>
     <file path=".planning/workflows/customer-site-content-and-engagebay.md">
       <description>Public-site conversion flow and content checklist.</description>
@@ -24,9 +24,13 @@
       <description>Quote workflow and internal opportunity handoff planning.</description>
       <keywords>quotes,pipeline</keywords>
     </file>
-    <file path="src/app/(frontend)/contact/page.tsx">
-      <description>Customer-facing contact and support route.</description>
+    <file path="src/app/(frontend)/[slug]/page.tsx">
+      <description>Customer-facing marketing pages including `/contact` (Payload `pages` slug `contact` + contact request block).</description>
       <keywords>contact,support,frontend</keywords>
+    </file>
+    <file path="src/blocks/ContactRequest/Component.tsx">
+      <description>First-party contact UI block rendered from page layout (hero from CMS, form posts to lead-forms).</description>
+      <keywords>contact,blocks,frontend</keywords>
     </file>
     <file path="src/lib/forms/contactRequest.ts">
       <description>Contact/support request categories and submission mapping.</description>
@@ -64,6 +68,18 @@
       <description>Draftable recurring-plan defaults for the customer portal and service-plan records.</description>
       <keywords>portal,subscription,global,drafts</keywords>
     </file>
+    <file path=".planning/workflows/customer-auth-and-portal-access.md">
+      <description>Customer claim/invite activation plan, Supabase auth model, and portal entry requirements for existing CRM customers and company users.</description>
+      <keywords>portal,auth,claim,invite</keywords>
+    </file>
+    <file path="src/app/(portal)/account/page.tsx">
+      <description>Customer account surface that should expose company member access and invitation controls without leaking admin screens.</description>
+      <keywords>portal,account,invite,company</keywords>
+    </file>
+    <file path="src/components/portal/CustomerAccountForm.tsx">
+      <description>Main customer account-management form that should stay compact while company membership actions grow around it.</description>
+      <keywords>portal,account,form</keywords>
+    </file>
   </files>
   <keywords>
     <keyword>crm</keyword>
@@ -74,11 +90,11 @@
   <tasks>
     <task id="05-form-sync" owner="team">
       <description>Keep every public lead captured in Payload with clear internal follow-up metadata, and move quote/contact/schedule/support capture onto a shared first-party form system.</description>
-      <status>in-progress</status>
+      <status>done</status>
     </task>
     <task id="05-schedule-flow" owner="team">
       <description>Make scheduling part of the in-house customer lifecycle with a first-party form flow, shared validators/helpers, customer portal schedule requests/reschedules, recurring-plan cadence, and Payload-managed follow-up instead of an embedded vendor form.</description>
-      <status>in-progress</status>
+      <status>done</status>
     </task>
     <task id="05-customer-portal-ops" owner="team">
       <description>Use Payload collections/globals for customer portal estimates, invoices, recurring plans, service appointments, and self-serve account/contact updates.</description>
@@ -86,11 +102,15 @@
     </task>
     <task id="05-quote-deal-sync" owner="team">
       <description>Retire external quote-to-deal sync and replace it with internal opportunity planning so follow-up and relationship management happen inside Payload.</description>
-      <status>in-progress</status>
+      <status>done</status>
     </task>
     <task id="05-hubspot-ops-read" owner="team">
       <description>Replace the old provider-toggle/day-board assumptions with internal queue, appointment, and opportunity reads so `/ops` uses Payload-native data sources only.</description>
-      <status>in-progress</status>
+      <status>done</status>
+    </task>
+    <task id="05-customer-activation" owner="team">
+      <description>Make customer activation first-party: claim-account links for existing CRM customers, company-user invite acceptance, clearer first-login state, compact account-entry surfaces that reuse the same claim/invite token flow, and lifecycle email CTAs that push quote/invoice/appointment recipients into activation.</description>
+      <status>done</status>
     </task>
   </tasks>
   <questions>

@@ -111,7 +111,7 @@
   <tasks>
     <task id="06-quote-workflow" owner="team">
       <description>Keep quote scope internal-only, surface Quotes and Quote settings directly in the admin portal, and align field and automation changes with tax-review guidance.</description>
-      <status>in-progress</status>
+      <status>done</status>
     </task>
     <task id="06-dashboard" owner="team">
       <description>Make `/ops` the internal command center with KPI cards, chart, operator panel, left-rail command navigation, daily board, scorecard, milestones, asset guidance, controlled scrolling, and Payload-native operating context while `/dashboard` stays customer-facing.</description>
@@ -119,12 +119,17 @@
     </task>
     <task id="06-ops-data" owner="team">
       <description>Define KPI formulas, growth thresholds, and asset/tool guidance, then make sure scorecard/liability CRUD, quote pipeline math, and service-plan data actually power the live dashboard.</description>
-      <status>in-progress</status>
+      <status>done</status>
+    </task>
+    <task id="06-kpi-card-compactness" owner="team">
+      <description>Shift KPI cards to compact number-first UX with tooltip-driven formula/composition disclosure, shared KPI metadata mapping, and reduced explanatory body copy in the default dashboard view.</description>
+      <status>done</status>
     </task>
   </tasks>
   <questions>
     <question id="q-ops-global" status="resolved">KPI display strings and chart disclaimer: editable via Payload global internalOpsSettings (D-ops-002). Full scorecard row definitions remain in code until a broader ops content model is needed.</question>
     <question id="q-quote-settings" status="resolved">Instant quote rates and service toggles live in Payload global quoteSettings with drafts enabled; the public site reads published settings while staff can preview drafts via draft mode.</question>
+    <question id="q-kpi-card-disclosure-density" status="resolved">Default KPI cards should be number-first and compact; explanatory detail moves to info-icon tooltips backed by shared KPI metadata for formula, source composition, and freshness notes.</question>
     <question id="q-accounting" status="open">Will revenue, margin, and liability data stay manual in v1 or sync from QuickBooks later?</question>
     <question id="q-commercial" status="open">At what revenue or route-density threshold should larger-area commercial work become a formal target?</question>
   </questions>
@@ -134,6 +139,7 @@
     <decision>D-ops-001</decision>
     <decision>D-ops-002</decision>
     <decision>D-ops-003</decision>
+    <decision>D-ux-007</decision>
     <decision>D-vault-001</decision>
   </decisions>
   <requriements-suggestions>

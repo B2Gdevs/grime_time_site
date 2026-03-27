@@ -17,6 +17,29 @@ describe('parseSubmissionRows', () => {
       customerEmail: 'jamie@example.com',
       customerName: 'Jamie Customer',
       priority: 'high',
+      requestKind: 'sales',
+      shouldCreateOpportunity: true,
+      source: 'instant_quote',
+      staleDays: 1,
+    })
+  })
+
+  it('classifies instant quote + scheduling as scheduling support while keeping instant_quote source', () => {
+    const parsed = parseSubmissionRows([
+      { field: 'fullName', value: 'Jamie Customer' },
+      { field: 'email', value: 'jamie@example.com' },
+      { field: 'serviceType', value: 'House wash' },
+      { field: 'propertyAddress', value: '123 Oak St' },
+      { field: 'schedulingRequested', value: 'Yes' },
+      { field: 'propertyType', value: 'Residential' },
+      { field: 'preferredWindow', value: 'Morning preferred' },
+      { field: 'leadSource', value: 'instant_quote' },
+    ])
+
+    expect(parsed).toMatchObject({
+      accountType: 'residential',
+      priority: 'high',
+      requestKind: 'scheduling_support',
       shouldCreateOpportunity: true,
       source: 'instant_quote',
       staleDays: 1,
@@ -35,6 +58,7 @@ describe('parseSubmissionRows', () => {
     expect(parsed).toMatchObject({
       accountType: 'commercial',
       priority: 'high',
+      requestKind: 'scheduling_support',
       shouldCreateOpportunity: true,
       source: 'schedule_request',
       staleDays: 1,
@@ -52,5 +76,19 @@ describe('parseSubmissionRows', () => {
     expect(parsed.shouldCreateOpportunity).toBe(false)
     expect(parsed.priority).toBe('medium')
     expect(parsed.accountType).toBe('residential')
+    expect(parsed.requestKind).toBe('policy_privacy')
+  })
+
+  it('routes billing or refund requests into the support class instead of sales', () => {
+    const parsed = parseSubmissionRows([
+      { field: 'fullName', value: 'Billing Contact' },
+      { field: 'email', value: 'billing@example.com' },
+      { field: 'serviceType', value: 'Billing or refund question' },
+      { field: 'message', value: 'Customer asked for a refund because of a service issue.' },
+      { field: 'leadSource', value: 'contact_request' },
+    ])
+
+    expect(parsed.requestKind).toBe('refund_request')
+    expect(parsed.shouldCreateOpportunity).toBe(false)
   })
 })

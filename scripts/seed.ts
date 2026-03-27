@@ -8,6 +8,8 @@
  * 2. `ADMIN_EMAIL` + `ADMIN_PASSWORD` if seed vars are unset (typical after bootstrap).
  *
  * Loads `.env` from the project root via dotenv (see package.json script).
+ *
+ * Optional: `DEMO_SEED=true` also upserts demo CRM/billing personas (`src/endpoints/seed/demo-seed.ts`) — dev/staging only.
  */
 import 'dotenv/config'
 

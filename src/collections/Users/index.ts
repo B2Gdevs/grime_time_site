@@ -7,7 +7,9 @@ import type {
 
 import { adminOrSelf } from '@/access/adminOrSelf'
 import { isAdmin } from '@/access/isAdmin'
+import { PORTAL_INVITE_STATE_OPTIONS } from '@/lib/auth/portal-access/constants'
 import { isAdminUser, USER_ROLE_OPTIONS } from '@/lib/auth/roles'
+import { billingDiscountTypeOptions } from '@/lib/billing/discountPolicy'
 
 /** Single source of truth for the auth collection slug (Payload admin user). */
 export const USERS_COLLECTION_SLUG = 'users' as const satisfies CollectionConfig['slug']
@@ -196,6 +198,145 @@ export const Users: CollectionConfig = {
           if (isAdminUser(user)) return true
           return user?.id === doc?.id
         },
+      },
+    },
+    {
+      type: 'row',
+      fields: [
+        {
+          name: 'billingDiscountType',
+          type: 'select',
+          defaultValue: 'none',
+          options: billingDiscountTypeOptions.map((option) => ({ ...option })),
+          admin: {
+            description: 'Optional user-level billing override. This wins over account defaults.',
+            width: '34%',
+          },
+          access: {
+            create: isAdminField,
+            read: isAdminField,
+            update: isAdminField,
+          },
+        },
+        {
+          name: 'billingDiscountValue',
+          type: 'number',
+          min: 0,
+          defaultValue: 0,
+          admin: {
+            step: 0.01,
+            width: '33%',
+          },
+          access: {
+            create: isAdminField,
+            read: isAdminField,
+            update: isAdminField,
+          },
+        },
+        {
+          name: 'billingDiscountNote',
+          type: 'text',
+          admin: {
+            width: '33%',
+          },
+          access: {
+            create: isAdminField,
+            read: isAdminField,
+            update: isAdminField,
+          },
+        },
+      ],
+    },
+    {
+      name: 'supabaseAuthUserID',
+      type: 'text',
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+      },
+      access: {
+        create: isAdminField,
+        read: isAdminField,
+        update: isAdminField,
+      },
+    },
+    {
+      name: 'emailVerifiedAt',
+      type: 'date',
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+      },
+      access: {
+        create: isAdminField,
+        read: isAdminField,
+        update: isAdminField,
+      },
+    },
+    {
+      name: 'lastPortalLoginAt',
+      type: 'date',
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+      },
+      access: {
+        create: isAdminField,
+        read: isAdminField,
+        update: isAdminField,
+      },
+    },
+    {
+      name: 'portalInviteState',
+      type: 'select',
+      defaultValue: 'none',
+      options: PORTAL_INVITE_STATE_OPTIONS.map((option) => ({ ...option })),
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+      },
+      access: {
+        create: isAdminField,
+        read: isAdminField,
+        update: isAdminField,
+      },
+    },
+    {
+      name: 'portalInviteTokenHash',
+      type: 'text',
+      admin: {
+        hidden: true,
+      },
+      access: {
+        create: isAdminField,
+        read: isAdminField,
+        update: isAdminField,
+      },
+    },
+    {
+      name: 'portalInviteExpiresAt',
+      type: 'date',
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+      },
+      access: {
+        create: isAdminField,
+        read: isAdminField,
+        update: isAdminField,
+      },
+    },
+    {
+      name: 'portalInviteSentAt',
+      type: 'date',
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+      },
+      access: {
+        create: isAdminField,
+        read: isAdminField,
+        update: isAdminField,
       },
     },
   ],

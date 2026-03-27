@@ -3,6 +3,7 @@ import { getPayload } from 'payload'
 
 import type { User } from '@/payload-types'
 import { getImpersonationUserIdFromCookieHeader } from '@/lib/auth/impersonation'
+import { resolveCustomerPayloadUser } from '@/lib/auth/resolveCustomerPayloadUser'
 import { isAdminUser } from '@/lib/auth/roles'
 
 export type PayloadRequestAuth = {
@@ -44,7 +45,9 @@ async function loadImpersonatedUser(args: {
 export async function requireRequestAuth(request: Request): Promise<null | PayloadRequestAuth> {
   const payload = await getPayload({ config })
   const { user } = await payload.auth({ headers: request.headers })
-  const realUser = (user as User | null) ?? null
+  const payloadUser = (user as User | null) ?? null
+  const customerAuth = payloadUser ? null : await resolveCustomerPayloadUser()
+  const realUser = payloadUser ?? customerAuth?.user ?? null
 
   if (!realUser) {
     return null
@@ -53,7 +56,7 @@ export async function requireRequestAuth(request: Request): Promise<null | Paylo
   const impersonationUserId = getImpersonationUserIdFromCookieHeader(request.headers.get('cookie'))
   const impersonatedUser = await loadImpersonatedUser({
     impersonationUserId,
-    payload,
+    payload: customerAuth?.payload ?? payload,
     realUser,
   })
 
@@ -62,7 +65,7 @@ export async function requireRequestAuth(request: Request): Promise<null | Paylo
     impersonatedUser,
     isImpersonating: Boolean(impersonatedUser),
     isRealAdmin: isAdminUser(realUser),
-    payload,
+    payload: customerAuth?.payload ?? payload,
     realUser,
   }
 }

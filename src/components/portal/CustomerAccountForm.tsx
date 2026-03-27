@@ -1,5 +1,6 @@
 'use client'
 
+import { useMutation } from '@tanstack/react-query'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { CheckCircle2Icon, LoaderCircleIcon, SaveIcon } from 'lucide-react'
 import { useState } from 'react'
@@ -9,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { customerAccountSchema, type CustomerAccountValues } from '@/lib/forms/customerAccount'
+import { requestJson } from '@/lib/query/request'
 
 type Props = {
   defaultValues: CustomerAccountValues
@@ -23,30 +25,30 @@ export function CustomerAccountForm({ defaultValues }: Props) {
     defaultValues,
   })
 
-  async function onSubmit(values: CustomerAccountValues) {
-    setSaved(false)
-    setServerMessage(null)
-
-    try {
-      const response = await fetch('/api/portal/account', {
+  const saveMutation = useMutation({
+    mutationFn: (values: CustomerAccountValues) =>
+      requestJson<{ message?: string }>('/api/portal/account', {
         body: JSON.stringify(values),
         headers: {
           'Content-Type': 'application/json',
         },
         method: 'POST',
-      })
-
-      const body = (await response.json().catch(() => ({}))) as { error?: string; message?: string }
-      if (!response.ok) {
-        throw new Error(body.error || 'Could not update your account right now.')
-      }
-
-      setSaved(true)
-      setServerMessage(body.message || 'Account updated.')
-    } catch (error) {
+      }),
+    onError: (error) => {
       setSaved(false)
       setServerMessage(error instanceof Error ? error.message : 'Could not update your account right now.')
-    }
+    },
+    onSuccess: (body) => {
+      setSaved(true)
+      setServerMessage(body.message || 'Account updated.')
+    },
+  })
+
+  async function onSubmit(values: CustomerAccountValues) {
+    setSaved(false)
+    setServerMessage(null)
+
+    await saveMutation.mutateAsync(values)
   }
 
   return (
@@ -277,8 +279,8 @@ export function CustomerAccountForm({ defaultValues }: Props) {
           <p className="text-sm text-muted-foreground">
             Keep this current so estimates, invoices, and service-day updates go to the right place.
           </p>
-          <Button disabled={form.formState.isSubmitting} type="submit">
-            {form.formState.isSubmitting ? (
+          <Button disabled={saveMutation.isPending} type="submit">
+            {saveMutation.isPending ? (
               <>
                 <LoaderCircleIcon className="size-4 animate-spin" />
                 Saving...

@@ -44,17 +44,15 @@ export function CrmWorkspaceQueueList({
         const isLoading = loadingItemId === itemKey
 
         return (
-          <button
+          <div
             key={itemKey}
-            type="button"
             className={cn(
               'rounded-2xl border bg-card p-4 text-left transition hover:border-primary/40 hover:bg-muted/20',
               isActive && 'border-primary bg-primary/5',
             )}
-            onClick={() => onSelect(item)}
           >
             <div className="flex flex-wrap items-start justify-between gap-3">
-              <div className="min-w-0 flex-1">
+              <button type="button" className="min-w-0 flex-1 text-left" onClick={() => onSelect(item)}>
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="font-medium leading-tight">{item.title}</p>
                   <Badge variant={badgeVariant(item)} className="text-[10px] uppercase">
@@ -81,8 +79,8 @@ export function CrmWorkspaceQueueList({
                     ))}
                   </div>
                 ) : null}
-                <CrmWorkspaceItemActions actionLoadingKey={actionLoadingKey} item={item} onAction={onAction} />
-              </div>
+                {isLoading ? <p className="mt-3 text-xs text-muted-foreground">Loading detail...</p> : null}
+              </button>
 
               <div className="flex items-center gap-2">
                 {item.stale ? <Clock3Icon className="size-4 text-destructive" /> : null}
@@ -96,9 +94,8 @@ export function CrmWorkspaceQueueList({
                 </a>
               </div>
             </div>
-
-            {isLoading ? <p className="mt-3 text-xs text-muted-foreground">Loading detail...</p> : null}
-          </button>
+            <CrmWorkspaceItemActions actionLoadingKey={actionLoadingKey} item={item} onAction={onAction} />
+          </div>
         )
       })}
     </div>

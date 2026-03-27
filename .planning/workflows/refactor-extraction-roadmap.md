@@ -74,16 +74,23 @@ src/
 
 ## Priority extraction queue (first 10)
 
-1. `src/app/(portal)/ops/page.tsx` -> split data loaders and presenters.
+1. `src/app/(portal)/ops/page.tsx` -> split data loaders and presenters. **Progress:** dashboard data + KPI assembly moved to `src/lib/ops/loaders/loadOpsDashboardData.ts`; route file now uses `src/lib/ops/loaders/loadOpsRouteData.ts` for shared admin gating and data loading.
 2. `src/components/portal/AdminDashboardView.tsx` -> extract operator panel config + shared panel components.
-3. `src/components/app-sidebar.tsx` -> extract nav context/label builder (admin vs preview user).
+3. `src/components/app-sidebar.tsx` -> extract nav context/label builder (admin vs preview user). **Progress:** staff-route shell + `(admin)` / `(test_user)` labels + `previewIdentity` + `portalNavSurface` hook, plus shared nav config builders in `src/lib/navigation/portalSidebar.ts`.
 4. `src/lib/auth/getAuthContext.ts` + auth callers -> centralize preview context presenter.
 5. `src/lib/crm/workspace/format.ts` -> convert to presenter/meta driven formatting.
 6. `src/components/portal/crm/CrmWorkspace.tsx` -> move queue/action metadata and query handling into shared modules.
 7. `src/components/admin-impersonation/AdminImpersonationToolbar.tsx` -> extract search/result row and quick-link config.
 8. `src/app/(portal)/dashboard/page.tsx` -> extract customer cards presenter.
-9. `/ops` route query logic -> add typed parser/serializer utilities for deep links.
-10. shared status badge/icon metadata -> centralized `uiMeta` modules for CRM/ops/customer areas.
+9. `/ops` route query logic -> add typed parser/serializer utilities for deep links. **Progress:** implemented in `src/lib/ops/query/parseOpsQuery.ts` and `src/lib/ops/query/stringifyOpsQuery.ts`, re-exported by `src/lib/ops/opsCommandCenterTabs.ts`.
+10. shared status badge/icon metadata -> centralized `uiMeta` modules for CRM/ops/customer areas. **Progress:** ops section labels, icons, route metadata, and default detail copy now live in `src/lib/ops/uiMeta.ts`.
+
+## Recent completed/partial extractions
+
+- `src/app/(portal)/layout.tsx` now delegates shell composition to `src/components/portal/PortalAppShell.tsx`.
+- `/ops/crm`, `/ops/today`, `/ops/scorecard`, `/ops/milestones`, and `/ops/assets` are now real focused pages instead of redirects, using `src/components/portal/ops/OpsSectionPage.tsx` and `src/components/portal/ops/OpsFocusedWorkspace.tsx`.
+- CRM task creation now flows through shared policy/data modules in `src/lib/crm/tasks/policy.ts` and `src/lib/crm/tasks/data.ts` instead of route/hook-local condition chains.
+- Billing workspace composition now uses focused subcomponents under `src/components/portal/ops/billing/` instead of a single monolithic workspace card.
 
 ## Reuse goals
 

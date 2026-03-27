@@ -4,6 +4,7 @@ import { getPayload } from 'payload'
 
 import type { User } from '@/payload-types'
 import { isAdminUser } from '@/lib/auth/roles'
+import { resolveCustomerPayloadUser } from '@/lib/auth/resolveCustomerPayloadUser'
 import { getImpersonationUserIdFromCookies } from './impersonation'
 
 export type PayloadAuthContext = {
@@ -47,11 +48,13 @@ export async function getCurrentAuthContext(): Promise<PayloadAuthContext> {
   const requestHeaders = await headers()
   const cookieStore = await cookies()
   const { user } = await payload.auth({ headers: requestHeaders })
-  const realUser = (user as User | null) ?? null
+  const payloadUser = (user as User | null) ?? null
+  const customerAuth = payloadUser ? null : await resolveCustomerPayloadUser()
+  const realUser = payloadUser ?? customerAuth?.user ?? null
   const impersonationUserId = getImpersonationUserIdFromCookies(cookieStore)
   const impersonatedUser = await loadImpersonatedUser({
     impersonationUserId,
-    payload,
+    payload: customerAuth?.payload ?? payload,
     realUser,
   })
 
@@ -60,7 +63,7 @@ export async function getCurrentAuthContext(): Promise<PayloadAuthContext> {
     impersonatedUser,
     isImpersonating: Boolean(impersonatedUser),
     isRealAdmin: isAdminUser(realUser),
-    payload,
+    payload: customerAuth?.payload ?? payload,
     realUser,
   }
 }

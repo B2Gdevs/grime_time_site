@@ -64,9 +64,9 @@ export function buildHomeMarketingBlocks({
           enableLink: false,
           richText: {
             root: root([
-              heading('h2', 'Clean visuals, clear scope, and less guesswork for the customer.'),
+              heading('h2', 'Clean results, clear scope, no guesswork.'),
               paragraph(
-                'The public site should feel like the service itself: straightforward, polished, and focused on the property. Customers should see the kinds of surfaces we clean, understand how pricing moves, and know the next step without reading a wall of filler copy.',
+                'You should see what we clean, how pricing moves, and what to do next—without wading through vague contractor talk. Strong photos, straight service lanes, and an instant quote that respects your time.',
               ),
             ]),
           },
@@ -160,7 +160,7 @@ export function buildHomeMarketingBlocks({
             type: 'custom' as const,
             appearance: 'outline' as const,
             label: 'Book online',
-            url: '/schedule',
+            url: '/#instant-quote',
           },
         },
       ],

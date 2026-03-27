@@ -34,9 +34,13 @@ export async function POST(request: Request) {
       submissionData: instantQuoteRequestToSubmissionRows(result.data, catalog),
     })
 
+    const scheduling = Boolean(result.data.requestScheduling)
+
     return NextResponse.json({
       crmSyncStatus: submission.crmSyncStatus ?? null,
-      message: 'Estimate request sent. We saved your details and will follow up with a scoped quote.',
+      message: scheduling
+        ? 'Request sent. We saved your estimate and scheduling details and will follow up to confirm scope and timing.'
+        : 'Estimate request sent. We saved your details and will follow up with a scoped quote.',
       ok: true,
       submissionId: submission.id,
     })

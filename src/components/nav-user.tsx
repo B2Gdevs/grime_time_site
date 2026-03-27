@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { LogOutIcon, ShieldIcon, UserCircleIcon } from 'lucide-react'
 
+import { getSupabaseBrowserClient } from '@/lib/supabase/browser'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
   DropdownMenu,
@@ -31,11 +32,15 @@ function initialsForName(name: string): string {
 
 export function NavUser({
   dashboardUrl,
-  isAdmin,
+  isRealAdmin,
+  staffShell,
   user,
 }: {
   dashboardUrl: string
-  isAdmin: boolean
+  /** Session is an admin account (used for Payload admin link when on staff routes). */
+  isRealAdmin: boolean
+  /** User is on /ops or /docs — show staff quick links in the menu. */
+  staffShell: boolean
   user: {
     email: string
     name: string
@@ -45,7 +50,19 @@ export function NavUser({
   const { isMobile } = useSidebar()
 
   async function handleLogout() {
-    await fetch('/api/users/logout', { method: 'POST' })
+    const supabaseSignOut = (() => {
+      try {
+        return getSupabaseBrowserClient().auth.signOut()
+      } catch {
+        return Promise.resolve()
+      }
+    })()
+
+    await Promise.allSettled([
+      fetch('/auth/logout', { method: 'POST' }),
+      fetch('/api/users/logout', { method: 'POST' }),
+      supabaseSignOut,
+    ])
     router.push('/login')
     router.refresh()
   }
@@ -90,10 +107,10 @@ export function NavUser({
               <DropdownMenuItem asChild>
                 <a href={dashboardUrl}>
                   <UserCircleIcon />
-                  {isAdmin ? 'Ops dashboard' : 'Dashboard'}
+                  {staffShell ? 'Ops dashboard' : 'Dashboard'}
                 </a>
               </DropdownMenuItem>
-              {isAdmin ? (
+              {isRealAdmin && staffShell ? (
                 <DropdownMenuItem asChild>
                   <a href="/admin">
                     <ShieldIcon />

@@ -4,11 +4,13 @@ import type { Page, Pricing } from '@/payload-types'
 
 import { ArchiveBlock } from '@/blocks/ArchiveBlock/Component'
 import { CallToActionBlock } from '@/blocks/CallToAction/Component'
+import { ContactRequestBlock } from '@/blocks/ContactRequest/Component'
 import { ContentBlock } from '@/blocks/Content/Component'
 import { FormBlock } from '@/blocks/Form/Component'
 import { MediaBlock } from '@/blocks/MediaBlock/Component'
 import { PricingTableBlock } from '@/blocks/PricingTable/Component'
 import { ServiceGridBlock } from '@/blocks/ServiceGrid/Component'
+import { TestimonialsBlock } from '@/blocks/Testimonials/Component'
 import { getCachedGlobal } from '@/utilities/getGlobals'
 
 type Props = {
@@ -77,6 +79,20 @@ export async function RenderBlocks({ blocks, pricingGlobal: pricingProp }: Props
           return (
             <div className="my-16" key={index}>
               <FormBlock {...(block as unknown as React.ComponentProps<typeof FormBlock>)} />
+            </div>
+          )
+        }
+        if (blockType === 'contactRequest') {
+          return (
+            <div className="my-8" key={index}>
+              <ContactRequestBlock />
+            </div>
+          )
+        }
+        if (blockType === 'testimonialsBlock') {
+          return (
+            <div className="my-8" key={index}>
+              <TestimonialsBlock {...(block as React.ComponentProps<typeof TestimonialsBlock>)} />
             </div>
           )
         }

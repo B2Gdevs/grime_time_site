@@ -27,6 +27,10 @@ Repo files
 - [`vendor/image-gen-mcp`](../../vendor/image-gen-mcp)
 - [`.env.example`](../../.env.example)
 - [`package.json`](../../package.json)
+- [`scripts/verify-mcp.mjs`](../../scripts/verify-mcp.mjs)
+- [`src/lib/media/image-generation-manifest.ts`](../../src/lib/media/image-generation-manifest.ts) — **prompts, style rules, `wiredTo`, batches, `enabled` backlog**
+- [`scripts/generate-marketing-images.ts`](../../scripts/generate-marketing-images.ts) — **CLI:** OpenAI → JPEG/WebP/PNG → Payload `media` (stable filenames; relationships keep same IDs)
+- [`src/lib/media/openaiImageGeneration.ts`](../../src/lib/media/openaiImageGeneration.ts) — shared with [`src/app/api/internal/media/generate/route.ts`](../../src/app/api/internal/media/generate/route.ts)
 - [`scripts/image-gen-mcp-setup.mjs`](../../scripts/image-gen-mcp-setup.mjs)
 - [`scripts/image-gen-mcp-start.mjs`](../../scripts/image-gen-mcp-start.mjs)
 - [`scripts/dev-with-services.mjs`](../../scripts/dev-with-services.mjs)
@@ -58,14 +62,29 @@ Dev-process target
 2. `npm run image-mcp:start` should start the server using the root `.env`.
 3. `npm run dev` or an adjacent dev helper should be able to start the image MCP alongside Next dev when `IMAGE_GEN_MCP_ENABLED=true`.
 4. Cursor and Codex should be able to launch the same repo-local server command for MCP usage.
+5. `npm run verify:mcp` should confirm both MCPs are wired correctly before editor sessions depend on them.
 
 Current implementation
 - `git submodule add` pins the upstream server at `vendor/image-gen-mcp`.
 - `npm run image-mcp:setup` runs `uv sync` inside the vendored repo and creates its local `.venv`.
 - `npm run image-mcp:start` starts the HTTP server using the root `.env`.
 - `npm run image-mcp:stdio` exposes the stdio transport for MCP clients.
+- `npm run verify:mcp` validates Cursor/Codex config stubs, Payload MCP reachability, and image-gen stdio startup.
 - `npm run dev` now uses `scripts/dev-with-services.mjs` and starts the image MCP only when `IMAGE_GEN_MCP_ENABLED=true`.
 - Cursor and Codex examples now point at the repo-local Node launcher, which then starts the vendored Python server.
+
+CLI marketing images (no MCP required)
+- **Manifest (prompts, style, wiring, backlog):** [`src/lib/media/image-generation-manifest.ts`](../../src/lib/media/image-generation-manifest.ts) — single source of truth for what we generate, global negative constraints (no people/text/logos), per-asset `promptBody`, `category`, `wiredTo` (seed routes or `library` if unassigned), and `enabled` (skip generation while still documented).
+- **Inspect without generating:** `npm run generate:marketing-images -- --list` prints batches, filenames, wiring, and disabled backlog entries.
+- **Inspect media presence/URLs:** `npm run generate:marketing-images -- --status` checks the selected batch in Payload and prints `present/missing` with media URL when available.
+- **Default:** `npm run generate:marketing-images` runs the **`core`** batch only (`seed-grime-*.jpg` — house, driveway, property). Same env as seed: `PROVIDERS__OPENAI__API_KEY` / `OPENAI_API_KEY`, `SEED_LOGIN_*` or `ADMIN_*`. Existing filenames are preserved unless overwrite is requested.
+- **Overwrite safety:** generation now **skips existing filenames by default**. Use `--overwrite-existing` (or `--force`) only when you intentionally want refreshed binaries.
+- **Blog headers:** `npm run generate:marketing-images -- --include-posts` adds **`posts`** (`image-post1.webp` … `image-post3.webp`).
+- **Extended library (textures, service shots, commercial, UI graphs, logo concept PNG):** `npm run generate:marketing-images -- --library` generates only the **`extended`** batch (new `seed-*` / `seed-ui-*` filenames — creates or updates `media` rows; not wired in seed until you assign in admin or extend `src/endpoints/seed/index.ts`).
+- **Core + library in one run:** `npm run generate:marketing-images -- --with-library` (and optionally `--include-posts`).
+- **All batches:** `npm run generate:marketing-images -- --everything`.
+- Optional env: `OPENAI_IMAGE_MODEL` (default `gpt-image-1`).
+- **Hero note:** Homepage high-impact hero uses **`seed-grime-driveway.jpg`** (see manifest `wiredTo`). The driveway prompt is tuned for a more cinematic hero than the house/property shots.
 
 Media workflow target
 - Generated images should be easy to move into:
