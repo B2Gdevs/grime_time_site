@@ -236,11 +236,11 @@
       <status>done</status>
     </task>
     <task id="07-portal-shell-hardening" owner="team">
-      <description>Use conventional shadcn app-shell patterns for sidebar and content insets so the portal avoids overlay collisions, horizontal overflow, and hidden admin toolbar controls. This is now complete for the current scope: shell variables are centralized, the floating admin preview toolbar uses the shared shell offset, sticky rails respect a shared portal top offset, and focused `/ops/*` pages no longer duplicate section header chrome over the main page header.</description>
+      <description>Use conventional shadcn app-shell patterns for sidebar and content insets so the portal avoids overlay collisions, horizontal overflow, and hidden admin toolbar controls. This is now complete for the current scope: shell variables are centralized, the floating admin preview toolbar uses the shared shell offset, sticky rails respect a shared portal top offset, the preview toolbar can collapse into a draggable corner chip, and top-corner preview placement no longer sits on top of the workspace header.</description>
       <status>done</status>
     </task>
     <task id="07-ops-route-split" owner="team">
-      <description>Promote CRM workspace, scorecard, milestones, assets, and today board into first-class `/ops/*` routes. This is now live: `/ops` acts as the duties-first staff dashboard with compact summary cards and follow-up sections, while CRM, today board, scorecard, milestones, and assets operate as focused `/ops/*` pages with shared route/query helpers instead of embedding dense work surfaces back into one hub.</description>
+      <description>Keep `/ops` as the KPI-first staff dashboard and move dense daily work into `/ops/workspace`, where today board, ops workspace queues, billing follow-up, scorecard, milestones, and assets share one non-overlapping tabbed surface. Legacy `/ops/*` section routes remain as compatibility redirects into the workspace so deep links still resolve without leaving the consolidated operating surface.</description>
       <status>done</status>
     </task>
     <task id="07-preview-identity-and-nav-context" owner="team">

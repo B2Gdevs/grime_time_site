@@ -1,3 +1,4 @@
+import type { BillingWorkspaceData } from '@/lib/billing/workspace'
 import type { CrmRecordDetail, CrmWorkspaceData } from '@/lib/crm/workspace'
 import type {
   OpsAssetLadderRow,
@@ -18,6 +19,7 @@ export type DetailState = {
 
 export type OpsCommandCenterProps = {
   assetLadderItems: OpsAssetLadderRow[]
+  billingWorkspace: BillingWorkspaceData
   crmWorkspace: CrmWorkspaceData
   growthMilestones: OpsGrowthMilestoneRow[]
   initialTab?: OpsCommandCenterTabId

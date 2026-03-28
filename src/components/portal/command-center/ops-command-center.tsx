@@ -3,6 +3,7 @@
 import * as React from 'react'
 
 import { CrmWorkspace } from '@/components/portal/crm/CrmWorkspace'
+import { OpsBillingWorkspaceCard } from '@/components/portal/ops/OpsBillingWorkspaceCard'
 import { Tabs, TabsContent } from '@/components/ui/tabs'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -15,17 +16,22 @@ import { TodayBoardPanel } from './today-panel'
 import type { DetailState, OpsCommandCenterProps } from './types'
 import type { OpsCommandCenterTabId } from '@/lib/ops/opsCommandCenterTabs'
 import { buildOpsTabUrl, parseOpsTabQuery } from '@/lib/ops/opsCommandCenterTabs'
+import { getOpsSectionMeta } from '@/lib/ops/uiMeta'
 
-const defaultDetail: DetailState = {
-  body:
-    'Use the left rail to switch between the operating board, CRM workspace, scorecard, milestones, and asset ladder. Detail selected from any tab shows up here instead of opening on top of the dashboard.',
-  description: 'Command center context',
-  kind: 'text',
-  title: 'Internal command center',
+function buildDefaultDetail(tab: OpsCommandCenterTabId): DetailState {
+  const meta = getOpsSectionMeta(tab)
+
+  return {
+    body: meta.defaultDetailBody,
+    description: meta.defaultDetailDescription,
+    kind: 'text',
+    title: meta.pageTitle,
+  }
 }
 
 export function OpsCommandCenter({
   assetLadderItems,
+  billingWorkspace,
   crmWorkspace,
   growthMilestones,
   initialTab = 'today',
@@ -33,11 +39,11 @@ export function OpsCommandCenter({
   mergedScorecard,
   scorecardTooltipMap,
 }: OpsCommandCenterProps) {
-  const [detail, setDetail] = React.useState<DetailState>(defaultDetail)
   const router = useRouter()
   const searchParams = useSearchParams()
 
   const [activeTab, setActiveTab] = React.useState<OpsCommandCenterTabId>(initialTab)
+  const [detail, setDetail] = React.useState<DetailState>(() => buildDefaultDetail(initialTab))
 
   // Sync active tab with `?tab=` so back/forward + deep links behave predictably.
   React.useEffect(() => {
@@ -47,6 +53,10 @@ export function OpsCommandCenter({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams])
+
+  React.useEffect(() => {
+    setDetail(buildDefaultDetail(activeTab))
+  }, [activeTab])
 
   const setTabAndUrl = React.useCallback(
     (next: string) => {
@@ -70,7 +80,11 @@ export function OpsCommandCenter({
           className="w-full min-w-0 px-4 lg:px-6"
         >
           <div className="grid gap-4 xl:grid-cols-[22rem_minmax(0,1fr)]">
-            <CommandCenterSectionRail defaultDetail={defaultDetail} detail={detail} setDetail={setDetail} />
+            <CommandCenterSectionRail
+              defaultDetail={buildDefaultDetail(activeTab)}
+              detail={detail}
+              setDetail={setDetail}
+            />
 
             <div className="min-w-0">
               <TabsContent value="today" className="mt-0 min-w-0">
@@ -79,6 +93,10 @@ export function OpsCommandCenter({
 
               <TabsContent value="crm" className="mt-0 min-w-0">
                 <CrmWorkspace initialData={crmWorkspace} setDetail={setDetail} />
+              </TabsContent>
+
+              <TabsContent value="billing" className="mt-0 min-w-0">
+                <OpsBillingWorkspaceCard initialData={billingWorkspace} />
               </TabsContent>
 
               <TabsContent value="scorecard" className="mt-0 min-w-0">

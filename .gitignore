@@ -9,6 +9,9 @@ tsconfig.tsbuildinfo
 .vercel
 .runtime
 
+# grimetime seed pull snapshots
+.grimetime-seed-pull/
+
 # Payload default media upload directory
 public/media/
 

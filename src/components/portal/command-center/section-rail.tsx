@@ -7,7 +7,7 @@ import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/ca
 import { TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { OpsSectionCardContent } from '@/components/portal/ops/OpsSectionCardContent'
-import { listOpsSectionMeta } from '@/lib/ops/uiMeta'
+import { getOpsSectionMeta, OPS_SECTION_IDS } from '@/lib/ops/uiMeta'
 
 import { CommandCenterDetailPanel } from './detail-panel'
 import type { DetailState } from './types'
@@ -21,17 +21,15 @@ export function CommandCenterSectionRail({
   detail: DetailState
   setDetail: (value: DetailState) => void
 }) {
-  const commandCenterSections = listOpsSectionMeta()
-
   return (
     <Card className="h-fit min-w-0 xl:sticky xl:top-[var(--portal-sticky-top)]">
       <CardHeader className="space-y-3">
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
-              Internal command center
+              Ops workspace
             </p>
-            <CardTitle className="mt-2 text-xl">Operate the day like a live job.</CardTitle>
+            <CardTitle className="mt-2 text-xl">Operate the day in one surface.</CardTitle>
           </div>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -52,20 +50,22 @@ export function CommandCenterSectionRail({
           </Tooltip>
         </div>
         <CardDescription>
-          One rail for section switching and detail context. The right side stays focused on live work.
+          One rail for section switching and detail context. Keep the live work stable while the detail stays pinned.
         </CardDescription>
       </CardHeader>
 
       <TabsList
-        className="mx-6 grid h-auto gap-2 rounded-2xl border bg-muted/40 p-2"
+        className="mx-6 flex h-auto w-auto min-w-0 flex-col items-stretch gap-2 rounded-2xl border bg-muted/40 p-2"
         data-tour="portal-command-rail"
       >
-        {commandCenterSections.map((section) => {
+        {OPS_SECTION_IDS.map((sectionId) => {
+          const section = getOpsSectionMeta(sectionId)
+
           return (
             <TabsTrigger
-              key={section.href}
-              value={section.href.split('/').at(-1) ?? 'today'}
-              className="flex h-auto w-full items-start justify-start rounded-xl border border-transparent px-3 py-3 text-left shadow-none data-[state=active]:border-border data-[state=active]:bg-background"
+              key={sectionId}
+              value={sectionId}
+              className="flex h-auto w-full min-w-0 whitespace-normal items-start justify-start rounded-xl border border-transparent px-3 py-3 text-left shadow-none data-[state=active]:border-border data-[state=active]:bg-background"
             >
               <OpsSectionCardContent
                 description={section.railDescription}

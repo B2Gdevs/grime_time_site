@@ -17,10 +17,10 @@ import { useCrmWorkspace } from './useCrmWorkspace'
 
 const crmOverviewDetail: DetailState = {
   body:
-    'This workspace is the first-party CRM surface for queues, companies, tasks, opportunities, and sequence automation. Use the queue group to triage work, then click any row to load its structured detail into the left context panel instead of opening overlapping drawers.',
-  description: 'First-party CRM overview',
+    'This ops workspace queue is the first-party follow-up surface for leads, companies, tasks, opportunities, and sequence automation. Use the queue group to triage work, then click any row to load its structured detail into the left context panel instead of opening overlapping drawers.',
+  description: 'Ops workspace overview',
   kind: 'text',
-  title: 'CRM workspace',
+  title: 'Ops workspace',
 }
 
 function queueLink(queue: CrmWorkspaceQueueKey): string {
@@ -79,7 +79,7 @@ export function CrmWorkspace({
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
-              <CardTitle>CRM workspace</CardTitle>
+              <CardTitle>Ops workspace</CardTitle>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -87,7 +87,7 @@ export function CrmWorkspace({
                     variant="ghost"
                     size="icon"
                     className="size-8 text-muted-foreground"
-                    aria-label="CRM workspace help"
+                    aria-label="Ops workspace help"
                     onClick={() => setDetail(crmOverviewDetail)}
                   >
                     <InfoIcon className="size-4" />

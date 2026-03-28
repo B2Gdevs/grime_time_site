@@ -5,8 +5,8 @@
     <phase-name>Quoting and advanced ops</phase-name>
     <date>2026-03-23</date>
   </meta>
-  <purpose>Turn Grime Time's internal operations into a measurable system: quote workflow, editable quote math, internal dashboard command center, KPI scorecard, operating cadence, and phased growth guidance for tools and equipment.</purpose>
-  <scope>In scope: internal quote workflow, staff dashboard UX, profitability and revenue definitions, MRR framing, Payload-backed liabilities and scorecard row collections (merged with code defaults), seeded CRUD defaults for ladders/liabilities/scorecard rows, scorecard manual values powering KPI cards, scheduled-job reads on the day-board calendar, left-rail command-center detail panel (no overlay sheets), KPI cards above the command center, admin dual-nav to `/ops` and customer `/dashboard` preview, optional `PORTAL_ADMIN_ONLY` gate on portal layout, deep links from `/ops` to Payload admin for ladders and scorecard, internal quote/service-plan-derived KPI context, growth/asset ladder CRUD collections, KPI and scorecard tooltips via Internal ops targets global, admin-editable display strings via Payload global internalOpsSettings, and draftable/publishable quote settings via Payload global quoteSettings. Out of scope: customer-facing quote editing, automated tax-rate engine, finalized accounting sync, and in-portal write APIs for milestones/assets/liabilities beyond Payload admin (use admin links).</scope>
+  <purpose>Turn Grime Time's internal operations into a measurable system: quote workflow, editable quote math, internal dashboard command center, KPI scorecard, operating cadence, and Payload-backed growth plus asset inventory management for tools and equipment.</purpose>
+  <scope>In scope: internal quote workflow, staff dashboard UX, profitability and revenue definitions, MRR framing, Payload-backed liabilities and scorecard row collections (merged with code defaults), seeded CRUD defaults for milestones/assets/liabilities/scorecard rows, scorecard manual values powering KPI cards, scheduled-job reads on the day-board calendar, left-rail command-center detail panel (no overlay sheets), KPI cards above the command center, admin dual-nav to `/ops` and customer `/dashboard` preview, optional `PORTAL_ADMIN_ONLY` gate on portal layout, internal quote/service-plan-derived KPI context, growth milestones plus ops asset inventory CRUD collections, KPI and scorecard tooltips via Internal ops targets global, admin-editable display strings via Payload global internalOpsSettings, draftable/publishable quote settings via Payload global quoteSettings, and in-portal asset management from Ops workspace. Out of scope: customer-facing quote editing, automated tax-rate engine, and finalized accounting sync.</scope>
   <files>
     <file path=".planning/workflows/admin-portal-quotes-ux.md">
       <description>Dashboard, portal, admin, and quote UX planning.</description>
@@ -17,7 +17,7 @@
       <keywords>quotes,tax,pricing</keywords>
     </file>
     <file path=".planning/workflows/business-scorecard-and-growth.md">
-      <description>Scorecard, asset ladder, milestones, and operating rhythm.</description>
+      <description>Scorecard, asset inventory, milestones, and operating rhythm.</description>
       <keywords>kpi,mrr,assets,growth,ops</keywords>
     </file>
     <file path="src/app/(portal)/dashboard/page.tsx">
@@ -77,7 +77,7 @@
       <keywords>payload,collections,ops</keywords>
     </file>
     <file path="src/collections/OpsAssetLadderItems/index.ts">
-      <description>Admin-only asset ladder rows for `/ops` assets tab.</description>
+      <description>Admin-only ops asset inventory rows used by the `/ops/workspace` assets tab.</description>
       <keywords>payload,collections,ops</keywords>
     </file>
     <file path="src/collections/OpsLiabilityItems/index.ts">
@@ -118,7 +118,7 @@
       <status>done</status>
     </task>
     <task id="06-ops-data" owner="team">
-      <description>Define KPI formulas, growth thresholds, and asset/tool guidance, then make sure scorecard/liability CRUD, quote pipeline math, and service-plan data actually power the live dashboard.</description>
+      <description>Define KPI formulas, growth thresholds, and asset/tool guidance, then make sure scorecard/liability CRUD, quote pipeline math, service-plan data, and ops asset inventory records actually power the live dashboard and workspace.</description>
       <status>done</status>
     </task>
     <task id="06-kpi-card-compactness" owner="team">

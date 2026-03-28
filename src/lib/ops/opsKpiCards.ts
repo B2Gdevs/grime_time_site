@@ -8,7 +8,7 @@ export type OpsKpiId = (typeof OPS_KPI_IDS)[number]
 export const DEFAULT_OPS_KPI_TOOLTIPS: Record<OpsKpiId, string> = {
   leads: [
     'What it is: count of records in the Leads collection (first-party CRM intake).',
-    'Refreshes when you load /ops. Use the CRM workspace for follow-up queues.',
+    'Refreshes when you load /ops. Use Ops workspace for follow-up queues.',
   ].join('\n'),
   quotes: [
     'What it is: count of records in the Quotes collection (internal workflow).',

@@ -8,10 +8,8 @@ import { loadCrmWorkspace, type CrmWorkspaceData } from '@/lib/crm/workspace'
 import { buildOpsDashboardKpiCards } from '@/lib/ops/buildOpsDashboardKpiCards'
 import { loadOpsChartTrend } from '@/lib/ops/loadOpsChartTrend'
 import { mergeScorecardRows } from '@/lib/ops/mergeScorecard'
-import { OPERATING_DUTY_SUMMARIES, roleTagLabel } from '@/lib/ops/policies/operatingRhythm'
 import type {
   OpsAssetLadderRow,
-  OpsDashboardDutySection,
   OpsGrowthMilestoneRow,
   OpsLiabilityRow,
   OpsMergedScorecardRow,
@@ -25,7 +23,6 @@ import type {
   OpsLiabilityItem,
   OpsScorecardRow,
   Quote,
-  ServiceAppointment,
   ServicePlan,
   User,
 } from '@/payload-types'
@@ -277,7 +274,6 @@ export type OpsDashboardData = {
   chartTrend: OpsChartTrendPoint[]
   chartTrendIsLive: boolean
   crmWorkspace: CrmWorkspaceData
-  dutySections: OpsDashboardDutySection[]
   growthMilestones: OpsGrowthMilestoneRow[]
   liabilityItems: OpsLiabilityRow[]
   mergedScorecard: OpsMergedScorecardRow[]
@@ -285,132 +281,6 @@ export type OpsDashboardData = {
   pipelineSnapshotValue: string | null
   quotesEnabled: boolean
   scorecardTooltipMap: Record<string, string>
-}
-
-function startOfToday() {
-  const value = new Date()
-  value.setHours(0, 0, 0, 0)
-  return value
-}
-
-function endOfToday() {
-  const value = startOfToday()
-  value.setHours(23, 59, 59, 999)
-  return value
-}
-
-async function loadTodayAppointments(args: {
-  demoAccountIds: number[] | null
-  payload: Awaited<ReturnType<typeof getPayload>>
-  user: OpsDashboardUser
-}) {
-  const { demoAccountIds, payload, user } = args
-
-  try {
-    const baseWhere: Where = {
-      and: [
-        {
-          status: {
-            in: ['confirmed', 'requested', 'reschedule_requested'],
-          },
-        },
-        {
-          or: [
-            {
-              scheduledStart: {
-                greater_than_equal: startOfToday().toISOString(),
-              },
-            },
-            {
-              requestedDate: {
-                greater_than_equal: startOfToday().toISOString(),
-              },
-            },
-          ],
-        },
-      ],
-    }
-    const result = await payload.find({
-      collection: 'service-appointments',
-      depth: 1,
-      limit: 6,
-      overrideAccess: false,
-      sort: 'scheduledStart',
-      user,
-      where: scopeWhereForAccount(baseWhere, demoAccountIds) ?? baseWhere,
-    })
-
-    return result.docs as ServiceAppointment[]
-  } catch (error) {
-    payload.logger.warn({
-      err: error,
-      msg: 'Ops dashboard today-appointments load failed.',
-    })
-
-    return []
-  }
-}
-
-function buildDutySections(args: {
-  billingWorkspace: BillingWorkspaceData
-  crmWorkspace: CrmWorkspaceData
-  todayAppointments: ServiceAppointment[]
-}) {
-  const { billingWorkspace, crmWorkspace, todayAppointments } = args
-  const attentionQueue = crmWorkspace.queues.find((queue) => queue.key === 'attention')
-
-  return [
-    {
-      description: 'Stale follow-up, hot leads, and opportunity work that needs attention first.',
-      id: 'crm',
-      items: (attentionQueue?.items || []).slice(0, 5).map((item) => ({
-        href: '/ops/crm',
-        id: `${item.kind}:${item.id}`,
-        meta: [item.statusLabel, ...item.meta].filter(Boolean).join(' | '),
-        subtitle: item.subtitle,
-        title: item.title,
-        tone: item.stale ? 'warning' : 'default',
-      })),
-      roleSummary: OPERATING_DUTY_SUMMARIES.crm.roles.map((value) => roleTagLabel(value)).join(' + '),
-      rhythmSummary: OPERATING_DUTY_SUMMARIES.crm.rhythm,
-      title: 'CRM duties',
-    },
-    {
-      description: 'Scheduled work and requests that shape the current day or next route pass.',
-      id: 'today',
-      items: todayAppointments.map((appointment) => ({
-        href: '/ops/today',
-        id: String(appointment.id),
-        meta: [appointment.status, appointment.arrivalWindow, appointment.scheduledStart || appointment.requestedDate]
-          .filter(Boolean)
-          .join(' | '),
-        subtitle: appointment.customerName || appointment.customerEmail,
-        title: appointment.title,
-        tone:
-          appointment.status === 'reschedule_requested' || appointment.status === 'requested'
-            ? 'warning'
-            : 'default',
-      })),
-      roleSummary: OPERATING_DUTY_SUMMARIES.today.roles.map((value) => roleTagLabel(value)).join(' + '),
-      rhythmSummary: OPERATING_DUTY_SUMMARIES.today.rhythm,
-      title: 'Today board',
-    },
-    {
-      description: 'Invoices that still need sending, follow-up, or payment cleanup.',
-      id: 'billing',
-      items: billingWorkspace.invoices.slice(0, 5).map((invoice) => ({
-        href: '/ops#billing-follow-up',
-        id: invoice.id,
-        meta: [invoice.status, invoice.deliveryStatus, invoice.dueDate].filter(Boolean).join(' | '),
-        subtitle: invoice.accountName || invoice.invoiceNumber,
-        title: invoice.title,
-        tone: invoice.status === 'overdue' ? 'warning' : 'default',
-      })),
-      roleSummary: OPERATING_DUTY_SUMMARIES.billing.roles.map((value) => roleTagLabel(value)).join(' + '),
-      rhythmSummary: OPERATING_DUTY_SUMMARIES.billing.rhythm,
-      title: 'Billing follow-up',
-    },
-  ] satisfies OpsDashboardDutySection[]
 }
 
 export async function loadOpsDashboardData(args: {
@@ -569,7 +439,7 @@ export async function loadOpsDashboardData(args: {
     ],
   }
 
-  const [cardsBase, crmWorkspace, quoteProjection, servicePlanMetrics, billingWorkspace, todayAppointments] = await Promise.all([
+  const [cardsBase, crmWorkspace, quoteProjection, servicePlanMetrics, billingWorkspace] = await Promise.all([
     Promise.all([
       safeCountDocs({
         collection: 'leads',
@@ -614,11 +484,6 @@ export async function loadOpsDashboardData(args: {
       user,
     }),
     loadBillingWorkspace({
-      demoAccountIds,
-      payload,
-      user,
-    }),
-    loadTodayAppointments({
       demoAccountIds,
       payload,
       user,
@@ -724,11 +589,6 @@ export async function loadOpsDashboardData(args: {
     chartTrend,
     chartTrendIsLive,
     crmWorkspace,
-    dutySections: buildDutySections({
-      billingWorkspace,
-      crmWorkspace,
-      todayAppointments,
-    }),
     growthMilestones,
     liabilityItems,
     mergedScorecard,

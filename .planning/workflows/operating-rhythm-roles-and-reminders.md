@@ -141,7 +141,8 @@ Company-admin customers cannot:
   - `pb@grimetime.app` (admin)
   - `de@grimetime.app` (admin)
 - In staff portal navigation:
-  - show `Ops dashboard (admin)` for internal context
+  - show `Ops dashboard` for internal KPI context
+  - show `Ops workspace` for live queues, billing follow-up, and route work
   - show `Customer home (test_user)` for customer-preview context
 - In preview/customer context, hide admin-only docs and links (`/docs`, Payload admin, quote settings, cross-account tools).
 

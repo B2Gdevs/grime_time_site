@@ -7,7 +7,7 @@ export type OpsGrowthMilestoneRow = {
   sortOrder?: number | null
 }
 
-/** Serializable asset ladder row for /ops (from Payload). */
+/** Serializable ops asset inventory row for /ops (from Payload). */
 export type OpsAssetLadderRow = {
   id: string
   label: string
@@ -31,24 +31,4 @@ export type OpsMergedScorecardRow = {
   manualLine?: string
   name: string
   target: string
-}
-
-export type OpsDashboardDutyItemTone = 'default' | 'warning'
-
-export type OpsDashboardDutyItem = {
-  href: string
-  id: string
-  meta: string
-  subtitle: string
-  title: string
-  tone: OpsDashboardDutyItemTone
-}
-
-export type OpsDashboardDutySection = {
-  description: string
-  id: 'billing' | 'crm' | 'today'
-  items: OpsDashboardDutyItem[]
-  roleSummary?: string
-  rhythmSummary?: string
-  title: string
 }

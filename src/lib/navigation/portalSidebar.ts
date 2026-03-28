@@ -1,9 +1,7 @@
 import type { LucideIcon } from 'lucide-react'
 import {
   CalendarClockIcon,
-  FileBarChart2Icon,
   FileTextIcon,
-  FolderTreeIcon,
   HomeIcon,
   LayoutDashboardIcon,
   LifeBuoyIcon,
@@ -11,7 +9,6 @@ import {
   Settings2Icon,
   ShieldIcon,
   UserRoundCogIcon,
-  WrenchIcon,
 } from 'lucide-react'
 
 import { isPortalPreviewTestUser } from '@/lib/auth/previewIdentity'
@@ -47,39 +44,19 @@ export function buildPortalMainNav(args: {
   if (staffShell) {
     return [
       {
-        icon: LayoutDashboardIcon,
-        title: 'Ops dashboard (admin)',
-        url: '/ops',
-      },
-      {
-        icon: ReceiptTextIcon,
-        title: 'CRM workspace',
-        url: '/ops/crm',
-      },
-      {
-        icon: CalendarClockIcon,
-        title: 'Today board',
-        url: '/ops/today',
-      },
-      {
-        icon: FileBarChart2Icon,
-        title: 'Scorecard',
-        url: '/ops/scorecard',
-      },
-      {
-        icon: FolderTreeIcon,
-        title: 'Milestones',
-        url: '/ops/milestones',
-      },
-      {
-        icon: WrenchIcon,
-        title: 'Assets',
-        url: '/ops/assets',
-      },
-      {
         icon: HomeIcon,
         title: customerScopeLabel ? `Customer home ${customerScopeLabel}` : 'Customer home',
         url: '/dashboard',
+      },
+      {
+        icon: ReceiptTextIcon,
+        title: 'Ops workspace',
+        url: '/ops/workspace',
+      },
+      {
+        icon: LayoutDashboardIcon,
+        title: 'Ops dashboard',
+        url: '/ops',
       },
     ]
   }

@@ -6,4 +6,5 @@ export const queryKeys = {
   crmWorkspace: (args: { commercialOnly: boolean; ownerScope: string; searchQuery: string }) =>
     ['crm-workspace', args.searchQuery, args.ownerScope, args.commercialOnly ? 'commercial' : 'all'] as const,
   customerPortalBilling: ['customer-portal-billing'] as const,
+  opsAssets: ['ops-assets'] as const,
 } as const

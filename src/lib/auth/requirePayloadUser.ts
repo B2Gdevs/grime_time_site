@@ -1,4 +1,5 @@
 import config from '@payload-config'
+import { headers as nextHeaders } from 'next/headers'
 import { getPayload } from 'payload'
 
 import type { User } from '@/payload-types'
@@ -45,7 +46,18 @@ async function loadImpersonatedUser(args: {
 export async function requireRequestAuth(request: Request): Promise<null | PayloadRequestAuth> {
   const payload = await getPayload({ config })
   const { user } = await payload.auth({ headers: request.headers })
-  const payloadUser = (user as User | null) ?? null
+  let payloadUser = (user as User | null) ?? null
+
+  if (!payloadUser) {
+    try {
+      const fallbackHeaders = await nextHeaders()
+      const fallbackAuth = await payload.auth({ headers: fallbackHeaders })
+      payloadUser = (fallbackAuth.user as User | null) ?? null
+    } catch {
+      /* ignore header fallback failures and continue to customer auth fallback */
+    }
+  }
+
   const customerAuth = payloadUser ? null : await resolveCustomerPayloadUser()
   const realUser = payloadUser ?? customerAuth?.user ?? null
 

@@ -1834,7 +1834,7 @@ export interface GrowthMilestone {
   createdAt: string;
 }
 /**
- * Equipment ladder on /ops. Unchecked = want; checked = have.
+ * Asset inventory used by Ops workspace. Checked = have; unchecked = planned / want.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "ops-asset-ladder-items".
@@ -1842,15 +1842,15 @@ export interface GrowthMilestone {
 export interface OpsAssetLadderItem {
   id: number;
   /**
-   * Stage or category name.
+   * Asset name shown in Ops workspace.
    */
   label: string;
   /**
-   * What to buy or spec.
+   * Spec, setup, or purchase details.
    */
   buyNotes?: string | null;
   /**
-   * Why it matters / bottleneck it removes.
+   * Ops notes, usage notes, or why this asset matters.
    */
   whyNotes?: string | null;
   /**

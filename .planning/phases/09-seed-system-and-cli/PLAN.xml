@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phase-plan>
+  <meta>
+    <phase-id>09</phase-id>
+    <phase-name>Seed system &amp; developer CLI</phase-name>
+    <date>2026-03-27</date>
+  </meta>
+  <status>in_progress</status>
+
+  <problem>
+    <item>The seed entrypoint (`src/endpoints/seed/index.ts`) is monolithic: running `npm run seed` upserts media, globals, pages (including hero/gallery/layout), forms, ops rows, CRM sequences, and demo fixtures in one pass.</item>
+    <item>Developers cannot selectively refresh “foundation” vs “marketing layout” vs “demo CRM” without re-running everything or hand-editing env flags.</item>
+    <item>Media reuse is implicit (e.g. same uploaded doc IDs for gallery top/mid/bottom); we lack visibility into redundant or accidental reuse when iterating on the homepage.</item>
+    <item>Tests should consume stable, module-scoped demo data — today demo seed is all-or-nothing (`SEED_SKIP_DEMO` only).</item>
+  </problem>
+
+  <goals>
+    <goal id="G1">Layer data: **foundation** (admin users, minimal globals, migrations assumptions), **content** (media catalog, pages, layout blocks, nav), **demo** (personas, CRM/billing fixtures) — each runnable independently with clear dependencies.</goal>
+    <goal id="G2">Ship a **Grime Time–only** CLI (Node, `tsx`) with subcommands and flags comparable in ergonomics to Codex/Claude Code–style tools: discoverability (`--help`), dry-run, non-interactive CI mode, interactive confirmations for destructive or media-heavy operations.</goal>
+    <goal id="G3">**Safety**: default to non-destructive upserts; explicit `--force` / `--yes` for overwriting; **warnings** when seed would replace existing docs that differ from seed hash or when media uploads would duplicate bytes.</goal>
+    <goal id="G4">**Redundancy report**: static analysis of seed modules listing media ID/file reuse across slots (hero, service grid, gallery), with optional JSON output for CI.</goal>
+    <goal id="G5">**Tests**: Vitest integration tests import or invoke named demo modules; Playwright uses a documented “demo dataset” profile; avoid coupling tests to the full monolithic seed.</goal>
+  </goals>
+
+  <non-goals>
+    <item>General-purpose CMS content authoring CLI (Payload Admin remains the editor of record for copy).</item>
+    <item>Multi-tenant or multi-repo seed framework — only this codebase.</item>
+  </non-goals>
+
+  <target-architecture>
+    <directory-layout>
+      <item>Keep Payload entry `seed({ payload, req })` as a thin orchestrator that delegates to **register modules** (functions with metadata: name, dependsOn, collectionsTouched).</item>
+      <item>Introduce a folder convention under `src/endpoints/seed/` (exact names TBD in implementation): e.g. `foundation/`, `content/media/`, `content/pages/`, `content/globals/`, `demo/crm/`, `demo/billing/`, `demo/marketing/` — each exports `runModule({ payload, req, context })`.</item>
+      <item>Optional parallel **manifest** JSON or TS (`seed.manifest.ts`) describing modules and dependencies for the CLI and docs.</item>
+    </directory-layout>
+
+    <cli-surface>
+      <item>Executable: `npm run grimetime` → `src/cli/grimetime.ts`; `npm run seed` remains thin wrapper to push orchestrator.</item>
+      <item>Shipped (2026-03): **`grimetime collections`** — `list`, `describe &lt;slug&gt;` (read-only; requires admin session like seed).</item>
+      <item>Shipped (2026-03): **`grimetime seed`** — scopes: `foundation`, `media`, `taxonomy`, `posts`, `forms`, `pages`, `globals`, `ops`, `crm`, `demo`, `all`. Verbs: **`push`** (uses dependency expansion), **`list`**, **`summary`** (`--json`), **`check`** (still expands deps for integrity), **`pull`** / **`delete`**: **requested scopes only** (no dep expansion — `pull globals` ≠ pull pages); **`delete all`** runs scopes in `DELETE_SCOPE_ORDER` in `seed-delete.ts`. Contract test: `tests/int/seed/expectations-alignment.int.spec.ts`.</item>
+      <item>Still planned: `--only`, `--no-input`, redundancy `report`, deeper `check` diffs, optional `pull`/`delete` JSON output.</item>
+      <item>Media safety: on upload paths, prompt or warn when replacing existing `media` by filename or checksum; list affected page references.</item>
+    </cli-surface>
+
+    <redundancy-detection>
+      <item>Build a **seed static analyzer** that walks exported page/layout objects and collects `media` relationship IDs and file paths from seed builders.</item>
+      <item>Report: same `media` id used in multiple layout slots; same file path mapped to multiple logical roles; recommend distinct assets from `image-generation-manifest` or stock set.</item>
+      <item>Optional: fail CI on new duplicate assignments when `STRICT_SEED_MEDIA=1`.</item>
+    </redundancy-detection>
+
+    <testing-strategy>
+      <item>Unit: pure functions for manifest parsing, redundancy detection, module dependency sorting.</item>
+      <item>Integration: run targeted module against test DB (existing Vitest pattern) with `SEED_SKIP_DEMO` irrelevant — module-scoped fixtures.</item>
+      <item>E2E: document env + seed profile that guarantees demo personas and a known homepage state for Playwright; avoid full `all` unless nightly.</item>
+    </testing-strategy>
+
+    <migration>
+      <item>Phase A: extract **read-only** module boundaries from current `index.ts` without behavior change; `npm run seed` still calls full graph.</item>
+      <item>Phase B: implement CLI router + dry-run; keep admin `/next/seed` calling `all` or `foundation+demo` per DECISION.</item>
+      <item>Phase C: split demo into submodules + wire tests; add redundancy report to CI optional job.</item>
+    </migration>
+
+    <references>
+      <file>.planning/DECISIONS.xml</file>
+      <decision id="D-seed-001" />
+      <file>.planning/workflows/seed-system-and-cli.md</file>
+      <file>src/endpoints/seed/index.ts</file>
+      <file>src/endpoints/seed/expectations.ts</file>
+      <file>src/endpoints/seed/orchestrate-push.ts</file>
+      <file>src/endpoints/seed/upsert.ts</file>
+      <file>src/cli/seed/seed-commands.ts</file>
+      <file>src/cli/collections/collections-commands.ts</file>
+      <file>src/cli/lib/seed-scope-manifest.ts</file>
+      <file>src/cli/lib/seed-check.ts</file>
+      <file>src/cli/lib/seed-pull.ts</file>
+      <file>src/cli/lib/seed-delete.ts</file>
+      <file>scripts/seed.ts</file>
+      <file>src/app/(frontend)/next/seed/route.ts</file>
+      <file>.planning/workflows/demo-data-and-flows.md</file>
+    </references>
+  </target-architecture>
+
+  <tasks>
+    <task ref="09-01">DECISION D-seed-001 + workflow stub `seed-system-and-cli.md`</task>
+    <task ref="09-02">Module graph + `registerModule` pattern; extract foundation slice from `index.ts`</task>
+    <task ref="09-03">Media module: uploads, dedup warnings, optional strict mode</task>
+    <task ref="09-04">Pages/layout module: home hero, service grids, gallery slots — fix duplicate media assignments per redundancy report</task>
+    <task ref="09-05">Demo submodules (CRM, billing, marketing personas) + `SEED_SKIP_DEMO` mapping to subgraph</task>
+    <task ref="09-06">CLI: subcommands, `--dry-run`, `--yes`, `--only`, `--json`</task>
+    <task ref="09-07">Tests: Vitest for planner + redundancy; integration hooks for module-scoped seed; e2e doc for profile</task>
+  </tasks>
+</phase-plan>

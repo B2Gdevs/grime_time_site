@@ -32,7 +32,7 @@ export function CrmWorkspaceToolbar({
           onChange={(event) => onSearchChange(event.target.value)}
           placeholder="Search leads, companies, contacts, tasks, or automation"
           className="h-9 pl-9 text-sm"
-          aria-label="Search CRM workspace"
+          aria-label="Search ops workspace"
         />
       </div>
 

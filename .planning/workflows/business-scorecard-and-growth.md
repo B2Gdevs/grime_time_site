@@ -11,7 +11,7 @@
 - **Task registry:** `06-02` scorecard definitions, `06-03` equipment/tool phasing, `06-04` editable internal ops data later
 - **Decisions:** `D-quotes-001`, `D-ops-001`, `D-vault-001`
 
-This doc is the operating system for growing Grime Time without guessing. The point is to make the business feel measurable and winnable: hit the scorecard, unlock the next asset, then raise the standard.
+This doc is the operating system for growing Grime Time without guessing. The point is to make the business feel measurable and winnable: hit the scorecard, manage the real assets already on hand, then add the next asset when the bottleneck is real.
 
 ## Core scorecard
 
@@ -111,30 +111,19 @@ Each stage unlocks the next one.
 | **4. Crew leverage** | `35+ jobs/month` or owner bottleneck | SOPs exist, owner is not the only field operator or closer |
 | **5. Commercial push** | steady large-area demand | Equipment and systems support higher-ticket flatwork / commercial accounts |
 
-## Asset ladder
+## Asset inventory and next buys
 
-Buy assets to remove the current bottleneck. Do not buy prestige equipment before the work exists.
+Ops workspace should show the real inventory first. Add what Grime Time actually owns, then track future purchases in the same table so the section stays operational instead of aspirational.
 
-### 1. Low-cost speed upgrades
+### Current baseline
 
-Buy first:
+Start with the single field unit the business already has:
 
-- Better hose setup
-- Spare tips, o-rings, fittings, repair kit
-- Downstream chemical injector
-- Cones / caution signs
-- Branded yard sign or truck magnet
+- **Pressure washer**: the current production unit.
+- Keep the exact model, hose setup, reels, downstream gear, and support attachments in the asset inventory row notes.
+- Mark additional equipment as **Want** only when it is something the team is actually planning or pricing out.
 
-Why:
-
-- This is the cheapest way to cut setup friction and look more professional.
-
-### 2. Flatwork production upgrade
-
-Buy when driveways, sidewalks, patios, and larger concrete areas are becoming frequent:
-
-- **20-inch commercial surface cleaner**
-- **150-200 ft hose reel setup**
+### Next likely additions
 
 Current product references:
 
@@ -143,7 +132,7 @@ Current product references:
 
 Operational reading:
 
-- This is the highest-probability upgrade for cleaning larger areas faster with the washer you already have.
+- The highest-probability next adds are still a **surface cleaner**, **longer hose + reel**, and then **water independence** once the schedule and job mix justify them.
 
 ### 3. Water independence
 

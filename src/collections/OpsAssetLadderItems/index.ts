@@ -4,12 +4,12 @@ import { isAdmin } from '@/access/isAdmin'
 
 export const OpsAssetLadderItems: CollectionConfig = {
   slug: 'ops-asset-ladder-items',
-  labels: { plural: 'Ops asset ladder items', singular: 'Ops asset ladder item' },
+  labels: { plural: 'Ops assets', singular: 'Ops asset' },
   admin: {
     group: 'Internal',
     defaultColumns: ['label', 'owned', 'sortOrder', 'updatedAt'],
     useAsTitle: 'label',
-    description: 'Equipment ladder on /ops. Unchecked = want; checked = have.',
+    description: 'Asset inventory used by Ops workspace. Checked = have; unchecked = planned / want.',
   },
   access: {
     create: isAdmin,
@@ -22,17 +22,17 @@ export const OpsAssetLadderItems: CollectionConfig = {
       name: 'label',
       type: 'text',
       required: true,
-      admin: { description: 'Stage or category name.' },
+      admin: { description: 'Asset name shown in Ops workspace.' },
     },
     {
       name: 'buyNotes',
       type: 'textarea',
-      admin: { description: 'What to buy or spec.' },
+      admin: { description: 'Spec, setup, or purchase details.' },
     },
     {
       name: 'whyNotes',
       type: 'textarea',
-      admin: { description: 'Why it matters / bottleneck it removes.' },
+      admin: { description: 'Ops notes, usage notes, or why this asset matters.' },
     },
     {
       name: 'owned',

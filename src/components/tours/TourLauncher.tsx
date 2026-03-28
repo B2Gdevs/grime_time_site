@@ -42,11 +42,11 @@ export function TourLauncher({ isRealAdmin }: { isRealAdmin: boolean }) {
 
     if (def.opsTab) {
       const normalized = effectiveOpsTab(searchParams)
-      if (pathname === '/ops' && normalized === def.opsTab) {
+      if (pathname === '/ops/workspace' && normalized === def.opsTab) {
         startTour(id)
         return
       }
-      router.push(`/ops?tab=${def.opsTab}&tour=${id}`)
+      router.push(`/ops/workspace?tab=${def.opsTab}&tour=${id}`)
       return
     }
 

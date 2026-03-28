@@ -13,6 +13,7 @@ export type PortalTourPath =
   | '/estimates'
   | '/invoices'
   | '/ops'
+  | '/ops/workspace'
   | '/service-schedule'
 
 export const PORTAL_TOUR_IDS = [
@@ -68,7 +69,7 @@ const opsOverviewSteps: Step[] = [
     target: '[data-tour="portal-command-center"]',
     title: 'Command center',
     content:
-      'Today board, CRM, scorecard (with liabilities), milestones, and asset ladder share one rail. Pick a section on the left; details stay in the rail and right pane so nothing covers the dashboard.',
+      'Today board, CRM, scorecard (with liabilities), milestones, and asset inventory share one rail. Pick a section on the left; details stay in the rail and right pane so nothing covers the dashboard.',
     placement: 'top',
   },
   {
@@ -157,9 +158,9 @@ const staffScorecardSteps: Step[] = [
 const staffAssetsSteps: Step[] = [
   {
     target: '[data-tour="portal-assets-panel"]',
-    title: 'Asset ladder',
+    title: 'Asset inventory',
     content:
-      'Plan equipment and software buys by bottleneck and stage. Payload-backed rows keep the ladder editable in admin while the portal shows the live guidance.',
+      'Track the equipment the business actually has, then add planned purchases in the same inventory. Payload-backed rows stay editable while the portal shows the live asset table.',
     placement: 'bottom',
   },
 ]
@@ -240,9 +241,9 @@ export const portalTourRegistry: Record<PortalTourId, PortalTourDefinition> = {
   'staff-crm-workspace': {
     id: 'staff-crm-workspace',
     audience: 'staff',
-    label: 'CRM workspace',
+    label: 'Ops workspace',
     blurb: 'Queues, search, and field leads',
-    path: '/ops',
+    path: '/ops/workspace',
     opsTab: 'crm',
     steps: staffCrmSteps,
   },
@@ -267,8 +268,8 @@ export const portalTourRegistry: Record<PortalTourId, PortalTourDefinition> = {
   'staff-assets-ladder': {
     id: 'staff-assets-ladder',
     audience: 'staff',
-    label: 'Asset ladder',
-    blurb: 'Equipment and software plan',
+    label: 'Asset inventory',
+    blurb: 'Current equipment and planned additions',
     path: '/ops',
     opsTab: 'assets',
     steps: staffAssetsSteps,

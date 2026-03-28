@@ -39,7 +39,7 @@ const DOCS: PortalDoc[] = [
   },
   {
     audience: 'admin',
-    description: 'KPIs, MRR model, asset ladder, milestones, and daily operating rhythm.',
+    description: 'KPIs, MRR model, asset inventory, milestones, and daily operating rhythm.',
     filePath: '.planning/workflows/business-scorecard-and-growth.md',
     group: 'Team playbooks',
     slug: 'business-scorecard-and-growth',

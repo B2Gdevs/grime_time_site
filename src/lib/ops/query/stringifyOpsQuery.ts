@@ -1,6 +1,6 @@
 import type { OpsSectionId } from '@/lib/ops/uiMeta'
 
-/** Preserve existing `/ops` query params; set or replace `tab`. */
+/** Preserve existing workspace query params; set or replace `tab`. */
 export function buildOpsTabUrl(
   currentQuery: URLSearchParams | string,
   tab: OpsSectionId,
@@ -10,5 +10,5 @@ export function buildOpsTabUrl(
   )
 
   params.set('tab', tab)
-  return `/ops?${params.toString()}`
+  return `/ops/workspace?${params.toString()}`
 }

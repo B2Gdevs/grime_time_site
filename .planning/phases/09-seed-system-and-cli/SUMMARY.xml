@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phase-summary>
+  <meta>
+    <phase-id>09</phase-id>
+    <phase-name>Seed system &amp; developer CLI</phase-name>
+    <date>2026-03-27</date>
+  </meta>
+  <status>in_progress</status>
+  <highlights>
+    <item>`grimetime seed`: `pull` (snapshots), `delete` (keyed, guarded), `check`/`summary` `--json`, richer globals + demo checks; `purgeDemoSeedFixtures` in `demo-seed.ts`. `collections describe` uses Payload `payload/shared` field guards.</item>
+    <item>`tests/int/seed/expectations-alignment.int.spec.ts` locks `expectations.ts` ↔ `SEED_MEDIA` / `SEED_CATEGORIES` / `SEED_POST_SLUGS` in `orchestrate-push.ts`.</item>
+    <item>Admin session for `push`, `check`, `pull`, `delete`, `collections` (same creds as seed).</item>
+  </highlights>
+  <next>
+    <item>09-02: modular seed graph from `index.ts`; keep orchestrator behavior equivalent.</item>
+    <item>09-06 remainder: `--dry-run`, `--json`, non-interactive flags; implement `pull` / `delete` with explicit safety gates.</item>
+    <item>Deepen `check` (globals fields, demo beyond key accounts) and redundancy `report` per PLAN.</item>
+  </next>
+</phase-summary>

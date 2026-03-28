@@ -193,7 +193,7 @@ export function OpsBillingWorkspaceCard({ initialData }: { initialData: BillingW
         <CardTitle>Billing follow-up</CardTitle>
         <CardDescription>
           Send invoices, record payment outcomes, sync recurring plans, and batch monthly commercial billing without
-          leaving `/ops`.
+          leaving Ops workspace.
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4">

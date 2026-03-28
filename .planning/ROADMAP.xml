@@ -64,6 +64,14 @@
     <status>planned</status>
     <plans>.planning/phases/08-ai-ops-assistant/</plans>
   </phase>
+  <phase id="09">
+    <title>Seed system &amp; developer CLI</title>
+    <goal>Modular, first-class seeding for this repo only: split foundation vs demo data, slice by media/pages/globals/modules, a polished CLI (dry-run, confirmations, overwrite policy), redundancy and media safety reporting, and demo fixtures wired for unit/integration/e2e tests.</goal>
+    <requirements>REQ-03, REQ-05</requirements>
+    <depends>03,05</depends>
+    <status>planned</status>
+    <plans>.planning/phases/09-seed-system-and-cli/</plans>
+  </phase>
   <doc-flow>
     <doc name="TASK-REGISTRY.xml">Tasks by phase.</doc>
     <doc name="BLOCKERS.xml">Cross-phase gates (demo seed, deferred AI tour, etc.).</doc>

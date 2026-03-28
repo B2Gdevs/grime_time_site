@@ -1,4 +1,4 @@
-import type { Payload, PayloadRequest } from 'payload'
+import type { Payload, PayloadRequest, Where } from 'payload'
 import type { Invoice } from '@/payload-types'
 
 import { calculateLineTotal, calculateQuoteTotals } from '@/lib/quotes/calculateQuoteTotals'
@@ -770,4 +770,90 @@ export async function seedDemoData({
   payload.logger.info(
     `— Demo seed finished (Stripe invoice sync attempts: ${stripeSyncCount}). Log in as *@demo.grimetime.app / ${DEMO_CUSTOMER_PASSWORD}.`,
   )
+}
+
+/** Stable keys matching titles / numbers created in `seedDemoData` (for `grimetime seed delete demo`). */
+const DEMO_PURGE_INVOICE_NUMBERS = ['DEMO-INV-0001', 'DEMO-INV-REFUND', 'DEMO-INV-0002'] as const
+
+const DEMO_PURGE_APPOINTMENT_TITLES = [
+  'Completed — house wash (demo)',
+  'Scheduled — maintenance visit (demo)',
+  'HOA — common area rinse (demo)',
+] as const
+
+const DEMO_PURGE_SERVICE_PLAN_TITLES = ['Chen household — bi-annual exterior (demo)'] as const
+
+const DEMO_PURGE_OPPORTUNITY_TITLES = [
+  'Chen — new lead intake (demo)',
+  'Sunset Ridge — perimeter wash (demo)',
+  'Lakeside — storefront refresh (demo)',
+  'Lakeside — dock bay cleaning (demo)',
+  'Sunset Ridge — clubhouse schedule (demo)',
+  'Chen — patio detail (won) (demo)',
+  'Lakeside — competitor bid (lost) (demo)',
+] as const
+
+const DEMO_PURGE_QUOTE_TITLES = ['Chen residence — maintenance quote (demo)'] as const
+
+const DEMO_PURGE_LEAD_TITLES = [
+  'Instant quote — Oak Hollow Dr (demo)',
+  'Contact — gutter leak follow-up (demo)',
+] as const
+
+async function purgeDeleteWhere(
+  payload: Payload,
+  req: PayloadRequest,
+  collection: 'accounts' | 'contacts' | 'invoices' | 'leads' | 'opportunities' | 'quotes' | 'service-appointments' | 'service-plans' | 'users',
+  where: Where,
+  label: string,
+): Promise<void> {
+  try {
+    await payload.delete({ collection, depth: 0, where, req })
+  } catch (err) {
+    payload.logger.warn({ err, msg: `Demo purge: delete failed (${collection} — ${label})` })
+  }
+}
+
+/**
+ * Best-effort removal of documents created by `seedDemoData` (order: dependents first).
+ * May leave rows if hooks/FKs block deletes; re-run `grimetime seed check demo` after.
+ */
+export async function purgeDemoSeedFixtures({
+  payload,
+  req,
+}: {
+  payload: Payload
+  req: PayloadRequest
+}): Promise<void> {
+  payload.logger.info('— Demo purge: removing seeded demo fixtures (best effort)...')
+
+  for (const invoiceNumber of DEMO_PURGE_INVOICE_NUMBERS) {
+    await purgeDeleteWhere(payload, req, 'invoices', { invoiceNumber: { equals: invoiceNumber } }, invoiceNumber)
+  }
+  for (const title of DEMO_PURGE_APPOINTMENT_TITLES) {
+    await purgeDeleteWhere(payload, req, 'service-appointments', { title: { equals: title } }, title)
+  }
+  for (const title of DEMO_PURGE_SERVICE_PLAN_TITLES) {
+    await purgeDeleteWhere(payload, req, 'service-plans', { title: { equals: title } }, title)
+  }
+  for (const title of DEMO_PURGE_OPPORTUNITY_TITLES) {
+    await purgeDeleteWhere(payload, req, 'opportunities', { title: { equals: title } }, title)
+  }
+  for (const title of DEMO_PURGE_QUOTE_TITLES) {
+    await purgeDeleteWhere(payload, req, 'quotes', { title: { equals: title } }, title)
+  }
+  for (const title of DEMO_PURGE_LEAD_TITLES) {
+    await purgeDeleteWhere(payload, req, 'leads', { title: { equals: title } }, title)
+  }
+  for (const email of demoPersonas.map((p) => p.email)) {
+    await purgeDeleteWhere(payload, req, 'contacts', { email: { equals: email } }, email)
+  }
+  for (const email of demoPersonas.map((p) => p.email)) {
+    await purgeDeleteWhere(payload, req, 'users', { email: { equals: email } }, email)
+  }
+  for (const name of demoAccounts.map((a) => a.name)) {
+    await purgeDeleteWhere(payload, req, 'accounts', { name: { equals: name } }, name)
+  }
+
+  payload.logger.info('— Demo purge finished.')
 }

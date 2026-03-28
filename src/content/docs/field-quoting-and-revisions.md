@@ -13,9 +13,9 @@ Most new business still comes from **door-to-door and on-site conversations**. R
 
 ## CRM alignment
 
-- **Leads and opportunities** from the field and from the site should land in the **CRM workspace** queues so follow-up does not depend on memory.
+- **Leads and opportunities** from the field and from the site should land in the **Ops workspace** queues so follow-up does not depend on memory.
 - **Commercial and residential** accounts may share the same portal patterns; company-level context belongs on the account record when you are ready to model it fully.
 
 ## Related tours
 
-Staff portal **Guided tours** include the Ops overview (recommended first), CRM workspace, Today board, Scorecard & liabilities, and Asset ladder. Customer-facing tours are listed separately for homeowner accounts.
+Staff portal **Guided tours** include the Ops overview (recommended first), Ops workspace, Today board, Scorecard & liabilities, and Asset inventory. Customer-facing tours are listed separately for homeowner accounts.

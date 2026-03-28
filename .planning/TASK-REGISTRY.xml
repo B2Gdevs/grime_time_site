@@ -264,7 +264,7 @@
       </commands>
     </task>
     <task id="06-05" agent-id="" status="done">
-      <goal>Payload CRUD for growth ladder and asset ladder (`growth-milestones`, `ops-asset-ladder-items`); portal tabs read from DB; Internal ops targets extended for KPI/scorecard tooltips and chart pipeline note.</goal>
+      <goal>Payload CRUD for growth milestones and ops asset inventory (`growth-milestones`, `ops-asset-ladder-items`); portal tabs read from DB; Internal ops targets extended for KPI/scorecard tooltips and chart pipeline note.</goal>
       <keywords>payload,collections,ops,dashboard</keywords>
       <commands>
         <command>migration 20260324_223907_ops_ladders_and_kpi_tooltips; src/collections/GrowthMilestones, OpsAssetLadderItems</command>
@@ -387,10 +387,10 @@
       </commands>
     </task>
     <task id="07-12" agent-id="" status="done">
-      <goal>Split oversized command-center sections into first-class `/ops/*` routes (CRM workspace, scorecard, milestones, assets, today board), keep `/ops` itself as the duties-first staff dashboard, and use compact summary cards plus deep links/query params into focused pages instead of embedding the full work surfaces back into one hub.</goal>
+      <goal>Keep `/ops` as the KPI-first staff dashboard, move dense daily work into `/ops/workspace`, make billing follow-up a first-class ops-workspace tab, and keep legacy `/ops/*` section routes only as compatibility redirects into that single non-overlapping workspace.</goal>
       <keywords>ops,information-architecture,routing,ux,crm</keywords>
       <commands>
-        <command>See src/app/(portal)/ops/page.tsx (?tab=), src/app/(portal)/ops/*/page.tsx redirects, src/components/portal/command-center/*</command>
+        <command>See src/app/(portal)/ops/page.tsx, src/app/(portal)/ops/workspace/page.tsx, src/app/(portal)/ops/*/page.tsx redirects, src/components/portal/command-center/*</command>
       </commands>
     </task>
     <task id="07-13" agent-id="" status="done">
@@ -456,6 +456,57 @@
       <keywords>test,playwright,ai</keywords>
       <commands>
         <command>See .planning/phases/08-ai-ops-assistant/PLAN.xml</command>
+      </commands>
+    </task>
+  </phase>
+  <phase id="09">
+    <task id="09-01" agent-id="" status="planned">
+      <goal>DECISION D-seed-001 + workflow stub `.planning/workflows/seed-system-and-cli.md` (phase `09` PLAN/SUMMARY remain source of truth).</goal>
+      <keywords>planning,seed,decision</keywords>
+      <commands>
+        <command>See .planning/phases/09-seed-system-and-cli/PLAN.xml</command>
+      </commands>
+    </task>
+    <task id="09-02" agent-id="" status="planned">
+      <goal>Module graph + `registerModule` pattern; extract foundation slice from `src/endpoints/seed/index.ts` without changing default full-graph seed initially.</goal>
+      <keywords>refactor,seed,modules</keywords>
+      <commands>
+        <command>See src/endpoints/seed/index.ts, src/endpoints/seed/upsert.ts</command>
+      </commands>
+    </task>
+    <task id="09-03" agent-id="" status="planned">
+      <goal>Media module: uploads, dedup / overwrite warnings, optional strict mode; map referencing pages when replacing media.</goal>
+      <keywords>media,seed,safety</keywords>
+      <commands>
+        <command>See src/collections/Media, src/endpoints/seed/index.ts</command>
+      </commands>
+    </task>
+    <task id="09-04" agent-id="" status="planned">
+      <goal>Pages/layout module: home hero, service grids, gallery slots; fix duplicate media assignments using redundancy report.</goal>
+      <keywords>pages,homepage,layout</keywords>
+      <commands>
+        <command>See src/endpoints/seed/home.ts, src/lib/media/image-generation-manifest.ts</command>
+      </commands>
+    </task>
+    <task id="09-05" agent-id="" status="planned">
+      <goal>Demo submodules (CRM, billing, marketing personas) under agreed folder + `SEED_SKIP_DEMO` mapping to subgraph.</goal>
+      <keywords>demo,fixtures,modules</keywords>
+      <commands>
+        <command>See src/endpoints/seed/demo-seed.ts, .planning/workflows/demo-data-and-flows.md</command>
+      </commands>
+    </task>
+    <task id="09-06" agent-id="" status="in_progress">
+      <goal>CLI (`npm run grimetime`): **shipped** — `seed pull|delete`, `check|summary --json`, guarded `delete all`. **Remaining** — `--dry-run`/`push` flag polish, `--only`, `--no-input`, `report`/`plan`.</goal>
+      <keywords>cli,developer-experience</keywords>
+      <commands>
+        <command>src/cli/grimetime.ts, src/cli/seed/seed-commands.ts, src/cli/lib/seed-pull.ts, src/cli/lib/seed-delete.ts, src/cli/lib/seed-check.ts, scripts/seed.ts; DECISION D-seed-001</command>
+      </commands>
+    </task>
+    <task id="09-07" agent-id="" status="planned">
+      <goal>Tests: Vitest for planner + redundancy analyzer; integration hooks for module-scoped seed; e2e doc for Playwright demo profile. **Started:** `tests/int/seed/expectations-alignment.int.spec.ts`.</goal>
+      <keywords>vitest,playwright,fixtures</keywords>
+      <commands>
+        <command>tests/int/seed/expectations-alignment.int.spec.ts; tests/int; tests/e2e</command>
       </commands>
     </task>
   </phase>

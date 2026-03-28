@@ -67,7 +67,7 @@ Work through these in order; tick when data exists and the path is verified on *
 
 ## Portal tours (Joyride)
 
-- **Registry:** `src/lib/tours/registry.ts` - each tour has `audience: staff | customer`. Staff: `ops-dashboard` (overview; optional session autolaunch for real admins), `staff-crm-workspace`, `staff-today-board`, `staff-scorecard-liabilities`, `staff-assets-ladder`, `staff-milestones`, `staff-portal-docs`. Customer: `customer-dashboard`, `customer-estimates`, `customer-invoices`, `customer-schedule`, `customer-account`. URL `?tour=` must match an ID; `/ops` deep links use `?tab=` as needed.  
+- **Registry:** `src/lib/tours/registry.ts` - each tour has `audience: staff | customer`. Staff: `ops-dashboard` (overview; optional session autolaunch for real admins), `staff-crm-workspace`, `staff-today-board`, `staff-scorecard-liabilities`, `staff-assets-ladder`, `staff-milestones`, `staff-portal-docs`. Customer: `customer-dashboard`, `customer-estimates`, `customer-invoices`, `customer-schedule`, `customer-account`. URL `?tour=` must match an ID; ops workspace deep links use `/ops/workspace?tab=` as needed.  
 - **Marketing site:** `src/lib/tours/site-registry.ts` - `public-instant-quote` on `/` only; **Quick tour** and Joyride run only when **demo mode** is on (`?demo=1` sets cookie, or toggle from dev). Wired in `SiteTourProvider` (`src/app/(frontend)/layout.tsx`).  
 - **Completion:** `src/lib/tours/storage.ts` - localStorage marks tours seen after finish/skipped/error so autolaunch does not repeat forever.  
 - **Launcher:** Sidebar "Guided tours" - grouped **Customer** vs **Staff / field team**; hidden unless tours are enabled (demo persona login or admin with demo mode).  

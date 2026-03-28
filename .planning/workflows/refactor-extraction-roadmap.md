@@ -88,7 +88,7 @@ src/
 ## Recent completed/partial extractions
 
 - `src/app/(portal)/layout.tsx` now delegates shell composition to `src/components/portal/PortalAppShell.tsx`.
-- `/ops/crm`, `/ops/today`, `/ops/scorecard`, `/ops/milestones`, and `/ops/assets` are now real focused pages instead of redirects, using `src/components/portal/ops/OpsSectionPage.tsx` and `src/components/portal/ops/OpsFocusedWorkspace.tsx`.
+- `/ops` is now the KPI-first dashboard and `/ops/workspace` is the shared live-work surface; legacy `/ops/crm`, `/ops/today`, `/ops/scorecard`, `/ops/milestones`, and `/ops/assets` routes redirect into workspace tabs instead of carrying separate focused shells.
 - CRM task creation now flows through shared policy/data modules in `src/lib/crm/tasks/policy.ts` and `src/lib/crm/tasks/data.ts` instead of route/hook-local condition chains.
 - Billing workspace composition now uses focused subcomponents under `src/components/portal/ops/billing/` instead of a single monolithic workspace card.
 

@@ -102,29 +102,10 @@ export const growthMilestones = [
 
 export const assetLadder = [
   {
-    category: 'Low-cost speed upgrades',
-    buy: 'Downstream injector, extra hose, spare tips, better wand/gun setup, jobsite cones and signs',
-    why: 'Cheap upgrades reduce setup friction and let the current washer earn more before a big capital purchase.',
-  },
-  {
-    category: 'Flatwork production',
-    buy: '20-inch commercial surface cleaner and 150-200 ft hose reel',
-    why: 'Large flat areas become faster, more uniform, and easier to quote confidently.',
-  },
-  {
-    category: 'Water independence',
-    buy: '300-325 gallon buffer tank and trailer or truck-bed mounting plan',
-    why: 'Remote properties and larger sites stop being limited by weak spigots or awkward access.',
-  },
-  {
-    category: 'Commercial throughput',
-    buy: 'Truck- or trailer-mount unit in the 8+ GPM class once demand justifies it',
-    why: 'Higher GPM increases production on large concrete, parking, and commercial jobs much more than chasing PSI alone.',
-  },
-  {
-    category: 'Premium service mix',
-    buy: 'Hot-water capability and dedicated soft-wash / chemical workflow when grease, gum, and specialty work are common',
-    why: 'This opens higher-ticket work, but only after lead flow and operator discipline are already stable.',
+    category: 'Pressure washer',
+    buy: 'Current field unit. Add exact model, GPM, hose setup, and supporting attachments in Ops workspace as the inventory grows.',
+    owned: true,
+    why: 'Primary production asset for Grime Time today. This inventory table should reflect the real equipment on hand first, then future additions as they are purchased or planned.',
   },
 ] as const
 

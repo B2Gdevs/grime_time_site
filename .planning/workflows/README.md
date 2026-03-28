@@ -11,7 +11,7 @@ Suggested docs:
 | `internal-docs-policy.md` | Public repo rules, sensitive-content boundary, and internal tool guardrails |
 | `crm-org-and-sync.md` | Historical CRM organization notes; keep aligned with the first-party CRM direction if reused |
 | `crm-and-integrations.md` | Integration map for Payload, Stripe, Resend, Supabase, and internal CRM boundaries |
-| `business-scorecard-and-growth.md` | KPIs, MRR, asset ladder, operating rhythm, milestones, and tool recommendations |
+| `business-scorecard-and-growth.md` | KPIs, MRR, asset inventory, operating rhythm, milestones, and tool recommendations |
 | `payload-native-crm-and-billing.md` | Product direction, design rules, data model, billing split, automation roadmap |
 | `stripe-billing-and-customer-payment-operations.md` | Stripe-hosted invoice, portal, subscription, and out-of-band payment operating model |
 | `hubspot-capability-map-and-first-party-crm.md` | Map HubSpot CRM primitives into first-party Payload collections, Next routes, Stripe webhooks, and compact ops UI |

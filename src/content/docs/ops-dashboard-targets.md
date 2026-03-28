@@ -17,12 +17,12 @@ The **Internal ops targets** global in Payload admin drives values and copy on t
 - **MRR** should come from active Payload `service-plans` first, then scorecard/manual fallback values when service-plan data is not ready.
 - **Day plan** comes from Payload `service-appointments`.
 
-## Growth and asset ladders
+## Growth milestones and asset inventory
 
-Milestones and asset ladder rows are **Payload collections** (admin-only):
+Milestones and ops asset rows are **Payload collections** (admin-only):
 
 - **Growth milestones** -> Internal -> Growth milestones.
-- **Ops asset ladder items** -> Internal -> Ops asset ladder items.
+- **Ops assets** -> Internal -> Ops assets.
 
 ## Liabilities and scorecard rows
 
