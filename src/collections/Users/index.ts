@@ -248,6 +248,19 @@ export const Users: CollectionConfig = {
       ],
     },
     {
+      name: 'clerkUserID',
+      type: 'text',
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+      },
+      access: {
+        create: isAdminField,
+        read: isAdminField,
+        update: isAdminField,
+      },
+    },
+    {
       name: 'supabaseAuthUserID',
       type: 'text',
       admin: {

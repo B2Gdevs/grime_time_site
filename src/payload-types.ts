@@ -174,6 +174,7 @@ export interface Config {
   jobs: {
     tasks: {
       sendCustomerNotification: TaskSendCustomerNotification;
+      sendEmployeeNotification: TaskSendEmployeeNotification;
       processSequenceEnrollmentStep: TaskProcessSequenceEnrollmentStep;
       scanOverdueInvoices: TaskScanOverdueInvoices;
       schedulePublish: TaskSchedulePublish;
@@ -527,6 +528,7 @@ export interface User {
   billingDiscountType?: ('none' | 'percent' | 'flat_amount') | null;
   billingDiscountValue?: number | null;
   billingDiscountNote?: string | null;
+  clerkUserID?: string | null;
   supabaseAuthUserID?: string | null;
   emailVerifiedAt?: string | null;
   lastPortalLoginAt?: string | null;
@@ -2171,6 +2173,7 @@ export interface PayloadJob {
         taskSlug:
           | 'inline'
           | 'sendCustomerNotification'
+          | 'sendEmployeeNotification'
           | 'processSequenceEnrollmentStep'
           | 'scanOverdueInvoices'
           | 'schedulePublish';
@@ -2210,6 +2213,7 @@ export interface PayloadJob {
     | (
         | 'inline'
         | 'sendCustomerNotification'
+        | 'sendEmployeeNotification'
         | 'processSequenceEnrollmentStep'
         | 'scanOverdueInvoices'
         | 'schedulePublish'
@@ -2887,6 +2891,7 @@ export interface UsersSelect<T extends boolean = true> {
   billingDiscountType?: T;
   billingDiscountValue?: T;
   billingDiscountNote?: T;
+  clerkUserID?: T;
   supabaseAuthUserID?: T;
   emailVerifiedAt?: T;
   lastPortalLoginAt?: T;
@@ -4228,6 +4233,19 @@ export interface TaskSendCustomerNotification {
     quoteId?: string | null;
     invoiceId?: string | null;
     appointmentId?: string | null;
+  };
+  output: {
+    sent: boolean;
+  };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TaskSendEmployeeNotification".
+ */
+export interface TaskSendEmployeeNotification {
+  input: {
+    type: 'lead_created' | 'lead_owner_reassigned';
+    leadId?: string | null;
   };
   output: {
     sent: boolean;

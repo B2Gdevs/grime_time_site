@@ -47,6 +47,7 @@ That means:
 - the in-app copilot calls those tools
 - the OpenClaw plugin calls the same tools
 - channel-specific behavior lives in OpenClaw config and plugin code, not in core CRM logic
+- the authenticated employee identity should come from the app's primary identity layer, which now means Clerk-backed user identity mapped into Payload authorization records
 
 ## Shared tool surface
 

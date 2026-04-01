@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<errors-and-attempts>
+  <attempt id="04-10-a1" phase="04" task="04-10" status="resolved">
+    <title>Page media devtools bridge caused a homepage render loop</title>
+    <symptom>Opening the public home page with the localhost-only page-media devtools mounted triggered `Maximum update depth exceeded` from `PageMediaDevtoolsContext.tsx`.</symptom>
+    <cause>The provider recreated `setCurrentPage`, `clearPage`, and the full context object on every render. `PageMediaRegistryBridge` depended on that changing context object, so its effect cleanup and re-run kept setting state recursively.</cause>
+    <attempted-fix>Stabilize the context callbacks with `useCallback`, memoize the provider value with `useMemo`, and make the bridge effect depend only on the stable `setCurrentPage` / `clearPage` functions rather than the whole context object.</attempted-fix>
+    <verification>
+      <command>cmd /c npm.cmd run test:int -- --run tests/int/components/admin-impersonation/page-media-devtools-context.int.spec.tsx tests/int/lib/media/page-media-devtools.int.spec.ts tests/int/lib/media/page-media-route.int.spec.ts</command>
+      <command>cmd /c npm.cmd exec eslint "src/components/admin-impersonation/PageMediaDevtoolsContext.tsx" "tests/int/components/admin-impersonation/page-media-devtools-context.int.spec.tsx"</command>
+      <command>cmd /c npm.cmd run build</command>
+    </verification>
+  </attempt>
+  <attempt id="11-05-a1" phase="11" task="11-05" status="resolved">
+    <title>Portal-access integration test failed before the Clerk id column existed</title>
+    <symptom>After adding `clerkUserID` to Payload `users`, `tests/int/lib/auth/portalAccess.int.spec.ts` failed with `column users.clerk_user_i_d does not exist` when it created records before the latest schema change had been applied.</symptom>
+    <cause>The runtime app/build path had already migrated the database, but the targeted integration test could hit a database that had not seen the new column yet. Calling `payload.db.migrate()` inside the test exposed a second pre-existing issue: older migration files import `MigrateUpArgs` and `MigrateDownArgs` as runtime values, so Payload's dynamic migration loader throws during tests.</cause>
+    <attempted-fix>Keep the new migration file on type-only imports and make the portal-access integration test self-heal by issuing the specific `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` and index creation directly through the Drizzle handle before creating `users` records.</attempted-fix>
+    <verification>
+      <command>cmd /c npm.cmd run test:int -- --run tests/int/lib/auth/portalAccess.int.spec.ts tests/int/components/auth/customer-login-card.int.spec.tsx tests/int/components/admin-impersonation/page-media-devtools-context.int.spec.tsx tests/int/lib/media/page-media-devtools.int.spec.ts tests/int/lib/media/page-media-route.int.spec.ts</command>
+      <command>cmd /c npm.cmd exec eslint "src/collections/Users/index.ts" "src/lib/auth/portal-access/claims.ts" "src/lib/email/portalAccessCta.ts" "src/lib/auth/resolveCustomerPayloadUser.ts" "src/app/api/auth/claim-account/complete/route.ts" "src/components/auth/login/ClaimAccountForm.tsx" "src/migrations/20260401_170000_clerk_user_id.ts" "src/migrations/index.ts" "src/environment.d.ts" "tests/int/lib/auth/portalAccess.int.spec.ts"</command>
+      <command>cmd /c npm.cmd run build</command>
+    </verification>
+  </attempt>
+</errors-and-attempts>

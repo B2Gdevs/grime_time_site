@@ -2,307 +2,240 @@
 
 ## Why this exists
 
-Customer access is still using Payload's built-in email/password login, but the product direction now requires:
+Grime Time now has two realities:
 
-- easy customer sign-in
-- email/password as a supported path
-- passwordless sign-in with one-time magic links
-- forgot-password and reset-password flows
-- clean account claiming for existing customers and company users
-- customer data visibility that stays tied to the correct account/company scope
+- the current repo still carries a Supabase-backed customer-auth implementation
+- the product direction has changed to **full Clerk adoption** for hosted auth UI, social login, and identity
 
-This workflow defines the target auth model and the gaps that still block a polished customer experience.
+This workflow records the new target so future auth work does not keep extending the Supabase path by accident.
 
 ## Current state in repo
 
-- Public login UI: `src/app/(frontend)/login/page.tsx`
-- Dedicated claim-account UI: `src/app/(frontend)/claim-account/page.tsx`
-- Login/register form: `src/components/login-form.tsx`
-- Forgot-password page: `src/app/(frontend)/forgot-password/page.tsx`
-- Reset-password page: `src/app/(frontend)/reset-password/page.tsx`
-- Public registration route: `src/app/auth/register/route.ts`
-- Supabase confirm callback: `src/app/auth/confirm/route.ts`
-- Supabase logout route: `src/app/auth/logout/route.ts`
-- Claim-account request/preview route: `src/app/api/auth/claim-account/route.ts`
-- Claim completion route: `src/app/api/auth/claim-account/complete/route.ts`
-- Company invite route: `src/app/api/portal/account/invitations/route.ts`
+### Live checkpoint
+
+The first Clerk slice is now active in repo:
+
+- `src/proxy.ts` uses `clerkMiddleware()`
+- `src/app/layout.tsx` is now the real root App Router layout and mounts `ClerkProvider` inside `<body>`
+- marketing and `/login` now show Clerk-hosted sign-in/sign-up affordances plus `UserButton`
+- server auth resolution checks Clerk first, then falls back to the older Supabase path
+- Payload `users` now persist `clerkUserID` for app-side identity mapping
+- claim-account completion can now accept a verified Clerk session and bind it onto the existing Payload user
+- the shared claim/invite token screen now presents Clerk-first invite-aware copy, so company-access invites and direct account claims point users through the same hosted auth completion path
+- direct `/forgot-password` and `/reset-password` now present Clerk-first recovery guidance when Clerk is configured instead of exposing the Supabase reset forms as the primary UX
+- legacy `/auth/register` and `/auth/confirm` routes now short-circuit into the Clerk-first flow when Clerk is configured, instead of continuing to behave like the primary customer-auth entry points
+- the active Clerk-first login, claim, forgot-password, reset-password, and signed-in nav surfaces no longer import Supabase browser helpers directly; the legacy Supabase customer-auth UI now lives behind fallback-only dynamic components and routes
+- server-side customer identity now resolves through one shared helper, so Clerk-primary mode does not quietly reuse an old Supabase session when there is no Clerk session
+- existing Payload admin users can now bind onto Clerk by email on first sign-in, which keeps the repo's own impersonation model viable without relying on Clerk's paid impersonation feature
+
+That means the app is now running with Clerk at the framework edge even though the full business-auth migration is not finished yet.
+
+The existing implementation is still Supabase-shaped:
+
+- public login UI: `src/app/(frontend)/login/page.tsx`
+- dedicated claim-account UI: `src/app/(frontend)/claim-account/page.tsx`
+- login/register form: `src/components/login-form.tsx`
+- forgot-password page: `src/app/(frontend)/forgot-password/page.tsx`
+- reset-password page: `src/app/(frontend)/reset-password/page.tsx`
+- public registration route: `src/app/auth/register/route.ts`
+- auth callback/logout routes: `src/app/auth/confirm/route.ts`, `src/app/auth/logout/route.ts`
+- claim-account request/preview route: `src/app/api/auth/claim-account/route.ts`
+- claim completion route: `src/app/api/auth/claim-account/complete/route.ts`
+- company invite route: `src/app/api/portal/account/invitations/route.ts`
 - Payload auth collection: `src/collections/Users/index.ts`
-- Current auth context: `src/lib/auth/getAuthContext.ts`
-- Request auth bridge: `src/lib/auth/requirePayloadUser.ts`
+- current auth context: `src/lib/auth/getAuthContext.ts`
+- request auth bridge: `src/lib/auth/requirePayloadUser.ts`
 - Supabase helpers: `src/lib/supabase/browser.ts`, `src/lib/supabase/server.ts`
-- Portal-access helpers: `src/lib/auth/portal-access/*`
-- Portal gate: `src/app/(portal)/layout.tsx`
-- Customer data surface: `src/lib/customers/getCustomerPortalData.ts`
-- Company-access surface: `src/app/(portal)/account/page.tsx`, `src/components/portal/CustomerCompanyAccessCard.tsx`, `src/components/portal/CustomerCompanyInviteForm.tsx`
+- portal-access helpers: `src/lib/auth/portal-access/*`
+- portal gate: `src/app/(portal)/layout.tsx`
+- customer data surface: `src/lib/customers/getCustomerPortalData.ts`
 
 Today:
 
 - customers can sign in with Supabase email/password
-- customers can request a one-time magic link
-- customers can request a password-reset email and land on a reset page
-- portal access can now resolve a customer from Supabase Auth back into a Payload `users` record by verified email
-- a missing Payload customer user is auto-created on first verified Supabase login
-- existing CRM customers can now request or complete a claim link from `/claim-account`
-- company accounts can now issue account-scoped invite links from the account surface
-- repo defaults now use `grimetime.app` for staff/preview identities and `demo.grimetime.app` for demo personas; customer auth should still use a real deliverable inbox
-- staff/admin auth still remains on Payload auth
-- quote/invoice/schedule emails still do not generate claim CTAs automatically
-- company invite authority currently uses the primary company contact or matching billing email, not a separate dedicated company-admin role
+- customers can request a magic link
+- customers can request password reset
+- claim-account and company invite flows bind into the Supabase path
+- Payload `users` still acts as the app-facing authorization/profile record
+- staff/admin auth and impersonation logic still assume a Payload-first internal actor
 
-The current implementation target is to solve both gaps with one shared token model:
+That is acceptable as the current implementation state, but it is no longer the desired end state.
 
-- claim-account requests for existing CRM customers
-- company-user invites from an account surface
-- the same dedicated `/claim-account` route consuming either path
+## New product direction
 
-## Product requirements
+### Identity provider
 
-### Customer-facing auth
+**Clerk is the identity layer for Grime Time.**
 
-Support all of these:
-
-1. Email + password sign-in
-2. Magic-link sign-in
-3. Forgot-password email
-4. Reset-password page
-5. New customer account creation
-6. Existing-customer account claim from a quote / invoice / invite email
-7. Company-user invite acceptance without exposing admin screens
-
-### Customer-facing access
-
-After auth, customers should be able to:
-
-- view estimates / quotes tied to them or their company account
-- view invoices and payment links
-- view appointments and recurring-plan status
-- update contact info and addresses
-- manage payment method links through Stripe portal when enabled
-
-### UX expectations
-
-- keep login compact and obvious
-- avoid social login for now
-- make passwordless a first-class option, not buried
-- use tabs / button groups / compact help text instead of long copy blocks
-- keep company users and residential users on the same basic auth surface, with differences handled by account scope after login
-
-## Recommended auth architecture
-
-### Split auth by audience
-
-- Staff/admin auth stays on Payload auth and `/admin/login`
-- Customer/public auth moves to Supabase Auth
-
-This split is the cleanest way to support magic links and password reset without forcing customer auth to live inside the admin/session model that currently powers Payload.
-
-## Why Supabase Auth is the right customer auth layer
-
-Supabase already supports:
+Use Clerk for:
 
 - email/password auth
-- magic-link login via `signInWithOtp`
-- password reset via `resetPasswordForEmail`
-- password update after reset via `updateUser`
+- social login
+- passwordless / magic-link style flows where supported by the chosen Clerk setup
+- session handling
+- hosted login / signup / account components
+- `UserButton` and related account chrome
 
-Official references:
+### App-facing record
 
-- Magic-link / passwordless email: `https://supabase.com/docs/guides/auth/auth-email-passwordless`
-- Password auth + reset flow: `https://supabase.com/docs/guides/auth/passwords`
+**Payload `users` remains the business/profile/authorization record.**
 
-Important operational note:
+Use Payload `users` for:
 
-- Supabase's built-in email sender is limited for production use; production should use custom SMTP
-- Resend should be configured as the SMTP provider for Supabase Auth emails
+- roles
+- account/company relationship
+- permissions and portal visibility
+- staff versus customer scope
+- CRM ownership links
+- impersonation rules
+- Stripe customer linkage
 
-## Target system-of-record model
+### External ids
 
-### Supabase Auth
+Clerk and Stripe ids must both be first-class on the Grime Time side:
 
-Use Supabase Auth for:
+- `clerkUserId`
+- `stripeCustomerId`
 
-- customer identity
-- customer sessions
-- magic-link verification
-- password reset email flow
+Those ids should map back into Payload `users` and, where needed, related account/customer records.
+
+## UX direction
+
+Use Clerk-hosted components as much as practical instead of rebuilding auth chrome:
+
+- hosted sign-in
+- hosted sign-up
+- hosted account management where it fits
+- Clerk `UserButton`
+- social login buttons from Clerk configuration
+
+The app should stop growing a parallel custom login UI unless a very specific product need is not covered by Clerk-hosted surfaces.
+
+## Target architecture
+
+### Clerk
+
+Clerk owns:
+
+- identity
+- session cookies/tokens
+- social login
+- public auth screens
+- core account-management affordances
 
 ### Payload `users`
 
-Keep Payload `users` as the business/profile/authorization record for:
+Payload owns:
 
-- roles
-- account relationship
-- addresses
-- phone
-- company/account scope
-- access checks in Local API queries
+- role and authorization data
+- account scope
+- staff/customer flags
+- operational metadata
+- invite/claim token state
+- app-specific preferences and business links
 
-### Required bridge fields on `users`
+### Stripe
 
-Add and use fields such as:
+Stripe remains the billing system of record for payment rails, but its customer ids should be linked from the same user/account model that Clerk signs in.
 
-- `supabaseAuthUserID`
-- `emailVerifiedAt`
-- `lastPortalLoginAt`
-- `portalInviteState`
-- `portalInviteTokenHash`
-- `portalInviteExpiresAt`
-- `portalInviteSentAt`
+That means:
 
-These fields let the app map a Supabase session back to the correct Payload user and account scope without turning customers into Payload-admin-session users.
+- Clerk identity maps to Payload user
+- Payload user maps to account/company scope
+- Payload user and/or account maps to Stripe customer id
 
 ## Target request/session flow
 
-### Customer auth resolution
+`src/lib/auth/getAuthContext.ts` should move toward this:
 
-`src/lib/auth/getAuthContext.ts` should become hybrid:
+1. resolve the current Clerk session
+2. map Clerk identity to the matching Payload `users` record by `clerkUserId` first, then verified email only for controlled bootstrap/claim flows
+3. load role, account, and staff/customer scope from Payload
+4. preserve real-admin identity plus effective-user impersonation rules inside the app
 
-1. check Payload auth first for real staff/admin session
-2. if no Payload staff session is present, check Supabase customer session
-3. resolve the Supabase user back to the Payload `users` record
-4. load effective customer scope from Payload `users.account`
-5. keep existing impersonation behavior for real admins only
+The important boundary is:
 
-### Result
+- Clerk tells us **who is signed in**
+- Payload tells us **what that user can do**
 
-This keeps:
+## Claim and invite model
 
-- current admin flows intact
-- current Payload access-control patterns usable, because Local API queries can still receive a real Payload `user` object with `overrideAccess: false`
-- customer sessions separate from Payload admin auth cookies
+Claim-account and company invites should stay one shared token model.
 
-## Required customer flows
+That means:
 
-### 1. Email/password sign-in
+- existing-customer claim links and company invites still use one Payload token shape
+- the acceptance surface should land in Clerk-hosted auth, not a separate custom auth system
+- token completion binds the verified Clerk identity to the existing Payload user
+- no duplicate Payload users when the invite/claim email already maps to an existing user
 
-- use Supabase `signInWithPassword`
-- keep `/login` as the single public customer auth entry
+## Staff and admin direction
 
-### 2. Magic-link sign-in
+The long-term direction is to avoid a permanent split where customers use one auth stack and staff use another.
 
-- add a "Email me a sign-in link" path on `/login`
-- use Supabase `signInWithOtp`
-- set `shouldCreateUser` carefully:
-  - `false` for sign-in-only requests
-  - `true` only on explicit claim/create flows
-- route the link back through a first-party callback such as `/auth/confirm`
+Open question for implementation:
 
-### 3. Forgot password
+- whether Payload admin stays as a narrow operator-only path during transition
+- or whether Clerk becomes the upstream identity for both staff portal access and admin-adjacent app auth, with Payload admin bridged accordingly
 
-- add a public "Forgot password?" path from `/login`
-- use Supabase `resetPasswordForEmail`
-- redirect to a public reset handoff page that becomes authenticated through the reset link
+For planning purposes, assume **Clerk is the primary identity standard**, even if some Payload-admin specifics remain transitional.
 
-### 4. Reset password
+### Impersonation
 
-- create a change-password page for authenticated reset sessions
-- call Supabase `updateUser({ password })`
+Grime Time does **not** need Clerk's paid impersonation add-on for normal support/admin workflow.
 
-### 5. Existing customer claim flow
+The intended model is:
 
-Needed for customers already created in Payload by staff.
+- Clerk owns the real signed-in identity
+- Payload `users` and app cookies own effective-user impersonation state
+- audit and portal access checks keep both the real actor and the impersonated subject visible in app logic
 
-Recommended behavior:
-
-- if staff already created the customer/user, claim flow should bind the Supabase auth identity to the existing Payload `users` row by email
-- if the email is tied to a company account, use the existing `account` relationship
-- do not create duplicate Payload users when the email already exists
-- use a first-party claim token stored on the Payload `users` record so quote/invoice/schedule emails can deep-link directly into `/login`
-
-### 6. Company invite flow
-
-For commercial customers:
-
-- admins or company admins should invite another company user by email
-- invite email lands on the same auth surface
-- accepted invite links the user to the same Payload `account`
-- invite creation should reuse the same token-generation and completion helpers as claim-account so email delivery, expiry, and activation rules stay consistent
-
-## Missing customer-side product gaps right now
-
-### Authentication gaps
-
-- quote, invoice, and schedule emails still need to deep-link into the shared claim/invite path by default
-- self-signup policy is still undecided, so the auth surface currently supports both open signup and claim/invite-first activation
-- company invite authority is still based on primary contact / billing-email ownership, not a dedicated company-admin permission model
-
-### Activation / attention gaps
-
-- quote, invoice, and schedule emails do not yet consistently push customers into account claim / sign-in flows
-- there is no standard "view your estimate" or "view your account" CTA path tied to auth state
-- no sequence enrollment currently upgrades a lead/customer into an account-claim flow
-
-### Portal clarity gaps
-
-- dashboard is usable, but first-login onboarding is still too generic
-- customers need a clearer first-login state:
-  - no estimate yet
-  - estimate ready
-  - invoice open
-  - appointment needs scheduling
-  - subscription active
+That means first-sign-in binding for existing admins matters: if a staff/admin email already exists in Payload, Clerk should attach to that record instead of creating a second customer-shaped user.
 
 ## Implementation slices
 
-### Slice A: auth foundation
+### Slice A: identity migration foundation
 
-- add Supabase auth clients/helpers
-- add hybrid auth context
-- add callback route for magic links / reset links
-- add `supabaseAuthUserID` mapping on Payload `users`
+- add Clerk env/config
+- add Clerk provider and middleware/session helpers
+- add `clerkUserId` to Payload `users`
+- add deterministic Payload-user lookup by Clerk identity
+- keep Supabase path only as a migration fallback until cutover is complete
 
-Status:
+### Slice B: hosted auth surfaces
 
-- implemented with schema fields on `users`, verified-email fallback, `supabaseAuthUserID`, claim/invite token storage, and safe auto-create for unknown customer users
+- replace custom login/signup emphasis with Clerk-hosted sign-in/sign-up
+- adopt Clerk `UserButton` and account affordances in the portal/shell
+- enable configured social providers
 
-### Slice B: public login UX
+### Slice C: claim/invite bridge
 
-- redesign `/login` into compact auth modes:
-  - password
-  - magic link
-  - create account
-- add forgot-password request screen
-- add reset-password screen
-- move claim/invite handling to a dedicated token-driven `/claim-account` route instead of exposing claim as a normal login tab
+- keep claim and company-invite tokens in Payload
+- route accepted tokens through Clerk sign-in/sign-up
+- bind the resulting Clerk user to the existing Payload user and account scope
+- current checkpoint: the shared claim/invite token screen now supports Clerk-first copy and Clerk-backed completion; remaining work is removing the old Supabase-specific fallback UX once the team is comfortable with the cutover
 
-Status:
+### Slice D: Stripe and business identity linkage
 
-- password / magic-link / create-account tabs are live
-- claim-account now lives on its own route and can either request a claim link or accept a tokenized claim/invite
-- forgot-password and reset-password screens are live
-- auth surface is now split into smaller login modules instead of one growing monolith
+- ensure `stripeCustomerId` is associated to the same Payload user/account records that Clerk resolves
+- keep billing and portal checks keyed from app data, not directly from Clerk metadata alone
 
-### Slice C: customer/account activation
+### Slice E: Supabase retirement
 
-- add claim-account flow for existing customers
-- add company invite flow
-- add quote/invoice email CTAs that deep-link into auth and then into the relevant portal page
+- remove Supabase auth screens/helpers once Clerk is fully wired
+- keep only the database/storage pieces that still belong in Supabase/Postgres infrastructure
+- current checkpoint: browser-side fallback forms are isolated into explicit `Supabase*` components and only loaded when Clerk is not the active customer-auth path
+- current checkpoint: server-side claim completion and customer-user resolution now share the same Clerk-first identity helper, so fallback auth only runs when the server auth mode explicitly allows it
 
-Implementation notes:
+## Immediate planning implications
 
-- prefer one shared token helper instead of separate claim and invite token systems
-- keep login/create/claim screens split into small auth modules rather than expanding one monolithic form component
-- company-member invite management should live on the customer account surface for account-scoped users, not in admin-only UI
-
-Status:
-
-- shared claim/invite token flow is implemented and validated with integration plus Playwright coverage
-- company-account invite UI is implemented on the account surface
-- email CTA generation from quotes/invoices/schedules is still pending
-
-### Slice D: tests
-
-- integration coverage now includes `tests/int/lib/auth/portalAccess.int.spec.ts`
-- Playwright coverage now includes admin preview plus company-access verification in `tests/e2e/admin.e2e.spec.ts`
-- remaining browser coverage to add:
-  - magic-link request UX
-  - forgot-password request UX
-  - reset-password page access
-  - public claim-account happy path
+- future auth work should target **Clerk**, not extend the Supabase UX
+- invite, portal, impersonation, and employee-tool work must assume a Clerk-backed real identity
+- shared tool/auth work in phase `11` should be compatible with Clerk identities for field agents and staff
 
 ## Open product questions
 
-- Should public self-registration stay open for anyone, or should it eventually become claim/invite-first?
-- Should magic-link sign-in create a user automatically when the email is unknown, or only for explicit signup/claim flows?
-- Should company admins be able to invite users immediately in v1, or should that remain staff-only until billing/admin boundaries are tighter?
-- Which customer emails should include account-claim CTAs first: quote sent, invoice sent, appointment scheduled, or all three?
+- Do we want Clerk-hosted pages everywhere, or are there specific branded auth surfaces we still want to custom-wrap?
+- Which social providers matter first for Grime Time: Google only, or Google plus Apple/Facebook?
+- Do we want Clerk organizations, or will Grime Time continue to model company membership only in Payload accounts for v1?
+- How much of Payload admin should stay on a transitional auth path versus moving behind the same Clerk-backed identity assumptions as the portal?

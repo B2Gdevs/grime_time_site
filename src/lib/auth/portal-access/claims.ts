@@ -4,7 +4,6 @@ import { getPayload, type Payload } from 'payload'
 import { USERS_COLLECTION_SLUG } from '@/collections/Users'
 import {
   PORTAL_ACCESS_DEFAULT_NEXT_PATH,
-  type PortalInviteState,
 } from '@/lib/auth/portal-access/constants'
 import { sendPortalAccessEmail } from '@/lib/auth/portal-access/email'
 import { provisionPortalAccess } from '@/lib/auth/portal-access/provision'
@@ -35,8 +34,9 @@ type IssuePortalAccessArgs = {
 }
 
 type CompletePortalAccessArgs = {
+  clerkUserID?: null | string
   payload?: Payload
-  supabaseAuthUserID: string
+  supabaseAuthUserID?: null | string
   token: string
   verifiedEmail: string
 }
@@ -142,12 +142,13 @@ export async function completePortalAccessClaim(
     collection: USERS_COLLECTION_SLUG,
     id: preview.userID,
     data: {
+      clerkUserID: args.clerkUserID ?? undefined,
       emailVerifiedAt: new Date().toISOString(),
       lastPortalLoginAt: new Date().toISOString(),
       portalInviteExpiresAt: null,
       portalInviteState: 'active',
       portalInviteTokenHash: null,
-      supabaseAuthUserID: args.supabaseAuthUserID,
+      supabaseAuthUserID: args.supabaseAuthUserID ?? undefined,
     },
     overrideAccess: true,
   })) as User

@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import type { PointerEvent as ReactPointerEvent } from 'react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
@@ -22,6 +23,7 @@ import {
 } from 'lucide-react'
 
 import { DemoModeToggle } from '@/components/demo/DemoModeToggle'
+import { PageMediaDevtoolsDrawer } from '@/components/admin-impersonation/PageMediaDevtoolsDrawer'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -176,10 +178,12 @@ const CORNER_ICONS: Record<Corner, typeof ArrowUpLeftIcon> = {
 export function AdminImpersonationToolbar({
   effectiveUser,
   impersonatedUser,
+  localPageMediaEnabled = false,
   realUser,
 }: {
   effectiveUser: AdminPreviewUser
   impersonatedUser: AdminPreviewUser | null
+  localPageMediaEnabled?: boolean
   realUser: AdminPreviewUser
 }) {
   const pathname = usePathname()
@@ -272,7 +276,7 @@ export function AdminImpersonationToolbar({
         }
 
         setResults(payload?.users ?? [])
-      } catch (error) {
+      } catch {
         if (!controller.signal.aborted) {
           setStatus('Unable to load users.')
           setResults([])
@@ -468,12 +472,13 @@ export function AdminImpersonationToolbar({
           <div className="mt-3 flex flex-wrap items-center gap-2">
             {quickLinks.map((link) => (
               <Button asChild key={link.href} size="sm" type="button" variant="ghost">
-                <a href={link.href}>
+                <Link href={link.href}>
                   <link.icon className="h-4 w-4" />
                   {link.label}
-                </a>
+                </Link>
               </Button>
             ))}
+            <PageMediaDevtoolsDrawer enabled={localPageMediaEnabled} />
             <DemoModeToggle />
           </div>
 
@@ -569,10 +574,10 @@ export function AdminImpersonationToolbar({
 
                   {impersonatedUser ? (
                     <Button asChild size="sm" type="button" variant="ghost">
-                      <a href="/dashboard">
+                      <Link href="/dashboard">
                         <ExternalLinkIcon className="h-4 w-4" />
                         Open customer dashboard
-                      </a>
+                      </Link>
                     </Button>
                   ) : null}
                 </div>

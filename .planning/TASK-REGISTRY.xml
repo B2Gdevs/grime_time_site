@@ -117,11 +117,11 @@
         <command>Use src/app/(frontend)/layout.tsx, src/app/(frontend)/page.tsx, the Header/Footer replacement path, and the seeded home/quote content in src/endpoints/seed/home.ts plus src/components/InstantQuoteSection.tsx.</command>
       </commands>
     </task>
-    <task id="03-11" agent-id="" status="planned">
+    <task id="03-11" agent-id="" status="done">
       <goal>Polish the new marketing shell so the sidebar hierarchy, page spacing, and non-home heroes feel purpose-built rather than adapted from the Payload website template; keep Grime Time’s own scene, quotes, services, and support routes intact.</goal>
       <keywords>sidebar,hero,spacing,frontend,polish</keywords>
       <commands>
-        <command>Refine src/components/frontend/MarketingShell.tsx, src/app/(frontend)/[slug]/page.tsx, src/heros/*, and supporting frontend globals so public routes share the same visual grammar as the new home page.</command>
+          <command>Refined src/components/frontend/MarketingShell.tsx, src/components/home/GrimeTimeMarketingHome.tsx, src/components/ui/sidebar.tsx, and src/app/(frontend)/globals.css so the public shell no longer overlaps the hero, duplicate nav/login lanes are removed, and the homepage keeps services, pricing, and quote actions in view.</command>
       </commands>
     </task>
     <task id="03-07" agent-id="" status="done">
@@ -194,6 +194,13 @@
       <keywords>auth,supabase,magic-link,password-reset,portal</keywords>
       <commands>
         <command>See .planning/workflows/customer-auth-and-portal-access.md</command>
+      </commands>
+    </task>
+    <task id="04-10" agent-id="" status="done">
+      <goal>Extend the existing admin preview/impersonation tooling with a localhost-only page-media sidebar for frontend routes so a real admin can inspect the current page's resolved media records, replace a media file in place, or create a new media record and swap the page reference without leaving the page.</goal>
+      <keywords>auth,impersonation,media,developer,local</keywords>
+      <commands>
+        <command>Implemented via `src/components/admin-impersonation/PageMediaDevtoolsDrawer.tsx`, `src/components/admin-impersonation/PageMediaDevtoolsContext.tsx`, `src/lib/media/pageMediaDevtools.ts`, and `src/app/api/internal/dev/page-media/route.ts`. The tool is only exposed when the real user is an admin and the request host resolves to localhost / 127.0.0.1 / ::1.</command>
       </commands>
     </task>
   </phase>
@@ -534,11 +541,11 @@
     </task>
   </phase>
   <phase id="11">
-    <task id="11-01" agent-id="" status="in_progress">
+    <task id="11-01" agent-id="" status="done">
       <goal>Ship first-party quote and lead-notification email for employees using Payload jobs plus Resend templates, delivery logging, and routing rules so inbound work reaches the right person without depending on AI or chat infrastructure.</goal>
       <keywords>email,resend,quotes,notifications,employees</keywords>
       <commands>
-        <command>See .planning/workflows/field-agent-messaging-and-notifications.md and .planning/workflows/crm-and-integrations.md</command>
+        <command>Implemented `sendEmployeeNotification` Payload jobs for inbound lead intake and owner-reassignment alerts, routed by owner plus `EMPLOYEE_NOTIFICATION_EMAILS` fallback, with CRM activity logging and Resend-backed delivery. See src/hooks/afterLeadAutomation.ts, src/jobs/sendEmployeeNotificationTask.ts, and src/lib/automation/employee-notifications/sendEmployeeNotification.ts.</command>
       </commands>
     </task>
     <task id="11-02" agent-id="" status="planned">
@@ -560,6 +567,13 @@
       <keywords>stripe,subscriptions,billing,service-plans</keywords>
       <commands>
         <command>See .planning/workflows/stripe-billing-and-customer-payment-operations.md</command>
+      </commands>
+    </task>
+    <task id="11-05" agent-id="" status="in-progress">
+      <goal>Replace the current Supabase customer-auth path with Clerk-hosted auth and social login, use Clerk UI components wherever practical for sign-in/up and account affordances, and map Clerk external ids back into Payload `users` plus Stripe customer records without weakening admin impersonation or portal access checks. Current checkpoint: root `ClerkProvider`, `clerkMiddleware()`, marketing/login surfaces, persisted `clerkUserID`, the shared claim/invite token flow presents a Clerk-first completion path against the existing Payload user, the direct forgot/reset routes no longer expose Supabase-first UX when Clerk is enabled, the old `/auth/register` plus `/auth/confirm` routes now short-circuit into the Clerk-first flow, the active Clerk-first customer surfaces plus signed-in nav isolate legacy Supabase browser helpers behind fallback-only dynamic components and routes, the server now resolves customer identity through one shared helper so Clerk-primary mode does not silently fall back to Supabase sessions, and Clerk-backed staff/admin sessions bind onto existing Payload admin users by email so app-owned impersonation remains viable. Remaining work is any final Supabase-era server cleanup plus a follow-through pass on admin/ops affordances that still assume Payload-auth-first staff login.</goal>
+      <keywords>auth,clerk,social-login,stripe,portal</keywords>
+      <commands>
+        <command>See .planning/workflows/customer-auth-and-portal-access.md and DECISIONS `D-auth-005` / `D-auth-006`.</command>
       </commands>
     </task>
   </phase>

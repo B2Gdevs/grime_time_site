@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { sql } from '@payloadcms/db-postgres'
 import { getPayload, type Payload } from 'payload'
 
 import config from '@/payload.config'
@@ -34,6 +35,11 @@ describe('portal access helpers', () => {
   beforeAll(async () => {
     const payloadConfig = await config
     payload = await getPayload({ config: payloadConfig })
+    await (payload.db as { drizzle: { execute: (statement: ReturnType<typeof sql>) => Promise<unknown> } }).drizzle
+      .execute(sql`
+        ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "clerk_user_i_d" varchar;
+        CREATE UNIQUE INDEX IF NOT EXISTS "users_clerk_user_i_d_idx" ON "users" USING btree ("clerk_user_i_d");
+      `)
 
     companyUser = await createRecord<User>({
       collection: 'users',
@@ -88,12 +94,14 @@ describe('portal access helpers', () => {
     expect(preview?.accountName).toBe(`${runKey} account`)
 
     const completed = await completePortalAccessClaim({
+      clerkUserID: `clerk_${runKey}`,
       payload,
       supabaseAuthUserID: `supabase-${runKey}`,
       token: `${runKey}-token`,
       verifiedEmail: `${runKey}.company@example.com`,
     })
 
+    expect(completed?.clerkUserID).toBe(`clerk_${runKey}`)
     expect(completed?.portalInviteState).toBe('active')
     expect(completed?.supabaseAuthUserID).toBe(`supabase-${runKey}`)
     expect(completed?.portalInviteTokenHash).toBeNull()

@@ -1,0 +1,6 @@
+# Magicborn vendor CLI manifest (same family as monorepo .magicborn/cli-config.toml)
+framework = "magicborn-vendor-cli"
+version = 1
+id = "grimetime"
+bin = "bin/grimetime.mjs"
+description = "Grime Time — Payload site (grimetime CLI)"

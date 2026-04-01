@@ -1,24 +1,37 @@
 'use client'
 
+import { Show } from '@clerk/nextjs'
+import dynamic from 'next/dynamic'
 import { useSearchParams } from 'next/navigation'
 
+import { ClerkCustomerAccessPanel } from '@/components/auth/ClerkCustomerAccessPanel'
 import { AuthError } from '@/components/auth/auth-error'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { CreateAccountForm } from '@/components/auth/login/CreateAccountForm'
-import { MagicLinkSignInForm } from '@/components/auth/login/MagicLinkSignInForm'
-import { PasswordSignInForm } from '@/components/auth/login/PasswordSignInForm'
 import { PORTAL_ACCESS_DEFAULT_NEXT_PATH } from '@/lib/auth/portal-access/constants'
+import {
+  isClerkCustomerAuthPrimaryClient,
+  isSupabaseCustomerAuthFallbackEnabledClient,
+} from '@/lib/auth/customerAuthMode'
 import { sanitizeNextPath } from '@/lib/auth/redirect'
-import { isSupabaseAuthConfigured } from '@/lib/supabase/config'
+
+const SupabaseCustomerLoginPanel = dynamic(
+  () =>
+    import('@/components/auth/login/SupabaseCustomerLoginPanel').then((module) => ({
+      default: module.SupabaseCustomerLoginPanel,
+    })),
+  { ssr: false },
+)
 
 export function CustomerLoginCard() {
   const search = useSearchParams()
   const nextPath = sanitizeNextPath(search.get('next')) || PORTAL_ACCESS_DEFAULT_NEXT_PATH
-  const supabaseConfigured = isSupabaseAuthConfigured()
+  const supabaseConfigured = isSupabaseCustomerAuthFallbackEnabledClient()
+  const clerkConfigured = isClerkCustomerAuthPrimaryClient()
   const authLinkError =
     search.get('error') === 'auth-link-invalid'
       ? 'That sign-in or reset link is invalid or expired.'
+      : search.get('error') === 'clerk-auth-active'
+        ? 'Customer sign-in now runs through the hosted Grime Time auth flow. Start again below with the same email on your account.'
       : search.get('error') === 'supabase-auth-disabled'
         ? 'Customer sign-in is not configured yet.'
         : null
@@ -27,7 +40,11 @@ export function CustomerLoginCard() {
     <Card className="shadow-sm">
       <CardHeader className="text-center">
         <CardTitle className="text-2xl">Customer account</CardTitle>
-        <CardDescription>Sign in with your password or a one-time link.</CardDescription>
+        <CardDescription>
+          {clerkConfigured
+            ? 'Use the same email tied to your estimate, invoice, or company invite.'
+            : 'Sign in with your password or a one-time link.'}
+        </CardDescription>
       </CardHeader>
       <CardContent>
         {authLinkError ? (
@@ -35,25 +52,20 @@ export function CustomerLoginCard() {
             <AuthError message={authLinkError} />
           </div>
         ) : null}
-        {!supabaseConfigured ? (
-          <AuthError message="Customer sign-in is not configured yet. Add the public Supabase auth env vars first." />
+        {clerkConfigured ? (
+          <div className="grid gap-4">
+            <Show when="signed-out">
+              <div className="rounded-xl border border-border/70 bg-muted/35 p-4 text-sm text-muted-foreground">
+                Use Clerk sign-in for portal access. Choose the same email used on your estimate, invoice,
+                or company invite so Grime Time can attach this session to the correct customer record.
+              </div>
+            </Show>
+            <ClerkCustomerAccessPanel signInFallbackHref={nextPath} signUpFallbackHref={nextPath} />
+          </div>
+        ) : !supabaseConfigured ? (
+          <AuthError message="Customer sign-in is not configured yet. Add the Clerk or public Supabase auth env vars first." />
         ) : (
-          <Tabs defaultValue="sign-in" className="grid gap-6">
-            <TabsList className="grid h-auto w-full grid-cols-3 gap-1 rounded-xl p-1">
-              <TabsTrigger value="sign-in">Password</TabsTrigger>
-              <TabsTrigger value="magic-link">Magic link</TabsTrigger>
-              <TabsTrigger value="create-account">Create account</TabsTrigger>
-            </TabsList>
-            <TabsContent value="sign-in">
-              <PasswordSignInForm nextPath={nextPath} />
-            </TabsContent>
-            <TabsContent value="magic-link">
-              <MagicLinkSignInForm nextPath={nextPath} />
-            </TabsContent>
-            <TabsContent value="create-account">
-              <CreateAccountForm />
-            </TabsContent>
-          </Tabs>
+          <SupabaseCustomerLoginPanel nextPath={nextPath} />
         )}
       </CardContent>
     </Card>

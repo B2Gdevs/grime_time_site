@@ -12,7 +12,7 @@ export type PortalAccessCta = {
 
 function isActivePortalUser(user: User | null): boolean {
   if (!user) return false
-  return user.portalInviteState === 'active' && Boolean(user.supabaseAuthUserID)
+  return user.portalInviteState === 'active' && Boolean(user.clerkUserID || user.supabaseAuthUserID)
 }
 
 export async function resolvePortalAccessCta(args: {

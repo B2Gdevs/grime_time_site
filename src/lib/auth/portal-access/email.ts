@@ -23,10 +23,15 @@ function emailBody(args: SendPortalAccessEmailArgs) {
     args.mode === 'invite'
       ? `You were invited to join ${args.accountName || 'a Grime Time company account'}.`
       : 'A Grime Time customer record already exists for your email. Claim it to review estimates, invoices, and service details.'
+  const setupLine =
+    args.mode === 'invite'
+      ? 'Open the secure link below, sign in or create your account with this email, and Grime Time will attach you to the right company access.'
+      : 'Open the secure link below, sign in or create your account with this email, and Grime Time will attach you to your existing customer record.'
 
   const html = `
     <p>Hi ${recipientName},</p>
     <p>${actionLine}</p>
+    <p>${setupLine}</p>
     <p><a href="${link}">Open your secure account link</a></p>
     <p>This link expires in 72 hours. If it expires, request a fresh one from the login screen.</p>
     <p>Grime Time</p>
@@ -36,6 +41,8 @@ function emailBody(args: SendPortalAccessEmailArgs) {
     `Hi ${recipientName},`,
     '',
     actionLine,
+    '',
+    setupLine,
     '',
     `Open your secure account link: ${link}`,
     '',

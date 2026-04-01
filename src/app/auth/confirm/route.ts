@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { EmailOtpType } from '@supabase/supabase-js'
 
+import { isClerkCustomerAuthPrimaryServer } from '@/lib/auth/customerAuthMode'
 import { completePortalAccessClaim } from '@/lib/auth/portal-access/claims'
 import { sanitizeNextPath } from '@/lib/auth/redirect'
 import { getSupabaseServerClient } from '@/lib/supabase/server'
@@ -33,6 +34,17 @@ export async function GET(request: Request) {
   const nextPath = sanitizeNextPath(url.searchParams.get('next'))
   const tokenHash = url.searchParams.get('token_hash')
   const type = url.searchParams.get('type')
+  if (isClerkCustomerAuthPrimaryServer()) {
+    if (claimToken) {
+      const destination = new URL('/claim-account', getServerSideURL())
+      destination.searchParams.set('claim', claimToken)
+      destination.searchParams.set('next', nextPath)
+      return NextResponse.redirect(destination)
+    }
+
+    return NextResponse.redirect(new URL('/login?error=clerk-auth-active', getServerSideURL()))
+  }
+
   const supabase = await getSupabaseServerClient()
 
   if (!supabase) {

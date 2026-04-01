@@ -19,6 +19,7 @@ import * as migration_20260327_120000_internal_ops_quote_weights from './2026032
 import * as migration_20260327_140500_sequence_jobs_and_relations from './20260327_140500_sequence_jobs_and_relations';
 import * as migration_20260327_141500_payload_jobs_meta from './20260327_141500_payload_jobs_meta';
 import * as migration_20260327_031119_20260327_170000_operating_rhythm_and_discount_policy from './20260327_031119_20260327_170000_operating_rhythm_and_discount_policy';
+import * as migration_20260401_170000_clerk_user_id from './20260401_170000_clerk_user_id';
 
 export const migrations = [
   {
@@ -125,5 +126,10 @@ export const migrations = [
     up: migration_20260327_031119_20260327_170000_operating_rhythm_and_discount_policy.up,
     down: migration_20260327_031119_20260327_170000_operating_rhythm_and_discount_policy.down,
     name: '20260327_031119_20260327_170000_operating_rhythm_and_discount_policy',
+  },
+  {
+    up: migration_20260401_170000_clerk_user_id.up,
+    down: migration_20260401_170000_clerk_user_id.down,
+    name: '20260401_170000_clerk_user_id',
   },
 ];

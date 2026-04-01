@@ -1,11 +1,11 @@
 import { completePortalAccessClaim } from '@/lib/auth/portal-access/claims'
+import { resolveCustomerSessionIdentity } from '@/lib/auth/customerSessionIdentity'
 import { completeClaimAccountSchema } from '@/lib/forms/portalAccess'
-import { getSupabaseServerUser } from '@/lib/supabase/server'
 
 export async function POST(request: Request) {
-  const supabaseUser = await getSupabaseServerUser()
+  const identity = await resolveCustomerSessionIdentity()
 
-  if (!supabaseUser?.id || !supabaseUser.email) {
+  if (!identity?.email) {
     return Response.json({ error: 'You must finish authentication before claiming this account.' }, { status: 401 })
   }
 
@@ -20,9 +20,10 @@ export async function POST(request: Request) {
   }
 
   const user = await completePortalAccessClaim({
-    supabaseAuthUserID: supabaseUser.id,
+    clerkUserID: identity.kind === 'clerk' ? identity.clerkUserID : undefined,
+    supabaseAuthUserID: identity.kind === 'supabase' ? identity.supabaseAuthUserID : undefined,
     token: parsed.data.token,
-    verifiedEmail: supabaseUser.email,
+    verifiedEmail: identity.email,
   })
 
   if (!user) {

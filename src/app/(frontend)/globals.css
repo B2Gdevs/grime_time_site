@@ -400,22 +400,25 @@
   }
 
   .portal-scroll::-webkit-scrollbar,
-  .portal-nav-scroll::-webkit-scrollbar {
+  .portal-nav-scroll::-webkit-scrollbar,
+  .marketing-sidebar-scroll::-webkit-scrollbar {
     width: 10px;
     height: 10px;
   }
 
   .portal-scroll::-webkit-scrollbar-track,
-  .portal-nav-scroll::-webkit-scrollbar-track {
+  .portal-nav-scroll::-webkit-scrollbar-track,
+  .marketing-sidebar-scroll::-webkit-scrollbar-track {
     background: transparent;
   }
 
   .portal-scroll::-webkit-scrollbar-thumb,
-  .portal-nav-scroll::-webkit-scrollbar-thumb {
+  .portal-nav-scroll::-webkit-scrollbar-thumb,
+  .marketing-sidebar-scroll::-webkit-scrollbar-thumb {
     border: 2px solid transparent;
     border-radius: 9999px;
     background-clip: padding-box;
-    background-color: color-mix(in oklab, var(--foreground) 18%, transparent);
+    background-color: color-mix(in oklab, var(--sidebar-foreground) 18%, transparent);
   }
 
   .portal-nav-scroll {
@@ -425,6 +428,16 @@
     overscroll-behavior: contain;
     scrollbar-width: thin;
     scrollbar-color: color-mix(in oklab, var(--foreground) 18%, transparent)
+      transparent;
+  }
+
+  .marketing-sidebar-scroll {
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in oklab, var(--sidebar-foreground) 20%, transparent)
       transparent;
   }
 

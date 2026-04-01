@@ -1,9 +1,10 @@
 'use client'
 
+import { useClerk } from '@clerk/nextjs'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { LogOutIcon, ShieldIcon, UserCircleIcon } from 'lucide-react'
 
-import { getSupabaseBrowserClient } from '@/lib/supabase/browser'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
   DropdownMenu,
@@ -20,6 +21,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar'
+import { isSupabaseCustomerAuthFallbackEnabledClient } from '@/lib/auth/customerAuthMode'
 
 function initialsForName(name: string): string {
   return name
@@ -48,20 +50,24 @@ export function NavUser({
 }) {
   const router = useRouter()
   const { isMobile } = useSidebar()
+  const clerk = useClerk()
 
   async function handleLogout() {
-    const supabaseSignOut = (() => {
-      try {
-        return getSupabaseBrowserClient().auth.signOut()
-      } catch {
-        return Promise.resolve()
-      }
-    })()
+    const clerkSignOut = clerk.signOut({ redirectUrl: '/login' }).catch(() => undefined)
+    const supabaseSignOut = isSupabaseCustomerAuthFallbackEnabledClient()
+      ? import('@/lib/supabase/browser')
+          .then(({ getSupabaseBrowserClient }) => getSupabaseBrowserClient().auth.signOut())
+          .catch(() => undefined)
+      : Promise.resolve(undefined)
+    const legacyLogout = isSupabaseCustomerAuthFallbackEnabledClient()
+      ? fetch('/auth/logout', { method: 'POST' })
+      : Promise.resolve(undefined)
 
     await Promise.allSettled([
-      fetch('/auth/logout', { method: 'POST' }),
+      legacyLogout,
       fetch('/api/users/logout', { method: 'POST' }),
       supabaseSignOut,
+      clerkSignOut,
     ])
     router.push('/login')
     router.refresh()
@@ -105,17 +111,17 @@ export function NavUser({
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem asChild>
-                <a href={dashboardUrl}>
+                <Link href={dashboardUrl}>
                   <UserCircleIcon />
                   {staffShell ? 'Ops dashboard' : 'Dashboard'}
-                </a>
+                </Link>
               </DropdownMenuItem>
               {isRealAdmin && staffShell ? (
                 <DropdownMenuItem asChild>
-                  <a href="/admin">
+                  <Link href="/admin">
                     <ShieldIcon />
                     Payload admin
-                  </a>
+                  </Link>
                 </DropdownMenuItem>
               ) : null}
             </DropdownMenuGroup>

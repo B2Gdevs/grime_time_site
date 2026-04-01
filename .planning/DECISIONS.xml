@@ -405,9 +405,9 @@
     </references>
   </decision>
   <decision id="D-auth-005">
-    <title>Customer auth uses Supabase; staff auth stays on Payload</title>
-    <summary>Public/customer authentication should move to Supabase Auth so Grime Time can support email/password, passwordless magic links, and reset-password flows cleanly. Staff/admin authentication remains on Payload admin auth. Payload `users` stays the app-facing profile and authorization record for both sides.</summary>
-    <impact>This keeps customer auth UX simple while preserving the current Payload-first role/account access model. The app will need a hybrid auth context: Payload session for staff, Supabase session for customers, and a deterministic mapping back into Payload `users` plus account scope for Local API access checks and portal rendering.</impact>
+    <title>Clerk becomes the primary identity layer; Payload users stay the app-facing authorization record</title>
+    <summary>Grime Time will adopt Clerk for hosted sign-in, sign-up, social login, passwordless flows, session handling, and account affordances such as the user button. Payload `users` remains the business/profile/authorization record, with Clerk external ids mapped back into the app for portal scope, staff permissions, impersonation, and Stripe customer linkage.</summary>
+    <impact>The current Supabase customer-auth implementation becomes an interim state, not the long-term direction. Future auth work should prioritize Clerk-hosted components and Clerk session checks, while preserving a deterministic bridge into Payload `users`, account scope, and Stripe `customerId` records. Staff/admin auth should converge on the same identity provider where practical rather than keeping a permanent Supabase-vs-Payload split.</impact>
     <references>
       <file path=".planning/workflows/customer-auth-and-portal-access.md" />
       <file path="src/components/login-form.tsx" />
@@ -417,13 +417,36 @@
   </decision>
   <decision id="D-auth-006">
     <title>Account claim and company invites share one Payload token model</title>
-    <summary>Existing-customer claim links and company-user invites should not become separate systems. Both flows should issue the same kind of first-party token stored on the Payload `users` record, land on the same compact public auth surface, and complete by binding the verified Supabase identity back to the existing Payload user and account scope.</summary>
-    <impact>Reduces duplicated auth logic, keeps email CTA generation consistent across quotes/invoices/schedules/company invites, and makes the auth UI easier to refactor into small reusable modules instead of branching by flow in many places.</impact>
+    <summary>Existing-customer claim links and company-user invites should not become separate systems. Both flows should issue the same kind of first-party token stored on the Payload `users` record, land on the same compact Clerk-hosted auth surface, and complete by binding the verified Clerk identity back to the existing Payload user, account scope, and Stripe customer context where present.</summary>
+    <impact>Reduces duplicated auth logic, keeps email CTA generation consistent across quotes/invoices/schedules/company invites, and makes the auth UI easier to refactor into small reusable modules instead of branching by flow in many places. It also keeps invite acceptance compatible with hosted Clerk components instead of custom one-off auth pages.</impact>
     <references>
       <file path=".planning/workflows/customer-auth-and-portal-access.md" />
       <file path="src/components/login-form.tsx" />
       <file path="src/collections/Users/index.ts" />
       <file path="src/app/(portal)/account/page.tsx" />
+    </references>
+  </decision>
+  <decision id="D-auth-007">
+    <title>Frontend page-media devtools stay local-only and ride the existing admin preview toolbar</title>
+    <summary>The public-site media editing affordance should not become a production CMS surface. Instead, the existing admin preview/impersonation toolbar can expose a localhost-only page-media sidebar for real admins that lists media resolved on the current page and allows two developer actions: replace the file behind an existing media record, or create a new media record and swap the page relationship to that new record.</summary>
+    <impact>Keeps production/editor experience anchored in Payload admin while giving the developer a fast local iteration loop on homepage and public pages. This also means the tool must be hard-gated by real-admin auth plus localhost/127.0.0.1 host checks, and mutation routes must require an explicit page relationship path rather than attempting broad document rewrites.</impact>
+    <references>
+      <file path=".planning/TASK-REGISTRY.xml" />
+      <file path=".planning/workflows/local-page-media-devtools.md" />
+      <file path="src/components/admin-impersonation/AdminImpersonationToolbar.tsx" />
+      <file path="src/app/(frontend)/layout.tsx" />
+    </references>
+  </decision>
+  <decision id="D-auth-008">
+    <title>Clerk owns real identity; Grime Time owns impersonation</title>
+    <summary>Grime Time will use Clerk for the real signed-in identity, but it will keep support/admin impersonation as an app-layer feature using Payload-linked users plus first-party effective-user cookies instead of relying on Clerk's paid impersonation add-on.</summary>
+    <impact>Existing Payload admins must bind onto Clerk by email on first sign-in so `/ops`, admin preview, and customer impersonation keep working without duplicate users. Audit and permission checks must continue to distinguish the real actor from the impersonated subject.</impact>
+    <references>
+      <file path=".planning/workflows/customer-auth-and-portal-access.md" />
+      <file path="src/lib/auth/getAuthContext.ts" />
+      <file path="src/lib/auth/requirePayloadUser.ts" />
+      <file path="src/app/api/internal/impersonation/start/route.ts" />
+      <file path="src/app/api/internal/impersonation/stop/route.ts" />
     </references>
   </decision>
   <decision id="D-eng-001">

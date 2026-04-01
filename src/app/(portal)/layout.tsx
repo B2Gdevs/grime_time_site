@@ -7,10 +7,7 @@ import { isAiOpsAssistantEnabled } from '@/lib/ai'
 import { getCurrentAuthContext } from '@/lib/auth/getAuthContext'
 import { userIsAdmin } from '@/lib/auth/getCurrentPayloadUser'
 import { getPortalDocs } from '@/lib/docs/catalog'
-import { Providers } from '@/providers'
 import { quotesInternalEnabled } from '@/utilities/quotesAccess'
-
-import '../(frontend)/globals.css'
 
 const portalAdminOnly = process.env.PORTAL_ADMIN_ONLY === 'true'
 
@@ -36,24 +33,18 @@ export default async function PortalLayout({ children }: { children: ReactNode }
     : []
 
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className="site-shell portal-shell overflow-x-hidden antialiased">
-        <Providers>
-          <PortalAppShell
-            aiCopilotEnabled={auth.isRealAdmin && isAiOpsAssistantEnabled()}
-            documents={docs}
-            effectiveUserEmail={user.email ?? ''}
-            isRealAdmin={auth.isRealAdmin}
-            quotesEligible={quotesEligible}
-            user={{
-              email: user.email,
-              name: user.name || user.email,
-            }}
-          >
-            {children}
-          </PortalAppShell>
-        </Providers>
-      </body>
-    </html>
+    <PortalAppShell
+      aiCopilotEnabled={auth.isRealAdmin && isAiOpsAssistantEnabled()}
+      documents={docs}
+      effectiveUserEmail={user.email ?? ''}
+      isRealAdmin={auth.isRealAdmin}
+      quotesEligible={quotesEligible}
+      user={{
+        email: user.email,
+        name: user.name || user.email,
+      }}
+    >
+      {children}
+    </PortalAppShell>
   )
 }

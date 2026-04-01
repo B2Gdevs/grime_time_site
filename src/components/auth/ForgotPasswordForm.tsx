@@ -1,85 +1,47 @@
 'use client'
 
+import dynamic from 'next/dynamic'
 import Link from 'next/link'
-import { useState, type FormEvent } from 'react'
 
-import { AuthError } from '@/components/auth/auth-error'
-import { AuthNotice } from '@/components/auth/AuthNotice'
-import { Button } from '@/components/ui/button'
+import { ClerkCustomerAccessPanel } from '@/components/auth/ClerkCustomerAccessPanel'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { getCustomerAuthEmailIssue, normalizeCustomerAuthEmail } from '@/lib/auth/customerEmail'
-import { getSupabaseBrowserClient } from '@/lib/supabase/browser'
-import { getClientSideURL } from '@/utilities/getURL'
+import { isClerkClientConfigured } from '@/lib/clerk/config'
+
+const SupabaseForgotPasswordCard = dynamic(
+  () =>
+    import('@/components/auth/SupabaseForgotPasswordCard').then((module) => ({
+      default: module.SupabaseForgotPasswordCard,
+    })),
+  { ssr: false },
+)
 
 export function ForgotPasswordForm() {
-  const [error, setError] = useState<string | null>(null)
-  const [pending, setPending] = useState(false)
-  const [success, setSuccess] = useState<string | null>(null)
+  const clerkConfigured = isClerkClientConfigured()
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    setPending(true)
-    setError(null)
-    setSuccess(null)
-
-    const form = new FormData(event.currentTarget)
-    const email = normalizeCustomerAuthEmail(String(form.get('email') || ''))
-    const emailIssue = getCustomerAuthEmailIssue(email)
-
-    if (emailIssue) {
-      setError(emailIssue)
-      setPending(false)
-      return
-    }
-
-    try {
-      const supabase = getSupabaseBrowserClient()
-      const { error: authError } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${getClientSideURL()}/auth/confirm?next=/reset-password`,
-      })
-
-      if (authError) {
-        throw authError
-      }
-
-      setSuccess('If that email is in the system, we sent a reset link.')
-    } catch (submitError) {
-      setError(
-        submitError instanceof Error
-          ? submitError.message
-          : 'Could not send a reset link right now.',
-      )
-    } finally {
-      setPending(false)
-    }
+  if (clerkConfigured) {
+    return (
+      <Card>
+        <CardHeader className="text-center">
+          <CardTitle className="text-xl">Reset access</CardTitle>
+          <CardDescription>
+            Open hosted sign-in and use the same email already tied to your customer account.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4">
+          <div className="rounded-xl border border-border/70 bg-muted/35 p-4 text-sm text-muted-foreground">
+            Clerk handles password recovery for the customer portal now. Start sign-in with the same
+            email on your estimate, invoice, or company invite, then follow the reset steps there.
+          </div>
+          <ClerkCustomerAccessPanel showSignUp={false} signInFallbackHref="/dashboard" />
+          <div className="text-center text-sm text-muted-foreground">
+            <Link href="/login" className="font-medium text-primary hover:underline">
+              Back to sign in
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
+    )
   }
 
-  return (
-    <Card>
-      <CardHeader className="text-center">
-        <CardTitle className="text-xl">Reset password</CardTitle>
-        <CardDescription>Enter your email and we will send a secure reset link.</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form className="grid gap-4" onSubmit={handleSubmit}>
-          <div className="grid gap-2 text-left">
-            <Label htmlFor="forgot-email">Email</Label>
-            <Input id="forgot-email" name="email" type="email" autoComplete="email" required />
-          </div>
-          {error ? <AuthError message={error} /> : null}
-          {success ? <AuthNotice message={success} /> : null}
-          <Button className="w-full" disabled={pending} type="submit">
-            {pending ? 'Sending reset link...' : 'Send reset link'}
-          </Button>
-        </form>
-        <div className="mt-4 text-center text-sm text-muted-foreground">
-          <Link href="/login" className="font-medium text-primary hover:underline">
-            Back to sign in
-          </Link>
-        </div>
-      </CardContent>
-    </Card>
-  )
+  return <SupabaseForgotPasswordCard />
 }

@@ -68,7 +68,8 @@ export function CustomerCompanyInviteForm({ accountName }: Props) {
         <div>
           <h3 className="font-medium">Invite a teammate</h3>
           <p className="text-sm text-muted-foreground">
-            Send a secure company-access link for {accountName}.
+            Send a secure company-access link for {accountName}. They will finish setup with the
+            same email through Grime Time hosted sign-in.
           </p>
         </div>
         <div className="grid gap-4 md:grid-cols-2">

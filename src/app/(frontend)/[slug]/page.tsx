@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 
 import { InstantQuoteSection } from '@/components/InstantQuoteSection'
 import { PayloadRedirects } from '@/components/PayloadRedirects'
+import { PageMediaRegistryBridge } from '@/components/admin-impersonation/PageMediaDevtoolsContext'
 import configPromise from '@payload-config'
 import { getPayload, type RequiredDataFromCollectionSlug } from 'payload'
 import { draftMode } from 'next/headers'
@@ -9,6 +10,7 @@ import React from 'react'
 
 import { RenderBlocks } from '@/blocks/RenderBlocks'
 import { RenderHero } from '@/heros/RenderHero'
+import { collectPageMediaReferences } from '@/lib/media/pageMediaDevtools'
 import { generatePublicPageStaticParams, queryPublicPageBySlug } from '@/lib/pages/queryPublicPageBySlug'
 import { getInstantQuoteCatalog } from '@/lib/quotes/getInstantQuoteCatalog'
 import { generateMeta } from '@/utilities/generateMeta'
@@ -44,9 +46,17 @@ export default async function Page({ params: paramsPromise }: Args) {
   const { hero, layout } = page
   const instantQuoteCatalog =
     slug === 'home' ? await getInstantQuoteCatalog({ draft, payload: await getPayload({ config: configPromise }) }) : null
+  const pageMediaEntries = collectPageMediaReferences({ page, pagePath: url })
 
   return (
     <article className="marketing-page-shell pb-24">
+      <PageMediaRegistryBridge
+        entries={pageMediaEntries}
+        pageId={Number(page.id)}
+        pagePath={url}
+        pageSlug={page.slug}
+        pageTitle={page.title}
+      />
       <PageClient />
       {/* Allows redirects for valid pages too */}
       <PayloadRedirects disableNotFound url={url} />

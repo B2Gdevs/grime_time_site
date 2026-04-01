@@ -14,7 +14,11 @@ function toPreviewUser(user: {
   }
 }
 
-export async function AdminImpersonationToolbarShell() {
+export async function AdminImpersonationToolbarShell({
+  pageMediaDevtoolsEnabled = false,
+}: {
+  pageMediaDevtoolsEnabled?: boolean
+}) {
   const auth = await getCurrentAuthContext()
 
   if (!auth.realUser || !auth.isRealAdmin || !auth.effectiveUser) {
@@ -25,6 +29,7 @@ export async function AdminImpersonationToolbarShell() {
     <AdminImpersonationToolbar
       effectiveUser={toPreviewUser(auth.effectiveUser)}
       impersonatedUser={auth.impersonatedUser ? toPreviewUser(auth.impersonatedUser) : null}
+      localPageMediaEnabled={pageMediaDevtoolsEnabled}
       realUser={toPreviewUser(auth.realUser)}
     />
   )

@@ -4,6 +4,7 @@ import { z } from 'zod'
 
 import config from '@payload-config'
 import { USERS_COLLECTION_SLUG } from '@/collections/Users'
+import { isClerkCustomerAuthPrimaryServer } from '@/lib/auth/customerAuthMode'
 import type { User } from '@/payload-types'
 import { getCustomerAuthEmailIssue, normalizeCustomerAuthEmail } from '@/lib/auth/customerEmail'
 import { isAdminUser } from '@/lib/auth/roles'
@@ -15,6 +16,13 @@ const registerSchema = z.object({
 })
 
 export async function POST(request: Request) {
+  if (isClerkCustomerAuthPrimaryServer()) {
+    return NextResponse.json(
+      { error: 'Customer account creation now runs through the hosted Grime Time sign-in flow.' },
+      { status: 409 },
+    )
+  }
+
   const payload = await getPayload({ config })
 
   const json = await request.json().catch(() => null)

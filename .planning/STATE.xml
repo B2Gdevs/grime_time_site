@@ -3,7 +3,7 @@
   <agent-registry>
   </agent-registry>
   <current-phase>11</current-phase>
-  <current-plan>11-01</current-plan>
+  <current-plan>11-05</current-plan>
   <status>in-progress</status>
-  <next-action>Priority remains phase `11`: ship employee quote and lead-notification email through Payload jobs plus Resend first (`11-01`), then define the shared tool surface for both the in-app copilot and the future OpenClaw field-agent plugin (`11-02`). CLI polish task `09-06` is now closed: `grimetime seed` gained `plan`, `report`, `--only`, and `--no-input`, and local dev now forces MCP off unless explicitly re-enabled.</next-action>
+  <next-action>`11-05` remains active: Grime Time has a real App Router root layout with `ClerkProvider`, `src/proxy.ts` uses `clerkMiddleware()`, the marketing/login surfaces show Clerk-hosted sign-in/up and `UserButton`, Payload `users` persist `clerkUserID`, the shared claim/invite token surface uses Clerk-first copy and Clerk-backed completion against the existing Payload user, the direct forgot/reset routes present Clerk-first recovery guidance when Clerk is enabled, the old `/auth/register` plus `/auth/confirm` routes now short-circuit into the Clerk-first flow, the active Clerk-first customer screens plus signed-in nav no longer import Supabase browser helpers directly, the server now resolves customer identity through one shared helper so Clerk-primary mode no longer silently falls back to Supabase sessions, and existing Payload admins now bind onto Clerk by email on first sign-in so the app-owned impersonation tooling keeps working without Clerk's paid impersonation add-on. Next work on this slice is any remaining Supabase-era server cleanup plus a deliberate pass over admin/ops affordances that still assume Payload-auth-first staff login.</next-action>
 </state>
