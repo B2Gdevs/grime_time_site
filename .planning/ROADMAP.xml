@@ -5,7 +5,7 @@
     <goal>Repo, RepoPlanner submodule, `.planning/` contract, pushed to `main`.</goal>
     <requirements>REQ-01</requirements>
     <depends></depends>
-    <status>complete</status>
+    <status>in-progress</status>
     <plans>.planning/phases/01-foundation/</plans>
   </phase>
   <phase id="02">
@@ -58,10 +58,10 @@
   </phase>
   <phase id="08">
     <title>AI ops assistant (beta)</title>
-    <goal>Optional, feature-flagged staff assistant: RAG over internal docs, Vercel AI SDK + OpenAI, Assistant UI / Tool UI patterns, and guarded multimodal flows (e.g. screenshot to contacts) strictly scoped to business operations — not a customer-facing product until explicitly promoted.</goal>
+    <goal>Optional, feature-flagged staff employee copilot: portfolio-style Assistant UI and Tool UI patterns, internal-docs RAG using the same efficient local-ingestion mindset as the portfolio and Magicborn flow, and assistant-rendered ops components for tours, assigned tasks, and follow-up contacts. It stays strictly scoped to business operations and is not a customer-facing product until explicitly promoted.</goal>
     <requirements>REQ-05, REQ-06</requirements>
     <depends>07</depends>
-    <status>planned</status>
+    <status>complete</status>
     <plans>.planning/phases/08-ai-ops-assistant/</plans>
   </phase>
   <phase id="09">
@@ -71,6 +71,14 @@
     <depends>03,05</depends>
     <status>planned</status>
     <plans>.planning/phases/09-seed-system-and-cli/</plans>
+  </phase>
+  <phase id="10">
+    <title>Lead capture expansion channels</title>
+    <goal>Evaluate later-lifecycle lead-capture channels such as Google Business Profile messaging and only enable them when response-time coverage, inbox routing, and follow-up ownership are strong enough to protect conversion and local-search reputation.</goal>
+    <requirements>REQ-05, REQ-06</requirements>
+    <depends>07</depends>
+    <status>planned</status>
+    <plans>.planning/workflows/google-business-profile-chat.md</plans>
   </phase>
   <doc-flow>
     <doc name="TASK-REGISTRY.xml">Tasks by phase.</doc>

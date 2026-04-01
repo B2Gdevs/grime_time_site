@@ -6,10 +6,12 @@ import React from 'react'
 
 import { AdminBar } from '@/components/AdminBar'
 import { AdminImpersonationToolbarShell } from '@/components/admin-impersonation/AdminImpersonationToolbarShell'
+import { MarketingShell } from '@/components/frontend/MarketingShell'
+import type { Footer, Header } from '@/payload-types'
 import { SiteTourProvider } from '@/components/tours/SiteTourProvider'
-import { Footer } from '@/Footer/Component'
-import { Header } from '@/Header/Component'
+import { buildMarketingNavLinks } from '@/lib/marketing/public-shell'
 import { Providers } from '@/providers'
+import { getCachedGlobal } from '@/utilities/getGlobals'
 import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
 import { draftMode } from 'next/headers'
 
@@ -28,6 +30,12 @@ const fontMono = JetBrains_Mono({
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const { isEnabled } = await draftMode()
+  const [headerData, footerData] = await Promise.all([
+    getCachedGlobal('header', 1)(),
+    getCachedGlobal('footer', 1)(),
+  ])
+  const primaryLinks = buildMarketingNavLinks((headerData as Header | null)?.navItems)
+  const footerLinks = buildMarketingNavLinks((footerData as Footer | null)?.navItems)
 
   return (
     <html
@@ -48,10 +56,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               }}
             />
             <AdminImpersonationToolbarShell />
-
-            <Header />
-            {children}
-            <Footer />
+            <MarketingShell footerLinks={footerLinks} primaryLinks={primaryLinks}>
+              {children}
+            </MarketingShell>
           </SiteTourProvider>
         </Providers>
       </body>

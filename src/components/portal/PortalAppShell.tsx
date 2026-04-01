@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react'
 
 import { AdminImpersonationToolbarShell } from '@/components/admin-impersonation/AdminImpersonationToolbarShell'
+import { PortalCopilot } from '@/components/copilot/PortalCopilot'
+import { PortalCopilotProvider } from '@/components/copilot/PortalCopilotContext'
 import { AppSidebar } from '@/components/app-sidebar'
 import { PortalTourGate } from '@/components/tours/PortalTourGate'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
@@ -8,6 +10,7 @@ import { buildPortalShellStyle } from '@/lib/portal/layout'
 
 type Props = {
   children: ReactNode
+  aiCopilotEnabled: boolean
   documents: {
     name: string
     url: string
@@ -22,6 +25,7 @@ type Props = {
 }
 
 export function PortalAppShell({
+  aiCopilotEnabled,
   children,
   documents,
   effectiveUserEmail,
@@ -29,7 +33,7 @@ export function PortalAppShell({
   quotesEligible,
   user,
 }: Props) {
-  return (
+  const shell = (
     <PortalTourGate effectiveUserEmail={effectiveUserEmail} isRealAdmin={isRealAdmin}>
       <AdminImpersonationToolbarShell />
       <SidebarProvider
@@ -47,5 +51,16 @@ export function PortalAppShell({
         <SidebarInset className="portal-main-shell min-w-0">{children}</SidebarInset>
       </SidebarProvider>
     </PortalTourGate>
+  )
+
+  if (!aiCopilotEnabled) {
+    return shell
+  }
+
+  return (
+    <PortalCopilotProvider>
+      {shell}
+      <PortalCopilot />
+    </PortalCopilotProvider>
   )
 }

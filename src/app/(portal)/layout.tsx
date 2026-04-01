@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { redirect } from 'next/navigation'
 
 import { PortalAppShell } from '@/components/portal/PortalAppShell'
+import { isAiOpsAssistantEnabled } from '@/lib/ai'
 import { getCurrentAuthContext } from '@/lib/auth/getAuthContext'
 import { userIsAdmin } from '@/lib/auth/getCurrentPayloadUser'
 import { getPortalDocs } from '@/lib/docs/catalog'
@@ -39,6 +40,7 @@ export default async function PortalLayout({ children }: { children: ReactNode }
       <body className="site-shell portal-shell overflow-x-hidden antialiased">
         <Providers>
           <PortalAppShell
+            aiCopilotEnabled={auth.isRealAdmin && isAiOpsAssistantEnabled()}
             documents={docs}
             effectiveUserEmail={user.email ?? ''}
             isRealAdmin={auth.isRealAdmin}

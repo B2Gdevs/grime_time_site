@@ -11,6 +11,7 @@ Suggested docs:
 | `internal-docs-policy.md` | Public repo rules, sensitive-content boundary, and internal tool guardrails |
 | `crm-org-and-sync.md` | Historical CRM organization notes; keep aligned with the first-party CRM direction if reused |
 | `crm-and-integrations.md` | Integration map for Payload, Stripe, Resend, Supabase, and internal CRM boundaries |
+| `google-business-profile-chat.md` | Deferred evaluation note for Google Business Profile messaging, response-time constraints, and lead-capture expansion rules |
 | `business-scorecard-and-growth.md` | KPIs, MRR, asset inventory, operating rhythm, milestones, and tool recommendations |
 | `payload-native-crm-and-billing.md` | Product direction, design rules, data model, billing split, automation roadmap |
 | `stripe-billing-and-customer-payment-operations.md` | Stripe-hosted invoice, portal, subscription, and out-of-band payment operating model |

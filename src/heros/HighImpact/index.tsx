@@ -18,7 +18,7 @@ export const HighImpactHero: React.FC<Page['hero']> = ({ media }) => {
 
   return (
     <div
-      className="relative -mt-[8rem] flex min-h-[72vh] items-end overflow-hidden text-white sm:-mt-[9rem] sm:min-h-[78vh] lg:-mt-[10.4rem] lg:min-h-[84vh]"
+      className="marketing-high-impact-hero relative flex min-h-[58vh] items-end overflow-hidden text-white sm:min-h-[64vh] lg:min-h-[68vh]"
       data-theme="dark"
     >
       <div className="absolute inset-0 -z-10 select-none">
@@ -52,9 +52,9 @@ export const HighImpactHero: React.FC<Page['hero']> = ({ media }) => {
         />
       </div>
 
-      <div className="container relative z-10 w-full pb-10 pt-28 sm:pb-14 sm:pt-32 lg:pb-16 lg:pt-36">
-        <div className="mx-auto max-w-4xl">
-          <div className="hero-glass-float rounded-3xl border border-white/15 bg-white/10 p-6 shadow-2xl shadow-black/35 backdrop-blur-md sm:p-8 lg:p-10">
+      <div className="container relative z-10 w-full pb-10 pt-18 sm:pb-14 sm:pt-20 lg:pb-16 lg:pt-24">
+        <div className="mx-auto max-w-5xl">
+          <div className="hero-glass-float rounded-[2rem] border border-white/15 bg-white/10 p-6 shadow-2xl shadow-black/35 backdrop-blur-md sm:p-8 lg:p-10">
             <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.28em] text-white/65 sm:text-xs">
               North Texas
             </p>
@@ -65,11 +65,7 @@ export const HighImpactHero: React.FC<Page['hero']> = ({ media }) => {
               We are the most transparent when it comes to pricing services for our customers.
             </p>
 
-            <Button
-              asChild
-              className="mt-7 h-12 rounded-xl px-6 text-base font-semibold shadow-lg shadow-primary/25"
-              size="lg"
-            >
+            <Button asChild className="mt-7 h-12 rounded-xl px-6 text-base font-semibold shadow-lg shadow-primary/25" size="lg">
               <Link href="/#instant-quote">Get an instant quote</Link>
             </Button>
           </div>

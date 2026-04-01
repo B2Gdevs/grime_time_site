@@ -5,18 +5,20 @@
     <phase-name>AI ops assistant (beta)</phase-name>
     <date>2026-03-26</date>
   </meta>
-  <status>planned</status>
+  <status>complete</status>
   <summary>
-    <item>Deliver a gated, staff-only assistant using OpenAI + Vercel AI SDK, RAG over approved docs, and Assistant UI / Tool UI patterns.</item>
-    <item>Optional vision path: screenshot to extracted contacts with confirmation before CRM writes.</item>
+    <item>Deliver a gated, staff-only employee copilot using OpenAI plus Vercel AI SDK, portfolio-style Assistant UI patterns, and RAG over approved internal docs.</item>
+    <item>Reuse the portfolio and Magicborn internal-docs ingestion discipline with cheap local embeddings as the default baseline instead of inventing a second AI data path.</item>
+    <item>Make the assistant operational: launch tours, surface the logged-in employee's tasks, and render follow-up contacts or CRM summaries as in-chat components.</item>
+    <item>Optional later vision path: screenshot to extracted contacts with confirmation before CRM writes.</item>
     <item>Explicit guardrails: feature flag, beta labeling, audit, rate limits, kill switch.</item>
   </summary>
   <tasks>
-    <task ref="08-01">Architecture, env flag, DECISION D-ai-001</task>
-    <task ref="08-02">RAG embeddings + storage</task>
-    <task ref="08-03">Portal chat UI + streaming + tools</task>
-    <task ref="08-04">Vision upload path (optional)</task>
-    <task ref="08-05">Operational guardrails</task>
-    <task ref="08-06">Tests</task>
+    <task ref="08-01">Architecture, env flags, and decision updates for a staff-only employee copilot</task>
+    <task ref="08-02">RAG ingestion, embeddings, and retrieval over approved internal docs using the portfolio-style local baseline</task>
+    <task ref="08-03">Portal copilot shell with streaming Assistant UI and Tool UI patterns modeled after the portfolio copilot</task>
+    <task ref="08-04">Tool and component rendering for tours, assigned tasks, follow-up contacts, and CRM or quote summaries</task>
+    <task ref="08-05">Operational guardrails plus optional later vision path</task>
+    <task ref="08-06">Tests, smoke coverage, and operator verification</task>
   </tasks>
 </phase-plan>

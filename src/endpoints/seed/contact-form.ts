@@ -35,7 +35,6 @@ const contactFormBase: RequiredDataFromCollectionSlug<'forms'> = {
     },
   },
   confirmationType: 'message',
-  createdAt: '2023-01-12T21:47:41.374Z',
   emails: [
     {
       emailFrom: '"Grime Time" \u003Conboarding@resend.dev\u003E',
@@ -110,7 +109,6 @@ const contactFormBase: RequiredDataFromCollectionSlug<'forms'> = {
   redirect: undefined,
   submitButtonLabel: 'Submit',
   title: SEED_CONTACT_FORM_TITLE,
-  updatedAt: '2023-01-12T21:47:41.374Z',
 }
 
 /** Uses `EMAIL_FROM` when set (must match a verified sender in Resend). */

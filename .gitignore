@@ -8,6 +8,8 @@ next-env.d.ts
 tsconfig.tsbuildinfo
 .vercel
 .runtime
+.cache
+models
 
 # grimetime seed pull snapshots
 .grimetime-seed-pull/

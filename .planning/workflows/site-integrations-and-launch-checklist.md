@@ -65,5 +65,6 @@
 
 - Inngest
 - Twilio / SMS review requests
+- Google Business Profile live messaging until the team can cover near-real-time replies and route that inbox into the real lead workflow
 - Public customer quote approval
 - Accounting sync

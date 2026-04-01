@@ -524,13 +524,24 @@
     </references>
   </decision>
   <decision id="D-ai-001">
-    <title>AI ops assistant is optional, beta, staff-only, and feature-flagged</title>
-    <summary>An **internal** assistant for **business operations** (quotes, CRM context, playbook Q&amp;A) may use **OpenAI** via **Vercel AI SDK**, **Assistant UI** / **Tool UI** patterns, and **RAG** (embeddings over approved docs). It is **not** a default customer-facing product: ship behind **`AI_OPS_ASSISTANT_ENABLED`** (or equivalent), show **Beta** in UI, gate to **staff/admin**, and require explicit security review before production enablement. Optional **vision** flows (e.g. screenshot → phone numbers) must use **confirmation** before writes, **rate limits**, and **no raw PII** in application logs. TASK-REGISTRY phase **08** tracks delivery.</summary>
-    <impact>Supersedes ad-hoc “drop in chat” experiments; ties AI work to env keys in `.env.example`, catalogued internal docs for RAG, and audit expectations.</impact>
+    <title>AI ops assistant is an optional, beta, staff-only employee copilot</title>
+    <summary>An **internal** employee copilot for **business operations** (quotes, CRM context, playbook Q&amp;A, assigned tasks, follow-up queues) may use **OpenAI** via **Vercel AI SDK**, **Assistant UI** and **Tool UI** patterns, and **RAG** over approved docs. It should visually and behaviorally take strong inspiration from the portfolio site copilot, but stay focused on employee work inside Grime Time. It is **not** a default customer-facing product: ship behind **`AI_OPS_ASSISTANT_ENABLED`** (or equivalent), show **Beta** in UI, gate to **staff/admin**, and require explicit security review before production enablement. Optional later **vision** flows (e.g. screenshot -> phone numbers) must use **confirmation** before writes, **rate limits**, and **no raw PII** in application logs. TASK-REGISTRY phase **08** tracks delivery.</summary>
+    <impact>Supersedes ad-hoc "drop in chat" experiments; ties AI work to env keys in `.env.example`, catalogued internal docs for RAG, and audit expectations. It also establishes that tours remain Joyride-based and the copilot can launch or orchestrate them rather than replacing them.</impact>
     <references>
       <file path=".planning/workflows/ai-ops-assistant-beta.md" />
       <file path=".planning/TASK-REGISTRY.xml" />
       <file path=".planning/ROADMAP.xml" />
+    </references>
+  </decision>
+  <decision id="D-ai-002">
+    <title>Employee copilot reuses the portfolio-style internal RAG baseline and renders ops components in chat</title>
+    <summary>Grime Time should not invent a separate AI retrieval stack if the portfolio and Magicborn internal-docs flow already solves the ingestion problem. The default baseline is approved-docs ingestion plus cheap local embeddings (`Xenova/all-MiniLM-L6-v2`, 384 dims), with assistant responses enriched by rendered Tool UI components for tasks, follow-up contacts, quote or CRM summaries, and launch-tour actions.</summary>
+    <impact>Keeps AI costs low, keeps ingestion deterministic, and makes the assistant operational instead of purely conversational. It also reduces architecture drift between the portfolio repo and Grime Time while preserving Grime Time's own staff-only domain model.</impact>
+    <references>
+      <file path=".planning/workflows/ai-ops-assistant-beta.md" />
+      <file path=".planning/phases/08-ai-ops-assistant/PLAN.xml" />
+      <file path="apps/portfolio/app/api/chat/route.ts" />
+      <file path="apps/portfolio/components/site/SiteCopilot.tsx" />
     </references>
   </decision>
   <decision id="D-seed-001">

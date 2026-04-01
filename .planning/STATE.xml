@@ -3,7 +3,7 @@
   <agent-registry>
   </agent-registry>
   <current-phase>03</current-phase>
-  <current-plan>03-01</current-plan>
+  <current-plan>03-11</current-plan>
   <status>in-progress</status>
-  <next-action>Deploy Payload app to Vercel; point POSTGRES_URL at Supabase; verify admin + seed.</next-action>
+  <next-action>Phase `08` is closed: the employee copilot beta now has sanitized audit logging, per-user rate limits, a kill switch, component-level panel coverage, and a gated Playwright smoke that proves the beta UI can launch into the CRM workspace with the right tab context. Resume `03-11` next so the public marketing shell catches up to the stronger portal/AI experience, then return to `09-06` CLI polish.</next-action>
 </state>

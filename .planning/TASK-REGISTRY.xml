@@ -110,6 +110,20 @@
         <command>See .planning/workflows/demo-data-and-flows.md and DECISIONS D-demo-001</command>
       </commands>
     </task>
+    <task id="03-10" agent-id="" status="done">
+      <goal>Refit the public marketing shell and homepage to use a portfolio-inspired sidebar-led layout while preserving the Grime Time visual theme, service proof, instant-quote flow, dock/rail service language, and Payload-managed public content for the rest of the site.</goal>
+      <keywords>homepage,sidebar,marketing-shell,quotes,branding</keywords>
+      <commands>
+        <command>Use src/app/(frontend)/layout.tsx, src/app/(frontend)/page.tsx, the Header/Footer replacement path, and the seeded home/quote content in src/endpoints/seed/home.ts plus src/components/InstantQuoteSection.tsx.</command>
+      </commands>
+    </task>
+    <task id="03-11" agent-id="" status="in_progress">
+      <goal>Polish the new marketing shell so the sidebar hierarchy, page spacing, and non-home heroes feel purpose-built rather than adapted from the Payload website template; keep Grime Time’s own scene, quotes, services, and support routes intact.</goal>
+      <keywords>sidebar,hero,spacing,frontend,polish</keywords>
+      <commands>
+        <command>Refine src/components/frontend/MarketingShell.tsx, src/app/(frontend)/[slug]/page.tsx, src/heros/*, and supporting frontend globals so public routes share the same visual grammar as the new home page.</command>
+      </commands>
+    </task>
     <task id="03-07" agent-id="" status="done">
       <goal>Redesign `/contact` for clarity and stronger visual hierarchy: remove faded treatment, reduce copy density, add brand logo presence in the request card, increase icon-led affordances, and replace loose text-card stacks with compact tabs that drive a single detail panel for long-form guidance.</goal>
       <keywords>contact,ux,tabs,brand,icons</keywords>
@@ -416,44 +430,44 @@
     </task>
   </phase>
   <phase id="08">
-    <task id="08-01" agent-id="" status="planned">
-      <goal>Architecture + DECISION for AI ops assistant beta: scope (business operations only), env feature flag (`AI_OPS_ASSISTANT_ENABLED` or similar), staff/admin gate, OpenAI + Vercel AI SDK baseline, no customer-facing chat until promoted, explicit PII/logging redaction policy.</goal>
+    <task id="08-01" agent-id="" status="done">
+      <goal>Architecture plus decision updates for the employee copilot beta: business-operations-only scope, env feature flag (`AI_OPS_ASSISTANT_ENABLED` or similar), staff/admin gate, no customer-facing chat until promoted, and a UX baseline that follows the portfolio site copilot rather than a generic admin chatbot.</goal>
       <keywords>ai,openai,vercel-sdk,feature-flag,security</keywords>
       <commands>
         <command>See DECISIONS D-ai-001; .planning/workflows/ai-ops-assistant-beta.md</command>
       </commands>
     </task>
-    <task id="08-02" agent-id="" status="planned">
-      <goal>RAG: embeddings pipeline for approved docs (portal `src/content/docs/`, selected playbooks), vector storage (e.g. Supabase `pgvector` or managed index), re-ingest on doc change, retrieval contracts for quote/CRM terminology.</goal>
-      <keywords>rag,embeddings,pgvector,docs</keywords>
+    <task id="08-02" agent-id="" status="done">
+      <goal>RAG: approved-docs ingestion for portal docs and selected playbooks using the same efficient internal-docs pattern as the portfolio and Magicborn flow, with cheap local embeddings (`Xenova/all-MiniLM-L6-v2`, 384 dims) as the default baseline and retrieval contracts for quote and CRM terminology.</goal>
+      <keywords>rag,embeddings,local-model,docs</keywords>
       <commands>
         <command>See .planning/workflows/ai-ops-assistant-beta.md</command>
       </commands>
     </task>
-    <task id="08-03" agent-id="" status="planned">
-      <goal>Staff UI: Assistant UI + Tool UI chat shell in portal (or `/ops` subtree), **Beta** label, streaming via Vercel AI SDK, tool calls to internal read-only APIs (quotes, CRM search) behind explicit allowlists — no broad write access in v1.</goal>
-      <keywords>assistant-ui,tool-ui,chat,portal</keywords>
+    <task id="08-03" agent-id="" status="done">
+      <goal>Staff UI: build a portal employee-copilot shell using Assistant UI and Tool UI patterns, **Beta** label, streaming via Vercel AI SDK, and portfolio-inspired interaction patterns for sources, composer, and assistant panels inside `/ops` or `/ops/workspace`.</goal>
+      <keywords>assistant-ui,tool-ui,copilot,portal</keywords>
       <commands>
         <command>See .planning/workflows/ai-ops-assistant-beta.md</command>
       </commands>
     </task>
-    <task id="08-04" agent-id="" status="planned">
-      <goal>Optional multimodal: screenshot / image upload → vision extraction of phone numbers and notes → structured handoff to CRM lead/quote flows; rate limits; user confirmation before any write; document field use case (contacts in phone notes).</goal>
-      <keywords>vision,ocr,upload,crm,quotes</keywords>
+    <task id="08-04" agent-id="" status="done">
+      <goal>Render operational components in chat: launch tours from the copilot, show the logged-in employee's assigned tasks, surface follow-up contacts and stale leads, and render compact quote or CRM cards with explicit action affordances instead of only text responses.</goal>
+      <keywords>tool-ui,components,tours,tasks,follow-up</keywords>
       <commands>
         <command>See .planning/workflows/ai-ops-assistant-beta.md</command>
       </commands>
     </task>
-    <task id="08-05" agent-id="" status="planned">
-      <goal>Operational guardrails: audit logging, cost/rate limits, retention policy for chat transcripts, kill switch via env, security review before enabling in production org.</goal>
-      <keywords>audit,limits,compliance</keywords>
+    <task id="08-05" agent-id="" status="done">
+      <goal>Operational guardrails: audit logging, cost and rate limits, transcript retention policy, kill switch via env, security review before enabling in production, plus the optional later multimodal path for screenshot or image extraction into confirmed CRM handoff.</goal>
+      <keywords>audit,limits,compliance,vision</keywords>
       <commands>
         <command>See DECISIONS D-ai-001</command>
       </commands>
     </task>
-    <task id="08-06" agent-id="" status="planned">
-      <goal>Tests: integration tests for retrieval + tool wiring; gated Playwright smoke for beta UI when flag on.</goal>
-      <keywords>test,playwright,ai</keywords>
+    <task id="08-06" agent-id="" status="done">
+      <goal>Tests: integration coverage for retrieval and tool wiring, component-rendering actions, and tour-launch/task/follow-up flows, with gated Playwright smoke for the beta UI when the feature flag is on.</goal>
+      <keywords>test,playwright,ai,tools</keywords>
       <commands>
         <command>See .planning/phases/08-ai-ops-assistant/PLAN.xml</command>
       </commands>
@@ -507,6 +521,15 @@
       <keywords>vitest,playwright,fixtures</keywords>
       <commands>
         <command>tests/int/seed/expectations-alignment.int.spec.ts; tests/int; tests/e2e</command>
+      </commands>
+    </task>
+  </phase>
+  <phase id="10">
+    <task id="10-01" agent-id="" status="planned">
+      <goal>Evaluate Google Business Profile real-time messaging as a later lead-capture channel: define staffing coverage, response-time SLA, inbox routing (SMS / WhatsApp / CRM handoff), qualification scripts, and lead attribution before enabling it on the listing.</goal>
+      <keywords>google-business-profile,chat,leads,sms,whatsapp,local-seo</keywords>
+      <commands>
+        <command>See .planning/workflows/google-business-profile-chat.md</command>
       </commands>
     </task>
   </phase>

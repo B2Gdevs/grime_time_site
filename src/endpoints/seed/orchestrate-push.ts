@@ -43,11 +43,15 @@ import { post2 } from './post-2'
 import { post3 } from './post-3'
 import { type SeedScope, expandScopes } from './scopes'
 import {
+  findDoc,
   upsertBySlug,
   upsertCategoryBySlug,
   upsertFormByTitle,
+  upsertGlobalBySlug,
   upsertMediaByFilename,
+  type SeedUpsertAction,
 } from './upsert'
+import { seedDataMatchesExisting } from './diff'
 
 /**
  * Push-time media list — **must stay aligned** with `EXPECTED_SEED_MEDIA_FILENAMES` in `expectations.ts`
@@ -134,6 +138,20 @@ type PushCtx = {
   contactSla?: Page
 }
 
+type ActionCounts = Record<SeedUpsertAction, number>
+
+function createActionCounts(): ActionCounts {
+  return { created: 0, updated: 0, skipped: 0 }
+}
+
+function recordAction(counts: ActionCounts, action: SeedUpsertAction) {
+  counts[action] += 1
+}
+
+function formatActionCounts(counts: ActionCounts) {
+  return `created=${counts.created}, updated=${counts.updated}, skipped=${counts.skipped}`
+}
+
 async function upsertCollectionDoc(
   payload: Payload,
   req: PayloadRequest,
@@ -149,7 +167,7 @@ async function upsertCollectionDoc(
     keyValue: string
   },
 ) {
-  const existingId = await payload
+  const existingDoc = await payload
     .find({
       collection: args.collection,
       depth: 0,
@@ -162,22 +180,37 @@ async function upsertCollectionDoc(
         },
       },
     })
-    .then((result) => result.docs[0]?.id)
+    .then((result) => result.docs[0] as unknown as Record<string, unknown> | undefined)
 
-  if (existingId != null) {
-    return (payload as any).update({
+  if (existingDoc?.id != null) {
+    if (seedDataMatchesExisting(existingDoc, args.data)) {
+      return {
+        id: existingDoc.id as string | number,
+        action: 'skipped' as const,
+      }
+    }
+
+    const doc = await (payload as any).update({
       collection: args.collection,
-      id: existingId,
+      id: existingDoc.id as string | number,
       data: args.data,
       req,
     })
+    return {
+      id: doc.id as string | number,
+      action: 'updated' as const,
+    }
   }
 
-  return (payload as any).create({
+  const doc = await (payload as any).create({
     collection: args.collection,
     data: args.data,
     req,
   })
+  return {
+    id: doc.id as string | number,
+    action: 'created' as const,
+  }
 }
 
 async function fetchFileByURL(url: string, suggestedFilename?: string): Promise<File> {
@@ -217,6 +250,7 @@ async function fetchFileByURL(url: string, suggestedFilename?: string): Promise<
 async function pushFoundation(ctx: PushCtx): Promise<void> {
   const { payload, req } = ctx
   const staffEmails = resolveSeedStaffEmails()
+  const counts = createActionCounts()
   const fromQuotesEnv = parseQuotesInternalEmailAllowlist().length > 0
   payload.logger.info(
     fromQuotesEnv
@@ -252,22 +286,34 @@ async function pushFoundation(ctx: PushCtx): Promise<void> {
       .then((r) => r.docs[0]?.id)
 
     if (existingId != null) {
-      teamUsers.push(
-        (await payload.update({
+      const existingUser = await payload.findByID({
+        collection: 'users',
+        id: existingId,
+        depth: 0,
+        req,
+      })
+
+      if (seedDataMatchesExisting(existingUser, { name, roles: ['admin'] })) {
+        recordAction(counts, 'skipped')
+        teamUsers.push(existingUser as User)
+      } else {
+        const updatedUser = (await payload.update({
           collection: 'users',
           id: existingId,
           data: { name, roles: ['admin'] },
           req,
-        })) as User,
-      )
+        })) as User
+        recordAction(counts, 'updated')
+        teamUsers.push(updatedUser)
+      }
     } else {
-      teamUsers.push(
-        (await payload.create({
-          collection: 'users',
-          data: { name, email, password: 'changethis', roles: ['admin'] },
-          req,
-        })) as User,
-      )
+      const createdUser = (await payload.create({
+        collection: 'users',
+        data: { name, email, password: 'changethis', roles: ['admin'] },
+        req,
+      })) as User
+      recordAction(counts, 'created')
+      teamUsers.push(createdUser)
     }
   }
 
@@ -286,12 +332,24 @@ async function pushFoundation(ctx: PushCtx): Promise<void> {
     })
     const previewId = existingPreview.docs[0]?.id
     if (previewId != null) {
-      await payload.update({
+      const existingPreviewUser = await payload.findByID({
         collection: 'users',
         id: previewId,
-        data: { name: 'Test User', roles: ['customer'] },
+        depth: 0,
         req,
       })
+
+      if (seedDataMatchesExisting(existingPreviewUser, { name: 'Test User', roles: ['customer'] })) {
+        recordAction(counts, 'skipped')
+      } else {
+        await payload.update({
+          collection: 'users',
+          id: previewId,
+          data: { name: 'Test User', roles: ['customer'] },
+          req,
+        })
+        recordAction(counts, 'updated')
+      }
     } else {
       await payload.create({
         collection: 'users',
@@ -303,29 +361,38 @@ async function pushFoundation(ctx: PushCtx): Promise<void> {
         },
         req,
       })
+      recordAction(counts, 'created')
     }
     payload.logger.info(`— Preview customer user: ${previewEmail}`)
   } catch (err) {
     payload.logger.warn({ err, msg: `Seed: could not upsert preview user ${previewEmail}` })
   }
+
+  payload.logger.info(`— Foundation summary: ${formatActionCounts(counts)}`)
 }
 
 async function pushMedia(ctx: PushCtx): Promise<void> {
   const { payload, req } = ctx
   payload.logger.info(`— Upserting media...`)
-
-  const buffers = await Promise.all(SEED_MEDIA.map((m) => fetchFileByURL(m.url, m.filename)))
-
+  const counts = createActionCounts()
   const mediaDocs: Awaited<ReturnType<typeof upsertMediaByFilename>>[] = []
-  for (let i = 0; i < SEED_MEDIA.length; i++) {
-    const m = SEED_MEDIA[i]
-    mediaDocs.push(
-      await upsertMediaByFilename(payload, req, {
-        filename: m.filename,
-        data: { ...m.data },
-        file: buffers[i],
-      }),
-    )
+
+  for (const media of SEED_MEDIA) {
+    const existing = await findDoc(payload, 'media', { filename: { equals: media.filename } }, req)
+    const shouldFetchFile = !(existing && seedDataMatchesExisting(existing, media.data))
+
+    const result = await upsertMediaByFilename(payload, req, {
+      filename: media.filename,
+      data: { ...media.data },
+      ...(shouldFetchFile
+        ? {
+            file: await fetchFileByURL(media.url, media.filename),
+          }
+        : {}),
+    })
+
+    recordAction(counts, result.action)
+    mediaDocs.push(result)
   }
 
   const [image1Doc, image2Doc, image3Doc, imageHouseDoc, imageDrivewayDoc, imagePropertyDoc] =
@@ -337,13 +404,17 @@ async function pushMedia(ctx: PushCtx): Promise<void> {
   ctx.imageHouseDoc = imageHouseDoc as MediaDoc
   ctx.imageDrivewayDoc = imageDrivewayDoc as MediaDoc
   ctx.imagePropertyDoc = imagePropertyDoc as MediaDoc
+  payload.logger.info(`— Media summary: ${formatActionCounts(counts)}`)
 }
 
 async function pushTaxonomy(ctx: PushCtx): Promise<void> {
   const { payload, req } = ctx
+  const counts = createActionCounts()
   for (const cat of SEED_CATEGORIES) {
-    await upsertCategoryBySlug(payload, req, cat)
+    const result = await upsertCategoryBySlug(payload, req, cat)
+    recordAction(counts, result.action)
   }
+  payload.logger.info(`— Taxonomy summary: ${formatActionCounts(counts)}`)
 }
 
 async function pushPosts(ctx: PushCtx): Promise<void> {
@@ -353,78 +424,120 @@ async function pushPosts(ctx: PushCtx): Promise<void> {
   }
 
   payload.logger.info(`— Upserting posts...`)
+  const counts = createActionCounts()
+  const toRelatedPostId = (value: unknown): number => {
+    if (typeof value === 'number') {
+      return value
+    }
+
+    const parsed = Number(value)
+    if (Number.isFinite(parsed)) {
+      return parsed
+    }
+
+    throw new Error(`Seed posts scope expected numeric post id, received: ${String(value)}`)
+  }
 
   const postSeed = (slug: string, data: Record<string, unknown>) =>
     upsertBySlug(payload, 'posts', slug, data, req)
 
-  const post1Doc = await postSeed(
+  const post1Result = await postSeed(
     'digital-horizons',
     {
       ...post1({ heroImage: image1Doc, blockImage: image2Doc, author: postAuthor }),
       authors: [postAuthor.id],
     },
-  ).then(({ id }) => payload.findByID({ collection: 'posts', id, depth: 0, req }))
+  )
+  recordAction(counts, post1Result.action)
+  const post1Doc = await payload.findByID({ collection: 'posts', id: post1Result.id, depth: 0, req })
 
-  const post2Doc = await postSeed(
+  const post2Result = await postSeed(
     SEED_POST_SLUGS[1],
     {
       ...post2({ heroImage: image2Doc, blockImage: image3Doc, author: postAuthor }),
       authors: [postAuthor.id],
     },
-  ).then(({ id }) => payload.findByID({ collection: 'posts', id, depth: 0, req }))
+  )
+  recordAction(counts, post2Result.action)
+  const post2Doc = await payload.findByID({ collection: 'posts', id: post2Result.id, depth: 0, req })
 
-  const post3Doc = await postSeed(
+  const post3Result = await postSeed(
     SEED_POST_SLUGS[2],
     {
       ...post3({ heroImage: image3Doc, blockImage: image1Doc, author: postAuthor }),
       authors: [postAuthor.id],
     },
-  ).then(({ id }) => payload.findByID({ collection: 'posts', id, depth: 0, req }))
+  )
+  recordAction(counts, post3Result.action)
+  const post3Doc = await payload.findByID({ collection: 'posts', id: post3Result.id, depth: 0, req })
 
-  await payload.update({
-    id: post1Doc.id,
-    collection: 'posts',
-    data: { relatedPosts: [post2Doc.id, post3Doc.id] },
-    req,
-  })
-  await payload.update({
-    id: post2Doc.id,
-    collection: 'posts',
-    data: { relatedPosts: [post1Doc.id, post3Doc.id] },
-    req,
-  })
-  await payload.update({
-    id: post3Doc.id,
-    collection: 'posts',
-    data: { relatedPosts: [post1Doc.id, post2Doc.id] },
-    req,
-  })
+  const relatedUpdates: Array<{ post: typeof post1Doc; relatedPosts: number[] }> = [
+    { post: post1Doc, relatedPosts: [toRelatedPostId(post2Doc.id), toRelatedPostId(post3Doc.id)] },
+    { post: post2Doc, relatedPosts: [toRelatedPostId(post1Doc.id), toRelatedPostId(post3Doc.id)] },
+    { post: post3Doc, relatedPosts: [toRelatedPostId(post1Doc.id), toRelatedPostId(post2Doc.id)] },
+  ]
+
+  for (const update of relatedUpdates) {
+    if (seedDataMatchesExisting(update.post, { relatedPosts: update.relatedPosts })) {
+      recordAction(counts, 'skipped')
+      continue
+    }
+
+    await payload.update({
+      id: update.post.id,
+      collection: 'posts',
+      context: { disableRevalidate: true },
+      data: { relatedPosts: update.relatedPosts },
+      req,
+    })
+    recordAction(counts, 'updated')
+  }
+
+  payload.logger.info(`— Posts summary: ${formatActionCounts(counts)}`)
 }
 
 async function pushForms(ctx: PushCtx): Promise<void> {
   const { payload, req } = ctx
   payload.logger.info(`— Upserting contact form...`)
+  const counts = createActionCounts()
 
-  await upsertFormByTitle(
-    payload,
-    req,
-    SEED_CONTACT_FORM_TITLE,
-    buildContactFormData() as Record<string, unknown>,
-  ).then(({ id }) => payload.findByID({ collection: 'forms', id, depth: 0, req }))
-
-  await upsertFormByTitle(
-    payload,
-    req,
-    SEED_INSTANT_QUOTE_FORM_TITLE,
-    buildInstantQuoteFormData() as Record<string, unknown>,
+  recordAction(
+    counts,
+    (
+      await upsertFormByTitle(
+        payload,
+        req,
+        SEED_CONTACT_FORM_TITLE,
+        buildContactFormData() as Record<string, unknown>,
+      )
+    ).action,
   )
 
-  await upsertFormByTitle(
-    payload,
-    req,
-    SCHEDULE_REQUEST_FORM_TITLE,
-    buildScheduleRequestFormData() as Record<string, unknown>,
+  recordAction(
+    counts,
+    (
+      await upsertFormByTitle(
+        payload,
+        req,
+        SEED_INSTANT_QUOTE_FORM_TITLE,
+        buildInstantQuoteFormData() as Record<string, unknown>,
+      )
+    ).action,
   )
+
+  recordAction(
+    counts,
+    (
+      await upsertFormByTitle(
+        payload,
+        req,
+        SCHEDULE_REQUEST_FORM_TITLE,
+        buildScheduleRequestFormData() as Record<string, unknown>,
+      )
+    ).action,
+  )
+
+  payload.logger.info(`— Forms summary: ${formatActionCounts(counts)}`)
 }
 
 async function pushPages(ctx: PushCtx): Promise<void> {
@@ -434,68 +547,98 @@ async function pushPages(ctx: PushCtx): Promise<void> {
   }
 
   payload.logger.info(`— Upserting pages...`)
+  const counts = createActionCounts()
 
-  await upsertBySlug(
-    payload,
-    'pages',
-    'home',
-    home({
-      heroImage: imageDrivewayDoc,
-      metaImage: imageHouseDoc,
-      galleryTop: imageHouseDoc,
-      galleryMid: imageDrivewayDoc,
-      galleryBottom: imagePropertyDoc,
-    }) as Record<string, unknown>,
-    req,
+  recordAction(
+    counts,
+    (
+      await upsertBySlug(
+        payload,
+        'pages',
+        'home',
+        home({
+          heroImage: imageDrivewayDoc,
+          metaImage: imageHouseDoc,
+          galleryTop: imageHouseDoc,
+          galleryMid: imageDrivewayDoc,
+          galleryBottom: imagePropertyDoc,
+        }) as Record<string, unknown>,
+        req,
+      )
+    ).action,
   )
 
-  ctx.contactPage = (await upsertBySlug(
+  const contactResult = await upsertBySlug(
     payload,
     'pages',
     'contact',
     contactPageData({ heroImage: imagePropertyDoc }) as Record<string, unknown>,
     req,
-  ).then(({ id }) => payload.findByID({ collection: 'pages', id, depth: 0, req }))) as Page
+  )
+  recordAction(counts, contactResult.action)
+  ctx.contactPage = (await payload.findByID({
+    collection: 'pages',
+    id: contactResult.id,
+    depth: 0,
+    req,
+  })) as Page
 
-  ctx.aboutPage = (await upsertBySlug(
+  const aboutResult = await upsertBySlug(
     payload,
     'pages',
     'about',
     aboutPageData({ heroImage: imageHouseDoc, supportImage: imagePropertyDoc }) as Record<string, unknown>,
     req,
-  ).then(({ id }) => payload.findByID({ collection: 'pages', id, depth: 0, req }))) as Page
+  )
+  recordAction(counts, aboutResult.action)
+  ctx.aboutPage = (await payload.findByID({ collection: 'pages', id: aboutResult.id, depth: 0, req })) as Page
 
-  ctx.privacyPage = (await upsertBySlug(
+  const privacyResult = await upsertBySlug(
     payload,
     'pages',
     'privacy-policy',
     privacyPolicyPage() as Record<string, unknown>,
     req,
-  ).then(({ id }) => payload.findByID({ collection: 'pages', id, depth: 0, req }))) as Page
+  )
+  recordAction(counts, privacyResult.action)
+  ctx.privacyPage = (await payload.findByID({ collection: 'pages', id: privacyResult.id, depth: 0, req })) as Page
 
-  ctx.termsPage = (await upsertBySlug(
+  const termsResult = await upsertBySlug(
     payload,
     'pages',
     'terms-and-conditions',
     termsAndConditionsPage() as Record<string, unknown>,
     req,
-  ).then(({ id }) => payload.findByID({ collection: 'pages', id, depth: 0, req }))) as Page
+  )
+  recordAction(counts, termsResult.action)
+  ctx.termsPage = (await payload.findByID({ collection: 'pages', id: termsResult.id, depth: 0, req })) as Page
 
-  ctx.refundPage = (await upsertBySlug(
+  const refundResult = await upsertBySlug(
     payload,
     'pages',
     'refund-policy',
     refundPolicyPage() as Record<string, unknown>,
     req,
-  ).then(({ id }) => payload.findByID({ collection: 'pages', id, depth: 0, req }))) as Page
+  )
+  recordAction(counts, refundResult.action)
+  ctx.refundPage = (await payload.findByID({ collection: 'pages', id: refundResult.id, depth: 0, req })) as Page
 
-  ctx.contactSla = (await upsertBySlug(
+  const contactSlaResult = await upsertBySlug(
     payload,
     'pages',
     'contact-sla',
     contactSlaPage() as Record<string, unknown>,
     req,
-  ).then(({ id }) => payload.findByID({ collection: 'pages', id, depth: 0, req }))) as Page
+  )
+  recordAction(counts, contactSlaResult.action)
+  ctx.contactSla = (await payload.findByID({
+    collection: 'pages',
+    id: contactSlaResult.id,
+    depth: 0,
+    req,
+  })) as Page
+
+  payload.logger.info(`— Pages summary: ${formatActionCounts(counts)}`)
 }
 
 async function pushGlobals(ctx: PushCtx): Promise<void> {
@@ -505,148 +648,137 @@ async function pushGlobals(ctx: PushCtx): Promise<void> {
   }
 
   payload.logger.info(`— Updating globals...`)
-
-  await Promise.all([
-    payload.updateGlobal({
-      slug: 'header',
-      data: {
-        navItems: [
-          { link: { type: 'custom', label: 'Home', url: '/' } },
-          {
-            link: {
-              type: 'reference',
-              label: 'About',
-              reference: { relationTo: 'pages', value: aboutPage.id },
-            },
+  const results = await Promise.all([
+    upsertGlobalBySlug(payload, req, 'header', {
+      navItems: [
+        { link: { type: 'custom', label: 'Home', url: '/' } },
+        {
+          link: {
+            type: 'reference',
+            label: 'About',
+            reference: { relationTo: 'pages', value: aboutPage.id },
           },
-          { link: { type: 'custom', label: 'Services', url: '/#services' } },
-          { link: { type: 'custom', label: 'Get quote', url: '/#instant-quote' } },
-          {
-            link: {
-              type: 'reference',
-              label: 'Contact',
-              reference: { relationTo: 'pages', value: contactPage.id },
-            },
-          },
-          { link: { type: 'custom', label: 'Book online', url: '/#instant-quote' } },
-        ],
-      },
-      req,
-    }),
-    payload.updateGlobal({
-      slug: 'footer',
-      data: {
-        navItems: [
-          {
-            link: {
-              type: 'reference',
-              label: 'About',
-              reference: { relationTo: 'pages', value: aboutPage.id },
-            },
-          },
-          {
-            link: {
-              type: 'reference',
-              label: 'Contact',
-              reference: { relationTo: 'pages', value: contactPage.id },
-            },
-          },
-          {
-            link: {
-              type: 'reference',
-              label: 'Privacy',
-              reference: { relationTo: 'pages', value: privacyPage.id },
-            },
-          },
-          {
-            link: {
-              type: 'reference',
-              label: 'Terms',
-              reference: { relationTo: 'pages', value: termsPage.id },
-            },
-          },
-          {
-            link: {
-              type: 'reference',
-              label: 'Refund policy',
-              reference: { relationTo: 'pages', value: refundPage.id },
-            },
-          },
-          {
-            link: {
-              type: 'reference',
-              label: 'Contact SLA',
-              reference: { relationTo: 'pages', value: contactSla.id },
-            },
-          },
-        ],
-      },
-      req,
-    }),
-    payload.updateGlobal({
-      slug: 'pricing',
-      data: {
-        sectionTitle: 'Quote estimator',
-        sectionIntro:
-          'Starting points for typical homes — final price depends on size, soil level, and access. Request a quote for an exact number.',
-        plans: [],
-      },
-      req,
-    }),
-    payload.updateGlobal({
-      slug: 'quoteSettings',
-      data: {
-        services: defaultInstantQuoteCatalog.services.map((service) => ({
-          serviceKey: service.key,
-          label: service.label,
-          description: service.description,
-          recommendedFor: service.recommendedFor,
-          minimum: service.minimum,
-          sqftLowRate: service.sqftLowRate,
-          sqftHighRate: service.sqftHighRate,
-          enabledOnSite: service.enabledOnSite,
-          quoteEnabled: service.quoteEnabled,
-          frequencyEligible: service.frequencyEligible,
-          sortOrder: service.sortOrder,
-        })),
-        conditionMultipliers: {
-          light: defaultInstantQuoteCatalog.conditionMultipliers.light,
-          standard: defaultInstantQuoteCatalog.conditionMultipliers.standard,
-          heavy: defaultInstantQuoteCatalog.conditionMultipliers.heavy,
         },
-        storyMultipliers: {
-          oneStory: defaultInstantQuoteCatalog.storyMultipliers['1'],
-          twoStories: defaultInstantQuoteCatalog.storyMultipliers['2'],
-          threePlusStories: defaultInstantQuoteCatalog.storyMultipliers['3+'],
+        { link: { type: 'custom', label: 'Services', url: '/#services' } },
+        { link: { type: 'custom', label: 'Get quote', url: '/#instant-quote' } },
+        {
+          link: {
+            type: 'reference',
+            label: 'Contact',
+            reference: { relationTo: 'pages', value: contactPage.id },
+          },
         },
-        frequencyMultipliers: {
-          oneTime: defaultInstantQuoteCatalog.frequencyMultipliers.one_time,
-          biannual: defaultInstantQuoteCatalog.frequencyMultipliers.biannual,
-          quarterly: defaultInstantQuoteCatalog.frequencyMultipliers.quarterly,
-        },
-      },
-      req,
+        { link: { type: 'custom', label: 'Book online', url: '/#instant-quote' } },
+      ],
     }),
-    payload.updateGlobal({
-      slug: 'servicePlanSettings',
-      data: {
-        billingInstallmentsPerYear: 12,
-        customerSummary:
-          'Recurring plans default to two visits per year at a 20% discount from normal one-off pricing, billed in equal installments across the year.',
-        defaultCadenceMonths: 6,
-        discountPercentOffSingleJob: 20,
-        minimumVisitsPerYear: 2,
+    upsertGlobalBySlug(payload, req, 'footer', {
+      navItems: [
+        {
+          link: {
+            type: 'reference',
+            label: 'About',
+            reference: { relationTo: 'pages', value: aboutPage.id },
+          },
+        },
+        {
+          link: {
+            type: 'reference',
+            label: 'Contact',
+            reference: { relationTo: 'pages', value: contactPage.id },
+          },
+        },
+        {
+          link: {
+            type: 'reference',
+            label: 'Privacy',
+            reference: { relationTo: 'pages', value: privacyPage.id },
+          },
+        },
+        {
+          link: {
+            type: 'reference',
+            label: 'Terms',
+            reference: { relationTo: 'pages', value: termsPage.id },
+          },
+        },
+        {
+          link: {
+            type: 'reference',
+            label: 'Refund policy',
+            reference: { relationTo: 'pages', value: refundPage.id },
+          },
+        },
+        {
+          link: {
+            type: 'reference',
+            label: 'Contact SLA',
+            reference: { relationTo: 'pages', value: contactSla.id },
+          },
+        },
+      ],
+    }),
+    upsertGlobalBySlug(payload, req, 'pricing', {
+      sectionTitle: 'Quote estimator',
+      sectionIntro:
+        'Starting points for typical homes — final price depends on size, soil level, and access. Request a quote for an exact number.',
+      plans: [],
+    }),
+    upsertGlobalBySlug(payload, req, 'quoteSettings', {
+      services: defaultInstantQuoteCatalog.services.map((service) => ({
+        serviceKey: service.key,
+        label: service.label,
+        description: service.description,
+        recommendedFor: service.recommendedFor,
+        minimum: service.minimum,
+        sqftLowRate: service.sqftLowRate,
+        sqftHighRate: service.sqftHighRate,
+        enabledOnSite: service.enabledOnSite,
+        quoteEnabled: service.quoteEnabled,
+        frequencyEligible: service.frequencyEligible,
+        sortOrder: service.sortOrder,
+      })),
+      conditionMultipliers: {
+        light: defaultInstantQuoteCatalog.conditionMultipliers.light,
+        standard: defaultInstantQuoteCatalog.conditionMultipliers.standard,
+        heavy: defaultInstantQuoteCatalog.conditionMultipliers.heavy,
       },
-      req,
+      storyMultipliers: {
+        oneStory: defaultInstantQuoteCatalog.storyMultipliers['1'],
+        twoStories: defaultInstantQuoteCatalog.storyMultipliers['2'],
+        threePlusStories: defaultInstantQuoteCatalog.storyMultipliers['3+'],
+      },
+      frequencyMultipliers: {
+        oneTime: defaultInstantQuoteCatalog.frequencyMultipliers.one_time,
+        biannual: defaultInstantQuoteCatalog.frequencyMultipliers.biannual,
+        quarterly: defaultInstantQuoteCatalog.frequencyMultipliers.quarterly,
+      },
+    }),
+    upsertGlobalBySlug(payload, req, 'servicePlanSettings', {
+      billingInstallmentsPerYear: 12,
+      customerSummary:
+        'Recurring plans default to two visits per year at a 20% discount from normal one-off pricing, billed in equal installments across the year.',
+      defaultCadenceMonths: 6,
+      discountPercentOffSingleJob: 20,
+      minimumVisitsPerYear: 2,
     }),
   ])
+
+  const counts = createActionCounts()
+  for (const result of results) {
+    recordAction(counts, result.action)
+  }
+
+  payload.logger.info(`— Globals summary: ${formatActionCounts(counts)}`)
 }
 
 async function pushOps(ctx: PushCtx): Promise<void> {
   const { payload, req } = ctx
+  payload.logger.info(`— Upserting ops data...`)
+  const counts = createActionCounts()
+  let removedLegacy = 0
 
   for (const [index, milestone] of defaultGrowthMilestones.entries()) {
-    await upsertCollectionDoc(payload, req, {
+    const result = await upsertCollectionDoc(payload, req, {
       collection: 'growth-milestones',
       data: {
         sortOrder: index,
@@ -657,6 +789,7 @@ async function pushOps(ctx: PushCtx): Promise<void> {
       keyField: 'title',
       keyValue: milestone.milestone,
     })
+    recordAction(counts, result.action)
   }
 
   for (const legacyLabel of LEGACY_ASSET_DEFAULT_LABELS) {
@@ -665,7 +798,7 @@ async function pushOps(ctx: PushCtx): Promise<void> {
     }
 
     try {
-      await payload.delete({
+      const deleted = await payload.delete({
         collection: 'ops-asset-ladder-items',
         depth: 0,
         req,
@@ -675,13 +808,16 @@ async function pushOps(ctx: PushCtx): Promise<void> {
           },
         },
       })
+      if (Array.isArray(deleted?.docs)) {
+        removedLegacy += deleted.docs.length
+      }
     } catch {
       /* ignore when the legacy seed row is already gone */
     }
   }
 
   for (const [index, item] of defaultAssetLadder.entries()) {
-    await upsertCollectionDoc(payload, req, {
+    const result = await upsertCollectionDoc(payload, req, {
       collection: 'ops-asset-ladder-items',
       data: {
         buyNotes: item.buy,
@@ -693,10 +829,11 @@ async function pushOps(ctx: PushCtx): Promise<void> {
       keyField: 'label',
       keyValue: item.category,
     })
+    recordAction(counts, result.action)
   }
 
   for (const [index, item] of liabilityChecklist.entries()) {
-    await upsertCollectionDoc(payload, req, {
+    const result = await upsertCollectionDoc(payload, req, {
       collection: 'ops-liability-items',
       data: {
         label: item,
@@ -706,10 +843,11 @@ async function pushOps(ctx: PushCtx): Promise<void> {
       keyField: 'label',
       keyValue: item,
     })
+    recordAction(counts, result.action)
   }
 
   for (const [index, row] of businessScorecard.entries()) {
-    await upsertCollectionDoc(payload, req, {
+    const result = await upsertCollectionDoc(payload, req, {
       collection: 'ops-scorecard-rows',
       data: {
         formula: row.formula,
@@ -732,14 +870,21 @@ async function pushOps(ctx: PushCtx): Promise<void> {
       keyField: 'title',
       keyValue: row.name,
     })
+    recordAction(counts, result.action)
   }
+
+  payload.logger.info(
+    `— Ops summary: ${formatActionCounts(counts)}${removedLegacy > 0 ? `, removedLegacy=${removedLegacy}` : ''}`,
+  )
 }
 
 async function pushCrm(ctx: PushCtx): Promise<void> {
   const { payload, req } = ctx
+  payload.logger.info(`— Upserting CRM sequences...`)
+  const counts = createActionCounts()
 
   for (const sequence of defaultCrmSequences) {
-    await upsertCollectionDoc(payload, req, {
+    const result = await upsertCollectionDoc(payload, req, {
       collection: 'crm-sequences',
       data: {
         audience: sequence.audience,
@@ -752,7 +897,10 @@ async function pushCrm(ctx: PushCtx): Promise<void> {
       keyField: 'key',
       keyValue: sequence.key,
     })
+    recordAction(counts, result.action)
   }
+
+  payload.logger.info(`— CRM summary: ${formatActionCounts(counts)}`)
 }
 
 async function pushDemo(ctx: PushCtx, skipDemo: boolean): Promise<void> {

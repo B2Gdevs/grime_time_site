@@ -35,6 +35,45 @@ function resolveScopes(options: RunSeedOptions): SeedScope[] {
   return expandScopes([...ALL_SEED_SCOPES])
 }
 
+async function upsertAdminForSeed(payload: Payload, input: { email: string; password: string }): Promise<User> {
+  const existing = await payload.find({
+    collection: USERS_COLLECTION_SLUG,
+    depth: 0,
+    limit: 1,
+    overrideAccess: true,
+    pagination: false,
+    where: {
+      email: {
+        equals: input.email,
+      },
+    },
+  })
+
+  const existingUser = (existing.docs[0] as User | undefined) ?? null
+
+  if (existingUser) {
+    return (await payload.update({
+      collection: USERS_COLLECTION_SLUG,
+      id: existingUser.id,
+      data: {
+        password: input.password,
+        roles: ['admin'],
+      },
+      overrideAccess: true,
+    })) as User
+  }
+
+  return (await payload.create({
+    collection: USERS_COLLECTION_SLUG,
+    data: {
+      email: input.email,
+      password: input.password,
+      roles: ['admin'],
+    },
+    overrideAccess: true,
+  })) as User
+}
+
 /**
  * Same behavior as `scripts/seed.ts`: login as admin, then run Payload seed upserts.
  * @returns exit code (0 = success)
@@ -94,9 +133,19 @@ export async function runSeedScript(options?: RunSeedOptions): Promise<number> {
     }
 
     if (!resolvedUser || !isAdminUser(resolvedUser)) {
-      console.error(
-        'Seed failed to resolve an admin user. Check ADMIN_* or SEED_LOGIN_* matches an existing admin account.',
-      )
+      if (source === 'admin') {
+        console.log('Seed: admin credentials did not resolve cleanly; reconciling the trusted admin account first.')
+        resolvedUser = await upsertAdminForSeed(payload, { email, password })
+      } else {
+        console.error(
+          'Seed failed to resolve an admin user. Check ADMIN_* or SEED_LOGIN_* matches an existing admin account.',
+        )
+        return 1
+      }
+    }
+
+    if (!resolvedUser || !isAdminUser(resolvedUser)) {
+      console.error('Seed failed to resolve an admin user even after trusted admin reconciliation.')
       return 1
     }
 

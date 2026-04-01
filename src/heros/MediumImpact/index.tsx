@@ -8,7 +8,7 @@ import RichText from '@/components/RichText'
 
 export const MediumImpactHero: React.FC<Page['hero']> = ({ links, media, richText }) => {
   return (
-    <div className="">
+    <div className="marketing-page-hero-shell pt-12 md:pt-16">
       <div className="container mb-8">
         {richText && <RichText className="mb-6" data={richText} enableGutter={false} />}
 
@@ -24,11 +24,11 @@ export const MediumImpactHero: React.FC<Page['hero']> = ({ links, media, richTex
           </ul>
         )}
       </div>
-      <div className="container ">
+      <div className="container">
         {media && typeof media === 'object' && (
-          <div>
+          <div className="overflow-hidden rounded-[2rem] border border-border/70 bg-card/70 p-3 shadow-[0_18px_80px_-54px_rgba(2,6,23,0.85)]">
             <Media
-              className="-mx-4 md:-mx-8 2xl:-mx-16"
+              className="rounded-[1.5rem]"
               imgClassName=""
               priority
               resource={media}

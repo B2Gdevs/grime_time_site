@@ -288,6 +288,49 @@
     border-radius: inherit;
     box-shadow: inset 0 1px 0 color-mix(in oklab, white 32%, transparent);
   }
+
+  .marketing-shell-main {
+    position: relative;
+  }
+
+  .marketing-shell-main::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(circle at top right, rgb(142 219 62 / 0.08), transparent 18%),
+      linear-gradient(to right, rgb(15 23 42 / 0.035) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(15 23 42 / 0.03) 1px, transparent 1px);
+    background-size: auto, 28px 28px, 28px 28px;
+    mask-image: linear-gradient(180deg, rgb(0 0 0 / 0.5), transparent 70%);
+  }
+
+  .marketing-page-shell {
+    position: relative;
+  }
+
+  .marketing-page-body > * + * {
+    margin-top: 0;
+  }
+
+  .marketing-page-body {
+    padding-bottom: 2rem;
+  }
+
+  .marketing-page-hero-shell {
+    position: relative;
+    z-index: 1;
+  }
+
+  .marketing-high-impact-hero::after {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.3), transparent);
+  }
 }
 
 @keyframes noise-drift {
