@@ -5,5 +5,5 @@
   <current-phase>11</current-phase>
   <current-plan>11-01</current-plan>
   <status>in-progress</status>
-  <next-action>Priority moved to phase `11`: ship employee quote and lead-notification email through Payload jobs plus Resend first (`11-01`), then define the shared tool surface for both the in-app copilot and the future OpenClaw field-agent plugin (`11-02`). Public marketing-shell polish (`03-11`) remains queued, but messaging and operator response-time now take precedence.</next-action>
+  <next-action>Priority remains phase `11`: ship employee quote and lead-notification email through Payload jobs plus Resend first (`11-01`), then define the shared tool surface for both the in-app copilot and the future OpenClaw field-agent plugin (`11-02`). CLI polish task `09-06` is now closed: `grimetime seed` gained `plan`, `report`, `--only`, and `--no-input`, and local dev now forces MCP off unless explicitly re-enabled.</next-action>
 </state>

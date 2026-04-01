@@ -25,6 +25,7 @@ import {
   SEED_ROOT_RELATIVE,
   SCOPE_PRIMARY_COLLECTIONS,
 } from '../lib/seed-scope-manifest'
+import { resolveSeedPlanDetails } from '../lib/seed-plan-report'
 import { resolveRepoRoot } from '../lib/repo-root'
 
 const DOMAIN_OPTIONS = [SEED_SCOPE_ALL, ...SEED_SCOPES] as string[]
@@ -116,6 +117,14 @@ const pushArgs = {
     description: 'Print resolved scopes only (no database)',
     alias: 'n',
   },
+  only: {
+    type: 'string',
+    description: 'Only for `push all`: comma-separated scopes (for example pages,globals)',
+  },
+  noInput: {
+    type: 'boolean',
+    description: 'Disable interactive prompts and fail fast if confirmation is required',
+  },
 } satisfies ArgsDef
 
 const pushCommand = defineCommand({
@@ -127,13 +136,24 @@ const pushCommand = defineCommand({
   args: pushArgs,
   async run({ args }) {
     const scope = assertValidScope(args.scope as string | undefined, 'grimetime seed push')
+    let plan
+    try {
+      plan = resolveSeedPlanDetails({
+        baseline: Boolean(args.baseline),
+        only: args.only as string | undefined,
+        scope,
+      })
+    } catch (error) {
+      console.error(pc.red(error instanceof Error ? error.message : String(error)))
+      process.exit(1)
+    }
     if (args.dryRun) {
-      const expanded = expandScopes(parseSeedDomainArg(scope))
-      const list = (args.baseline ? expanded.filter((s) => s !== 'demo') : expanded).join(', ')
       console.log(
         boxen(
-          `${pc.bold('Dry run')}: scopes in order:\n\n${pc.cyan(list)}\n\n` +
-            `${pc.dim('Requested:')} ${pc.white(scope)}`,
+          `${pc.bold('Dry run')}: scopes in order:\n\n${pc.cyan(plan.resolvedScopes.join(', '))}\n\n` +
+            `${pc.dim('Requested:')} ${pc.white(plan.requestedScopes.join(', '))}` +
+            `\n${pc.dim('Baseline:')} ${pc.white(plan.baseline ? 'yes' : 'no')}` +
+            (plan.selectedByOnly ? `\n${pc.dim('Only:')} ${pc.white((args.only as string).trim())}` : ''),
           { padding: 1, borderStyle: 'round', borderColor: 'blue', title: 'grimetime seed push' },
         ),
       )
@@ -141,6 +161,16 @@ const pushCommand = defineCommand({
     }
 
     if (scope === SEED_SCOPE_ALL && !args.yes) {
+      if (args.noInput) {
+        console.error(
+          pc.red('Refused: `push all` with ') +
+            pc.bold('--no-input') +
+            pc.red(' also requires ') +
+            pc.bold('--yes') +
+            pc.red('.'),
+        )
+        process.exit(1)
+      }
       const ok = await confirmPushAll()
       if (!ok) {
         console.error(pc.red('Aborted. Pass ') + pc.bold('--yes') + pc.red(' to continue without a prompt.'))
@@ -149,10 +179,16 @@ const pushCommand = defineCommand({
     }
 
     if (scope === SEED_SCOPE_ALL) {
+      const scopePreview =
+        !plan.selectedByOnly && !plan.baseline
+          ? formatScopeListForAll()
+          : plan.resolvedScopes
+              .map((resolvedScope) => `  • ${pc.cyan(resolvedScope)} — ${SCOPE_DESCRIPTIONS[resolvedScope]}`)
+              .join('\n')
       console.log(
         boxen(
           `${pc.yellow('Full seed')} runs every scope (users, media, pages, globals, ops, CRM templates, demo unless --baseline).\n\n` +
-            `${pc.dim('Scopes:')}\n${formatScopeListForAll()}`,
+            `${pc.dim('Scopes:')}\n${scopePreview}`,
           { padding: 1, borderStyle: 'double', borderColor: 'yellow', title: pc.bold('grimetime seed push all') },
         ),
       )
@@ -160,8 +196,8 @@ const pushCommand = defineCommand({
 
     const { runSeedScript } = await import('../lib/seed-runner')
     const code = await runSeedScript({
-      domain: scope,
-      baseline: Boolean(args.baseline),
+      baseline: plan.baseline,
+      scopes: plan.requestedScopes,
     })
     if (code !== 0) process.exit(code)
   },
@@ -315,6 +351,172 @@ const listCommand = defineCommand({
   },
 })
 
+const planArgs = {
+  scope: scopePositional,
+  baseline: {
+    type: 'boolean',
+    description: 'Hide demo scope from the resolved plan',
+    alias: 'b',
+  },
+  only: {
+    type: 'string',
+    description: 'Only for `all`: comma-separated scopes (for example pages,globals)',
+  },
+  json: {
+    type: 'boolean',
+    description: 'Print machine-readable JSON (stdout only)',
+  },
+} satisfies ArgsDef
+
+const planCommand = defineCommand({
+  meta: {
+    name: 'plan',
+    description:
+      'Show the resolved scope order, dependencies, primary collections, and source files without touching the database.',
+  },
+  args: planArgs,
+  async run({ args }) {
+    const scope = assertValidScope(args.scope as string | undefined, 'grimetime seed plan')
+
+    let plan
+    try {
+      plan = resolveSeedPlanDetails({
+        baseline: Boolean(args.baseline),
+        only: args.only as string | undefined,
+        scope,
+      })
+    } catch (error) {
+      console.error(pc.red(error instanceof Error ? error.message : String(error)))
+      process.exit(1)
+    }
+
+    if (args.json) {
+      console.log(
+        JSON.stringify({
+          baseline: plan.baseline,
+          only: args.only ?? null,
+          primaryCollections: plan.primaryCollections,
+          requestedScopes: plan.requestedScopes,
+          resolvedScopes: plan.resolvedScopes,
+          sourceFiles: plan.sourceFiles,
+        }),
+      )
+      return
+    }
+
+    console.log(
+      boxen(
+        [
+          `${pc.dim('Requested:')} ${pc.white(plan.requestedScopes.join(', '))}`,
+          `${pc.dim('Resolved:')} ${pc.cyan(plan.resolvedScopes.join(', '))}`,
+          `${pc.dim('Baseline:')} ${pc.white(plan.baseline ? 'yes' : 'no')}`,
+          args.only ? `${pc.dim('Only:')} ${pc.white((args.only as string).trim())}` : '',
+        ]
+          .filter(Boolean)
+          .join('\n'),
+        { title: 'grimetime seed plan', padding: 1, borderStyle: 'round', borderColor: 'blue' },
+      ),
+    )
+    console.log('')
+    console.log(
+      formatTable(
+        ['Scope', 'Primary data'],
+        plan.primaryCollections.map((row) => [row.scope, row.collection]),
+      ),
+    )
+    console.log('')
+    console.log(pc.bold('Source files'))
+    console.log(plan.sourceFiles.join('\n'))
+  },
+})
+
+const reportArgs = {
+  scope: {
+    type: 'positional' as const,
+    required: false,
+    description: 'Optional scope (default: all)',
+  },
+  baseline: {
+    type: 'boolean',
+    description: 'Hide demo scope from the report',
+    alias: 'b',
+  },
+  only: {
+    type: 'string',
+    description: 'Only for `all`: comma-separated scopes (for example pages,globals)',
+  },
+  json: {
+    type: 'boolean',
+    description: 'Print machine-readable JSON (stdout only)',
+  },
+} satisfies ArgsDef
+
+const reportCommand = defineCommand({
+  meta: {
+    name: 'report',
+    description:
+      'Print a scope-oriented report for seed planning: counts, source files, primary collections, and dependency-resolved execution order.',
+  },
+  args: reportArgs,
+  async run({ args }) {
+    const scope = assertValidScope(
+      (args.scope as string | undefined) ?? SEED_SCOPE_ALL,
+      'grimetime seed report',
+    )
+
+    let plan
+    try {
+      plan = resolveSeedPlanDetails({
+        baseline: Boolean(args.baseline),
+        only: args.only as string | undefined,
+        scope,
+      })
+    } catch (error) {
+      console.error(pc.red(error instanceof Error ? error.message : String(error)))
+      process.exit(1)
+    }
+
+    const rows = plan.resolvedScopes.map((resolvedScope) => ({
+      description: SCOPE_DESCRIPTIONS[resolvedScope],
+      files: fileCountForScope(resolvedScope),
+      primaryData: SCOPE_PRIMARY_COLLECTIONS[resolvedScope],
+      scope: resolvedScope,
+    }))
+
+    if (args.json) {
+      console.log(
+        JSON.stringify({
+          baseline: plan.baseline,
+          only: args.only ?? null,
+          requestedScopes: plan.requestedScopes,
+          resolvedScopes: plan.resolvedScopes,
+          rows,
+          sourceFiles: plan.sourceFiles,
+        }),
+      )
+      return
+    }
+
+    console.log(
+      boxen(
+        [
+          `${pc.dim('Requested:')} ${pc.white(plan.requestedScopes.join(', '))}`,
+          `${pc.dim('Resolved:')} ${pc.cyan(plan.resolvedScopes.join(', '))}`,
+          `${pc.dim('Files:')} ${pc.white(String(plan.sourceFiles.length))}`,
+        ].join('\n'),
+        { title: 'grimetime seed report', padding: 1, borderStyle: 'round', borderColor: 'green' },
+      ),
+    )
+    console.log('')
+    console.log(
+      formatTable(
+        ['Scope', 'Primary data', 'Files', 'Description'],
+        rows.map((row) => [row.scope, row.primaryData, String(row.files), row.description]),
+      ),
+    )
+  },
+})
+
 const summaryArgs = {
   json: {
     type: 'boolean',
@@ -427,8 +629,10 @@ seedRootRef = defineCommand({
     check: checkCommand,
     delete: deleteCommand,
     list: listCommand,
+    plan: planCommand,
     pull: pullCommand,
     push: pushCommand,
+    report: reportCommand,
     summary: summaryCommand,
   },
 })
@@ -442,6 +646,8 @@ export async function printSeedQuickHelp(): Promise<void> {
     `${pc.cyan('list')} <scope>     Source files for that scope`,
     `${pc.cyan('summary')}         Table of scopes + seed folder path`,
     `${pc.cyan('check')} <scope>   DB vs repository expectations`,
+    `${pc.cyan('plan')} <scope>    Show resolved dependency order before push`,
+    `${pc.cyan('report')} [scope]  Scope-oriented planning report`,
     `${pc.cyan('push')} <scope>    Apply seed to database`,
     `${pc.cyan('pull')} <scope>    JSON snapshot of seed-keyed docs → .grimetime-seed-pull/`,
     `${pc.cyan('delete')} <scope>  Remove seed-keyed docs (${pc.bold('--yes')}; all needs ${pc.bold('--confirm-all')})`,
@@ -450,6 +656,7 @@ export async function printSeedQuickHelp(): Promise<void> {
     `  ${pc.green('grimetime seed summary')}`,
     `  ${pc.green('grimetime seed list pages')}`,
     `  ${pc.green('grimetime seed check media')}`,
+    `  ${pc.green('grimetime seed plan all --only pages,globals')}`,
     `  ${pc.green('grimetime seed push all --yes')}`,
   ]
   console.log(

@@ -509,7 +509,7 @@
         <command>See src/endpoints/seed/demo-seed.ts, .planning/workflows/demo-data-and-flows.md</command>
       </commands>
     </task>
-    <task id="09-06" agent-id="" status="in_progress">
+    <task id="09-06" agent-id="" status="done">
       <goal>CLI (`npm run grimetime`): **shipped** — `seed pull|delete`, `check|summary --json`, guarded `delete all`. **Remaining** — `--dry-run`/`push` flag polish, `--only`, `--no-input`, `report`/`plan`.</goal>
       <keywords>cli,developer-experience</keywords>
       <commands>
