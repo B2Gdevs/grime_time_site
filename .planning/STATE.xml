@@ -2,8 +2,8 @@
 <state>
   <agent-registry>
   </agent-registry>
-  <current-phase>03</current-phase>
-  <current-plan>03-11</current-plan>
+  <current-phase>11</current-phase>
+  <current-plan>11-01</current-plan>
   <status>in-progress</status>
-  <next-action>Phase `08` is closed: the employee copilot beta now has sanitized audit logging, per-user rate limits, a kill switch, component-level panel coverage, and a gated Playwright smoke that proves the beta UI can launch into the CRM workspace with the right tab context. Resume `03-11` next so the public marketing shell catches up to the stronger portal/AI experience, then return to `09-06` CLI polish.</next-action>
+  <next-action>Priority moved to phase `11`: ship employee quote and lead-notification email through Payload jobs plus Resend first (`11-01`), then define the shared tool surface for both the in-app copilot and the future OpenClaw field-agent plugin (`11-02`). Public marketing-shell polish (`03-11`) remains queued, but messaging and operator response-time now take precedence.</next-action>
 </state>

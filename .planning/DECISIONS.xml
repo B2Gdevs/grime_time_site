@@ -544,6 +544,24 @@
       <file path="apps/portfolio/components/site/SiteCopilot.tsx" />
     </references>
   </decision>
+  <decision id="D-comms-001">
+    <title>Quote and lead notifications ship through Payload jobs plus Resend before chat automation</title>
+    <summary>New quote, lead, and follow-up notifications are deterministic business events and should use first-party jobs plus Resend templates before any OpenClaw or AI channel work. Field-assistant work must not block basic employee response-time communication.</summary>
+    <impact>Implementation priority moves to employee routing, notification templates, delivery logging, and retry-safe job handling. OpenClaw can later mirror or extend these alerts, but it is not a dependency for the first notification path.</impact>
+    <references>
+      <file path=".planning/workflows/field-agent-messaging-and-notifications.md" />
+      <file path=".planning/workflows/crm-and-integrations.md" />
+    </references>
+  </decision>
+  <decision id="D-comms-002">
+    <title>Field-agent chat uses a plugin-first OpenClaw integration over a shared Grime Time tool surface</title>
+    <summary>Grime Time should not fork its business logic across in-app AI and field chat. Instead, expose a narrow shared tool surface for employee actions and integrate OpenClaw as a plugin consumer of that same tool layer. Channel rollout should be pragmatic: email notifications first, then a low-friction chat pilot, then more field-native channels.</summary>
+    <impact>Keeps auth, CRM, tasks, quote state, and audit history inside Grime Time while allowing OpenClaw to power field messaging. It also reduces maintenance compared with an early OpenClaw fork and makes later channel changes cheaper.</impact>
+    <references>
+      <file path=".planning/workflows/field-agent-messaging-and-notifications.md" />
+      <file path=".planning/workflows/ai-ops-assistant-beta.md" />
+    </references>
+  </decision>
   <decision id="D-seed-001">
     <title>Modular seed layers + first-class developer CLI (this repo only)</title>
     <summary>Grime Time will **split seed data** into composable layers — **foundation** (admin/setup, minimal globals), **content** (media, pages, layout blocks, nav-related globals), and **demo** (personas, CRM/billing fixtures) — each invokable independently. A **Grime-only CLI** (see `scripts/seed.ts` evolution) will provide **subcommands**, **`--dry-run`**, **`--only`**, **`--force`/`--yes`**, **`--json`**, and **non-interactive** mode for CI; **media operations** require explicit confirmation or flags when overwriting or duplicating uploads. A **redundancy report** will flag the same `media` id reused across multiple layout slots (e.g. gallery top/mid/bottom) so marketing imagery stays intentional. **Tests** should target **module-scoped** demo fixtures rather than relying on the monolithic seed. Payload admin `/next/seed` remains supported but should delegate to the same module graph (exact default bundle TBD). Implementation is tracked in roadmap **phase 09** (`.planning/phases/09-seed-system-and-cli/`).</summary>

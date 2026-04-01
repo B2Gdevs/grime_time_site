@@ -117,7 +117,7 @@
         <command>Use src/app/(frontend)/layout.tsx, src/app/(frontend)/page.tsx, the Header/Footer replacement path, and the seeded home/quote content in src/endpoints/seed/home.ts plus src/components/InstantQuoteSection.tsx.</command>
       </commands>
     </task>
-    <task id="03-11" agent-id="" status="in_progress">
+    <task id="03-11" agent-id="" status="planned">
       <goal>Polish the new marketing shell so the sidebar hierarchy, page spacing, and non-home heroes feel purpose-built rather than adapted from the Payload website template; keep Grime Time’s own scene, quotes, services, and support routes intact.</goal>
       <keywords>sidebar,hero,spacing,frontend,polish</keywords>
       <commands>
@@ -530,6 +530,36 @@
       <keywords>google-business-profile,chat,leads,sms,whatsapp,local-seo</keywords>
       <commands>
         <command>See .planning/workflows/google-business-profile-chat.md</command>
+      </commands>
+    </task>
+  </phase>
+  <phase id="11">
+    <task id="11-01" agent-id="" status="in_progress">
+      <goal>Ship first-party quote and lead-notification email for employees using Payload jobs plus Resend templates, delivery logging, and routing rules so inbound work reaches the right person without depending on AI or chat infrastructure.</goal>
+      <keywords>email,resend,quotes,notifications,employees</keywords>
+      <commands>
+        <command>See .planning/workflows/field-agent-messaging-and-notifications.md and .planning/workflows/crm-and-integrations.md</command>
+      </commands>
+    </task>
+    <task id="11-02" agent-id="" status="planned">
+      <goal>Define and implement a shared Grime Time tool surface for employee actions so the in-app copilot and the future OpenClaw plugin use the same auth, CRM, task, quote, and tour capabilities.</goal>
+      <keywords>tools,mcp,ops,auth,crm</keywords>
+      <commands>
+        <command>See .planning/workflows/field-agent-messaging-and-notifications.md and .planning/workflows/ai-ops-assistant-beta.md</command>
+      </commands>
+    </task>
+    <task id="11-03" agent-id="" status="planned">
+      <goal>Build a plugin-first OpenClaw integration for field agents with safe read-first tools, one pilot chat channel, strict allowlists, and auditable operator identity before any broader rollout.</goal>
+      <keywords>openclaw,plugin,field-agents,chat,permissions</keywords>
+      <commands>
+        <command>See .planning/workflows/field-agent-messaging-and-notifications.md</command>
+      </commands>
+    </task>
+    <task id="11-04" agent-id="" status="planned">
+      <goal>Expand recurring-service billing around Stripe subscriptions, hosted invoice flows, and customer portal sessions so Grime Time adopts Stripe infrastructure deeply without building custom payment rails.</goal>
+      <keywords>stripe,subscriptions,billing,service-plans</keywords>
+      <commands>
+        <command>See .planning/workflows/stripe-billing-and-customer-payment-operations.md</command>
       </commands>
     </task>
   </phase>

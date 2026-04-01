@@ -80,6 +80,14 @@
     <status>planned</status>
     <plans>.planning/workflows/google-business-profile-chat.md</plans>
   </phase>
+  <phase id="11">
+    <title>Field-agent messaging, notifications, and subscriptions</title>
+    <goal>Ship employee quote-notification email first, then add a shared Grime Time tool surface for field-agent messaging and an OpenClaw plugin path, while keeping Stripe as the default infrastructure for recurring services and subscriptions.</goal>
+    <requirements>REQ-05, REQ-06</requirements>
+    <depends>07,08</depends>
+    <status>in-progress</status>
+    <plans>.planning/workflows/field-agent-messaging-and-notifications.md</plans>
+  </phase>
   <doc-flow>
     <doc name="TASK-REGISTRY.xml">Tasks by phase.</doc>
     <doc name="BLOCKERS.xml">Cross-phase gates (demo seed, deferred AI tour, etc.).</doc>
