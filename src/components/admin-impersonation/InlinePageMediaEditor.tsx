@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useRef, useState } from 'react'
-import { ImagePlusIcon, LoaderCircleIcon, SparklesIcon, UploadIcon } from 'lucide-react'
+import { LoaderCircleIcon, SparklesIcon, UploadIcon } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
 import { usePageMediaDevtoolsOptional } from '@/components/admin-impersonation/PageMediaDevtoolsContext'
@@ -13,26 +13,31 @@ type InlinePageMediaEditorProps = {
   relationPath: string
 }
 
-type SubmitAction = 'create-and-swap' | 'generate-and-swap' | 'generate-replace-existing' | 'replace-existing'
+type SubmitAction = 'create-and-swap' | 'generate-and-swap' | 'replace-existing'
 
 function buildAltFallback(prompt: string, entryLabel: string) {
   const trimmed = prompt.trim()
   return (trimmed || entryLabel).slice(0, 240)
 }
 
-export function InlinePageMediaEditor({
-  children,
-  relationPath,
-}: InlinePageMediaEditorProps) {
+function getFileKind(file: File): 'image' | 'video' {
+  return file.type.startsWith('video/') ? 'video' : 'image'
+}
+
+function getMediaKindFromMimeType(mimeType: null | string | undefined): 'image' | 'video' {
+  return mimeType?.startsWith('video/') ? 'video' : 'image'
+}
+
+export function InlinePageMediaEditor({ children, relationPath }: InlinePageMediaEditorProps) {
   const router = useRouter()
   const context = usePageMediaDevtoolsOptional()
   const [dragActive, setDragActive] = useState(false)
   const [generatorOpen, setGeneratorOpen] = useState(false)
+  const [generateKind, setGenerateKind] = useState<'image' | 'video'>('image')
   const [prompt, setPrompt] = useState('')
   const [status, setStatus] = useState<null | string>(null)
   const [submitting, setSubmitting] = useState<null | SubmitAction>(null)
   const replaceInputRef = useRef<HTMLInputElement | null>(null)
-  const createInputRef = useRef<HTMLInputElement | null>(null)
   const entry = useMemo(
     () => context?.currentPage?.entries.find((item) => item.relationPath === relationPath) || null,
     [context?.currentPage?.entries, relationPath],
@@ -55,7 +60,7 @@ export function InlinePageMediaEditor({
       }
 
       setStatus(
-        action === 'replace-existing' || action === 'generate-replace-existing'
+        action === 'replace-existing'
           ? `Updated media record ${entry?.mediaId ?? ''}.`
           : `Created media record ${payload?.mediaId ?? ''} and swapped the page reference.`,
       )
@@ -78,6 +83,7 @@ export function InlinePageMediaEditor({
     formData.set('action', action)
     formData.set('alt', entry.media?.alt || entry.label)
     formData.set('file', file)
+    formData.set('mediaKind', getFileKind(file))
 
     if (action === 'replace-existing') {
       if (!entry.mediaId) {
@@ -93,34 +99,31 @@ export function InlinePageMediaEditor({
     await submitFormData(formData, action)
   }
 
-  async function submitGenerated(action: 'generate-and-swap' | 'generate-replace-existing') {
+  async function submitGenerated() {
     if (!entry) {
       return
     }
 
     const trimmedPrompt = prompt.trim()
     if (!trimmedPrompt) {
-      setStatus('Enter an image prompt first.')
+      setStatus(`Enter a ${generateKind} prompt first.`)
       return
     }
 
     const formData = new FormData()
-    formData.set('action', action)
+    formData.set('action', 'generate-and-swap')
     formData.set('alt', buildAltFallback(trimmedPrompt, entry.label))
+    formData.set('mediaKind', generateKind)
     formData.set('prompt', trimmedPrompt)
 
-    if (action === 'generate-replace-existing') {
-      if (!entry.mediaId) {
-        setStatus('This image does not have a media record to replace yet.')
-        return
-      }
-      formData.set('mediaId', String(entry.mediaId))
-    } else {
-      formData.set('pageId', String(entry.pageId))
-      formData.set('relationPath', entry.relationPath)
+    if (entry.mediaId) {
+      formData.set('sourceMediaId', String(entry.mediaId))
     }
 
-    await submitFormData(formData, action)
+    formData.set('pageId', String(entry.pageId))
+    formData.set('relationPath', entry.relationPath)
+
+    await submitFormData(formData, 'generate-and-swap')
   }
 
   if (!enabled || !entry) {
@@ -169,7 +172,7 @@ export function InlinePageMediaEditor({
         </div>
         <div className="pointer-events-auto flex flex-wrap justify-end gap-2">
           <input
-            accept="image/*"
+            accept="image/*,video/*"
             className="hidden"
             ref={replaceInputRef}
             type="file"
@@ -179,20 +182,6 @@ export function InlinePageMediaEditor({
                 return
               }
               await submitFile(file, entry.mediaId ? 'replace-existing' : 'create-and-swap')
-              event.currentTarget.value = ''
-            }}
-          />
-          <input
-            accept="image/*"
-            className="hidden"
-            ref={createInputRef}
-            type="file"
-            onChange={async (event) => {
-              const file = event.target.files?.[0]
-              if (!file) {
-                return
-              }
-              await submitFile(file, 'create-and-swap')
               event.currentTarget.value = ''
             }}
           />
@@ -208,17 +197,10 @@ export function InlinePageMediaEditor({
           </Button>
           <Button
             className="h-8 rounded-full bg-background/94 px-3 text-xs shadow-lg"
-            onClick={() => createInputRef.current?.click()}
-            size="sm"
-            type="button"
-            variant="secondary"
-          >
-            <ImagePlusIcon className="h-3.5 w-3.5" />
-            New record
-          </Button>
-          <Button
-            className="h-8 rounded-full bg-background/94 px-3 text-xs shadow-lg"
-            onClick={() => setGeneratorOpen((current) => !current)}
+            onClick={() => {
+              setGenerateKind(getMediaKindFromMimeType(entry.media?.mimeType))
+              setGeneratorOpen((current) => !current)
+            }}
             size="sm"
             type="button"
             variant="secondary"
@@ -231,29 +213,45 @@ export function InlinePageMediaEditor({
 
       {generatorOpen ? (
         <div className="absolute inset-x-3 bottom-3 z-20 rounded-[1.2rem] border border-border/80 bg-background/96 p-3 shadow-2xl backdrop-blur">
-          <div className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-            Generate replacement
+          <div className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">Generate replacement</div>
+          <div className="mt-3 flex gap-2">
+            <Button
+              onClick={() => setGenerateKind('image')}
+              size="sm"
+              type="button"
+              variant={generateKind === 'image' ? 'default' : 'outline'}
+            >
+              Image
+            </Button>
+            <Button
+              onClick={() => setGenerateKind('video')}
+              size="sm"
+              type="button"
+              variant={generateKind === 'video' ? 'default' : 'outline'}
+            >
+              Video
+            </Button>
           </div>
           <Textarea
             className="mt-3 min-h-24"
             onChange={(event) => setPrompt(event.target.value)}
-            placeholder={`Describe the new image for ${entry.label.toLowerCase()}…`}
+            placeholder={`Describe the new ${generateKind} for ${entry.label.toLowerCase()}...`}
             value={prompt}
           />
           <div className="mt-3 flex flex-wrap gap-2">
             <Button
               disabled={submitting !== null}
-              onClick={() => submitGenerated(entry.mediaId ? 'generate-replace-existing' : 'generate-and-swap')}
+              onClick={() => submitGenerated()}
               size="sm"
               type="button"
             >
-              {submitting === 'generate-replace-existing' || submitting === 'generate-and-swap' ? (
+              {submitting === 'generate-and-swap' ? (
                 <>
                   <LoaderCircleIcon className="h-4 w-4 animate-spin" />
-                  Generating…
+                  Generating...
                 </>
               ) : (
-                'Generate and apply'
+                `Generate ${generateKind}`
               )}
             </Button>
             <Button onClick={() => setGeneratorOpen(false)} size="sm" type="button" variant="outline">

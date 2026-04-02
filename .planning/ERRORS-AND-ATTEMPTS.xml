@@ -65,4 +65,89 @@
       <command>cmd /c npm.cmd run build</command>
     </verification>
   </attempt>
+  <attempt id="12-02-a2" phase="12" task="12-02" status="resolved">
+    <title>Bootstrap membership creation failed at runtime with invalid `organization_id` and `user_id` relationship validation</title>
+    <symptom>Opening staff-only routes such as `/ops` after Clerk sign-in could throw `ValidationError: The following field is invalid: organization_id, user_id` from `ensureBootstrapOrganizationMembership()`, which then broke auth-context resolution and returned a 500 from the route.</symptom>
+    <cause>The new first-party org bootstrap path created or updated `organization-memberships` records through local Payload operations without a local request object. In live runtime resolution, the relationship validation path for `organization` and `user` could not consistently resolve the linked records or access context, even though the same path passed in narrower tests.</cause>
+    <attempted-fix>Create a local Payload request with `createLocalReq({ user }, payload)` inside the bootstrap path, and thread that `req` through organization lookup, organization creation/update, existing membership lookup, and membership create/update so the relationship validation and linked record resolution run under a stable local request context.</attempted-fix>
+    <verification>
+      <command>cmd /c npm.cmd run test:int -- --run tests/int/lib/auth/organization-access.int.spec.ts tests/int/lib/auth/resolve-customer-payload-user.int.spec.ts tests/int/lib/auth/customer-session-identity.int.spec.ts</command>
+      <command>cmd /c npm.cmd exec eslint "src/lib/auth/organizationSync.ts" "src/lib/auth/organizationAccess.ts" "src/lib/auth/resolveCustomerPayloadUser.ts"</command>
+      <command>cmd /c npm.cmd run build</command>
+    </verification>
+  </attempt>
+  <attempt id="12-02-a3" phase="12" task="12-02" status="resolved">
+    <title>Ops shell felt oversized and trapped page scrolling behind inset chrome</title>
+    <symptom>The staff `/ops` view showed a sidebar that felt too wide, a visual gutter between the sidebar and main content, duplicated workspace actions in the page header, and an inner scroll region that made the page feel like it was scrolling in a strip between the nav and the content. The floating operator toolbar could also overlap the ops header when it snapped to the default top-right corner.</symptom>
+    <cause>The portal shell still used the inset sidebar variant plus a broad sidebar width, which created extra margins around the main surface. The ops and customer pages also kept their own nested `overflow-y-auto` containers instead of letting the page scroll naturally, and the toolbar still defaulted to the public-site corner placement even on secured staff routes.</cause>
+    <attempted-fix>Switch the portal shell back to the standard sidebar variant, narrow the shared portal sidebar width, remove the duplicate `Open ops workspace` header action, replace the staff-only `Customer home` nav item with a direct `Public site` route, let the main ops/customer surfaces use normal page flow instead of nested scroll containers, and move the toolbar's default secure-route corner to bottom-right via a versioned storage key.</attempted-fix>
+    <verification>
+      <command>cmd /c npm.cmd exec eslint "src/lib/portal/layout.ts" "src/components/portal/PortalAppShell.tsx" "src/lib/navigation/portalSidebar.ts" "src/components/portal/AdminDashboardView.tsx" "src/components/portal/CustomerDashboardView.tsx" "src/app/(portal)/ops/workspace/page.tsx" "src/components/admin-impersonation/AdminImpersonationToolbar.tsx"</command>
+      <command>cmd /c npm.cmd run build</command>
+    </verification>
+  </attempt>
+  <attempt id="12-02-a4" phase="12" task="12-02" status="resolved">
+    <title>Ops chart metric controls looked like stray transparent buttons in the header</title>
+    <symptom>The Business momentum card showed a small metric toggle cluster in the top-right of the header, which read more like overlapping transparent buttons than intentional dashboard controls. The useful metric context strings such as `2 active plans` for MRR were computed in the loader but were not surfaced in a clean place in the UI.</symptom>
+    <cause>The chart used a compact ToggleGroup / Select switcher in the header, but the surrounding dashboard had already adopted larger card-like KPI affordances. That left the metric controls visually out of family and disconnected from the real metric context produced in `loadOpsDashboardData()`.</cause>
+    <attempted-fix>Remove the top-right chart toggle cluster, add explicit chart metric summaries from the loader (Pipeline, Revenue, MRR, Margin), and render them as a clickable KPI-style row below the chart so the same controls double as metric context and chart selection. Reuse real detail strings such as `open quotes` and `active plans` instead of hiding them in the loader.</attempted-fix>
+    <verification>
+      <command>cmd /c npm.cmd exec eslint "src/lib/ops/loaders/loadOpsDashboardData.ts" "src/components/portal/AdminDashboardView.tsx" "src/app/(portal)/ops/page.tsx" "src/components/chart-area-interactive.tsx"</command>
+      <command>cmd /c npm.cmd run build</command>
+    </verification>
+  </attempt>
+  <attempt id="12-02-a5" phase="12" task="12-02" status="resolved">
+    <title>Compact KPI cards still pinned trend pills in the top-right and the ops chart still surfaced a stale “later phase” disclaimer</title>
+    <symptom>Even after the chart control rewrite, the `/ops` view still showed top-right transparent-looking pills such as `1 active plans` because the compact KPI cards rendered their trend badges as absolutely positioned badges in the card header. The chart disclaimer could also still show the old line about connecting real accounting and CRM data “in a later phase,” especially when that text had already been saved in Internal ops settings.</symptom>
+    <cause>The stray element was not from the chart anymore; it was the `SectionCards` compact card layout. Separately, the loader still accepted the legacy disclaimer string from either the global default or previously saved settings.</cause>
+    <attempted-fix>Move KPI trend badges into the normal card flow under the metric value instead of absolutely pinning them in the corner, update the Internal ops settings default disclaimer to describe the real live series, and normalize legacy illustrative disclaimer strings inside the loader so the stale “later phase” copy is replaced even if the old value already exists in the database.</attempted-fix>
+    <verification>
+      <command>cmd /c npm.cmd exec eslint "src/components/section-cards.tsx" "src/lib/ops/loaders/loadOpsDashboardData.ts" "src/globals/InternalOpsSettings/config.ts"</command>
+      <command>cmd /c npm.cmd run build</command>
+    </verification>
+  </attempt>
+  <attempt id="12-02-a6" phase="12" task="12-02" status="resolved">
+    <title>Page-media drawer creation flow was too awkward and the first gallery rewrite left a broken workbench</title>
+    <symptom>On the home page, the local media drawer still exposed an unfriendly `Create new media record and swap` block instead of a usable gallery/library flow. The first chunked rewrite also left malformed strings, a hidden generate-new-media path, and no clear placeholder card for drag-drop, upload, or generate.</symptom>
+    <cause>The original drawer was built around one-off slot forms, not a reusable media library workflow. The first route changes landed the backend capabilities, but the client rewrite was still centered on inline forms and picked up chunked-patch corruption.</cause>
+    <attempted-fix>Rebuild the drawer as a two-tab local media workbench: `Page media` for slot-focused replace/generate/swap actions and `Media library` for record-focused upload, drag-drop, generate, and swap flows. Extend the local devtools route with GET library loading plus `create-only`, `generate-only`, and `swap-existing-reference`, add a placeholder card for new records, and make both page cards and library cards drag-aware with selected-state feedback.</attempted-fix>
+    <verification>
+      <command>cmd /c npm.cmd exec eslint "src/components/admin-impersonation/PageMediaDevtoolsDrawer.tsx" "src/app/api/internal/dev/page-media/route.ts" "src/lib/media/pageMediaDevtools.ts"</command>
+      <command>cmd /c npm.cmd run test:int -- --run tests/int/lib/media/page-media-route.int.spec.ts tests/int/lib/media/page-media-devtools.int.spec.ts</command>
+      <command>cmd /c npm.cmd run build</command>
+    </verification>
+  </attempt>
+  <attempt id="12-02-a7" phase="12" task="12-02" status="resolved">
+    <title>Generate actions opened in the wrong place and the local media tools still treated everything like images</title>
+    <symptom>Clicking `Generate` in the page-media drawer pushed the prompt down into the old selected-detail block instead of opening inline on the clicked card. The local workbench and hover editor also still showed extra `New record` actions on page media, only accepted image uploads, and could not deliberately create video media from dropped files or generated prompts.</symptom>
+    <cause>The page-media workbench still carried forward the old selected-card pattern from the first rewrite, and the route/helper layer only exposed image-generation semantics even though Payload media records themselves already supported video uploads through `mimeType`.</cause>
+    <attempted-fix>Move generate controls inline onto the clicked page/library cards, remove the extra `New record` actions from page-card and hover tooling, add explicit image/video generation toggles, pass `mediaKind` through the local devtools route, return `mimeType` in devtools summaries so previews can render videos, accept image/video uploads everywhere relevant, and add a dedicated OpenAI video helper for the local media flow.</attempted-fix>
+    <verification>
+      <command>cmd /c npm.cmd exec eslint "src/components/admin-impersonation/PageMediaDevtoolsDrawer.tsx" "src/components/admin-impersonation/InlinePageMediaEditor.tsx" "src/app/api/internal/dev/page-media/route.ts" "src/lib/media/pageMediaDevtools.ts" "src/lib/media/openaiVideoGeneration.ts" "tests/int/lib/media/page-media-route.int.spec.ts" "tests/int/lib/media/page-media-devtools.int.spec.ts"</command>
+      <command>cmd /c npm.cmd run test:int -- --run tests/int/lib/media/page-media-route.int.spec.ts tests/int/lib/media/page-media-devtools.int.spec.ts</command>
+      <command>cmd /c npm.cmd run build</command>
+    </verification>
+  </attempt>
+  <attempt id="12-02-a8" phase="12" task="12-02" status="resolved">
+    <title>Page-slot generation still mutated shared media records and could not iterate an existing image into video</title>
+    <symptom>Generating from a page-media slot such as `hero.media` could still target `generate-replace-existing`, which meant one prompt could mutate a shared media record used by multiple page slots. The local media tools also let admins flip a slot from image to video, but the video generation path did not reuse the current image as a reference input.</symptom>
+    <cause>The page drawer and inline hover editor still treated generate like record replacement when a slot already had a media id, even though upload-on-page had already shifted to create-and-swap semantics. The OpenAI video helper accepted prompt-only generation but had no path to resolve the current image record into an `input_reference` object.</cause>
+    <attempted-fix>Make page-slot generate always submit `generate-and-swap`, pass the current slot media id as `sourceMediaId`, resolve that media record server-side when the requested output is video, fetch the current image bytes, and send them to the OpenAI video API as an `input_reference.image_url` data URL. Keep library-record generate-in-place available for explicit record iteration, but make page-slot generation always fork a new media record and swap the page relation.</attempted-fix>
+    <verification>
+      <command>cmd /c npm.cmd exec eslint "src/components/admin-impersonation/PageMediaDevtoolsDrawer.tsx" "src/components/admin-impersonation/InlinePageMediaEditor.tsx" "src/app/api/internal/dev/page-media/route.ts" "src/lib/media/openaiVideoGeneration.ts" "tests/int/lib/media/page-media-route.int.spec.ts"</command>
+      <command>cmd /c npm.cmd run test:int -- --run tests/int/lib/media/page-media-route.int.spec.ts tests/int/lib/media/page-media-devtools.int.spec.ts</command>
+      <command>cmd /c npm.cmd run build</command>
+    </verification>
+  </attempt>
+  <attempt id="12-02-a9" phase="12" task="12-02" status="resolved">
+    <title>Page-media cards still wasted space on separate replace/generate controls instead of one focused slot editor</title>
+    <symptom>Inside the page-media drawer, each slot card still carried its own inline action row and detail state. That made the page tab feel crowded, and clicking a layout media card did not open a focused editor for that slot. The upload/generate flows were available, but they were spread across the card instead of living in a single compact slot-edit modal.</symptom>
+    <cause>The page tab had evolved incrementally from inline forms. Even after the gallery and media-kind improvements, the slot cards still owned too much UI and treated upload/generate as separate surface actions rather than one “edit this slot” workflow.</cause>
+    <attempted-fix>Condense page-slot actions down to a single sparkle affordance and card click target, then open a focused modal for the selected slot with `Image`, `Video`, and `Gallery` tabs. Move drag-drop/upload to the top of the modal, keep generate controls at the bottom for image/video tabs, add `Cancel` plus a top-right close button, and cover the new modal-first behavior with a component integration test.</attempted-fix>
+    <verification>
+      <command>cmd /c npm.cmd exec eslint "src/components/admin-impersonation/PageMediaDevtoolsDrawer.tsx" "tests/int/components/admin-impersonation/page-media-devtools-drawer.int.spec.tsx"</command>
+      <command>cmd /c npm.cmd run test:int -- --run tests/int/components/admin-impersonation/page-media-devtools-drawer.int.spec.tsx tests/int/lib/media/page-media-route.int.spec.ts tests/int/lib/media/page-media-devtools.int.spec.ts</command>
+      <command>cmd /c npm.cmd run build</command>
+    </verification>
+  </attempt>
 </errors-and-attempts>

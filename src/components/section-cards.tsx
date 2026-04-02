@@ -45,7 +45,7 @@ export function SectionCards({ items }: { items: SectionCardItem[] }) {
               key={item.title}
             >
               <CardHeader className={compact ? 'pb-2' : undefined}>
-                <div className="flex flex-wrap items-center gap-1 pr-20">
+                <div className="flex flex-wrap items-center gap-1">
                   <CardDescription>{item.title}</CardDescription>
                   {showInfo ? (
                     <Tooltip>
@@ -75,8 +75,11 @@ export function SectionCards({ items }: { items: SectionCardItem[] }) {
                 >
                   {item.value}
                 </CardTitle>
-                <div className="absolute right-4 top-4">
-                  <Badge variant="outline" className="flex max-w-[10rem] gap-1 truncate rounded-lg text-xs">
+                <div className="pt-2">
+                  <Badge
+                    variant="outline"
+                    className="text-muted-foreground inline-flex max-w-full gap-1 rounded-lg border-border/70 bg-background/70 text-xs"
+                  >
                     <TrendIcon className="size-3 shrink-0" />
                     <span className="truncate">{item.trend}</span>
                   </Badge>

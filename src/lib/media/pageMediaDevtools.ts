@@ -1,14 +1,17 @@
 import type { Media, Page } from '@/payload-types'
 
+export type MediaDevtoolsSummary = {
+  alt: null | string
+  filename: null | string
+  id: number
+  mimeType: null | string
+  previewUrl: null | string
+  updatedAt: string
+}
+
 export type PageMediaReference = {
   label: string
-  media: null | {
-    alt: null | string
-    filename: null | string
-    id: number
-    previewUrl: null | string
-    updatedAt: string
-  }
+  media: null | MediaDevtoolsSummary
   mediaId: null | number
   pageId: number
   pagePath: string
@@ -32,7 +35,7 @@ function getMediaPreviewUrl(media: Media | null): null | string {
   return media.sizes?.thumbnail?.url || media.thumbnailURL || media.url || null
 }
 
-function buildMediaSummary(media: Media | null): PageMediaReference['media'] {
+export function buildMediaDevtoolsSummary(media: Media | null): null | MediaDevtoolsSummary {
   if (!media) {
     return null
   }
@@ -41,6 +44,7 @@ function buildMediaSummary(media: Media | null): PageMediaReference['media'] {
     alt: media.alt || null,
     filename: media.filename || null,
     id: Number(media.id),
+    mimeType: media.mimeType || null,
     previewUrl: getMediaPreviewUrl(media),
     updatedAt: media.updatedAt,
   }
@@ -68,7 +72,7 @@ export function collectPageMediaReferences(args: {
   if (heroMedia) {
     refs.push({
       label: 'Hero image',
-      media: buildMediaSummary(heroMedia),
+      media: buildMediaDevtoolsSummary(heroMedia),
       mediaId: Number(heroMedia.id),
       pageId,
       pagePath,
@@ -85,7 +89,7 @@ export function collectPageMediaReferences(args: {
       if (blockMedia) {
         refs.push({
           label: getBlockLabel(block, blockIndex),
-          media: buildMediaSummary(blockMedia),
+          media: buildMediaDevtoolsSummary(blockMedia),
           mediaId: Number(blockMedia.id),
           pageId,
           pagePath,
@@ -111,7 +115,7 @@ export function collectPageMediaReferences(args: {
 
       refs.push({
         label: `${getBlockLabel(block, blockIndex)}: ${service.name}`,
-        media: buildMediaSummary(rowMedia),
+        media: buildMediaDevtoolsSummary(rowMedia),
         mediaId: Number(rowMedia.id),
         pageId,
         pagePath,

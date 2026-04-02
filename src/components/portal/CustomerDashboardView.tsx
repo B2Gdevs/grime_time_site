@@ -35,11 +35,7 @@ export function CustomerDashboardView({
         title="Customer dashboard"
         description="Your estimates, invoices, schedule, and account details in one place."
       />
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        <div
-          className="@container/main portal-scroll flex min-h-0 flex-1 flex-col gap-6 overflow-x-hidden overflow-y-auto overscroll-contain py-4 md:py-6"
-          data-portal-scroll=""
-        >
+      <div className="@container/main flex flex-col gap-6 py-4 md:py-6">
           {isAdminPreview ? (
             <div className="mx-4 rounded-lg border border-amber-500/40 bg-amber-500/5 px-4 py-3 text-sm text-amber-950 dark:text-amber-50 lg:mx-6">
               <span className="font-medium">Admin preview</span>
@@ -157,7 +153,6 @@ export function CustomerDashboardView({
               </CardContent>
             </Card>
           </div>
-        </div>
       </div>
     </>
   )

@@ -37,9 +37,28 @@ const OPS_TARGETS_FALLBACK: {
   projectedRevenueDisplay: string
 } = {
   chartDisclaimer:
-    'Chart series uses paid invoices, weighted quotes by month, and current MRR run rate when available. Configure targets in Internal ops targets.',
+    'Revenue uses paid invoices by paid date, pipeline uses weighted sent and accepted quotes by update month, and MRR reflects current active service plans.',
   mrrTargetDisplay: '$1.8k',
   projectedRevenueDisplay: '$13.6k',
+}
+
+const LEGACY_ILLUSTRATIVE_CHART_DISCLAIMERS = new Set([
+  'Illustrative sample trend for layout only. Connect real accounting and first-party CRM data in a later phase.',
+  'Illustrative sample trend for layout only — connect real accounting or CRM data in a later phase.',
+])
+
+function normalizeChartDisclaimer(value: null | string | undefined): null | string {
+  const trimmed = value?.trim()
+
+  if (!trimmed) {
+    return null
+  }
+
+  if (LEGACY_ILLUSTRATIVE_CHART_DISCLAIMERS.has(trimmed)) {
+    return OPS_TARGETS_FALLBACK.chartDisclaimer
+  }
+
+  return trimmed
 }
 
 export const QUOTE_PROJECTION_WEIGHTS = {
@@ -271,6 +290,12 @@ export type OpsDashboardData = {
   billingWorkspace: BillingWorkspaceData
   cards: SectionCardItem[]
   chartDisclaimer: string
+  chartMetricSummaries: {
+    detail: string
+    key: 'grossMargin' | 'mrr' | 'projectedRevenue' | 'revenue'
+    label: string
+    value: string
+  }[]
   chartTrend: OpsChartTrendPoint[]
   chartTrendIsLive: boolean
   crmWorkspace: CrmWorkspaceData
@@ -315,7 +340,7 @@ export async function loadOpsDashboardData(args: {
       overrideAccess: false,
       user,
     })
-    if (ops?.chartDisclaimer) chartDisclaimer = ops.chartDisclaimer
+    chartDisclaimer = normalizeChartDisclaimer(ops?.chartDisclaimer) ?? OPS_TARGETS_FALLBACK.chartDisclaimer
     if (ops?.chartPipelineNote) chartPipelineNote = ops.chartPipelineNote
     if (ops?.mrrTargetDisplay) mrrTargetDisplay = ops.mrrTargetDisplay
     if (ops?.projectedRevenueDisplay) projectedRevenueDisplay = ops.projectedRevenueDisplay
@@ -491,6 +516,7 @@ export async function loadOpsDashboardData(args: {
   ])
 
   const projectedRow = findScorecardRow(scorecardRowsRaw, 'Projected revenue')
+  const revenueRow = findScorecardRow(scorecardRowsRaw, 'Revenue')
   const mrrRow = findScorecardRow(scorecardRowsRaw, 'MRR')
   const grossMarginRow = findScorecardRow(scorecardRowsRaw, 'Gross margin')
   const grossMarginPercent =
@@ -551,6 +577,23 @@ export async function loadOpsDashboardData(args: {
   const chartTrendIsLive = chartTrend.some(
     (p) => p.revenue > 0 || p.projectedRevenue > 0 || p.mrr > 0 || p.grossMargin > 0,
   )
+  const latestChartPoint = chartTrend[chartTrend.length - 1] ?? null
+
+  let revenueValue = formatCurrencyUsd(latestChartPoint?.revenue ?? 0)
+  let revenueTrend = chartTrendIsLive ? 'Paid invoices by paid month' : 'Waiting on closed revenue data'
+
+  if ((latestChartPoint?.revenue ?? 0) <= 0 && revenueRow?.manualValue != null && Number.isFinite(Number(revenueRow.manualValue))) {
+    revenueValue = formatManualScorecardValue('Revenue', Number(revenueRow.manualValue))
+    revenueTrend = revenueRow.manualValueLabel?.trim() || 'Scorecard'
+  }
+
+  let grossMarginValue = `${latestChartPoint?.grossMargin ?? 0}%`
+  let grossMarginTrend = grossMarginPercent != null ? `${grossMarginPercent}% scorecard target` : 'Set scorecard margin guidance'
+
+  if ((latestChartPoint?.grossMargin ?? 0) <= 0 && grossMarginRow?.manualValue != null && Number.isFinite(Number(grossMarginRow.manualValue))) {
+    grossMarginValue = formatManualScorecardValue('Gross margin', Number(grossMarginRow.manualValue))
+    grossMarginTrend = grossMarginRow.manualValueLabel?.trim() || 'Scorecard'
+  }
 
   const chartDisclaimerMerged = [
     chartDisclaimer,
@@ -581,11 +624,39 @@ export async function loadOpsDashboardData(args: {
     formatCurrencyUsd,
   })
 
+  const chartMetricSummaries = [
+    {
+      detail: projectedTrend,
+      key: 'projectedRevenue' as const,
+      label: 'Pipeline',
+      value: projectedValue,
+    },
+    {
+      detail: revenueTrend,
+      key: 'revenue' as const,
+      label: 'Revenue',
+      value: revenueValue,
+    },
+    {
+      detail: mrrTrend,
+      key: 'mrr' as const,
+      label: 'MRR',
+      value: mrrValue,
+    },
+    {
+      detail: grossMarginTrend,
+      key: 'grossMargin' as const,
+      label: 'Margin',
+      value: grossMarginValue,
+    },
+  ]
+
   return {
     assetLadderItems,
     billingWorkspace,
     cards,
     chartDisclaimer: chartDisclaimerMerged,
+    chartMetricSummaries,
     chartTrend,
     chartTrendIsLive,
     crmWorkspace,

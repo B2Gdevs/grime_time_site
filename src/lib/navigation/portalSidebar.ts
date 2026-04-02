@@ -44,11 +44,6 @@ export function buildPortalMainNav(args: {
   if (staffShell) {
     return [
       {
-        icon: HomeIcon,
-        title: customerScopeLabel ? `Customer home ${customerScopeLabel}` : 'Customer home',
-        url: '/dashboard',
-      },
-      {
         icon: ReceiptTextIcon,
         title: 'Ops workspace',
         url: '/ops/workspace',
@@ -124,6 +119,11 @@ export function buildPortalSecondaryNav(args: {
       : []),
     ...(staffShell
       ? [
+          {
+            icon: HomeIcon,
+            title: 'Public site',
+            url: '/',
+          },
           {
             icon: Settings2Icon,
             title: 'Quote settings',

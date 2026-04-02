@@ -34,12 +34,12 @@ import type { AdminPreviewSearchUser, AdminPreviewUser } from './types'
 
 type Corner = 'bottom-left' | 'bottom-right' | 'top-left' | 'top-right'
 
-const STORAGE_KEY = 'admin-preview-toolbar-corner'
+const STORAGE_KEY = 'admin-preview-toolbar-corner-v2'
 const STORAGE_MINIMIZED_KEY = 'admin-preview-toolbar-minimized'
 
-function readStoredCorner(): Corner {
+function readStoredCorner(fallback: Corner): Corner {
   if (typeof window === 'undefined') {
-    return 'top-right'
+    return fallback
   }
 
   const stored = window.localStorage.getItem(STORAGE_KEY)
@@ -48,7 +48,7 @@ function readStoredCorner(): Corner {
     stored === 'bottom-left' ||
     stored === 'bottom-right'
     ? stored
-    : 'top-right'
+    : fallback
 }
 
 function readStoredMinimized(): boolean {
@@ -144,6 +144,10 @@ function isSecuredAdminPath(pathname: string): boolean {
   return pathname.startsWith('/admin') || pathname.startsWith('/docs') || pathname.startsWith('/ops')
 }
 
+function defaultCornerForPath(pathname: string): Corner {
+  return isSecuredAdminPath(pathname) ? 'bottom-right' : 'top-right'
+}
+
 function shortLabel(user: AdminPreviewUser): string {
   return user.name?.trim() || user.email
 }
@@ -200,9 +204,9 @@ export function AdminImpersonationToolbar({
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
-    setCorner(readStoredCorner())
+    setCorner(readStoredCorner(defaultCornerForPath(pathname)))
     setMinimized(readStoredMinimized())
-  }, [])
+  }, [pathname])
 
   useEffect(() => {
     window.localStorage.setItem(STORAGE_KEY, corner)

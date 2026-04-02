@@ -46,7 +46,7 @@ export function PortalAppShell({
           isRealAdmin={isRealAdmin}
           quotesEligible={quotesEligible}
           user={user}
-          variant="inset"
+          variant="sidebar"
         />
         <SidebarInset className="portal-main-shell min-w-0">{children}</SidebarInset>
       </SidebarProvider>

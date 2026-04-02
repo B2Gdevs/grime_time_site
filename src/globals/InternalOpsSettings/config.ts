@@ -69,7 +69,7 @@ export const InternalOpsSettings: GlobalConfig = {
       name: 'chartDisclaimer',
       type: 'textarea',
       defaultValue:
-        'Illustrative sample trend for layout only. Connect real accounting and first-party CRM data in a later phase.',
+        'Revenue uses paid invoices by paid date, pipeline uses weighted sent and accepted quotes by update month, and MRR reflects current active service plans.',
       admin: {
         description: 'Shown under the business momentum chart on /ops.',
       },

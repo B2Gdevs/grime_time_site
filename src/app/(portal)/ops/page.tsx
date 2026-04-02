@@ -22,6 +22,7 @@ export default async function OpsDashboardPage({ searchParams }: OpsPageProps) {
     <AdminDashboardView
       cards={data.cards}
       chartDisclaimer={data.chartDisclaimer}
+      chartMetricSummaries={data.chartMetricSummaries}
       chartTrend={data.chartTrend}
       chartTrendIsLive={data.chartTrendIsLive}
       pipelineSnapshotLabel={data.pipelineSnapshotLabel}

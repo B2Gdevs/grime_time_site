@@ -1,4 +1,4 @@
-import type { Payload } from 'payload'
+import { createLocalReq, type Payload, type PayloadRequest } from 'payload'
 
 import type { Organization, OrganizationMembership, User } from '@/payload-types'
 import { getUserOrganizationMembership, syncUserLegacyRolesFromMemberships } from '@/lib/auth/organizationAccess'
@@ -81,13 +81,14 @@ function getDefaultClerkMembership(
   )
 }
 
-async function findDefaultOrganization(payload: Payload): Promise<Organization | null> {
+async function findDefaultOrganization(payload: Payload, req: PayloadRequest): Promise<Organization | null> {
   const byClerk = await payload.find({
     collection: ORGANIZATIONS_COLLECTION_SLUG,
     depth: 0,
     limit: 1,
     overrideAccess: true,
     pagination: false,
+    req,
     where: {
       clerkOrgID: {
         equals: DEFAULT_GRIME_TIME_ORGANIZATION.clerkOrgID,
@@ -105,6 +106,7 @@ async function findDefaultOrganization(payload: Payload): Promise<Organization |
     limit: 1,
     overrideAccess: true,
     pagination: false,
+    req,
     where: {
       slug: {
         equals: DEFAULT_GRIME_TIME_ORGANIZATION.slug,
@@ -115,8 +117,8 @@ async function findDefaultOrganization(payload: Payload): Promise<Organization |
   return (bySlug.docs[0] as Organization | undefined) ?? null
 }
 
-async function ensureDefaultOrganization(payload: Payload): Promise<Organization> {
-  const existing = await findDefaultOrganization(payload)
+async function ensureDefaultOrganization(payload: Payload, req: PayloadRequest): Promise<Organization> {
+  const existing = await findDefaultOrganization(payload, req)
 
   if (existing) {
     return (await payload.update({
@@ -133,6 +135,7 @@ async function ensureDefaultOrganization(payload: Payload): Promise<Organization
         status: 'active',
       },
       overrideAccess: true,
+      req,
     })) as Organization
   }
 
@@ -144,6 +147,7 @@ async function ensureDefaultOrganization(payload: Payload): Promise<Organization
       status: 'active',
     },
     overrideAccess: true,
+    req,
   })) as Organization
 }
 
@@ -168,10 +172,12 @@ export async function ensureBootstrapOrganizationMembership(
     return null
   }
 
-  const organization = await ensureDefaultOrganization(payload)
+  const req = await createLocalReq({ user }, payload)
+  const organization = await ensureDefaultOrganization(payload, req)
   const existingMembership = await getUserOrganizationMembership(payload, {
     organizationId: Number(organization.id),
     userId: user.id,
+    req,
   })
 
   if (existingMembership) {
@@ -193,6 +199,7 @@ export async function ensureBootstrapOrganizationMembership(
           syncSource: clerkMembership ? 'clerk' : 'bootstrap',
         },
         overrideAccess: true,
+        req,
       })) as OrganizationMembership
 
       await syncUserLegacyRolesFromMemberships(payload, user.id, {
@@ -218,6 +225,7 @@ export async function ensureBootstrapOrganizationMembership(
       user: user.id,
     },
     overrideAccess: true,
+    req,
   })) as OrganizationMembership
 
   await syncUserLegacyRolesFromMemberships(payload, user.id, {

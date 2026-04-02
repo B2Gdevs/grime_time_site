@@ -7,8 +7,7 @@ import type { OpsChartTrendPoint } from '@/lib/ops/loadOpsChartTrend'
 import { opsTrendData } from '@/lib/ops/internalDashboardData'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { cn } from '@/utilities/ui'
 
 const metricMeta = {
   grossMargin: {
@@ -64,6 +63,7 @@ export function ChartAreaInteractive({
   chartTrend,
   chartTrendIsLive,
   disclaimer,
+  metricSummaries,
   pipelineSnapshotLabel,
   pipelineSnapshotValue,
 }: {
@@ -73,6 +73,12 @@ export function ChartAreaInteractive({
   chartTrendIsLive?: boolean
   /** Shown under the chart, e.g. from the Internal ops targets global. */
   disclaimer?: string | null
+  metricSummaries?: Array<{
+    detail: string
+    key: MetricKey
+    label: string
+    value: string
+  }>
   /** Optional first-party KPI context shown next to the illustrative chart. */
   pipelineSnapshotLabel?: string | null
   pipelineSnapshotValue?: string | null
@@ -95,43 +101,6 @@ export function ChartAreaInteractive({
             </div>
             <CardDescription>{metricMeta[metric].description}</CardDescription>
           </div>
-          <div className="hidden @[720px]/card:flex">
-            <ToggleGroup
-              className="rounded-lg border bg-background p-1"
-              onValueChange={(value) => {
-                if (value) setMetric(value as MetricKey)
-              }}
-              type="single"
-              value={metric}
-              variant="outline"
-            >
-              <ToggleGroupItem value="projectedRevenue" className="px-2.5">
-                Pipeline
-              </ToggleGroupItem>
-              <ToggleGroupItem value="revenue" className="px-2.5">
-                Revenue
-              </ToggleGroupItem>
-              <ToggleGroupItem value="mrr" className="px-2.5">
-                MRR
-              </ToggleGroupItem>
-              <ToggleGroupItem value="grossMargin" className="px-2.5">
-                Margin
-              </ToggleGroupItem>
-            </ToggleGroup>
-          </div>
-        </div>
-        <div className="@[720px]/card:hidden mt-3">
-          <Select onValueChange={(value) => setMetric(value as MetricKey)} value={metric}>
-            <SelectTrigger aria-label="Select metric" className="w-44">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="projectedRevenue">Projected revenue</SelectItem>
-              <SelectItem value="revenue">Revenue</SelectItem>
-              <SelectItem value="mrr">MRR</SelectItem>
-              <SelectItem value="grossMargin">Gross margin</SelectItem>
-            </SelectContent>
-          </Select>
         </div>
         <div className="pt-2 text-3xl font-semibold tabular-nums">
           {formatMetricValue(metric, latestValue)}
@@ -184,6 +153,33 @@ export function ChartAreaInteractive({
           <p className="text-muted-foreground mt-3 px-2 text-xs leading-relaxed sm:px-6">
             {disclaimer}
           </p>
+        ) : null}
+        {metricSummaries && metricSummaries.length > 0 ? (
+          <div className="mt-4 grid gap-3 px-2 pb-2 sm:grid-cols-2 sm:px-6 xl:grid-cols-4">
+            {metricSummaries.map((summary) => {
+              const isActive = metric === summary.key
+
+              return (
+                <button
+                  key={summary.key}
+                  className={cn(
+                    'rounded-2xl border p-4 text-left transition-colors',
+                    isActive
+                      ? 'border-primary/45 bg-primary/8 shadow-sm'
+                      : 'border-border/80 bg-background hover:border-primary/30 hover:bg-muted/40',
+                  )}
+                  onClick={() => setMetric(summary.key)}
+                  type="button"
+                >
+                  <div className="text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.24em]">
+                    {summary.label}
+                  </div>
+                  <div className="mt-2 text-xl font-semibold tabular-nums">{summary.value}</div>
+                  <div className="text-muted-foreground mt-1 text-xs leading-relaxed">{summary.detail}</div>
+                </button>
+              )
+            })}
+          </div>
         ) : null}
       </CardContent>
     </Card>

@@ -1,4 +1,4 @@
-import type { Access, Payload } from 'payload'
+import type { Access, Payload, PayloadRequest } from 'payload'
 
 import type { OrganizationMembership, User } from '@/payload-types'
 import { ORGANIZATION_MEMBERSHIPS_COLLECTION_SLUG } from '@/lib/auth/organizationConstants'
@@ -194,7 +194,7 @@ export const canManageMemberships: Access = async ({ req }) => {
 
 export async function getUserOrganizationMembership(
   payload: Payload,
-  args: { organizationId: number; userId: number },
+  args: { organizationId: number; req?: PayloadRequest; userId: number },
 ): Promise<OrganizationMembership | null> {
   const memberships = await payload.find({
     collection: ORGANIZATION_MEMBERSHIPS_COLLECTION_SLUG,
@@ -202,6 +202,7 @@ export async function getUserOrganizationMembership(
     limit: 1,
     overrideAccess: true,
     pagination: false,
+    req: args.req,
     where: {
       and: [
         {

@@ -2,9 +2,11 @@ import { createLocalReq, type File as PayloadFile } from 'payload'
 
 import { getCurrentAuthContext } from '@/lib/auth/getAuthContext'
 import { isLocalDevtoolsRequestHeaders } from '@/lib/auth/localDevtools'
-import { buildPageMediaUpdateData } from '@/lib/media/pageMediaDevtools'
+import { buildMediaDevtoolsSummary, buildPageMediaUpdateData } from '@/lib/media/pageMediaDevtools'
 import { generateOpenAIImage } from '@/lib/media/openaiImageGeneration'
-import type { Page } from '@/payload-types'
+import { generateOpenAIVideo } from '@/lib/media/openaiVideoGeneration'
+import { getServerSideURL } from '@/utilities/getURL'
+import type { Media, Page } from '@/payload-types'
 
 async function requireLocalAdminDevtools(request: Request) {
   const auth = await getCurrentAuthContext()
@@ -44,6 +46,113 @@ async function generatePayloadImageFile(prompt: string): Promise<PayloadFile> {
   }
 }
 
+function getAbsoluteMediaUrl(url: null | string | undefined): null | string {
+  if (!url) {
+    return null
+  }
+
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url
+  }
+
+  return new URL(url, getServerSideURL()).toString()
+}
+
+async function loadSourceImageReference(args: {
+  mediaId: number
+  payload: Awaited<ReturnType<typeof getCurrentAuthContext>>['payload']
+  req: Awaited<ReturnType<typeof createLocalReq>>
+}): Promise<
+  | {
+      contentType: string
+      data: Buffer
+      filename: string
+    }
+  | null
+> {
+  const media = (await args.payload.findByID({
+    collection: 'media',
+    depth: 0,
+    id: args.mediaId,
+    req: args.req,
+  })) as Media
+
+  if (!media.mimeType?.startsWith('image/')) {
+    return null
+  }
+
+  const sourceUrl = getAbsoluteMediaUrl(media.url)
+
+  if (!sourceUrl) {
+    return null
+  }
+
+  const response = await fetch(sourceUrl)
+
+  if (!response.ok) {
+    throw new Error(`Unable to fetch source media ${args.mediaId} for video generation.`)
+  }
+
+  const data = Buffer.from(await response.arrayBuffer())
+  return {
+    contentType: media.mimeType,
+    data,
+    filename: media.filename || `media-${media.id}.png`,
+  }
+}
+
+async function generatePayloadVideoFile(args: {
+  payload: Awaited<ReturnType<typeof getCurrentAuthContext>>['payload']
+  prompt: string
+  req: Awaited<ReturnType<typeof createLocalReq>>
+  sourceMediaId?: null | number
+}): Promise<PayloadFile> {
+  const inputReference = args.sourceMediaId
+    ? await loadSourceImageReference({
+        mediaId: args.sourceMediaId,
+        payload: args.payload,
+        req: args.req,
+      })
+    : null
+
+  const { buffer, contentType, extension } = await generateOpenAIVideo({
+    inputReference,
+    prompt: args.prompt,
+  })
+
+  return {
+    data: buffer,
+    mimetype: contentType,
+    name: `page-media-${Date.now()}.${extension}`,
+    size: buffer.byteLength,
+  }
+}
+
+async function requirePageForSwap(args: {
+  pageId: number
+  payload: Awaited<ReturnType<typeof getCurrentAuthContext>>['payload']
+  relationPath: string
+}): Promise<Page> {
+  const page = (await args.payload.findByID({
+    collection: 'pages',
+    depth: 0,
+    id: args.pageId,
+    overrideAccess: true,
+  })) as Page
+
+  buildPageMediaUpdateData({
+    mediaId: 1,
+    page,
+    relationPath: args.relationPath,
+  })
+
+  return page
+}
+
+function buildMediaResponse(doc: Media | null | undefined) {
+  return doc ? buildMediaDevtoolsSummary(doc) : null
+}
+
 function parsePositiveNumber(value: FormDataEntryValue | null): null | number {
   const parsed = Number(value)
   return Number.isInteger(parsed) && parsed > 0 ? parsed : null
@@ -51,6 +160,37 @@ function parsePositiveNumber(value: FormDataEntryValue | null): null | number {
 
 function parseUpload(value: FormDataEntryValue | null): File | null {
   return value instanceof File && value.size > 0 ? value : null
+}
+
+function parseMediaKind(value: FormDataEntryValue | null): 'image' | 'video' {
+  return value === 'video' ? 'video' : 'image'
+}
+
+export async function GET(request: Request): Promise<Response> {
+  const auth = await requireLocalAdminDevtools(request)
+
+  if (!auth) {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const realUser = auth.realUser
+
+  if (!realUser) {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const payloadReq = await createLocalReq({ user: realUser }, auth.payload)
+  const media = await auth.payload.find({
+    collection: 'media',
+    depth: 0,
+    limit: 48,
+    req: payloadReq,
+    sort: '-updatedAt',
+  })
+
+  return Response.json({
+    items: (media.docs as Media[]).map((doc) => buildMediaDevtoolsSummary(doc)),
+  })
 }
 
 export async function POST(request: Request): Promise<Response> {
@@ -69,6 +209,8 @@ export async function POST(request: Request): Promise<Response> {
   const formData = await request.formData()
   const action = String(formData.get('action') || '')
   const alt = String(formData.get('alt') || '').trim()
+  const mediaKind = parseMediaKind(formData.get('mediaKind'))
+  const sourceMediaId = parsePositiveNumber(formData.get('sourceMediaId'))
   const payloadReq = await createLocalReq({ user: realUser }, auth.payload)
 
   if (action === 'generate-replace-existing' || action === 'generate-and-swap') {
@@ -78,7 +220,15 @@ export async function POST(request: Request): Promise<Response> {
       return Response.json({ error: 'A prompt is required.' }, { status: 400 })
     }
 
-    const generatedFile = await generatePayloadImageFile(prompt)
+    const generatedFile =
+      mediaKind === 'video'
+        ? await generatePayloadVideoFile({
+            payload: auth.payload,
+            prompt,
+            req: payloadReq,
+            sourceMediaId,
+          })
+        : await generatePayloadImageFile(prompt)
 
     if (action === 'generate-replace-existing') {
       const mediaId = parsePositiveNumber(formData.get('mediaId'))
@@ -99,6 +249,7 @@ export async function POST(request: Request): Promise<Response> {
       })
 
       return Response.json({
+        media: buildMediaResponse(updated as Media),
         mediaId: updated.id,
         ok: true,
       })
@@ -111,18 +262,40 @@ export async function POST(request: Request): Promise<Response> {
       return Response.json({ error: 'Page id and relation path are required.' }, { status: 400 })
     }
 
-    const page = (await auth.payload.findByID({
-      collection: 'pages',
-      depth: 0,
-      id: pageId,
-      overrideAccess: true,
-    })) as Page
-
     try {
-      buildPageMediaUpdateData({
-        mediaId: 1,
-        page,
+      const page = await requirePageForSwap({
+        pageId,
+        payload: auth.payload,
         relationPath,
+      })
+
+      const created = await auth.payload.create({
+        collection: 'media',
+        data: {
+          alt: alt || prompt.slice(0, 240),
+        },
+        depth: 0,
+        file: generatedFile,
+        req: payloadReq,
+      })
+
+      await auth.payload.update({
+        collection: 'pages',
+        data: buildPageMediaUpdateData({
+          mediaId: Number(created.id),
+          page,
+          relationPath,
+        }),
+        depth: 0,
+        id: pageId,
+        req: payloadReq,
+      })
+
+      return Response.json({
+        media: buildMediaResponse(created as Media),
+        mediaId: created.id,
+        ok: true,
+        pageId,
       })
     } catch (error) {
       return Response.json(
@@ -132,6 +305,14 @@ export async function POST(request: Request): Promise<Response> {
         { status: 400 },
       )
     }
+  }
+
+  if (action === 'generate-only') {
+    const prompt = String(formData.get('prompt') || '').trim()
+
+    if (!prompt) {
+      return Response.json({ error: 'A prompt is required.' }, { status: 400 })
+    }
 
     const created = await auth.payload.create({
       collection: 'media',
@@ -139,27 +320,74 @@ export async function POST(request: Request): Promise<Response> {
         alt: alt || prompt.slice(0, 240),
       },
       depth: 0,
-      file: generatedFile,
-      req: payloadReq,
-    })
-
-    await auth.payload.update({
-      collection: 'pages',
-      data: buildPageMediaUpdateData({
-        mediaId: Number(created.id),
-        page,
-        relationPath,
-      }),
-      depth: 0,
-      id: pageId,
+      file:
+        mediaKind === 'video'
+          ? await generatePayloadVideoFile({
+              payload: auth.payload,
+              prompt,
+              req: payloadReq,
+              sourceMediaId,
+            })
+          : await generatePayloadImageFile(prompt),
       req: payloadReq,
     })
 
     return Response.json({
+      media: buildMediaResponse(created as Media),
       mediaId: created.id,
       ok: true,
-      pageId,
     })
+  }
+
+  if (action === 'swap-existing-reference') {
+    const mediaId = parsePositiveNumber(formData.get('mediaId'))
+    const pageId = parsePositiveNumber(formData.get('pageId'))
+    const relationPath = String(formData.get('relationPath') || '').trim()
+
+    if (!mediaId || !pageId || !relationPath) {
+      return Response.json({ error: 'Media id, page id, and relation path are required.' }, { status: 400 })
+    }
+
+    try {
+      const page = await requirePageForSwap({
+        pageId,
+        payload: auth.payload,
+        relationPath,
+      })
+
+      await auth.payload.update({
+        collection: 'pages',
+        data: buildPageMediaUpdateData({
+          mediaId,
+          page,
+          relationPath,
+        }),
+        depth: 0,
+        id: pageId,
+        req: payloadReq,
+      })
+
+      const media = (await auth.payload.findByID({
+        collection: 'media',
+        depth: 0,
+        id: mediaId,
+        req: payloadReq,
+      })) as Media
+
+      return Response.json({
+        media: buildMediaResponse(media),
+        mediaId,
+        ok: true,
+        pageId,
+      })
+    } catch (error) {
+      return Response.json(
+        {
+          error: error instanceof Error ? error.message : 'Unable to swap the page media reference.',
+        },
+        { status: 400 },
+      )
+    }
   }
 
   const upload = parseUpload(formData.get('file'))
@@ -185,6 +413,7 @@ export async function POST(request: Request): Promise<Response> {
     })
 
     return Response.json({
+      media: buildMediaResponse(updated as Media),
       mediaId: updated.id,
       ok: true,
     })
@@ -198,18 +427,40 @@ export async function POST(request: Request): Promise<Response> {
       return Response.json({ error: 'Page id and relation path are required.' }, { status: 400 })
     }
 
-    const page = (await auth.payload.findByID({
-      collection: 'pages',
-      depth: 0,
-      id: pageId,
-      overrideAccess: true,
-    })) as Page
-
     try {
-      buildPageMediaUpdateData({
-        mediaId: 1,
-        page,
+      const page = await requirePageForSwap({
+        pageId,
+        payload: auth.payload,
         relationPath,
+      })
+
+      const created = await auth.payload.create({
+        collection: 'media',
+        data: {
+          alt: alt || upload.name.replace(/\.[a-z0-9]+$/i, ''),
+        },
+        depth: 0,
+        file: await toPayloadFile(upload),
+        req: payloadReq,
+      })
+
+      await auth.payload.update({
+        collection: 'pages',
+        data: buildPageMediaUpdateData({
+          mediaId: Number(created.id),
+          page,
+          relationPath,
+        }),
+        depth: 0,
+        id: pageId,
+        req: payloadReq,
+      })
+
+      return Response.json({
+        media: buildMediaResponse(created as Media),
+        mediaId: created.id,
+        ok: true,
+        pageId,
       })
     } catch (error) {
       return Response.json(
@@ -219,7 +470,9 @@ export async function POST(request: Request): Promise<Response> {
         { status: 400 },
       )
     }
+  }
 
+  if (action === 'create-only') {
     const created = await auth.payload.create({
       collection: 'media',
       data: {
@@ -230,22 +483,10 @@ export async function POST(request: Request): Promise<Response> {
       req: payloadReq,
     })
 
-    await auth.payload.update({
-      collection: 'pages',
-      data: buildPageMediaUpdateData({
-        mediaId: Number(created.id),
-        page,
-        relationPath,
-      }),
-      depth: 0,
-      id: pageId,
-      req: payloadReq,
-    })
-
     return Response.json({
+      media: buildMediaResponse(created as Media),
       mediaId: created.id,
       ok: true,
-      pageId,
     })
   }
 
