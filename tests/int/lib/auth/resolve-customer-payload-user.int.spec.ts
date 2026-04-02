@@ -20,7 +20,7 @@ async function createUser(data: Record<string, unknown>) {
     collection: 'users',
     data,
     overrideAccess: true,
-  })) as User
+  } as never)) as User
 
   created.push({ collection: 'users', id: user.id })
   return user
@@ -90,6 +90,37 @@ describe('resolveCustomerPayloadUser', () => {
     })
 
       expect(users.docs).toHaveLength(1)
+    },
+  )
+
+  it(
+    'creates a new Clerk-backed customer user with a local-only placeholder password when no Payload user exists yet',
+    { timeout: 15000 },
+    async () => {
+      const customerEmail = `${runKey}.new-customer@example.com`
+
+      resolveCustomerSessionIdentity.mockResolvedValue({
+        clerkUserID: `clerk_customer_${runKey}`,
+        email: customerEmail,
+        firstName: 'Fresh',
+        kind: 'clerk',
+        lastName: 'Customer',
+        user_metadata: {
+          name: 'Fresh Customer',
+        },
+      })
+
+      const { resolveCustomerPayloadUser } = await import('@/lib/auth/resolveCustomerPayloadUser')
+      const result = await resolveCustomerPayloadUser()
+
+      expect(result?.user.email).toBe(customerEmail)
+      expect(result?.user.clerkUserID).toBe(`clerk_customer_${runKey}`)
+      expect(result?.user.roles).toEqual(expect.arrayContaining(['customer']))
+      expect(result?.user.portalInviteState).toBe('active')
+
+      if (result?.user?.id) {
+        created.push({ collection: 'users', id: result.user.id })
+      }
     },
   )
 })

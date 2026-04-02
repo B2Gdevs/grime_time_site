@@ -1,9 +1,12 @@
+import { randomBytes } from 'node:crypto'
+
 import config from '@payload-config'
 import { getPayload } from 'payload'
 
 import { USERS_COLLECTION_SLUG } from '@/collections/Users'
 import type { User } from '@/payload-types'
 import { resolveCustomerSessionIdentity } from '@/lib/auth/customerSessionIdentity'
+import { ensureBootstrapOrganizationMembership } from '@/lib/auth/organizationSync'
 
 function readSupabaseDisplayName(user: {
   email?: null | string
@@ -72,13 +75,14 @@ export async function resolveCustomerPayloadUser() {
 
     return {
       payload,
-      user: updatedUser,
+      user: (await ensureBootstrapForUser(payload, updatedUser)) ?? updatedUser,
     }
   }
 
   const createdUser = (await payload.create({
     collection: USERS_COLLECTION_SLUG,
     data: {
+      password: buildLocalOnlyPassword(),
       emailVerifiedAt: new Date().toISOString(),
       email: normalizedEmail,
       lastPortalLoginAt: new Date().toISOString(),
@@ -93,8 +97,19 @@ export async function resolveCustomerPayloadUser() {
 
   return {
     payload,
-    user: createdUser,
+    user: (await ensureBootstrapForUser(payload, createdUser)) ?? createdUser,
   }
+}
+
+async function ensureBootstrapForUser(payload: Awaited<ReturnType<typeof getPayload>>, user: User) {
+  await ensureBootstrapOrganizationMembership(payload, user)
+
+  return (await payload.findByID({
+    collection: USERS_COLLECTION_SLUG,
+    depth: 0,
+    id: user.id,
+    overrideAccess: true,
+  })) as User
 }
 
 async function findCustomerUserBySupabaseID(
@@ -172,4 +187,8 @@ function readIdentityDisplayName(user: {
     email: user.email,
     user_metadata: user.user_metadata,
   })
+}
+
+function buildLocalOnlyPassword(): string {
+  return `clerk-only-${randomBytes(18).toString('base64url')}`
 }

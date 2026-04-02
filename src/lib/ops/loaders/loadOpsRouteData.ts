@@ -6,24 +6,25 @@ import { getPayload } from 'payload'
 
 import { GRIME_DEMO_MODE_KEY } from '@/lib/demo/constants'
 
-import { getCurrentPayloadUser, userIsAdmin } from '@/lib/auth/getCurrentPayloadUser'
+import { getCurrentAuthContext } from '@/lib/auth/getAuthContext'
 import type { OpsCommandCenterTabId } from '@/lib/ops/opsCommandCenterTabs'
 import { loadOpsDashboardData, type OpsDashboardData } from '@/lib/ops/loaders/loadOpsDashboardData'
 import { quotesInternalEnabled } from '@/utilities/quotesAccess'
 
 export type OpsRouteData = {
   data: OpsDashboardData
-  user: Awaited<ReturnType<typeof getCurrentPayloadUser>>
+  user: Awaited<ReturnType<typeof getCurrentAuthContext>>['realUser']
 }
 
 export async function loadOpsRouteData(): Promise<OpsRouteData> {
-  const user = await getCurrentPayloadUser()
+  const auth = await getCurrentAuthContext()
+  const user = auth.realUser
 
   if (!user) {
     redirect('/login')
   }
 
-  if (!userIsAdmin(user)) {
+  if (!auth.isRealAdmin) {
     redirect('/')
   }
 

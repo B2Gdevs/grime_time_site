@@ -15,7 +15,7 @@ export function getCustomerAuthEmailIssue(email: string): null | string {
   }
 
   if (RESERVED_STAFF_EMAILS.has(normalized)) {
-    return 'That address is reserved for staff. Use /admin/login for team sign-in.'
+    return 'That address is reserved for staff. Use the Grime Time sign-in flow for team access, then open /ops or /admin.'
   }
 
   if (normalized.endsWith(LOCAL_ONLY_EMAIL_SUFFIX)) {

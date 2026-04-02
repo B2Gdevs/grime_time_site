@@ -4,8 +4,8 @@ import { getPayload } from 'payload'
 
 import type { User } from '@/payload-types'
 import { getImpersonationUserIdFromCookieHeader } from '@/lib/auth/impersonation'
-import { resolveCustomerPayloadUser } from '@/lib/auth/resolveCustomerPayloadUser'
-import { isAdminUser } from '@/lib/auth/roles'
+import { hasPayloadAdminAccess } from '@/lib/auth/organizationAccess'
+import { resolveAppAuthActor } from '@/lib/auth/resolveAppAuthActor'
 
 export type PayloadRequestAuth = {
   effectiveUser: User
@@ -17,15 +17,16 @@ export type PayloadRequestAuth = {
 }
 
 async function loadImpersonatedUser(args: {
+  canImpersonate: boolean
   impersonationUserId: number | null
   payload: Awaited<ReturnType<typeof getPayload>>
   realUser: User | null
 }): Promise<User | null> {
-  if (!args.realUser || !isAdminUser(args.realUser) || args.impersonationUserId == null) {
+  if (!args.canImpersonate || args.impersonationUserId == null) {
     return null
   }
 
-  if (Number(args.realUser.id) === args.impersonationUserId) {
+  if (Number(args.realUser?.id) === args.impersonationUserId) {
     return null
   }
 
@@ -45,21 +46,22 @@ async function loadImpersonatedUser(args: {
 
 export async function requireRequestAuth(request: Request): Promise<null | PayloadRequestAuth> {
   const payload = await getPayload({ config })
-  const { user } = await payload.auth({ headers: request.headers })
-  let payloadUser = (user as User | null) ?? null
+  let fallbackHeaders: Headers | null = null
 
-  if (!payloadUser) {
-    try {
-      const fallbackHeaders = await nextHeaders()
-      const fallbackAuth = await payload.auth({ headers: fallbackHeaders })
-      payloadUser = (fallbackAuth.user as User | null) ?? null
-    } catch {
-      /* ignore header fallback failures and continue to customer auth fallback */
-    }
+  try {
+    fallbackHeaders = await nextHeaders()
+  } catch {
+    fallbackHeaders = null
   }
 
-  const customerAuth = payloadUser ? null : await resolveCustomerPayloadUser()
-  const realUser = payloadUser ?? customerAuth?.user ?? null
+  const resolvedAuth = await resolveAppAuthActor({
+    payload,
+    payloadHeaderCandidates: [request.headers, fallbackHeaders],
+  })
+  const realUser = resolvedAuth.realUser
+  const isRealAdmin = realUser
+    ? await hasPayloadAdminAccess(resolvedAuth.payload, realUser)
+    : false
 
   if (!realUser) {
     return null
@@ -67,8 +69,9 @@ export async function requireRequestAuth(request: Request): Promise<null | Paylo
 
   const impersonationUserId = getImpersonationUserIdFromCookieHeader(request.headers.get('cookie'))
   const impersonatedUser = await loadImpersonatedUser({
+    canImpersonate: isRealAdmin,
     impersonationUserId,
-    payload: customerAuth?.payload ?? payload,
+    payload: resolvedAuth.payload,
     realUser,
   })
 
@@ -76,8 +79,8 @@ export async function requireRequestAuth(request: Request): Promise<null | Paylo
     effectiveUser: impersonatedUser ?? realUser,
     impersonatedUser,
     isImpersonating: Boolean(impersonatedUser),
-    isRealAdmin: isAdminUser(realUser),
-    payload: customerAuth?.payload ?? payload,
+    isRealAdmin,
+    payload: resolvedAuth.payload,
     realUser,
   }
 }

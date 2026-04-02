@@ -570,10 +570,33 @@
       </commands>
     </task>
     <task id="11-05" agent-id="" status="in-progress">
-      <goal>Replace the current Supabase customer-auth path with Clerk-hosted auth and social login, use Clerk UI components wherever practical for sign-in/up and account affordances, and map Clerk external ids back into Payload `users` plus Stripe customer records without weakening admin impersonation or portal access checks. Current checkpoint: root `ClerkProvider`, `clerkMiddleware()`, marketing/login surfaces, persisted `clerkUserID`, the shared claim/invite token flow presents a Clerk-first completion path against the existing Payload user, the direct forgot/reset routes no longer expose Supabase-first UX when Clerk is enabled, the old `/auth/register` plus `/auth/confirm` routes now short-circuit into the Clerk-first flow, the active Clerk-first customer surfaces plus signed-in nav isolate legacy Supabase browser helpers behind fallback-only dynamic components and routes, the server now resolves customer identity through one shared helper so Clerk-primary mode does not silently fall back to Supabase sessions, and Clerk-backed staff/admin sessions bind onto existing Payload admin users by email so app-owned impersonation remains viable. Remaining work is any final Supabase-era server cleanup plus a follow-through pass on admin/ops affordances that still assume Payload-auth-first staff login.</goal>
+      <goal>Replace the current Supabase customer-auth path with Clerk-hosted auth and social login, use Clerk UI components wherever practical for sign-in/up and account affordances, and map Clerk external ids back into Payload `users` plus Stripe customer records without weakening admin impersonation or portal access checks. Current checkpoint: root `ClerkProvider`, `clerkMiddleware()`, marketing/login surfaces, persisted `clerkUserID`, the shared claim/invite token flow presents a Clerk-first completion path against the existing Payload user, the direct forgot/reset routes no longer expose Supabase-first UX when Clerk is enabled, the old `/auth/register` plus `/auth/confirm` routes now short-circuit into the Clerk-first flow, the active Clerk-first customer surfaces plus signed-in nav isolate legacy Supabase browser helpers behind fallback-only dynamic components and routes, the server now resolves customer identity through one shared helper so Clerk-primary mode does not silently fall back to Supabase sessions, Clerk-backed staff/admin sessions bind onto existing Payload admin users by email so app-owned impersonation remains viable, and the app-owned staff surfaces (`/ops`, portal docs, internal seed/auth guards) now resolve the Clerk-backed real actor before any Payload-session fallback. Remaining work is the final Supabase retirement and Stripe/customer-id linkage.</goal>
       <keywords>auth,clerk,social-login,stripe,portal</keywords>
       <commands>
         <command>See .planning/workflows/customer-auth-and-portal-access.md and DECISIONS `D-auth-005` / `D-auth-006`.</command>
+      </commands>
+    </task>
+  </phase>
+  <phase id="12">
+    <task id="12-01" agent-id="" status="done">
+      <goal>Define and implement first-party `organizations` and `organization-memberships` records, map the current Grime Time staff org to Clerk external id `org_3BmXmwG7NpGNO1JKpE3MkR667Mm`, and make app-side role templates plus entitlements the business authorization source of truth instead of raw Clerk org role strings. Shipped: Payload collections + migration, entitlement helpers, membership-aware Payload admin checks, default Grime Time staff-org bootstrap for internal users, and integration coverage for membership-based admin access.</goal>
+      <keywords>organizations,rbac,clerk,payload,memberships</keywords>
+      <commands>
+        <command>See .planning/workflows/orgs-rbac-and-provider-sync.md, src/collections/Organizations/index.ts, src/collections/OrganizationMemberships/index.ts, src/lib/auth/organizationAccess.ts, and src/lib/auth/organizationSync.ts</command>
+      </commands>
+    </task>
+    <task id="12-02" agent-id="" status="planned">
+      <goal>Build admin/workspace controls to assign memberships, promote/demote org role templates, and lock/unlock entitlements from Grime Time, then mirror those changes out to Clerk without making Clerk the canonical authorization store.</goal>
+      <keywords>admin,roles,entitlements,orgs,sync</keywords>
+      <commands>
+        <command>See .planning/workflows/orgs-rbac-and-provider-sync.md</command>
+      </commands>
+    </task>
+    <task id="12-03" agent-id="" status="planned">
+      <goal>Implement provider sync plus outbound domain events: ingest Clerk webhooks into reconciliation workers, emit first-party user/org/membership change events for external apps, and use field-family timestamps plus conflict logging instead of blind global last-write-wins.</goal>
+      <keywords>webhooks,events,reconciliation,provider-sync,external-apps</keywords>
+      <commands>
+        <command>See .planning/workflows/orgs-rbac-and-provider-sync.md</command>
       </commands>
     </task>
   </phase>

@@ -22,4 +22,36 @@
       <command>cmd /c npm.cmd run build</command>
     </verification>
   </attempt>
+  <attempt id="11-05-a2" phase="11" task="11-05" status="resolved">
+    <title>First-time Clerk social sign-in failed because Payload auth user creation still required a password</title>
+    <symptom>Signing in through Clerk social login from the public shell hit a `ValidationError` on `users.password`, which bubbled into the homepage auth sidebar and returned `GET / 500` during the first request after Google sign-in.</symptom>
+    <cause>`resolveCustomerPayloadUser()` correctly mapped existing users by Clerk id or email, but when no Payload user existed yet it created a new document in the auth-enabled `users` collection without a password. Payload auth collections still validate `password` on create even if Clerk is the real identity provider.</cause>
+    <attempted-fix>Assign a random local-only placeholder password when creating a brand-new Clerk-backed Payload user, keep Clerk as the real identity, and add an integration test that covers first-time Clerk customer creation so future auth cleanup does not reintroduce the validation failure.</attempted-fix>
+    <verification>
+      <command>cmd /c npm.cmd run test:int -- --run tests/int/lib/auth/resolve-customer-payload-user.int.spec.ts tests/int/lib/auth/customer-session-identity.int.spec.ts tests/int/lib/auth/resolve-app-auth-actor.int.spec.ts</command>
+      <command>cmd /c npm.cmd exec eslint "src/lib/auth/resolveCustomerPayloadUser.ts" "tests/int/lib/auth/resolve-customer-payload-user.int.spec.ts"</command>
+      <command>cmd /c npm.cmd run build</command>
+    </verification>
+  </attempt>
+  <attempt id="12-01-a1" phase="12" task="12-01" status="resolved">
+    <title>Organizations collection access helper caused a circular import during Payload boot</title>
+    <symptom>`payload migrate:create` crashed with `ReferenceError: Cannot access 'canManageOrganizations' before initialization` as soon as the new `organizations` collection imported the access helper.</symptom>
+    <cause>The access helper imported collection slug constants directly from the new collections, while the collections imported the access helper. That created a circular module edge during Payload config evaluation.</cause>
+    <attempted-fix>Move shared collection slugs and the default Grime Time Clerk org id into a neutral `src/lib/auth/organizationConstants.ts` module so collections, sync helpers, and access helpers no longer import each other at config-load time.</attempted-fix>
+    <verification>
+      <command>cmd /c npm.cmd run payload -- migrate:create add_organizations_and_memberships --skipEmpty</command>
+      <command>cmd /c .\node_modules\.bin\tsc.cmd --noEmit</command>
+    </verification>
+  </attempt>
+  <attempt id="12-01-a2" phase="12" task="12-01" status="resolved">
+    <title>Membership after-change role sync deadlocked the compatibility bridge</title>
+    <symptom>The first `organization-memberships` integration tests hung or timed out, and cleanup surfaced a broken `ON DELETE SET NULL`/`NOT NULL` combination when bootstrap-created memberships were left behind after a failed run.</symptom>
+    <cause>Trying to recompute and write the legacy `users.roles` bridge inside the membership collection's after-change hook created a fragile same-transaction path. The bridge exists for compatibility, but the real authorization source is now the first-party membership query.</cause>
+    <attempted-fix>Remove the membership after-change role sync hook, keep `organizations`/`organization-memberships` as the real runtime auth source, and move the legacy-role bridge to explicit bootstrap/auth-resolution paths (`organizationSync` and auth entrypoints) where the membership write has already settled.</attempted-fix>
+    <verification>
+      <command>cmd /c npm.cmd run test:int -- --run tests/int/lib/auth/organization-access.int.spec.ts tests/int/lib/auth/customer-session-identity.int.spec.ts tests/int/lib/auth/resolve-app-auth-actor.int.spec.ts tests/int/lib/auth/resolve-customer-payload-user.int.spec.ts</command>
+      <command>cmd /c .\node_modules\.bin\tsc.cmd --noEmit</command>
+      <command>cmd /c npm.cmd run build</command>
+    </verification>
+  </attempt>
 </errors-and-attempts>

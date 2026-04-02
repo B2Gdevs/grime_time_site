@@ -449,6 +449,25 @@
       <file path="src/app/api/internal/impersonation/stop/route.ts" />
     </references>
   </decision>
+  <decision id="D-auth-009">
+    <title>Organizations, memberships, and entitlements stay first-party; Clerk orgs are mirrored provider state</title>
+    <summary>Grime Time should not treat Clerk organizations or role strings as the primary business-authorization model. The app should own first-party organization and membership records, role templates, entitlement locks, provider mappings, and downstream domain events; Clerk org and membership state is an identity/workspace adapter that may be mirrored for convenience.</summary>
+    <impact>Admins can promote staff, lock or unlock capabilities, and manage the Grime Time org from app-owned surfaces without losing the option to swap auth providers later. The current Clerk org `org_3BmXmwG7NpGNO1JKpE3MkR667Mm` should be stored as an external mapping on the Grime Time organization, not hardcoded as the primary app org id.</impact>
+    <references>
+      <file path=".planning/workflows/orgs-rbac-and-provider-sync.md" />
+      <file path=".planning/TASK-REGISTRY.xml" />
+      <file path="src/collections/Users/index.ts" />
+    </references>
+  </decision>
+  <decision id="D-auth-010">
+    <title>Provider sync uses split authority plus first-party domain events, not blind global last-write-wins</title>
+    <summary>Identity-profile fields may remain provider-authoritative, but business-authorization fields such as org membership, role template, entitlement locks, and impersonation eligibility remain app-authoritative. Mirrored fields should track internal/provider write timestamps and sync source, while Grime Time emits its own user/org/membership events for external apps and consumes Clerk webhooks through reconciliation workers.</summary>
+    <impact>Changing a user or org in Grime Time admin produces an app-owned event stream that downstream systems can trust, while Clerk updates can still reconcile safely without accidentally overwriting app-only locks or permissions. Conflict logging and manual resync become part of the design instead of hidden drift.</impact>
+    <references>
+      <file path=".planning/workflows/orgs-rbac-and-provider-sync.md" />
+      <file path=".planning/workflows/customer-auth-and-portal-access.md" />
+    </references>
+  </decision>
   <decision id="D-eng-001">
     <title>Code quality favors extraction and typed shared primitives over literal sprawl</title>
     <summary>As the app scales, feature work should follow shared engineering conventions: centralize repeated literals into constants/typed unions, extract reusable utilities/components from large files, and enforce practical file-size guardrails. UI work should also prefer clear icon-assisted affordances and avoid copy-heavy low-contrast layouts for primary actions.</summary>

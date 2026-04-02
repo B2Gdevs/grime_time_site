@@ -12,6 +12,7 @@ Suggested docs:
 | `crm-org-and-sync.md` | Historical CRM organization notes; keep aligned with the first-party CRM direction if reused |
 | `crm-and-integrations.md` | Integration map for Payload, Stripe, Resend, Supabase, and internal CRM boundaries |
 | `field-agent-messaging-and-notifications.md` | Quote-notification email first, then OpenClaw plugin planning, field-channel rollout order, and shared tool-surface rules |
+| `orgs-rbac-and-provider-sync.md` | First-party organization/membership model, provider-agnostic RBAC, Clerk sync rules, and outbound domain events for external apps |
 | `google-business-profile-chat.md` | Deferred evaluation note for Google Business Profile messaging, response-time constraints, and lead-capture expansion rules |
 | `business-scorecard-and-growth.md` | KPIs, MRR, asset inventory, operating rhythm, milestones, and tool recommendations |
 | `payload-native-crm-and-billing.md` | Product direction, design rules, data model, billing split, automation roadmap |

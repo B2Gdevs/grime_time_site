@@ -1,6 +1,6 @@
 import type { Access } from 'payload'
 
-import { isAdminUser } from '@/lib/auth/roles'
+import { hasPayloadAdminAccess } from '@/lib/auth/organizationAccess'
 
-export const isAdmin: Access = ({ req: { user } }) => isAdminUser(user)
+export const isAdmin: Access = async ({ req }) => hasPayloadAdminAccess(req.payload, req.user)
 

@@ -3,8 +3,8 @@ import { cookies, headers } from 'next/headers'
 import { getPayload } from 'payload'
 
 import type { User } from '@/payload-types'
-import { isAdminUser } from '@/lib/auth/roles'
-import { resolveCustomerPayloadUser } from '@/lib/auth/resolveCustomerPayloadUser'
+import { hasPayloadAdminAccess } from '@/lib/auth/organizationAccess'
+import { resolveAppAuthActor } from '@/lib/auth/resolveAppAuthActor'
 import { getImpersonationUserIdFromCookies } from './impersonation'
 
 export type PayloadAuthContext = {
@@ -17,15 +17,16 @@ export type PayloadAuthContext = {
 }
 
 async function loadImpersonatedUser(args: {
+  canImpersonate: boolean
   impersonationUserId: number | null
   payload: Awaited<ReturnType<typeof getPayload>>
   realUser: User | null
 }): Promise<User | null> {
-  if (!args.realUser || !isAdminUser(args.realUser) || args.impersonationUserId == null) {
+  if (!args.canImpersonate || args.impersonationUserId == null) {
     return null
   }
 
-  if (Number(args.realUser.id) === args.impersonationUserId) {
+  if (Number(args.realUser?.id) === args.impersonationUserId) {
     return null
   }
 
@@ -47,14 +48,19 @@ export async function getCurrentAuthContext(): Promise<PayloadAuthContext> {
   const payload = await getPayload({ config })
   const requestHeaders = await headers()
   const cookieStore = await cookies()
-  const { user } = await payload.auth({ headers: requestHeaders })
-  const payloadUser = (user as User | null) ?? null
-  const customerAuth = payloadUser ? null : await resolveCustomerPayloadUser()
-  const realUser = payloadUser ?? customerAuth?.user ?? null
+  const resolvedAuth = await resolveAppAuthActor({
+    payload,
+    payloadHeaderCandidates: [requestHeaders],
+  })
+  const realUser = resolvedAuth.realUser
+  const isRealAdmin = realUser
+    ? await hasPayloadAdminAccess(resolvedAuth.payload, realUser)
+    : false
   const impersonationUserId = getImpersonationUserIdFromCookies(cookieStore)
   const impersonatedUser = await loadImpersonatedUser({
+    canImpersonate: isRealAdmin,
     impersonationUserId,
-    payload: customerAuth?.payload ?? payload,
+    payload: resolvedAuth.payload,
     realUser,
   })
 
@@ -62,8 +68,8 @@ export async function getCurrentAuthContext(): Promise<PayloadAuthContext> {
     effectiveUser: impersonatedUser ?? realUser,
     impersonatedUser,
     isImpersonating: Boolean(impersonatedUser),
-    isRealAdmin: isAdminUser(realUser),
-    payload: customerAuth?.payload ?? payload,
+    isRealAdmin,
+    payload: resolvedAuth.payload,
     realUser,
   }
 }

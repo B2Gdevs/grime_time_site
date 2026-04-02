@@ -15,11 +15,12 @@ import * as migration_20260326_174716_marketing_service_grid_media_refresh from 
 import * as migration_20260326_205231 from './20260326_205231';
 import * as migration_20260326_214509 from './20260326_214509';
 import * as migration_20260326_233945_billing_workspace_and_stripe_sync from './20260326_233945_billing_workspace_and_stripe_sync';
+import * as migration_20260327_031119_20260327_170000_operating_rhythm_and_discount_policy from './20260327_031119_20260327_170000_operating_rhythm_and_discount_policy';
 import * as migration_20260327_120000_internal_ops_quote_weights from './20260327_120000_internal_ops_quote_weights';
 import * as migration_20260327_140500_sequence_jobs_and_relations from './20260327_140500_sequence_jobs_and_relations';
 import * as migration_20260327_141500_payload_jobs_meta from './20260327_141500_payload_jobs_meta';
-import * as migration_20260327_031119_20260327_170000_operating_rhythm_and_discount_policy from './20260327_031119_20260327_170000_operating_rhythm_and_discount_policy';
 import * as migration_20260401_170000_clerk_user_id from './20260401_170000_clerk_user_id';
+import * as migration_20260402_022714_add_organizations_and_memberships from './20260402_022714_add_organizations_and_memberships';
 
 export const migrations = [
   {
@@ -108,6 +109,11 @@ export const migrations = [
     name: '20260326_233945_billing_workspace_and_stripe_sync',
   },
   {
+    up: migration_20260327_031119_20260327_170000_operating_rhythm_and_discount_policy.up,
+    down: migration_20260327_031119_20260327_170000_operating_rhythm_and_discount_policy.down,
+    name: '20260327_031119_20260327_170000_operating_rhythm_and_discount_policy',
+  },
+  {
     up: migration_20260327_120000_internal_ops_quote_weights.up,
     down: migration_20260327_120000_internal_ops_quote_weights.down,
     name: '20260327_120000_internal_ops_quote_weights',
@@ -120,16 +126,16 @@ export const migrations = [
   {
     up: migration_20260327_141500_payload_jobs_meta.up,
     down: migration_20260327_141500_payload_jobs_meta.down,
-    name: '20260327_141500_payload_jobs_meta'
-  },
-  {
-    up: migration_20260327_031119_20260327_170000_operating_rhythm_and_discount_policy.up,
-    down: migration_20260327_031119_20260327_170000_operating_rhythm_and_discount_policy.down,
-    name: '20260327_031119_20260327_170000_operating_rhythm_and_discount_policy',
+    name: '20260327_141500_payload_jobs_meta',
   },
   {
     up: migration_20260401_170000_clerk_user_id.up,
     down: migration_20260401_170000_clerk_user_id.down,
     name: '20260401_170000_clerk_user_id',
+  },
+  {
+    up: migration_20260402_022714_add_organizations_and_memberships.up,
+    down: migration_20260402_022714_add_organizations_and_memberships.down,
+    name: '20260402_022714_add_organizations_and_memberships'
   },
 ];

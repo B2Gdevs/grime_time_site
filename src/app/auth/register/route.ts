@@ -60,7 +60,10 @@ export async function POST(request: Request) {
 
     if (existingUser && isAdminUser(existingUser)) {
       return NextResponse.json(
-        { error: 'That email is reserved for staff sign-in. Use /admin/login instead.' },
+        {
+          error:
+            'That email is reserved for staff sign-in. Use the Grime Time sign-in flow for team access, then open /ops or /admin.',
+        },
         { status: 409 },
       )
     }
@@ -80,7 +83,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error:
-          'Set up the first admin account at /admin/login before opening public customer registration.',
+          'Set up the first staff account through the Grime Time sign-in flow before opening public customer registration.',
       },
       { status: 409 },
     )

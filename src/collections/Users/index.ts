@@ -8,6 +8,7 @@ import type {
 import { adminOrSelf } from '@/access/adminOrSelf'
 import { isAdmin } from '@/access/isAdmin'
 import { PORTAL_INVITE_STATE_OPTIONS } from '@/lib/auth/portal-access/constants'
+import { hasPayloadAdminAccess } from '@/lib/auth/organizationAccess'
 import { isAdminUser, USER_ROLE_OPTIONS } from '@/lib/auth/roles'
 import { billingDiscountTypeOptions } from '@/lib/billing/discountPolicy'
 
@@ -15,7 +16,7 @@ import { billingDiscountTypeOptions } from '@/lib/billing/discountPolicy'
 export const USERS_COLLECTION_SLUG = 'users' as const satisfies CollectionConfig['slug']
 
 const canCreateUser = async ({ req }: { req: PayloadRequest }): Promise<boolean> => {
-  if (isAdminUser(req.user)) return true
+  if (await hasPayloadAdminAccess(req.payload, req.user)) return true
 
   const existingUsers = await req.payload.find({
     collection: USERS_COLLECTION_SLUG,
@@ -29,7 +30,7 @@ const canCreateUser = async ({ req }: { req: PayloadRequest }): Promise<boolean>
   return existingUsers.totalDocs === 0
 }
 
-const isAdminField: FieldAccess = ({ req: { user } }) => isAdminUser(user)
+const isAdminField: FieldAccess = async ({ req }) => hasPayloadAdminAccess(req.payload, req.user)
 
 const ensureBootstrapAdmin: CollectionBeforeChangeHook = async ({ data, operation, req }) => {
   if (operation !== 'create') return data
@@ -60,7 +61,7 @@ const ensureBootstrapAdmin: CollectionBeforeChangeHook = async ({ data, operatio
 export const Users: CollectionConfig = {
   slug: USERS_COLLECTION_SLUG,
   access: {
-    admin: ({ req: { user } }) => isAdminUser(user),
+    admin: async ({ req }) => hasPayloadAdminAccess(req.payload, req.user),
     create: canCreateUser,
     delete: isAdmin,
     read: adminOrSelf,

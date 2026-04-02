@@ -13,7 +13,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { getCurrentPayloadUser, userIsAdmin } from '@/lib/auth/getCurrentPayloadUser'
+import { getCurrentAuthContext } from '@/lib/auth/getAuthContext'
 import {
   getPortalDocBySlug,
   getPortalDocs,
@@ -28,24 +28,24 @@ type Props = {
 }
 
 export default async function DocPage({ params }: Props) {
-  const user = await getCurrentPayloadUser()
+  const auth = await getCurrentAuthContext()
+  const user = auth.realUser
 
   if (!user) {
     return null
   }
 
   const { slug } = await params
-  const isAdmin = userIsAdmin(user)
-  if (!isAdmin) {
+  if (!auth.isRealAdmin) {
     redirect('/')
   }
-  const doc = getPortalDocBySlug(slug, { isAdmin })
+  const doc = getPortalDocBySlug(slug, { isAdmin: true })
 
   if (!doc) {
     notFound()
   }
 
-  const docs = getPortalDocs({ isAdmin })
+  const docs = getPortalDocs({ isAdmin: true })
   const groupedDocs = groupPortalDocs(docs)
   const content = await readPortalDoc(doc)
 

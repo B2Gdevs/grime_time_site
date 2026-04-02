@@ -12,34 +12,30 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { getCurrentPayloadUser, userIsAdmin } from '@/lib/auth/getCurrentPayloadUser'
+import { getCurrentAuthContext } from '@/lib/auth/getAuthContext'
 import { groupPortalDocs, readPortalDoc, getPortalDocs } from '@/lib/docs/catalog'
 
 export default async function DocsIndexPage() {
-  const user = await getCurrentPayloadUser()
+  const auth = await getCurrentAuthContext()
+  const user = auth.realUser
 
   if (!user) {
     return null
   }
 
-  const isAdmin = userIsAdmin(user)
-  if (!isAdmin) {
+  if (!auth.isRealAdmin) {
     redirect('/')
   }
-  const docs = getPortalDocs({ isAdmin })
+  const docs = getPortalDocs({ isAdmin: true })
   const groupedDocs = groupPortalDocs(docs)
-  const featured = isAdmin ? docs.find((doc) => doc.audience === 'admin') ?? docs[0] : docs[0]
+  const featured = docs.find((doc) => doc.audience === 'admin') ?? docs[0]
   const featuredBody = featured ? await readPortalDoc(featured) : ''
 
   return (
     <>
       <SiteHeader
         title="Docs"
-        description={
-          isAdmin
-            ? 'Internal playbooks plus the customer-facing help content.'
-            : 'Quick docs for scheduling, prep, and support.'
-        }
+        description="Internal playbooks plus the customer-facing help content."
       />
       <div className="flex flex-1 flex-col">
         <div className="grid gap-6 px-4 py-6 lg:px-6 xl:grid-cols-[1.1fr_1.9fr]">

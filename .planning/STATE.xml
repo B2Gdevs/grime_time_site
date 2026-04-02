@@ -2,8 +2,8 @@
 <state>
   <agent-registry>
   </agent-registry>
-  <current-phase>11</current-phase>
-  <current-plan>11-05</current-plan>
+  <current-phase>12</current-phase>
+  <current-plan>12-02</current-plan>
   <status>in-progress</status>
-  <next-action>`11-05` remains active: Grime Time has a real App Router root layout with `ClerkProvider`, `src/proxy.ts` uses `clerkMiddleware()`, the marketing/login surfaces show Clerk-hosted sign-in/up and `UserButton`, Payload `users` persist `clerkUserID`, the shared claim/invite token surface uses Clerk-first copy and Clerk-backed completion against the existing Payload user, the direct forgot/reset routes present Clerk-first recovery guidance when Clerk is enabled, the old `/auth/register` plus `/auth/confirm` routes now short-circuit into the Clerk-first flow, the active Clerk-first customer screens plus signed-in nav no longer import Supabase browser helpers directly, the server now resolves customer identity through one shared helper so Clerk-primary mode no longer silently falls back to Supabase sessions, and existing Payload admins now bind onto Clerk by email on first sign-in so the app-owned impersonation tooling keeps working without Clerk's paid impersonation add-on. Next work on this slice is any remaining Supabase-era server cleanup plus a deliberate pass over admin/ops affordances that still assume Payload-auth-first staff login.</next-action>
+  <next-action>`12-01` is landed: Grime Time now has first-party `organizations` and `organization-memberships`, role-template entitlement helpers, the default staff org maps Clerk org `org_3BmXmwG7NpGNO1JKpE3MkR667Mm` as external state instead of a primary app key, membership-based Payload admin access is wired into auth/admin guards, and internal `@grimetime.app` users bootstrap into the staff org without making Clerk the authorization source of truth. Next slice is `12-02`: build admin/workspace controls to assign memberships, promote or demote role templates, and lock or unlock entitlements from Grime Time itself, while `11-05` still retains the remaining Supabase-retirement and Stripe-customer-id linkage cleanup.</next-action>
 </state>

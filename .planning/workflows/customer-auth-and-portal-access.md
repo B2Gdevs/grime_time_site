@@ -27,6 +27,7 @@ The first Clerk slice is now active in repo:
 - the active Clerk-first login, claim, forgot-password, reset-password, and signed-in nav surfaces no longer import Supabase browser helpers directly; the legacy Supabase customer-auth UI now lives behind fallback-only dynamic components and routes
 - server-side customer identity now resolves through one shared helper, so Clerk-primary mode does not quietly reuse an old Supabase session when there is no Clerk session
 - existing Payload admin users can now bind onto Clerk by email on first sign-in, which keeps the repo's own impersonation model viable without relying on Clerk's paid impersonation feature
+- app-owned staff surfaces now resolve the Clerk-backed real actor first: `/ops`, portal docs, internal request-auth guards, and the frontend seed route no longer behave like Payload-session-first staff entry points
 
 That means the app is now running with Clerk at the framework edge even though the full business-auth migration is not finished yet.
 
@@ -52,12 +53,11 @@ The existing implementation is still Supabase-shaped:
 
 Today:
 
-- customers can sign in with Supabase email/password
-- customers can request a magic link
-- customers can request password reset
-- claim-account and company invite flows bind into the Supabase path
+- Clerk is the primary sign-in path when Clerk env is configured
+- legacy Supabase customer-auth flows now exist as fallback-only code paths for non-Clerk environments and controlled migration cases
+- claim-account and company invite flows bind Clerk identity back onto the existing Payload user
 - Payload `users` still acts as the app-facing authorization/profile record
-- staff/admin auth and impersonation logic still assume a Payload-first internal actor
+- app-owned staff/admin surfaces now use Clerk-first real identity, while Payload admin itself remains the transitional CMS/operator login surface
 
 That is acceptable as the current implementation state, but it is no longer the desired end state.
 

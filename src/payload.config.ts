@@ -17,6 +17,8 @@ import { GrowthMilestones } from './collections/GrowthMilestones'
 import { Invoices } from './collections/Invoices'
 import { Leads } from './collections/Leads'
 import { Media } from './collections/Media'
+import { OrganizationMemberships } from './collections/OrganizationMemberships'
+import { Organizations } from './collections/Organizations'
 import { OpsAssetLadderItems } from './collections/OpsAssetLadderItems'
 import { OpsLiabilityItems } from './collections/OpsLiabilityItems'
 import { OpsScorecardRows } from './collections/OpsScorecardRows'
@@ -129,6 +131,8 @@ export default buildConfig({
     Categories,
     Quotes,
     Users,
+    Organizations,
+    OrganizationMemberships,
     Accounts,
     BillingEvents,
     Contacts,
