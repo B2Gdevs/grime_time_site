@@ -31,6 +31,15 @@ describe('customer session identity', () => {
     authMock.mockResolvedValue({ userId: 'user_clerk_123' })
     clerkClientMock.mockResolvedValue({
       users: {
+        getOrganizationMembershipList: vi.fn().mockResolvedValue({
+          data: [
+            {
+              id: 'mem_1',
+              organization: { id: 'org_3BmXmwG7NpGNO1JKpE3MkR667Mm' },
+              role: 'org:member',
+            },
+          ],
+        }),
         getUser: vi.fn().mockResolvedValue({
           emailAddresses: [{ emailAddress: 'CrewLead@example.com', id: 'email_1' }],
           firstName: 'Crew',
@@ -51,6 +60,13 @@ describe('customer session identity', () => {
       firstName: 'Crew',
       kind: 'clerk',
       lastName: 'Lead',
+      organizationMemberships: [
+        {
+          clerkMembershipID: 'mem_1',
+          clerkOrgID: 'org_3BmXmwG7NpGNO1JKpE3MkR667Mm',
+          role: 'org:member',
+        },
+      ],
       user_metadata: {
         name: 'Crew Lead',
         username: 'crewlead',

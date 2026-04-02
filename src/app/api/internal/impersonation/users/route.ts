@@ -2,8 +2,8 @@ import type { Where } from 'payload'
 
 import { NextResponse } from 'next/server'
 
-import { requirePayloadUser } from '@/lib/auth/requirePayloadUser'
-import { isAdminUser } from '@/lib/auth/roles'
+import { hasPayloadAdminAccess } from '@/lib/auth/organizationAccess'
+import { requireRequestAuth } from '@/lib/auth/requirePayloadUser'
 import type { User } from '@/payload-types'
 
 type ImpersonationUserOption = {
@@ -28,9 +28,9 @@ function accountNameForUser(user: User): null | string {
 }
 
 export async function GET(request: Request) {
-  const auth = await requirePayloadUser(request)
+  const auth = await requireRequestAuth(request)
 
-  if (!auth || !isAdminUser(auth.user)) {
+  if (!auth || !auth.isRealAdmin) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -65,18 +65,25 @@ export async function GET(request: Request) {
     limit: 20,
     overrideAccess: false,
     sort: '-updatedAt',
-    user: auth.user,
+    user: auth.realUser,
     where,
   })
 
-  const options: ImpersonationUserOption[] = (users.docs as User[])
-    .filter((candidate) => !isAdminUser(candidate))
-    .map((candidate) => ({
+  const options: ImpersonationUserOption[] = (
+    await Promise.all(
+      (users.docs as User[]).map(async (candidate) => ({
+        candidate,
+        isAdmin: await hasPayloadAdminAccess(auth.payload, candidate),
+      })),
+    )
+  )
+    .filter(({ isAdmin }) => !isAdmin)
+    .map(({ candidate }) => ({
       accountName: accountNameForUser(candidate),
       company: candidate.company?.trim() || null,
       email: candidate.email,
       id: candidate.id,
-      isCurrent: String(candidate.id) === String(auth.user.id),
+      isCurrent: String(candidate.id) === String(auth.realUser.id),
       name: userLabel(candidate),
     }))
 

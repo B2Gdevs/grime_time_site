@@ -7,6 +7,7 @@ import { PageMediaDevtoolsProvider } from '@/components/admin-impersonation/Page
 import { MarketingShell } from '@/components/frontend/MarketingShell'
 import type { Footer, Header } from '@/payload-types'
 import { SiteTourProvider } from '@/components/tours/SiteTourProvider'
+import { getCurrentAuthContext } from '@/lib/auth/getAuthContext'
 import { isLocalDevtoolsRequest } from '@/lib/auth/localDevtools'
 import { buildMarketingNavLinks } from '@/lib/marketing/public-shell'
 import { getCachedGlobal } from '@/utilities/getGlobals'
@@ -17,6 +18,8 @@ import { getServerSideURL } from '@/utilities/getURL'
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const { isEnabled } = await draftMode()
   const localPageMediaDevtoolsEnabled = await isLocalDevtoolsRequest()
+  const auth = await getCurrentAuthContext()
+  const canUseLocalPageMediaDevtools = localPageMediaDevtoolsEnabled && auth.isRealAdmin
   const [headerData, footerData] = await Promise.all([
     getCachedGlobal('header', 1)(),
     getCachedGlobal('footer', 1)(),
@@ -25,14 +28,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const footerLinks = buildMarketingNavLinks((footerData as Footer | null)?.navItems)
 
   return (
-    <PageMediaDevtoolsProvider>
+    <PageMediaDevtoolsProvider enabled={canUseLocalPageMediaDevtools}>
       <SiteTourProvider>
         <AdminBar
           adminBarProps={{
             preview: isEnabled,
           }}
         />
-        <AdminImpersonationToolbarShell pageMediaDevtoolsEnabled={localPageMediaDevtoolsEnabled} />
+        <AdminImpersonationToolbarShell pageMediaDevtoolsEnabled={canUseLocalPageMediaDevtools} />
         <MarketingShell footerLinks={footerLinks} primaryLinks={primaryLinks}>
           {children}
         </MarketingShell>

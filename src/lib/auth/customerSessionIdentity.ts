@@ -6,6 +6,12 @@ import {
 } from '@/lib/auth/customerAuthMode'
 import { getSupabaseServerUser } from '@/lib/supabase/server'
 
+export type ClerkOrganizationMembershipIdentity = {
+  clerkMembershipID: string
+  clerkOrgID: string
+  role: null | string
+}
+
 export type CustomerSessionIdentity =
   | {
       clerkUserID: string
@@ -13,6 +19,7 @@ export type CustomerSessionIdentity =
       firstName: null | string
       kind: 'clerk'
       lastName: null | string
+      organizationMemberships: ClerkOrganizationMembershipIdentity[]
       user_metadata: Record<string, unknown>
     }
   | {
@@ -44,9 +51,22 @@ async function resolveClerkCustomerIdentity(): Promise<CustomerSessionIdentity |
 
     const client = await clerkClient()
     const user = await client.users.getUser(userId)
+    const membershipsResponse = await client.users
+      .getOrganizationMembershipList({
+        limit: 100,
+        userId,
+      })
+      .catch(() => ({ data: [] }))
     const primaryEmail =
       user.emailAddresses.find((item) => item.id === user.primaryEmailAddressId)?.emailAddress ||
       user.emailAddresses[0]?.emailAddress
+    const organizationMemberships = (membershipsResponse.data || [])
+      .map((membership) => ({
+        clerkMembershipID: membership.id,
+        clerkOrgID: membership.organization.id,
+        role: membership.role || null,
+      }))
+      .filter((membership) => membership.clerkMembershipID && membership.clerkOrgID)
 
     if (!primaryEmail) {
       return null
@@ -58,6 +78,7 @@ async function resolveClerkCustomerIdentity(): Promise<CustomerSessionIdentity |
       firstName: user.firstName,
       kind: 'clerk',
       lastName: user.lastName,
+      organizationMemberships,
       user_metadata: {
         name: [user.firstName, user.lastName].filter(Boolean).join(' '),
         username: user.username,

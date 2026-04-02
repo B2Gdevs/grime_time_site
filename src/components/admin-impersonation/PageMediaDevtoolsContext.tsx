@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 
 import type { PageMediaReference } from '@/lib/media/pageMediaDevtools'
 
@@ -15,12 +15,19 @@ export type CurrentPageMediaRegistry = {
 type PageMediaDevtoolsContextValue = {
   clearPage: (pagePath: string) => void
   currentPage: CurrentPageMediaRegistry | null
+  enabled: boolean
   setCurrentPage: (page: CurrentPageMediaRegistry) => void
 }
 
 const PageMediaDevtoolsContext = createContext<null | PageMediaDevtoolsContextValue>(null)
 
-export function PageMediaDevtoolsProvider({ children }: { children: React.ReactNode }) {
+export function PageMediaDevtoolsProvider({
+  children,
+  enabled = false,
+}: {
+  children: React.ReactNode
+  enabled?: boolean
+}) {
   const [currentPage, setCurrentPageState] = useState<CurrentPageMediaRegistry | null>(null)
 
   const setCurrentPage = useCallback((page: CurrentPageMediaRegistry) => {
@@ -32,8 +39,8 @@ export function PageMediaDevtoolsProvider({ children }: { children: React.ReactN
   }, [])
 
   const value = useMemo(
-    () => ({ clearPage, currentPage, setCurrentPage }),
-    [clearPage, currentPage, setCurrentPage],
+    () => ({ clearPage, currentPage, enabled, setCurrentPage }),
+    [clearPage, currentPage, enabled, setCurrentPage],
   )
 
   return (
@@ -67,8 +74,9 @@ export function PageMediaRegistryBridge({
   const clearPage = context?.clearPage
   const setCurrentPage = context?.setCurrentPage
   const entriesKey = pageMediaEntriesSignature(entries)
-  const entriesRef = useRef(entries)
-  entriesRef.current = entries
+  // The parent recreates `entries` on each render; key off the content signature instead.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const stableEntries = useMemo(() => entries, [entriesKey])
 
   useEffect(() => {
     if (!clearPage || !setCurrentPage) {
@@ -76,7 +84,7 @@ export function PageMediaRegistryBridge({
     }
 
     setCurrentPage({
-      entries: entriesRef.current,
+      entries: stableEntries,
       pageId,
       pagePath,
       pageSlug,
@@ -86,7 +94,7 @@ export function PageMediaRegistryBridge({
     return () => {
       clearPage(pagePath)
     }
-  }, [clearPage, entriesKey, pageId, pagePath, pageSlug, pageTitle, setCurrentPage])
+  }, [clearPage, pageId, pagePath, pageSlug, pageTitle, setCurrentPage, stableEntries])
 
   return null
 }

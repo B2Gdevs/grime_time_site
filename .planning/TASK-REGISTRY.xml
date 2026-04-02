@@ -585,8 +585,8 @@
         <command>See .planning/workflows/orgs-rbac-and-provider-sync.md, src/collections/Organizations/index.ts, src/collections/OrganizationMemberships/index.ts, src/lib/auth/organizationAccess.ts, and src/lib/auth/organizationSync.ts</command>
       </commands>
     </task>
-    <task id="12-02" agent-id="" status="planned">
-      <goal>Build admin/workspace controls to assign memberships, promote/demote org role templates, and lock/unlock entitlements from Grime Time, then mirror those changes out to Clerk without making Clerk the canonical authorization store.</goal>
+    <task id="12-02" agent-id="" status="in-progress">
+      <goal>Build admin/workspace controls to assign memberships, promote/demote org role templates, and lock/unlock entitlements from Grime Time, then mirror those changes out to Clerk without making Clerk the canonical authorization store. Current checkpoint: the mapped Clerk Grime Time org now bootstraps staff admin/operator access for non-`@grimetime.app` users, signed-in admins can bridge into Payload admin without re-entering credentials, the public-shell operator toolbar exposes `Ops`, `CRM workspace`, `Docs`, `Customer portal`, and Payload admin directly from the homepage, impersonation routes use membership-aware admin checks, and tracked homepage media can be replaced or regenerated in place from hover controls.</goal>
       <keywords>admin,roles,entitlements,orgs,sync</keywords>
       <commands>
         <command>See .planning/workflows/orgs-rbac-and-provider-sync.md</command>

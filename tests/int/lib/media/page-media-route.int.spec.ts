@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const createLocalReq = vi.fn()
 const getCurrentAuthContext = vi.fn()
 const isLocalDevtoolsRequestHeaders = vi.fn()
+const generateOpenAIImage = vi.fn()
 
 vi.mock('payload', () => ({
   createLocalReq,
@@ -14,6 +15,10 @@ vi.mock('@/lib/auth/getAuthContext', () => ({
 
 vi.mock('@/lib/auth/localDevtools', () => ({
   isLocalDevtoolsRequestHeaders,
+}))
+
+vi.mock('@/lib/media/openaiImageGeneration', () => ({
+  generateOpenAIImage,
 }))
 
 function makeUpload(name: string, body: string) {
@@ -29,6 +34,11 @@ describe('internal page media devtools route', () => {
     vi.clearAllMocks()
     createLocalReq.mockResolvedValue({})
     isLocalDevtoolsRequestHeaders.mockReturnValue(true)
+    generateOpenAIImage.mockResolvedValue({
+      buffer: Buffer.from('generated-image'),
+      contentType: 'image/png',
+      extension: 'png',
+    })
   })
 
   it('returns 401 when local admin devtools are not allowed', async () => {
@@ -134,6 +144,54 @@ describe('internal page media devtools route', () => {
             type: 'highImpact',
           },
         },
+        id: 7,
+      }),
+    )
+  })
+
+  it('generates a new media record and swaps the page relation', async () => {
+    const payload = {
+      create: vi.fn().mockResolvedValue({ id: 109 }),
+      findByID: vi.fn().mockResolvedValue({
+        hero: {
+          media: 11,
+          type: 'highImpact',
+        },
+        id: 7,
+        layout: [],
+      }),
+      update: vi.fn().mockResolvedValue({ id: 7 }),
+    }
+
+    getCurrentAuthContext.mockResolvedValue({
+      isRealAdmin: true,
+      payload,
+      realUser: { email: 'owner@grimetime.app', id: 1, roles: ['admin'] },
+    })
+
+    const { POST } = await import('@/app/api/internal/dev/page-media/route')
+    const formData = new FormData()
+    formData.set('action', 'generate-and-swap')
+    formData.set('pageId', '7')
+    formData.set('relationPath', 'hero.media')
+    formData.set('prompt', 'Fresh driveway photo in bright daylight')
+
+    const response = await POST({
+      formData: async () => formData,
+      headers: new Headers({ host: 'localhost' }),
+    } as unknown as Request)
+
+    expect(response.status).toBe(200)
+    expect(generateOpenAIImage).toHaveBeenCalled()
+    expect(payload.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        collection: 'media',
+        data: { alt: 'Fresh driveway photo in bright daylight' },
+      }),
+    )
+    expect(payload.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        collection: 'pages',
         id: 7,
       }),
     )

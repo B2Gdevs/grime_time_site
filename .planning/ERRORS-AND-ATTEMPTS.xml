@@ -54,4 +54,15 @@
       <command>cmd /c npm.cmd run build</command>
     </verification>
   </attempt>
+  <attempt id="12-02-a1" phase="12" task="12-02" status="resolved">
+    <title>Clerk-signed Grime Time staff users could sign in but still missed admin tools, impersonation, and page-media controls</title>
+    <symptom>A real Grime Time staff member signed in through Google/Clerk could land on the homepage but still saw no floating operator toolbar, no impersonation search, no page-media tooling, and `/admin/login` still behaved like a second auth island instead of recognizing the existing session.</symptom>
+    <cause>The first-party membership bootstrap only promoted `ADMIN_EMAIL` or `@grimetime.app` users into the Grime Time staff org. Clerk org membership itself was not being read during session resolution, and several internal routes still authorized through legacy `users.roles` rather than the new membership-aware admin check. Payload admin also still required its own cookie with no bridge from Clerk-backed staff identity.</cause>
+    <attempted-fix>Extend the Clerk session identity to include organization memberships, bootstrap the mapped Grime Time staff org from Clerk membership when present, switch impersonation routes to membership-aware admin auth, add a Payload-admin cookie bridge plus `/admin/login` redirect for signed-in Clerk users, and expose direct operator links plus inline homepage media hover controls from the public shell.</attempted-fix>
+    <verification>
+      <command>cmd /c npm.cmd run test:int -- --run tests/int/lib/auth/customer-session-identity.int.spec.ts tests/int/lib/auth/organization-access.int.spec.ts tests/int/lib/auth/resolve-customer-payload-user.int.spec.ts tests/int/lib/media/page-media-route.int.spec.ts tests/int/app/payload-admin-session-route.int.spec.ts</command>
+      <command>cmd /c npm.cmd exec eslint "src/lib/auth/customerSessionIdentity.ts" "src/lib/auth/organizationSync.ts" "src/lib/auth/resolveCustomerPayloadUser.ts" "src/proxy.ts" "src/app/api/internal/admin/payload-session/route.ts" "src/app/api/internal/impersonation/users/route.ts" "src/app/api/internal/impersonation/start/route.ts" "src/app/api/internal/impersonation/stop/route.ts" "src/app/api/internal/dev/page-media/route.ts" "src/components/AdminBar/index.tsx" "src/components/admin-impersonation/AdminImpersonationToolbar.tsx" "src/components/admin-impersonation/InlinePageMediaEditor.tsx" "src/components/admin-impersonation/PageMediaDevtoolsContext.tsx" "src/app/(frontend)/layout.tsx" "src/components/home/GrimeTimeMarketingHome.tsx" "tests/int/lib/auth/customer-session-identity.int.spec.ts" "tests/int/lib/auth/organization-access.int.spec.ts" "tests/int/lib/auth/resolve-customer-payload-user.int.spec.ts" "tests/int/lib/media/page-media-route.int.spec.ts" "tests/int/app/payload-admin-session-route.int.spec.ts"</command>
+      <command>cmd /c npm.cmd run build</command>
+    </verification>
+  </attempt>
 </errors-and-attempts>

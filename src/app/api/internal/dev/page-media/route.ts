@@ -3,6 +3,7 @@ import { createLocalReq, type File as PayloadFile } from 'payload'
 import { getCurrentAuthContext } from '@/lib/auth/getAuthContext'
 import { isLocalDevtoolsRequestHeaders } from '@/lib/auth/localDevtools'
 import { buildPageMediaUpdateData } from '@/lib/media/pageMediaDevtools'
+import { generateOpenAIImage } from '@/lib/media/openaiImageGeneration'
 import type { Page } from '@/payload-types'
 
 async function requireLocalAdminDevtools(request: Request) {
@@ -22,6 +23,23 @@ async function toPayloadFile(upload: File): Promise<PayloadFile> {
     data: buffer,
     mimetype: upload.type || 'application/octet-stream',
     name: upload.name,
+    size: buffer.byteLength,
+  }
+}
+
+async function generatePayloadImageFile(prompt: string): Promise<PayloadFile> {
+  const { buffer, contentType, extension } = await generateOpenAIImage({
+    model: 'gpt-image-1',
+    output_format: 'png',
+    prompt,
+    quality: 'high',
+    size: '1024x1024',
+  })
+
+  return {
+    data: buffer,
+    mimetype: contentType,
+    name: `page-media-${Date.now()}.${extension}`,
     size: buffer.byteLength,
   }
 }
@@ -50,14 +68,105 @@ export async function POST(request: Request): Promise<Response> {
 
   const formData = await request.formData()
   const action = String(formData.get('action') || '')
-  const upload = parseUpload(formData.get('file'))
   const alt = String(formData.get('alt') || '').trim()
+  const payloadReq = await createLocalReq({ user: realUser }, auth.payload)
+
+  if (action === 'generate-replace-existing' || action === 'generate-and-swap') {
+    const prompt = String(formData.get('prompt') || '').trim()
+
+    if (!prompt) {
+      return Response.json({ error: 'A prompt is required.' }, { status: 400 })
+    }
+
+    const generatedFile = await generatePayloadImageFile(prompt)
+
+    if (action === 'generate-replace-existing') {
+      const mediaId = parsePositiveNumber(formData.get('mediaId'))
+
+      if (!mediaId) {
+        return Response.json({ error: 'A valid media id is required.' }, { status: 400 })
+      }
+
+      const updated = await auth.payload.update({
+        collection: 'media',
+        data: {
+          alt: alt || prompt.slice(0, 240),
+        },
+        depth: 0,
+        file: generatedFile,
+        id: mediaId,
+        req: payloadReq,
+      })
+
+      return Response.json({
+        mediaId: updated.id,
+        ok: true,
+      })
+    }
+
+    const pageId = parsePositiveNumber(formData.get('pageId'))
+    const relationPath = String(formData.get('relationPath') || '').trim()
+
+    if (!pageId || !relationPath) {
+      return Response.json({ error: 'Page id and relation path are required.' }, { status: 400 })
+    }
+
+    const page = (await auth.payload.findByID({
+      collection: 'pages',
+      depth: 0,
+      id: pageId,
+      overrideAccess: true,
+    })) as Page
+
+    try {
+      buildPageMediaUpdateData({
+        mediaId: 1,
+        page,
+        relationPath,
+      })
+    } catch (error) {
+      return Response.json(
+        {
+          error: error instanceof Error ? error.message : 'Invalid page media path.',
+        },
+        { status: 400 },
+      )
+    }
+
+    const created = await auth.payload.create({
+      collection: 'media',
+      data: {
+        alt: alt || prompt.slice(0, 240),
+      },
+      depth: 0,
+      file: generatedFile,
+      req: payloadReq,
+    })
+
+    await auth.payload.update({
+      collection: 'pages',
+      data: buildPageMediaUpdateData({
+        mediaId: Number(created.id),
+        page,
+        relationPath,
+      }),
+      depth: 0,
+      id: pageId,
+      req: payloadReq,
+    })
+
+    return Response.json({
+      mediaId: created.id,
+      ok: true,
+      pageId,
+    })
+  }
+
+  const upload = parseUpload(formData.get('file'))
 
   if (!upload) {
     return Response.json({ error: 'A file upload is required.' }, { status: 400 })
   }
-
-  const payloadReq = await createLocalReq({ user: realUser }, auth.payload)
 
   if (action === 'replace-existing') {
     const mediaId = parsePositiveNumber(formData.get('mediaId'))

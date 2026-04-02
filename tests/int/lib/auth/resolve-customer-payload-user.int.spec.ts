@@ -64,6 +64,7 @@ describe('resolveCustomerPayloadUser', () => {
       firstName: 'Clerk',
       kind: 'clerk',
       lastName: 'Admin',
+      organizationMemberships: [],
       user_metadata: {
         name: 'Clerk Admin',
       },
@@ -105,6 +106,7 @@ describe('resolveCustomerPayloadUser', () => {
         firstName: 'Fresh',
         kind: 'clerk',
         lastName: 'Customer',
+        organizationMemberships: [],
         user_metadata: {
           name: 'Fresh Customer',
         },

@@ -185,4 +185,78 @@ describe('organizationAccess', () => {
       }
     },
   )
+
+  it(
+    'bootstraps the default Grime Time staff organization from Clerk org membership even for non-domain emails',
+    { timeout: 15000 },
+    async () => {
+      const user = await createUser({
+        email: `${runKey}.google-user@example.com`,
+        name: 'Google Staffer',
+        password: 'test-password',
+        roles: ['customer'],
+      })
+
+      const existingOrgResult = await payload.find({
+        collection: 'organizations',
+        depth: 0,
+        limit: 1,
+        overrideAccess: true,
+        pagination: false,
+        where: {
+          clerkOrgID: {
+            equals: DEFAULT_GRIME_TIME_CLERK_ORG_ID,
+          },
+        },
+      })
+      const hadDefaultOrganization = Boolean(existingOrgResult.docs[0])
+
+      const { ensureBootstrapOrganizationMembership } = await import(
+        '@/lib/auth/organizationSync'
+      )
+      const membership = await ensureBootstrapOrganizationMembership(payload, user, {
+        clerkMemberships: [
+          {
+            clerkMembershipID: `${runKey}-mem-1`,
+            clerkOrgID: DEFAULT_GRIME_TIME_CLERK_ORG_ID,
+            role: 'org:member',
+          },
+        ],
+      })
+
+      expect(membership?.roleTemplate).toBe('staff-operator')
+      expect(membership?.syncSource).toBe('clerk')
+      expect(membership?.clerkMembershipID).toBe(`${runKey}-mem-1`)
+
+      const reloadedUser = (await payload.findByID({
+        collection: 'users',
+        depth: 0,
+        id: user.id,
+        overrideAccess: true,
+      })) as User
+
+      expect(reloadedUser.roles).toEqual(expect.arrayContaining(['admin']))
+
+      if (membership?.id) {
+        created.push({ collection: 'organization-memberships', id: membership.id })
+      }
+
+      const defaultOrganization = (await payload.find({
+        collection: 'organizations',
+        depth: 0,
+        limit: 1,
+        overrideAccess: true,
+        pagination: false,
+        where: {
+          clerkOrgID: {
+            equals: DEFAULT_GRIME_TIME_CLERK_ORG_ID,
+          },
+        },
+      })) as { docs: Organization[] }
+
+      if (!hadDefaultOrganization && defaultOrganization.docs[0]?.id) {
+        created.push({ collection: 'organizations', id: defaultOrganization.docs[0].id })
+      }
+    },
+  )
 })

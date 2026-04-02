@@ -4,6 +4,7 @@ import { ArrowRightIcon, CheckCircle2Icon, DropletsIcon, ShieldCheckIcon, WavesI
 import type { RequiredDataFromCollectionSlug } from 'payload'
 
 import { RenderBlocks } from '@/blocks/RenderBlocks'
+import { InlinePageMediaEditor } from '@/components/admin-impersonation/InlinePageMediaEditor'
 import { InstantQuoteSection } from '@/components/InstantQuoteSection'
 import {
   extractLexicalPlainText,
@@ -47,6 +48,7 @@ export async function GrimeTimeMarketingHome({
   const heroImageUrl = getMediaUrl(heroMedia)
   const featuredServices = servicesBlock?.services?.slice(0, 3) || []
   const pricingSteps = pricingBlock?.services?.slice(0, 3) || []
+  const servicesBlockIndex = servicesBlock ? page.layout.findIndex((block) => block === servicesBlock) : -1
   const startingPrice = Math.min(...instantQuoteCatalog.services.map((service) => service.minimum))
   const quarterlySavings = Math.round((1 - instantQuoteCatalog.frequencyMultipliers.quarterly) * 100)
 
@@ -99,17 +101,19 @@ export async function GrimeTimeMarketingHome({
 
             <div className="relative overflow-hidden rounded-[2.3rem] border border-white/10 bg-[#071321] p-4 text-white shadow-[0_32px_100px_-40px_rgba(2,6,23,0.95)]">
               {heroImageUrl ? (
-                <div className="relative overflow-hidden rounded-[1.6rem]">
-                  <Image
-                    src={heroImageUrl}
-                    alt={heroMedia?.alt || page.title}
-                    width={heroMedia?.width || 1200}
-                    height={heroMedia?.height || 1400}
-                    className="aspect-[4/4.8] w-full object-cover"
-                    priority
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#071321] via-[#071321]/24 to-transparent" />
-                </div>
+                <InlinePageMediaEditor relationPath="hero.media">
+                  <div className="relative overflow-hidden rounded-[1.6rem]">
+                    <Image
+                      src={heroImageUrl}
+                      alt={heroMedia?.alt || page.title}
+                      width={heroMedia?.width || 1200}
+                      height={heroMedia?.height || 1400}
+                      className="aspect-[4/4.8] w-full object-cover"
+                      priority
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#071321] via-[#071321]/24 to-transparent" />
+                  </div>
+                </InlinePageMediaEditor>
               ) : (
                 <div className="flex aspect-[4/4.8] items-end rounded-[1.6rem] bg-[linear-gradient(180deg,#11314d,#071321)] p-6">
                   <p className="max-w-xs text-sm leading-6 text-white/76">
@@ -163,7 +167,7 @@ export async function GrimeTimeMarketingHome({
           </div>
 
           <div className="mt-10 grid gap-6 lg:grid-cols-3">
-            {featuredServices.map((service) => {
+            {featuredServices.map((service, serviceIndex) => {
               const media = asMedia(service.media)
               const mediaUrl = getMediaUrl(media)
 
@@ -171,13 +175,17 @@ export async function GrimeTimeMarketingHome({
                 <article key={service.id || service.name} className="overflow-hidden rounded-[1.9rem] border border-border/70 bg-card/82 shadow-[0_18px_80px_-52px_rgba(2,6,23,0.85)]">
                   <div className="relative">
                     {mediaUrl ? (
-                      <Image
-                        src={mediaUrl}
-                        alt={media?.alt || service.name}
-                        width={media?.width || 1200}
-                        height={media?.height || 900}
-                        className="aspect-[16/10] w-full object-cover"
-                      />
+                      <InlinePageMediaEditor
+                        relationPath={`layout.${servicesBlockIndex}.services.${serviceIndex}.media`}
+                      >
+                        <Image
+                          src={mediaUrl}
+                          alt={media?.alt || service.name}
+                          width={media?.width || 1200}
+                          height={media?.height || 900}
+                          className="aspect-[16/10] w-full object-cover"
+                        />
+                      </InlinePageMediaEditor>
                     ) : (
                       <div className="aspect-[16/10] w-full bg-[linear-gradient(180deg,rgba(7,19,33,0.88),rgba(17,49,77,0.72))]" />
                     )}

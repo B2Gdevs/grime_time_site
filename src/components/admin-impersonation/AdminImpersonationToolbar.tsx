@@ -297,9 +297,16 @@ export function AdminImpersonationToolbar({
   const quickLinks = useMemo(
     () => [
       { href: '/', icon: HomeIcon, label: 'Home' },
-      { href: '/dashboard', icon: UserRoundIcon, label: 'Dashboard' },
-      { href: '/invoices', icon: Building2Icon, label: 'Invoices' },
-      { href: '/account', icon: EyeIcon, label: 'Account' },
+      { href: '/dashboard', icon: UserRoundIcon, label: 'Customer portal' },
+      { href: '/ops', icon: Building2Icon, label: 'Ops' },
+      { href: '/ops/workspace?tab=crm', icon: SearchIcon, label: 'CRM workspace' },
+      { href: '/docs', icon: EyeIcon, label: 'Docs' },
+      {
+        href: '/api/internal/admin/payload-session?next=/admin',
+        icon: ExternalLinkIcon,
+        label: 'Payload admin',
+        native: true,
+      },
     ],
     [],
   )
@@ -396,7 +403,7 @@ export function AdminImpersonationToolbar({
                 onClick={() => setMinimized(false)}
                 type="button"
               >
-                <Badge variant="outline">Admin preview</Badge>
+                <Badge variant="outline">Operator tools</Badge>
                 {impersonatedUser ? <Badge>Impersonating</Badge> : null}
                 <span className="max-w-32 truncate text-xs font-medium">{shortLabel(effectiveUser)}</span>
               </button>
@@ -413,13 +420,13 @@ export function AdminImpersonationToolbar({
           ) : (
             <>
           <div className="flex items-start justify-between gap-3">
-            <div className="grid gap-1">
+              <div className="grid gap-1">
               <div className="flex items-center gap-2">
-                <Badge variant="outline">Admin preview</Badge>
+                <Badge variant="outline">Grime Time admin</Badge>
                 {impersonatedUser ? <Badge>Impersonating</Badge> : null}
               </div>
               <div className="text-sm font-semibold">{shortLabel(effectiveUser)}</div>
-              <div className="text-xs text-muted-foreground">Signed in as {realUser.email}</div>
+              <div className="text-xs text-muted-foreground">Signed in through Clerk as {realUser.email}</div>
             </div>
             <div className="flex items-center gap-1">
               <DragHandle onPointerDown={(event) => dragControls.start(event)} />
@@ -472,10 +479,17 @@ export function AdminImpersonationToolbar({
           <div className="mt-3 flex flex-wrap items-center gap-2">
             {quickLinks.map((link) => (
               <Button asChild key={link.href} size="sm" type="button" variant="ghost">
-                <Link href={link.href}>
-                  <link.icon className="h-4 w-4" />
-                  {link.label}
-                </Link>
+                {link.native ? (
+                  <a href={link.href}>
+                    <link.icon className="h-4 w-4" />
+                    {link.label}
+                  </a>
+                ) : (
+                  <Link href={link.href}>
+                    <link.icon className="h-4 w-4" />
+                    {link.label}
+                  </Link>
+                )}
               </Button>
             ))}
             <PageMediaDevtoolsDrawer enabled={localPageMediaEnabled} />
@@ -514,7 +528,7 @@ export function AdminImpersonationToolbar({
                       </Button>
                     ) : (
                       <div className="mt-2 text-xs text-muted-foreground">
-                        Pick any customer or company-linked user to preview their account flow.
+                        Search any non-staff customer to safely preview their portal and billing flow.
                       </div>
                     )}
                   </div>
@@ -565,7 +579,7 @@ export function AdminImpersonationToolbar({
                           </div>
                           <div className="flex shrink-0 items-center gap-1 text-xs text-primary">
                             <ArrowRightLeftIcon className="h-4 w-4" />
-                            <span>Preview</span>
+                            <span>Impersonate</span>
                           </div>
                         </button>
                       ))

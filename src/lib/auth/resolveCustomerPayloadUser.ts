@@ -74,8 +74,9 @@ export async function resolveCustomerPayloadUser() {
     })) as User
 
     return {
+      identity,
       payload,
-      user: (await ensureBootstrapForUser(payload, updatedUser)) ?? updatedUser,
+      user: (await ensureBootstrapForUser(payload, updatedUser, identity)) ?? updatedUser,
     }
   }
 
@@ -96,13 +97,20 @@ export async function resolveCustomerPayloadUser() {
   })) as User
 
   return {
+    identity,
     payload,
-    user: (await ensureBootstrapForUser(payload, createdUser)) ?? createdUser,
+    user: (await ensureBootstrapForUser(payload, createdUser, identity)) ?? createdUser,
   }
 }
 
-async function ensureBootstrapForUser(payload: Awaited<ReturnType<typeof getPayload>>, user: User) {
-  await ensureBootstrapOrganizationMembership(payload, user)
+async function ensureBootstrapForUser(
+  payload: Awaited<ReturnType<typeof getPayload>>,
+  user: User,
+  identity: Awaited<ReturnType<typeof resolveCustomerSessionIdentity>>,
+) {
+  await ensureBootstrapOrganizationMembership(payload, user, {
+    clerkMemberships: identity?.kind === 'clerk' ? identity.organizationMemberships : null,
+  })
 
   return (await payload.findByID({
     collection: USERS_COLLECTION_SLUG,

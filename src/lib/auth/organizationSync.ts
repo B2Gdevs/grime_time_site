@@ -10,6 +10,7 @@ import {
 } from '@/lib/auth/organizationConstants'
 import type { OrganizationMembershipRoleTemplate } from '@/lib/auth/organizationRoles'
 import { GRIME_TIME_DOMAIN } from '@/lib/brand/emailDefaults'
+import type { ClerkOrganizationMembershipIdentity } from '@/lib/auth/customerSessionIdentity'
 
 const DEFAULT_GRIME_TIME_ORGANIZATION = {
   clerkOrgID: DEFAULT_GRIME_TIME_CLERK_ORG_ID,
@@ -41,6 +42,43 @@ function inferBootstrapRole(user: Pick<User, 'email' | 'roles'>): OrganizationMe
   }
 
   return null
+}
+
+function mapClerkRoleToOrganizationRole(args: {
+  clerkRole: null | string | undefined
+  user: Pick<User, 'email' | 'roles'>
+}): OrganizationMembershipRoleTemplate {
+  const normalizedEmail = normalizeEmail(args.user.email)
+  const adminEmail = normalizeEmail(process.env.ADMIN_EMAIL)
+
+  if (adminEmail && normalizedEmail === adminEmail) {
+    return 'staff-owner'
+  }
+
+  const clerkRole = args.clerkRole?.trim().toLowerCase() || ''
+
+  if (clerkRole.includes('owner')) {
+    return 'staff-owner'
+  }
+
+  if (clerkRole.includes('admin')) {
+    return 'staff-admin'
+  }
+
+  return 'staff-operator'
+}
+
+function getDefaultClerkMembership(
+  memberships: ClerkOrganizationMembershipIdentity[] | null | undefined,
+): ClerkOrganizationMembershipIdentity | null {
+  return (
+    memberships?.find(
+      (membership) =>
+        membership.clerkOrgID === DEFAULT_GRIME_TIME_CLERK_ORG_ID &&
+        typeof membership.clerkMembershipID === 'string' &&
+        membership.clerkMembershipID.trim(),
+    ) || null
+  )
 }
 
 async function findDefaultOrganization(payload: Payload): Promise<Organization | null> {
@@ -112,12 +150,19 @@ async function ensureDefaultOrganization(payload: Payload): Promise<Organization
 export async function ensureBootstrapOrganizationMembership(
   payload: Payload,
   user: User,
+  args?: {
+    clerkMemberships?: ClerkOrganizationMembershipIdentity[] | null
+  },
 ): Promise<null | OrganizationMembership> {
   if (typeof payload.find !== 'function' || typeof payload.create !== 'function') {
     return null
   }
 
-  const roleTemplate = inferBootstrapRole(user)
+  const clerkMembership = getDefaultClerkMembership(args?.clerkMemberships)
+  const roleTemplate =
+    clerkMembership != null
+      ? mapClerkRoleToOrganizationRole({ clerkRole: clerkMembership.role, user })
+      : inferBootstrapRole(user)
 
   if (!roleTemplate || typeof user.id !== 'number') {
     return null
@@ -130,6 +175,33 @@ export async function ensureBootstrapOrganizationMembership(
   })
 
   if (existingMembership) {
+    const shouldUpdate =
+      existingMembership.roleTemplate !== roleTemplate ||
+      existingMembership.status !== 'active' ||
+      existingMembership.clerkMembershipID !== (clerkMembership?.clerkMembershipID || undefined) ||
+      existingMembership.syncSource !== (clerkMembership ? 'clerk' : 'bootstrap')
+
+    if (shouldUpdate) {
+      const updatedMembership = (await payload.update({
+        collection: ORGANIZATION_MEMBERSHIPS_COLLECTION_SLUG,
+        id: existingMembership.id,
+        data: {
+          clerkMembershipID: clerkMembership?.clerkMembershipID,
+          lastSyncedAt: new Date().toISOString(),
+          roleTemplate,
+          status: 'active',
+          syncSource: clerkMembership ? 'clerk' : 'bootstrap',
+        },
+        overrideAccess: true,
+      })) as OrganizationMembership
+
+      await syncUserLegacyRolesFromMemberships(payload, user.id, {
+        pendingMembership: updatedMembership,
+      })
+
+      return updatedMembership
+    }
+
     await syncUserLegacyRolesFromMemberships(payload, user.id)
     return existingMembership
   }
@@ -137,11 +209,12 @@ export async function ensureBootstrapOrganizationMembership(
   const membership = (await payload.create({
     collection: ORGANIZATION_MEMBERSHIPS_COLLECTION_SLUG,
     data: {
+      clerkMembershipID: clerkMembership?.clerkMembershipID,
       lastSyncedAt: new Date().toISOString(),
       organization: organization.id,
       roleTemplate,
       status: 'active',
-      syncSource: 'bootstrap',
+      syncSource: clerkMembership ? 'clerk' : 'bootstrap',
       user: user.id,
     },
     overrideAccess: true,

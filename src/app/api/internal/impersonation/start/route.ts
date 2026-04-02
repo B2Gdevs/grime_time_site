@@ -2,8 +2,8 @@ import { cookies } from 'next/headers'
 import { z } from 'zod'
 
 import { IMPERSONATION_COOKIE_NAME } from '@/lib/auth/impersonation'
-import { requirePayloadUser } from '@/lib/auth/requirePayloadUser'
-import { isAdminUser } from '@/lib/auth/roles'
+import { hasPayloadAdminAccess } from '@/lib/auth/organizationAccess'
+import { requireRequestAuth } from '@/lib/auth/requirePayloadUser'
 import type { User } from '@/payload-types'
 
 const payloadSchema = z.object({
@@ -11,9 +11,9 @@ const payloadSchema = z.object({
 })
 
 export async function POST(request: Request) {
-  const auth = await requirePayloadUser(request)
+  const auth = await requireRequestAuth(request)
 
-  if (!auth || !isAdminUser(auth.user)) {
+  if (!auth || !auth.isRealAdmin) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -29,10 +29,10 @@ export async function POST(request: Request) {
     depth: 0,
     id: parsed.data.userId,
     overrideAccess: false,
-    user: auth.user,
+    user: auth.realUser,
   })) as User
 
-  if (!target || isAdminUser(target)) {
+  if (!target || (await hasPayloadAdminAccess(auth.payload, target))) {
     return Response.json({ error: 'Only non-admin users can be impersonated.' }, { status: 400 })
   }
 

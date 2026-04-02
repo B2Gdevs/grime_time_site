@@ -1,13 +1,12 @@
 import { cookies } from 'next/headers'
 
 import { IMPERSONATION_COOKIE_NAME } from '@/lib/auth/impersonation'
-import { requirePayloadUser } from '@/lib/auth/requirePayloadUser'
-import { isAdminUser } from '@/lib/auth/roles'
+import { requireRequestAuth } from '@/lib/auth/requirePayloadUser'
 
 export async function POST(request: Request) {
-  const auth = await requirePayloadUser(request)
+  const auth = await requireRequestAuth(request)
 
-  if (!auth || !isAdminUser(auth.user)) {
+  if (!auth || !auth.isRealAdmin) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
