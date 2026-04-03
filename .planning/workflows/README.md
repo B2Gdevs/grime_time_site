@@ -31,6 +31,7 @@ Suggested docs:
 | `site-integrations-and-launch-checklist.md` | Current launch checklist for Payload, Stripe, Resend, and the customer quote flow |
 | `demo-data-and-flows.md` | Demo personas, seeded scenarios, and scripted paths for launch demos (staff + customer) |
 | `ai-ops-assistant-beta.md` | Optional staff AI assistant: RAG, Vercel AI SDK, Assistant/Tool UI, vision screenshot flow, feature flag and beta scope (phase 08) |
+| `visual-page-composer-and-copilot-experience.md` | Visual page composition, reusable section registry, local page authoring workbench, and the shared AI-aware copilot model for page/section/media editing (phase 13) |
 
 Integration specs and policies stay here. Product backlog and UX planning also use `ROADMAP.xml` and `phases/`.
 

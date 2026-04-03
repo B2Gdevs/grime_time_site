@@ -1,10 +1,39 @@
 import configPromise from '@payload-config'
 import { draftMode } from 'next/headers'
-import { getPayload, type RequiredDataFromCollectionSlug } from 'payload'
+import { createLocalReq, getPayload, type RequiredDataFromCollectionSlug, type Where } from 'payload'
 import { cache } from 'react'
 
 import { homeStatic } from '@/endpoints/seed/home-static'
+import { getCurrentAuthContext } from '@/lib/auth/getAuthContext'
 import { hasDatabaseUrl } from '@/utilities/buildTimeDb'
+
+export function buildPublicPageWhere(args: {
+  includePrivate: boolean
+  slug: string
+}): Where {
+  if (args.includePrivate) {
+    return {
+      slug: {
+        equals: args.slug,
+      },
+    }
+  }
+
+  return {
+    and: [
+      {
+        slug: {
+          equals: args.slug,
+        },
+      },
+      {
+        visibility: {
+          equals: 'public',
+        },
+      },
+    ],
+  }
+}
 
 export async function generatePublicPageStaticParams() {
   if (!hasDatabaseUrl()) return []
@@ -16,6 +45,11 @@ export async function generatePublicPageStaticParams() {
     limit: 1000,
     overrideAccess: false,
     pagination: false,
+    where: {
+      visibility: {
+        equals: 'public',
+      },
+    },
     select: {
       slug: true,
     },
@@ -30,20 +64,25 @@ export const queryPublicPageBySlug = cache(async ({ slug }: { slug: string }) =>
   }
 
   const { isEnabled: draft } = await draftMode()
-  const payload = await getPayload({ config: configPromise })
+  const auth = await getCurrentAuthContext()
+  const payload = auth.payload || (await getPayload({ config: configPromise }))
+  const includePrivate = draft || auth.isRealAdmin
+  const payloadReq = includePrivate
+    ? await createLocalReq({ user: auth.realUser || undefined }, payload)
+    : undefined
 
   const result = await payload.find({
     collection: 'pages',
-    draft,
+    draft: includePrivate,
     depth: 2,
     limit: 1,
     pagination: false,
-    overrideAccess: draft,
-    where: {
-      slug: {
-        equals: slug,
-      },
-    },
+    overrideAccess: false,
+    req: payloadReq,
+    where: buildPublicPageWhere({
+      includePrivate,
+      slug,
+    }),
   })
 
   return (result.docs?.[0] || null) as RequiredDataFromCollectionSlug<'pages'> | null

@@ -600,4 +600,53 @@
       </commands>
     </task>
   </phase>
+  <phase id="13">
+    <task id="13-01" agent-id="" status="done">
+      <goal>Kick off the visual page-composer phase: document the current public-page reality, note that as of 2026-04-02 there is no dedicated `/home` route and `/` renders the `home` page record with specialized React treatment, define the target section-registry and draft-page model, and capture the AI/copilot UX rules for focused page or section editing.</goal>
+      <keywords>planning,pages,composer,copilot,assistant-ui,openai</keywords>
+      <commands>
+        <command>See .planning/phases/13-visual-page-composer-and-copilot/PLAN.xml</command>
+        <command>See .planning/workflows/visual-page-composer-and-copilot-experience.md</command>
+        <command>See src/content/docs/site-copilot-and-page-composer.md</command>
+      </commands>
+    </task>
+    <task id="13-02" agent-id="" status="done">
+      <goal>Normalize `/` first by extracting the homepage-only composition logic into a reusable section registry or block-extension path. The current `/home`-style service and "what we do" sections should become reusable section types that can be added, removed, reordered, and swapped onto `/` and future pages without requiring a dedicated `/home` route or bespoke page-specific React to remain the composition authority.</goal>
+      <keywords>pages,blocks,sections,homepage,reuse</keywords>
+      <commands>
+        <command>See src/app/(frontend)/page.tsx, src/components/home/GrimeTimeMarketingHome.tsx, src/collections/Pages/index.ts, and .planning/workflows/visual-page-composer-and-copilot-experience.md</command>
+      </commands>
+    </task>
+    <task id="13-03" agent-id="" status="done">
+      <goal>Build the first staff-safe page-composer workbench with structure, content, media, and publish surfaces: drag-drop section order, add/remove/duplicate section, focused section selection, and light field editing that keeps the page visible while authoring. Shipped checkpoint: authenticated admins can open a frontend-toolbar composer, load the current page by route, reorder/add/duplicate/remove reusable service-grid sections, edit service-grid copy, manage section-row media from the same drawer through a protected staff-safe media route, and explicitly save draft or publish. Media actions are intentionally locked behind a save-first guard when the layout is dirty so persisted relation paths stay aligned.</goal>
+      <keywords>composer,drag-drop,devtools,sections,authoring</keywords>
+      <commands>
+        <command>See src/components/admin-impersonation/PageComposerDrawer.tsx, src/app/api/internal/page-composer/route.ts, src/app/api/internal/page-composer/media/route.ts, src/lib/pages/pageComposer.ts, and .planning/workflows/visual-page-composer-and-copilot-experience.md</command>
+      </commands>
+    </task>
+    <task id="13-04" agent-id="" status="done">
+      <goal>Create a first-class draft-page workflow for title, slug, visibility, publish status, and page creation so admins can make new pages without exposing them publicly, and warn when edited values are shared variables or feed business calculations instead of page-local copy. Shipped: `pages.visibility` now gates public routes and sitemaps, real admins can still preview private or draft pages from the frontend composer, the drawer can switch pages and create new draft pages, and the first warning pass calls out homepage-route edits, private-page behavior, page-local editing scope, and shared pricing-table globals.</goal>
+      <keywords>drafts,slug,publish,admin,variables</keywords>
+      <commands>
+        <command>See src/collections/Pages/index.ts, src/lib/pages/queryPublicPageBySlug.ts, src/app/api/internal/page-composer/route.ts, src/components/admin-impersonation/PageComposerDrawer.tsx, and .planning/workflows/visual-page-composer-and-copilot-experience.md</command>
+      </commands>
+    </task>
+    <task id="13-05" agent-id="" status="done">
+      <goal>Unify page authoring with the AI shell: expose the selected page, section, and media slot as assistant-ui interactables, move focused media generation into a short-lived modal session over the shared copilot experience, and require explicit mode selection (for example image, video, or gallery) before generation proceeds.</goal>
+      <keywords>copilot,assistant-ui,interactables,media,generation,modal</keywords>
+      <commands>
+        <command>See src/components/copilot/PortalCopilot.tsx, src/components/copilot/PortalCopilotContext.tsx, src/app/api/internal/ai/copilot/route.ts, src/app/(frontend)/layout.tsx, src/components/admin-impersonation/PageComposerDrawer.tsx, src/lib/ai/copilotAuthoring.ts, and src/content/docs/site-copilot-and-page-composer.md</command>
+      </commands>
+    </task>
+    <task id="13-06" agent-id="" status="done">
+      <goal>Add verification for the composer and shared AI authoring loop: unit coverage for section-registry transforms and selected-context helpers, integration coverage for page updates and draft-page create/publish rules, and Playwright coverage for add/reorder/swap/generate flows on localhost admin sessions.</goal>
+      <keywords>tests,vitest,playwright,composer,ai</keywords>
+      <commands>
+        <command>See tests/e2e/page-composer.e2e.spec.ts and tests/helpers/pageComposer.ts</command>
+        <command>cmd /c npm.cmd exec vitest run tests/int/lib/ai/copilot-authoring.int.spec.ts tests/int/lib/pages/page-composer.int.spec.ts</command>
+        <command>cmd /c npm.cmd run build</command>
+        <command>cmd /c npm.cmd exec playwright test tests/e2e/page-composer.e2e.spec.ts</command>
+      </commands>
+    </task>
+  </phase>
 </task-registry>

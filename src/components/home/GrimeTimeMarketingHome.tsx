@@ -1,16 +1,13 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { ArrowRightIcon, CheckCircle2Icon, DropletsIcon, ShieldCheckIcon, WavesIcon } from 'lucide-react'
+import { ArrowRightIcon, DropletsIcon, ShieldCheckIcon, WavesIcon } from 'lucide-react'
 import type { RequiredDataFromCollectionSlug } from 'payload'
 
 import { RenderBlocks } from '@/blocks/RenderBlocks'
+import { resolveServiceGridDisplayVariant } from '@/blocks/ServiceGrid/variants'
 import { InlinePageMediaEditor } from '@/components/admin-impersonation/InlinePageMediaEditor'
 import { InstantQuoteSection } from '@/components/InstantQuoteSection'
-import {
-  extractLexicalPlainText,
-  getHomeServiceGridBlocks,
-  getMediaUrl,
-} from '@/lib/marketing/public-shell'
+import { extractLexicalPlainText, getMediaUrl } from '@/lib/marketing/public-shell'
 import type { InstantQuoteCatalog } from '@/lib/quotes/instantQuoteCatalog'
 import { formatCurrency } from '@/lib/quotes/instantQuoteCatalog'
 import type { Media, ServiceGridBlock } from '@/payload-types'
@@ -35,20 +32,17 @@ export async function GrimeTimeMarketingHome({
   instantQuoteCatalog: InstantQuoteCatalog
   page: RequiredDataFromCollectionSlug<'pages'>
 }) {
-  const [servicesBlock, pricingBlock] = getHomeServiceGridBlocks(page.layout) as [
-    ServiceGridBlock | undefined,
-    ServiceGridBlock | undefined,
-  ]
-  const extraBlocks = page.layout.filter((block) => block.blockType !== 'serviceGrid')
   const heroCopy =
     extractLexicalPlainText(page.hero.richText) ||
     page.meta?.description ||
     'North Texas exterior cleaning with a clearer quote path and visible proof.'
   const heroMedia = asMedia(page.hero.media)
   const heroImageUrl = getMediaUrl(heroMedia)
-  const featuredServices = servicesBlock?.services?.slice(0, 3) || []
-  const pricingSteps = pricingBlock?.services?.slice(0, 3) || []
-  const servicesBlockIndex = servicesBlock ? page.layout.findIndex((block) => block === servicesBlock) : -1
+  const featureCardsBlock = page.layout.find(
+    (block): block is ServiceGridBlock =>
+      block.blockType === 'serviceGrid' && resolveServiceGridDisplayVariant(block) === 'featureCards',
+  )
+  const featuredServices = featureCardsBlock?.services?.slice(0, 3) || []
   const startingPrice = Math.min(...instantQuoteCatalog.services.map((service) => service.minimum))
   const quarterlySavings = Math.round((1 - instantQuoteCatalog.frequencyMultipliers.quarterly) * 100)
 
@@ -150,128 +144,9 @@ export async function GrimeTimeMarketingHome({
         </div>
       </section>
 
-      {servicesBlock ? (
-        <section id="services" className="mx-auto max-w-7xl px-6 py-16 md:py-20">
-          <div className="max-w-3xl">
-            <p className="text-[0.7rem] font-semibold uppercase tracking-[0.34em] text-primary/80">
-              {servicesBlock.eyebrow || 'Featured services'}
-            </p>
-            <h2 className="mt-4 text-4xl font-semibold tracking-tight text-foreground md:text-5xl">
-              {servicesBlock.heading}
-            </h2>
-            {servicesBlock.intro ? (
-              <p className="mt-4 max-w-2xl text-lg leading-8 text-muted-foreground">
-                {servicesBlock.intro}
-              </p>
-            ) : null}
-          </div>
-
-          <div className="mt-10 grid gap-6 lg:grid-cols-3">
-            {featuredServices.map((service, serviceIndex) => {
-              const media = asMedia(service.media)
-              const mediaUrl = getMediaUrl(media)
-
-              return (
-                <article key={service.id || service.name} className="overflow-hidden rounded-[1.9rem] border border-border/70 bg-card/82 shadow-[0_18px_80px_-52px_rgba(2,6,23,0.85)]">
-                  <div className="relative">
-                    {mediaUrl ? (
-                      <InlinePageMediaEditor
-                        relationPath={`layout.${servicesBlockIndex}.services.${serviceIndex}.media`}
-                      >
-                        <Image
-                          src={mediaUrl}
-                          alt={media?.alt || service.name}
-                          width={media?.width || 1200}
-                          height={media?.height || 900}
-                          className="aspect-[16/10] w-full object-cover"
-                        />
-                      </InlinePageMediaEditor>
-                    ) : (
-                      <div className="aspect-[16/10] w-full bg-[linear-gradient(180deg,rgba(7,19,33,0.88),rgba(17,49,77,0.72))]" />
-                    )}
-                    <div className="absolute inset-x-4 top-4 flex items-center justify-between gap-3">
-                      {service.eyebrow ? (
-                        <span className="rounded-full bg-black/55 px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-white backdrop-blur">
-                          {service.eyebrow}
-                        </span>
-                      ) : <span />}
-                      {service.pricingHint ? (
-                        <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[0.68rem] font-medium text-white backdrop-blur">
-                          {service.pricingHint}
-                        </span>
-                      ) : null}
-                    </div>
-                  </div>
-
-                  <div className="p-6">
-                    <h3 className="text-2xl font-semibold tracking-tight text-foreground">{service.name}</h3>
-                    <p className="mt-3 text-sm leading-7 text-muted-foreground">{service.summary}</p>
-
-                    {service.highlights?.length ? (
-                      <ul className="mt-5 grid gap-3">
-                        {service.highlights.map((highlight) => (
-                          <li key={highlight.id || highlight.text} className="flex items-start gap-3 text-sm leading-6 text-foreground/86">
-                            <CheckCircle2Icon className="mt-0.5 size-4 shrink-0 text-primary" />
-                            <span>{highlight.text}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : null}
-                  </div>
-                </article>
-              )
-            })}
-          </div>
-        </section>
-      ) : null}
-
-      {pricingBlock ? (
-        <section id="pricing" className="border-y border-border/70 bg-card/42">
-          <div className="mx-auto max-w-7xl px-6 py-16 md:py-20">
-            <div className="grid gap-10 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:items-start">
-              <div>
-                <p className="text-[0.7rem] font-semibold uppercase tracking-[0.34em] text-primary/80">
-                  {pricingBlock.eyebrow || 'Estimate logic'}
-                </p>
-                <h2 className="mt-4 text-4xl font-semibold tracking-tight text-foreground md:text-5xl">
-                  {pricingBlock.heading}
-                </h2>
-                {pricingBlock.intro ? (
-                  <p className="mt-4 max-w-2xl text-lg leading-8 text-muted-foreground">
-                    {pricingBlock.intro}
-                  </p>
-                ) : null}
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-3">
-                {pricingSteps.map((step) => (
-                  <div
-                    key={step.id || step.name}
-                    className="rounded-[1.7rem] border border-border/70 bg-background/88 p-5 shadow-[0_18px_70px_-54px_rgba(2,6,23,0.82)]"
-                  >
-                    {step.eyebrow ? (
-                      <p className="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-primary/80">
-                        {step.eyebrow}
-                      </p>
-                    ) : null}
-                    <h3 className="mt-3 text-xl font-semibold text-foreground">{step.name}</h3>
-                    <p className="mt-3 text-sm leading-6 text-muted-foreground">{step.summary}</p>
-                    {step.highlights?.[0]?.text ? (
-                      <p className="mt-4 text-sm font-medium leading-6 text-foreground/80">
-                        {step.highlights[0].text}
-                      </p>
-                    ) : null}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
-      ) : null}
+      <div className="pb-8">{await RenderBlocks({ blocks: page.layout })}</div>
 
       <InstantQuoteSection catalog={instantQuoteCatalog} />
-
-      {extraBlocks.length > 0 ? <div className="pb-20">{await RenderBlocks({ blocks: extraBlocks })}</div> : null}
     </div>
   )
 }

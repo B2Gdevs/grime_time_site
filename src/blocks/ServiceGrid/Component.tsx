@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import React from 'react'
 
@@ -15,12 +16,19 @@ import {
   WavesIcon,
 } from 'lucide-react'
 
+import { InlinePageMediaEditor } from '@/components/admin-impersonation/InlinePageMediaEditor'
 import { BubbleBackground } from '@/components/BubbleBackground'
 import { Media } from '@/components/Media'
 import { Button } from '@/components/ui/button'
 import type { ServiceGridBlock as ServiceGridBlockData } from '@/payload-types'
 
+import { resolveServiceGridDisplayVariant } from './variants'
+
 type ServiceGridRow = NonNullable<ServiceGridBlockData['services']>[number]
+
+type ServiceGridBlockProps = ServiceGridBlockData & {
+  blockIndex?: number
+}
 
 function hasMedia(
   media: ServiceGridRow['media'],
@@ -28,18 +36,79 @@ function hasMedia(
   return Boolean(media && typeof media === 'object')
 }
 
-function getRowIcon(name: string) {
+function getRowIconKey(name: string) {
   const key = name.toLowerCase()
-  if (key.includes('square footage')) return RulerIcon
-  if (key.includes('condition')) return WavesIcon
-  if (key.includes('access') || key.includes('recurrence')) return CircleDollarSignIcon
-  if (key.includes('house')) return HomeIcon
-  if (key.includes('driveway') || key.includes('flatwork')) return MountainIcon
-  if (key.includes('dock') || key.includes('waterfront')) return DockIcon
-  return DropletsIcon
+  if (key.includes('square footage')) return 'ruler'
+  if (key.includes('condition')) return 'waves'
+  if (key.includes('access') || key.includes('recurrence')) return 'dollar'
+  if (key.includes('house')) return 'home'
+  if (key.includes('driveway') || key.includes('flatwork')) return 'mountain'
+  if (key.includes('dock') || key.includes('waterfront')) return 'dock'
+  return 'droplets'
 }
 
-export const ServiceGridBlock: React.FC<ServiceGridBlockData> = ({
+function ServiceGridRowIcon({ className, name }: { className?: string; name: string }) {
+  const iconKey = getRowIconKey(name)
+
+  if (iconKey === 'ruler') {
+    return <RulerIcon className={className} />
+  }
+
+  if (iconKey === 'waves') {
+    return <WavesIcon className={className} />
+  }
+
+  if (iconKey === 'dollar') {
+    return <CircleDollarSignIcon className={className} />
+  }
+
+  if (iconKey === 'home') {
+    return <HomeIcon className={className} />
+  }
+
+  if (iconKey === 'mountain') {
+    return <MountainIcon className={className} />
+  }
+
+  if (iconKey === 'dock') {
+    return <DockIcon className={className} />
+  }
+
+  return <DropletsIcon className={className} />
+}
+
+export const ServiceGridBlock: React.FC<ServiceGridBlockProps> = ({
+  blockIndex,
+  displayVariant,
+  eyebrow,
+  heading,
+  intro,
+  services,
+}) => {
+  const variant = resolveServiceGridDisplayVariant({ displayVariant, heading })
+
+  if (variant === 'featureCards') {
+    return (
+      <FeatureCardsServiceGrid
+        blockIndex={blockIndex}
+        eyebrow={eyebrow}
+        heading={heading}
+        intro={intro}
+        services={services}
+      />
+    )
+  }
+
+  if (variant === 'pricingSteps') {
+    return <PricingStepsServiceGrid eyebrow={eyebrow} heading={heading} intro={intro} services={services} />
+  }
+
+  return <InteractiveServiceGrid eyebrow={eyebrow} heading={heading} intro={intro} services={services} />
+}
+
+const InteractiveServiceGrid: React.FC<
+  Pick<ServiceGridBlockData, 'eyebrow' | 'heading' | 'intro' | 'services'>
+> = ({
   eyebrow,
   heading,
   intro,
@@ -73,7 +142,9 @@ export const ServiceGridBlock: React.FC<ServiceGridBlockData> = ({
           {intro ? <p className="text-base leading-relaxed text-muted-foreground sm:text-lg">{intro}</p> : null}
         </div>
 
-        <div className={`grid gap-6 ${isPricing ? 'lg:grid-cols-[minmax(0,1fr)_18rem]' : 'lg:grid-cols-[18rem_minmax(0,1fr)]'}`}>
+        <div
+          className={`grid gap-6 ${isPricing ? 'lg:grid-cols-[minmax(0,1fr)_18rem]' : 'lg:grid-cols-[18rem_minmax(0,1fr)]'}`}
+        >
           <div className={`rounded-[1.4rem] border border-border/80 bg-background/80 p-3 ${isPricing ? 'lg:order-2' : ''}`}>
             <p className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
               {isPricing ? 'Select pricing step' : 'Select exterior lane'}
@@ -81,7 +152,6 @@ export const ServiceGridBlock: React.FC<ServiceGridBlockData> = ({
             <ul className="flex snap-x gap-2 overflow-x-auto px-1 pb-1 lg:grid lg:gap-2 lg:overflow-visible lg:px-0 lg:pb-0">
               {rows.map((row, index) => {
                 const active = index === activeIndex
-                const RowIcon = getRowIcon(row.name)
                 return (
                   <li key={`${row.name}-${index}`} className="min-w-[12.5rem] snap-start lg:min-w-0">
                     <button
@@ -94,7 +164,7 @@ export const ServiceGridBlock: React.FC<ServiceGridBlockData> = ({
                       type="button"
                     >
                       <div className="flex items-center gap-2">
-                        <RowIcon className="size-3.5 shrink-0 text-primary/90" />
+                        <ServiceGridRowIcon className="size-3.5 shrink-0 text-primary/90" name={row.name} />
                         {row.eyebrow ? (
                           <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-primary/90">
                             {row.eyebrow}
@@ -114,7 +184,6 @@ export const ServiceGridBlock: React.FC<ServiceGridBlockData> = ({
               const rowMedia = hasMedia(activeRow.media) ? activeRow.media : null
               const highlights = activeRow.highlights?.filter((item) => item?.text?.trim()) ?? []
               const hasFooter = Boolean(activeRow.pricingHint)
-              const ActiveIcon = getRowIcon(activeRow.name)
 
               return (
                 <>
@@ -128,16 +197,18 @@ export const ServiceGridBlock: React.FC<ServiceGridBlockData> = ({
                       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(86,175,255,0.22),transparent_50%),linear-gradient(180deg,rgba(242,247,255,0.9)_0%,rgba(232,240,249,0.6)_100%)]" />
                     )}
 
-                    <div className="absolute inset-x-0 bottom-0 p-5 text-white">
-                      <div className="flex items-center gap-2">
-                        <ActiveIcon className="size-4 shrink-0 text-white/80" />
+                  <div className="absolute inset-x-0 bottom-0 p-5 text-white">
+                    <div className="flex items-center gap-2">
+                        <ServiceGridRowIcon className="size-4 shrink-0 text-white/80" name={activeRow.name} />
                         {activeRow.eyebrow ? (
                           <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/80">
                             {activeRow.eyebrow}
                           </p>
                         ) : null}
                       </div>
-                      <h3 className="mt-2 text-xl font-semibold tracking-tight text-balance sm:text-2xl">{activeRow.name}</h3>
+                      <h3 className="mt-2 text-xl font-semibold tracking-tight text-balance sm:text-2xl">
+                        {activeRow.name}
+                      </h3>
                     </div>
                   </div>
 
@@ -175,6 +246,158 @@ export const ServiceGridBlock: React.FC<ServiceGridBlockData> = ({
                 </>
               )
             })()}
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+const FeatureCardsServiceGrid: React.FC<
+  Pick<ServiceGridBlockProps, 'blockIndex' | 'eyebrow' | 'heading' | 'intro' | 'services'>
+> = ({
+  blockIndex,
+  eyebrow,
+  heading,
+  intro,
+  services,
+}) => {
+  const rows = services || []
+
+  if (!rows.length) {
+    return null
+  }
+
+  return (
+    <section className="mx-auto max-w-7xl px-6 py-16 md:py-20" id="services">
+      <div className="max-w-3xl">
+        <p className="text-[0.7rem] font-semibold uppercase tracking-[0.34em] text-primary/80">
+          {eyebrow || 'Featured services'}
+        </p>
+        <h2 className="mt-4 text-4xl font-semibold tracking-tight text-foreground md:text-5xl">{heading}</h2>
+        {intro ? <p className="mt-4 max-w-2xl text-lg leading-8 text-muted-foreground">{intro}</p> : null}
+      </div>
+
+      <div className="mt-10 grid gap-6 lg:grid-cols-3">
+        {rows.map((service, serviceIndex) => {
+          const media = hasMedia(service.media) ? service.media : null
+          const mediaUrl = media?.sizes?.large?.url || media?.sizes?.medium?.url || media?.url || null
+          const relationPath =
+            typeof blockIndex === 'number' ? `layout.${blockIndex}.services.${serviceIndex}.media` : null
+
+          return (
+            <article
+              key={service.id || service.name}
+              className="overflow-hidden rounded-[1.9rem] border border-border/70 bg-card/82 shadow-[0_18px_80px_-52px_rgba(2,6,23,0.85)]"
+            >
+              <div className="relative">
+                {media && mediaUrl && relationPath ? (
+                  <InlinePageMediaEditor relationPath={relationPath}>
+                    <Image
+                      src={mediaUrl}
+                      alt={media.alt || service.name}
+                      width={media.width || 1200}
+                      height={media.height || 900}
+                      className="aspect-[16/10] w-full object-cover"
+                    />
+                  </InlinePageMediaEditor>
+                ) : media && mediaUrl ? (
+                  <Image
+                    src={mediaUrl}
+                    alt={media.alt || service.name}
+                    width={media.width || 1200}
+                    height={media.height || 900}
+                    className="aspect-[16/10] w-full object-cover"
+                  />
+                ) : (
+                  <div className="aspect-[16/10] w-full bg-[linear-gradient(180deg,rgba(7,19,33,0.88),rgba(17,49,77,0.72))]" />
+                )}
+                <div className="absolute inset-x-4 top-4 flex items-center justify-between gap-3">
+                  {service.eyebrow ? (
+                    <span className="rounded-full bg-black/55 px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-white backdrop-blur">
+                      {service.eyebrow}
+                    </span>
+                  ) : (
+                    <span />
+                  )}
+                  {service.pricingHint ? (
+                    <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[0.68rem] font-medium text-white backdrop-blur">
+                      {service.pricingHint}
+                    </span>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="p-6">
+                <h3 className="text-2xl font-semibold tracking-tight text-foreground">{service.name}</h3>
+                <p className="mt-3 text-sm leading-7 text-muted-foreground">{service.summary}</p>
+
+                {service.highlights?.length ? (
+                  <ul className="mt-5 grid gap-3">
+                    {service.highlights.map((highlight) => (
+                      <li
+                        key={highlight.id || highlight.text}
+                        className="flex items-start gap-3 text-sm leading-6 text-foreground/86"
+                      >
+                        <CheckCircle2Icon className="mt-0.5 size-4 shrink-0 text-primary" />
+                        <span>{highlight.text}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+              </div>
+            </article>
+          )
+        })}
+      </div>
+    </section>
+  )
+}
+
+const PricingStepsServiceGrid: React.FC<
+  Pick<ServiceGridBlockData, 'eyebrow' | 'heading' | 'intro' | 'services'>
+> = ({
+  eyebrow,
+  heading,
+  intro,
+  services,
+}) => {
+  const rows = services?.slice(0, 3) || []
+
+  if (!rows.length) {
+    return null
+  }
+
+  return (
+    <section className="border-y border-border/70 bg-card/42" id="pricing">
+      <div className="mx-auto max-w-7xl px-6 py-16 md:py-20">
+        <div className="grid gap-10 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:items-start">
+          <div>
+            <p className="text-[0.7rem] font-semibold uppercase tracking-[0.34em] text-primary/80">
+              {eyebrow || 'Estimate logic'}
+            </p>
+            <h2 className="mt-4 text-4xl font-semibold tracking-tight text-foreground md:text-5xl">{heading}</h2>
+            {intro ? <p className="mt-4 max-w-2xl text-lg leading-8 text-muted-foreground">{intro}</p> : null}
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-3">
+            {rows.map((step) => (
+              <div
+                key={step.id || step.name}
+                className="rounded-[1.7rem] border border-border/70 bg-background/88 p-5 shadow-[0_18px_70px_-54px_rgba(2,6,23,0.82)]"
+              >
+                {step.eyebrow ? (
+                  <p className="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-primary/80">
+                    {step.eyebrow}
+                  </p>
+                ) : null}
+                <h3 className="mt-3 text-xl font-semibold text-foreground">{step.name}</h3>
+                <p className="mt-3 text-sm leading-6 text-muted-foreground">{step.summary}</p>
+                {step.highlights?.[0]?.text ? (
+                  <p className="mt-4 text-sm font-medium leading-6 text-foreground/80">{step.highlights[0].text}</p>
+                ) : null}
+              </div>
+            ))}
           </div>
         </div>
       </div>

@@ -1,4 +1,4 @@
-import type { Footer, Header, Media, Page, ServiceGridBlock } from '@/payload-types'
+import type { Footer, Header, Media } from '@/payload-types'
 
 export type MarketingNavLink = {
   external: boolean
@@ -85,14 +85,6 @@ function extractLexicalNodeText(node: unknown): string[] {
 export function extractLexicalPlainText(value: unknown): string {
   const parts = extractLexicalNodeText(value)
   return parts.join(' ').replace(/\s+/g, ' ').trim()
-}
-
-export function getHomeServiceGridBlocks(layout: Page['layout'] | null | undefined): ServiceGridBlock[] {
-  if (!layout?.length) {
-    return []
-  }
-
-  return layout.filter((block): block is ServiceGridBlock => block.blockType === 'serviceGrid')
 }
 
 export function getMediaUrl(media: Media | number | null | undefined): string | null {

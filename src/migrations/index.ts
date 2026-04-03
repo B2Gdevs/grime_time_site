@@ -21,6 +21,8 @@ import * as migration_20260327_140500_sequence_jobs_and_relations from './202603
 import * as migration_20260327_141500_payload_jobs_meta from './20260327_141500_payload_jobs_meta';
 import * as migration_20260401_170000_clerk_user_id from './20260401_170000_clerk_user_id';
 import * as migration_20260402_022714_add_organizations_and_memberships from './20260402_022714_add_organizations_and_memberships';
+import * as migration_20260402_183806_add_service_grid_display_variant from './20260402_183806_add_service_grid_display_variant';
+import * as migration_20260402_194706_add_page_visibility from './20260402_194706_add_page_visibility';
 
 export const migrations = [
   {
@@ -136,6 +138,16 @@ export const migrations = [
   {
     up: migration_20260402_022714_add_organizations_and_memberships.up,
     down: migration_20260402_022714_add_organizations_and_memberships.down,
-    name: '20260402_022714_add_organizations_and_memberships'
+    name: '20260402_022714_add_organizations_and_memberships',
+  },
+  {
+    up: migration_20260402_183806_add_service_grid_display_variant.up,
+    down: migration_20260402_183806_add_service_grid_display_variant.down,
+    name: '20260402_183806_add_service_grid_display_variant',
+  },
+  {
+    up: migration_20260402_194706_add_page_visibility.up,
+    down: migration_20260402_194706_add_page_visibility.down,
+    name: '20260402_194706_add_page_visibility'
   },
 ];

@@ -1,5 +1,7 @@
 import type { Block } from 'payload'
 
+import { serviceGridDisplayVariantOptions } from './variants'
+
 export const ServiceGrid: Block = {
   slug: 'serviceGrid',
   interfaceName: 'ServiceGridBlock',
@@ -21,6 +23,18 @@ export const ServiceGrid: Block = {
     {
       name: 'intro',
       type: 'textarea',
+    },
+    {
+      name: 'displayVariant',
+      type: 'select',
+      defaultValue: 'interactive',
+      options: serviceGridDisplayVariantOptions.map((option) => ({
+        label: option.label,
+        value: option.value,
+      })),
+      admin: {
+        description: 'Choose the public section treatment for this block.',
+      },
     },
     {
       name: 'services',

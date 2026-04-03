@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phase-summary>
+  <meta>
+    <phase-id>13</phase-id>
+    <phase-name>Visual page composer and copilot authoring</phase-name>
+    <date>2026-04-02</date>
+  </meta>
+  <status>complete</status>
+  <highlights>
+    <item>Phase 13 is now explicit in the roadmap because visual page composition is the active blocker for Grime Time delivery.</item>
+    <item>The kickoff captures the current page reality: `/` renders the page with slug `home`, there is no dedicated `/home` route today, and `GrimeTimeMarketingHome` still special-cases part of the page composition path.</item>
+    <item>Direction is now fixed by owner input: normalize `/` first, treat current `/home` ideas as reusable section patterns rather than a required route, and make the first composer pass staff-safe for immediate use.</item>
+    <item>`13-02` is now implemented: `serviceGrid` blocks have explicit display variants, the current homepage service and pricing treatments render as reusable block-level variants, the seed data records those variants directly, and `/` no longer treats the first two service grids as hidden special cases.</item>
+    <item>`13-03` is now shipped: the frontend admin toolbar exposes a page composer drawer that loads the current page by route, supports drag-drop section ordering, add/duplicate/remove for reusable service-grid sections, service-grid copy editing, section-row media swapping or generation from the same drawer, and explicit draft-save vs publish actions through protected internal routes.</item>
+    <item>The first unified media pass is intentionally save-first: when the draft layout is dirty, media actions are locked until the user saves so persisted relation paths stay aligned with the layout being edited.</item>
+    <item>`13-04` is now shipped: pages have explicit public vs private visibility, public routes and the sitemap exclude private pages, real admins can still preview private or draft pages from the frontend, the composer can switch pages and create new draft pages, and the publish surface now covers title, slug, visibility, route preview, and first-pass shared-setting warnings.</item>
+    <item>`13-05` is now shipped: the shared Grime Time copilot is available on staff frontend pages, the page composer publishes selected page, section, and media-slot context into that shell, the copilot API receives sanitized authoring state, and focused media sessions now open inside the shared copilot modal with image/video/gallery mode controls.</item>
+    <item>`13-06` is now complete: localhost production verification runs on `localhost` rather than `127.0.0.1` so Clerk middleware no longer breaks `next start`, the Playwright suite now covers draft-page create/add/reorder/swap/generate/publish plus focused-copilot context end to end, and the same browser work flushed out real composer accessibility fixes for the media prompt field and close button labeling.</item>
+    <item>The target direction is clear: keep Payload pages and drafts as the source of truth, normalize reusable sections, grow the local workbench into a visual composer, and align AI authoring around selected page or section context.</item>
+  </highlights>
+  <next>
+    <item>`13-01` through `13-06` are complete. The visual page-composer and copilot-authoring phase is no longer blocked.</item>
+    <item>The next planning focus should return to the still-open phase 11 and phase 12 workstreams unless new composer scope is added.</item>
+    <item>Future composer slices should build on the now-verified staff-safe drawer and shared copilot shell instead of reviving localhost-only authoring paths.</item>
+  </next>
+</phase-summary>

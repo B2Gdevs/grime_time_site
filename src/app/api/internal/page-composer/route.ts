@@ -1,0 +1,246 @@
+import { createLocalReq } from 'payload'
+
+import { getCurrentAuthContext } from '@/lib/auth/getAuthContext'
+import {
+  frontendPathToPageSlug,
+  normalizePageComposerLayoutForSave,
+  type PageComposerDocument,
+  pageSlugToFrontendPath,
+  type PageComposerPageSummary,
+} from '@/lib/pages/pageComposer'
+import type { Page } from '@/payload-types'
+
+async function requireStaffPageComposerAuth() {
+  const auth = await getCurrentAuthContext()
+
+  if (!auth.realUser || !auth.isRealAdmin) {
+    return null
+  }
+
+  return auth
+}
+
+function parsePagePath(request: Request): null | string {
+  const pagePath = new URL(request.url).searchParams.get('pagePath')?.trim() || ''
+  return pagePath || null
+}
+
+function parsePageId(request: Request): null | number {
+  const pageId = Number(new URL(request.url).searchParams.get('pageId'))
+  return Number.isInteger(pageId) && pageId > 0 ? pageId : null
+}
+
+function toComposerDocument(page: Page, pagePath: string): PageComposerDocument {
+  return {
+    _status: page._status,
+    hero: page.hero,
+    id: page.id,
+    layout: page.layout || [],
+    pagePath,
+    publishedAt: page.publishedAt,
+    slug: page.slug,
+    title: page.title,
+    updatedAt: page.updatedAt,
+    visibility: page.visibility,
+  }
+}
+
+function toComposerPageSummary(page: Page): PageComposerPageSummary {
+  return {
+    _status: page._status,
+    id: page.id,
+    pagePath: pageSlugToFrontendPath(page.slug),
+    publishedAt: page.publishedAt,
+    slug: page.slug,
+    title: page.title,
+    updatedAt: page.updatedAt,
+    visibility: page.visibility,
+  }
+}
+
+async function loadComposerPages(args: {
+  payload: Awaited<ReturnType<typeof getCurrentAuthContext>>['payload']
+  req: Awaited<ReturnType<typeof createLocalReq>>
+}): Promise<PageComposerPageSummary[]> {
+  const result = await args.payload.find({
+    collection: 'pages',
+    depth: 0,
+    draft: true,
+    limit: 100,
+    overrideAccess: false,
+    pagination: false,
+    req: args.req,
+    sort: 'title',
+  })
+
+  return (result.docs as Page[]).map((page) => toComposerPageSummary(page))
+}
+
+export async function GET(request: Request): Promise<Response> {
+  const auth = await requireStaffPageComposerAuth()
+
+  if (!auth) {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const pageId = parsePageId(request)
+  const pagePath = parsePagePath(request)
+  const slug = pageId ? null : frontendPathToPageSlug(pagePath || '')
+
+  if (!pageId && !pagePath) {
+    return Response.json({ error: 'A page path or page id is required.' }, { status: 400 })
+  }
+
+  if (!pageId && !slug) {
+    return Response.json({ error: 'This route does not map to a page document.' }, { status: 400 })
+  }
+
+  const payloadReq = await createLocalReq({ user: auth.realUser || undefined }, auth.payload)
+  const pages = await loadComposerPages({
+    payload: auth.payload,
+    req: payloadReq,
+  })
+
+  let page: Page | undefined
+
+  try {
+    page = pageId
+      ? ((await auth.payload.findByID({
+          collection: 'pages',
+          depth: 2,
+          draft: true,
+          id: pageId,
+          overrideAccess: false,
+          req: payloadReq,
+        })) as Page)
+      : ((await auth.payload.find({
+          collection: 'pages',
+          depth: 2,
+          draft: true,
+          limit: 1,
+          overrideAccess: false,
+          pagination: false,
+          req: payloadReq,
+          where: {
+            slug: {
+              equals: slug,
+            },
+          },
+        }))?.docs?.[0] as Page | undefined)
+  } catch {
+    page = undefined
+  }
+
+  if (!page) {
+    return Response.json({ error: 'Page not found.' }, { status: 404 })
+  }
+
+  return Response.json({
+    ok: true,
+    page: toComposerDocument(page, pagePath || pageSlugToFrontendPath(page.slug)),
+    pages,
+  })
+}
+
+export async function POST(request: Request): Promise<Response> {
+  const auth = await requireStaffPageComposerAuth()
+
+  if (!auth) {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const body = (await request.json().catch(() => null)) as
+    | null
+    | {
+        action?: string
+        layout?: Page['layout']
+        pageId?: number
+        slug?: string
+        title?: string
+        visibility?: Page['visibility']
+      }
+
+  const pageId = Number(body?.pageId)
+  const title = body?.title?.trim() || ''
+  const slug = body?.slug?.trim() || ''
+  const layout = Array.isArray(body?.layout) ? body?.layout : null
+  const action = body?.action || ''
+  const visibility = body?.visibility === 'private' ? 'private' : 'public'
+
+  if (action !== 'save-draft' && action !== 'publish-page' && action !== 'create-page') {
+    return Response.json({ error: 'Unsupported composer action.' }, { status: 400 })
+  }
+
+  const payloadReq = await createLocalReq({ user: auth.realUser || undefined }, auth.payload)
+
+  try {
+    if (action === 'create-page') {
+      if (!title || !slug) {
+        return Response.json({ error: 'Title and slug are required.' }, { status: 400 })
+      }
+
+      const created = (await auth.payload.create({
+        collection: 'pages',
+        data: {
+          hero: {
+            type: 'lowImpact',
+          },
+          layout: [],
+          slug,
+          title,
+          visibility,
+        },
+        depth: 2,
+        draft: true,
+        overrideAccess: false,
+        req: payloadReq,
+      })) as Page
+
+      return Response.json({
+        ok: true,
+        page: toComposerDocument(created, pageSlugToFrontendPath(created.slug)),
+        pages: await loadComposerPages({
+          payload: auth.payload,
+          req: payloadReq,
+        }),
+      })
+    }
+
+    if (!Number.isInteger(pageId) || pageId <= 0 || !title || !slug || !layout) {
+      return Response.json({ error: 'Page id, title, slug, layout, and visibility are required.' }, { status: 400 })
+    }
+
+    const updated = (await auth.payload.update({
+      autosave: false,
+      collection: 'pages',
+      data: {
+        _status: action === 'publish-page' ? 'published' : undefined,
+        layout: normalizePageComposerLayoutForSave(layout),
+        slug,
+        title,
+        visibility,
+      },
+      depth: 2,
+      draft: action === 'save-draft',
+      id: pageId,
+      overrideAccess: false,
+      req: payloadReq,
+    })) as Page
+
+    return Response.json({
+      ok: true,
+      page: toComposerDocument(updated, pageSlugToFrontendPath(updated.slug)),
+      pages: await loadComposerPages({
+        payload: auth.payload,
+        req: payloadReq,
+      }),
+    })
+  } catch (error) {
+    return Response.json(
+      {
+        error: error instanceof Error ? error.message : 'Unable to update the page draft.',
+      },
+      { status: 400 },
+    )
+  }
+}

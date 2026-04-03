@@ -1,7 +1,7 @@
 import { getServerSideSitemap } from 'next-sitemap'
 import { getPayload } from 'payload'
 import config from '@payload-config'
-import { unstable_cache } from 'next/cache'
+import { unstable_cache } from 'next/cache.js'
 
 const getPagesSitemap = unstable_cache(
   async () => {
@@ -19,9 +19,18 @@ const getPagesSitemap = unstable_cache(
       limit: 1000,
       pagination: false,
       where: {
-        _status: {
-          equals: 'published',
-        },
+        and: [
+          {
+            _status: {
+              equals: 'published',
+            },
+          },
+          {
+            visibility: {
+              equals: 'public',
+            },
+          },
+        ],
       },
       select: {
         slug: true,

@@ -125,6 +125,27 @@ export const Pages: CollectionConfig<'pages'> = {
       ],
     },
     {
+      name: 'visibility',
+      type: 'select',
+      admin: {
+        description:
+          'Private pages stay available to real admins in the frontend composer, but they are hidden from public routes and the sitemap.',
+        position: 'sidebar',
+      },
+      defaultValue: 'public',
+      options: [
+        {
+          label: 'Public',
+          value: 'public',
+        },
+        {
+          label: 'Private (staff only)',
+          value: 'private',
+        },
+      ],
+      required: true,
+    },
+    {
       name: 'publishedAt',
       type: 'date',
       admin: {

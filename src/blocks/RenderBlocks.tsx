@@ -47,7 +47,7 @@ export async function RenderBlocks({ blocks, pricingGlobal: pricingProp }: Props
         if (blockType === 'serviceGrid') {
           return (
             <div className="my-16" key={index}>
-              <ServiceGridBlock {...block} />
+              <ServiceGridBlock {...block} blockIndex={index} />
             </div>
           )
         }

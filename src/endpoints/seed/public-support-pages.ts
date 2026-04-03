@@ -112,6 +112,7 @@ function buildSupportPage({
   return {
     slug,
     _status: 'published',
+    visibility: 'public',
     hero: {
       type: 'lowImpact',
       richText: {

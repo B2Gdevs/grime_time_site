@@ -528,6 +528,112 @@
       <file path="src/collections/Pages/index.ts" />
     </references>
   </decision>
+  <decision id="D-content-004">
+    <title>Visual page editing layers on Payload pages and drafts instead of creating a parallel page-builder store</title>
+    <summary>The visual composer should treat Payload `pages`, `layout` blocks, and draft versions as the source of truth. The local workbench may provide drag-drop, focused editing, and faster authoring surfaces, but it should write back into the existing page document model rather than introducing a second unpublished page-definition system.</summary>
+    <impact>New-page creation, slug management, draft/publish, and reusable-section work can reuse Payload's existing lifecycle and access model. Homepage-specialized React should be decomposed into reusable sections instead of remaining the hidden composition authority.</impact>
+    <references>
+      <file path="src/collections/Pages/index.ts" />
+      <file path="src/app/(frontend)/page.tsx" />
+      <file path="src/components/home/GrimeTimeMarketingHome.tsx" />
+      <file path=".planning/workflows/visual-page-composer-and-copilot-experience.md" />
+    </references>
+  </decision>
+  <decision id="D-content-005">
+    <title>Normalize `/` first; treat current `/home` ideas as reusable sections, not a required route</title>
+    <summary>The first composition pass should target `/`. The current service and "what we do" treatments that feel like `/home` sections should become reusable section types that can be swapped onto `/`, removed, reordered, and cloned into similar sections later. Grime Time does not need to preserve a dedicated `/home` route to achieve that reuse.</summary>
+    <impact>Implementation starts by decomposing the specialized homepage structure into portable section definitions instead of building route-specific duplication. Section reuse becomes the path to future pages and variants, while `/` stays the canonical first page to normalize.</impact>
+    <references>
+      <file path="src/app/(frontend)/page.tsx" />
+      <file path="src/components/home/GrimeTimeMarketingHome.tsx" />
+      <file path="src/endpoints/seed/home.ts" />
+      <file path=".planning/phases/13-visual-page-composer-and-copilot/PLAN.xml" />
+    </references>
+  </decision>
+  <decision id="D-content-006">
+    <title>First composer pass should be staff-safe, not localhost-only</title>
+    <summary>While the existing page-media devtools remain a useful localhost-only prototype, the first real page-composer delivery for phase 13 should be safe for authenticated staff and usable immediately in normal staff workflows.</summary>
+    <impact>The visual composer needs proper staff access, draft safety, and publish controls rather than relying on localhost host checks as its main boundary. The local-only drawer can continue to exist as a narrower developer tool without blocking the staff-safe authoring surface.</impact>
+    <references>
+      <file path=".planning/workflows/local-page-media-devtools.md" />
+      <file path=".planning/workflows/visual-page-composer-and-copilot-experience.md" />
+      <file path=".planning/phases/13-visual-page-composer-and-copilot/PLAN.xml" />
+    </references>
+  </decision>
+  <decision id="D-content-007">
+    <title>Homepage-specific service treatments become reusable ServiceGrid display variants</title>
+    <summary>The current homepage service cards and pricing-step treatments should not live as hidden one-off JSX inside `GrimeTimeMarketingHome`. They are now modeled as `serviceGrid.displayVariant` values with heading-based fallback for older content so the same section shapes can be added, removed, reordered, duplicated, and reused through the normal page layout model.</summary>
+    <impact>This keeps `/` normalized around `pages.layout`, preserves current visual treatments without a dedicated `/home` route, and gives the upcoming staff-safe composer a real first section-library primitive instead of more route-specific composition logic.</impact>
+    <references>
+      <file path="src/blocks/ServiceGrid/config.ts" />
+      <file path="src/blocks/ServiceGrid/variants.ts" />
+      <file path="src/blocks/ServiceGrid/Component.tsx" />
+      <file path="src/components/home/GrimeTimeMarketingHome.tsx" />
+      <file path="src/endpoints/seed/home.ts" />
+      <file path="src/migrations/20260402_183806_add_service_grid_display_variant.ts" />
+    </references>
+  </decision>
+  <decision id="D-content-008">
+    <title>First staff-safe page composer lives in the frontend admin toolbar and saves drafts by default</title>
+    <summary>The first staff-safe composer surface should sit where staff are already previewing pages: the authenticated frontend admin toolbar. It loads the current page document by route, keeps section edits local in the drawer until the user explicitly saves a draft or publishes, and starts with reusable section structure plus service-grid copy editing instead of waiting for a full CMS replacement.</summary>
+    <impact>This gives Grime Time an immediate visual editing lane without making localhost-only tools the production authoring boundary. It also establishes a draft-first editing pattern for the upcoming media integration and broader section-library work.</impact>
+    <references>
+      <file path="src/components/admin-impersonation/AdminImpersonationToolbar.tsx" />
+      <file path="src/components/admin-impersonation/PageComposerDrawer.tsx" />
+      <file path="src/app/api/internal/page-composer/route.ts" />
+      <file path="src/lib/pages/pageComposer.ts" />
+    </references>
+  </decision>
+  <decision id="D-content-009">
+    <title>Composer media actions stay in the same staff-safe drawer and require a persisted draft layout</title>
+    <summary>The first unified media pass should not send staff back to the localhost-only page-media drawer. Section-row media swapping and generation now live inside the same frontend page-composer drawer, but the composer must require a saved draft before media mutations run so relation-path updates always target the persisted layout, not an unsaved local variant.</summary>
+    <impact>This keeps structure, copy, media, and publish controls in one staff-safe authoring surface while avoiding accidental media updates against stale layout paths. The save-first rule is a deliberate safety tradeoff until later phases add richer selected-context syncing and page creation flows.</impact>
+    <references>
+      <file path="src/components/admin-impersonation/PageComposerDrawer.tsx" />
+      <file path="src/app/api/internal/page-composer/media/route.ts" />
+      <file path="src/app/api/internal/page-composer/route.ts" />
+      <file path="src/lib/pages/pageComposer.ts" />
+      <file path=".planning/phases/13-visual-page-composer-and-copilot/SUMMARY.xml" />
+    </references>
+  </decision>
+  <decision id="D-content-010">
+    <title>Page visibility is explicit, and private pages remain staff-previewable from the frontend composer</title>
+    <summary>The first draft-page workflow needs more than draft vs published. `pages` now carry an explicit `visibility` flag so staff can create private pages without exposing them in public routes or the sitemap. Real admins can still preview those private or draft pages on the frontend so visual editing does not stop at page creation.</summary>
+    <impact>This gives the composer a usable new-page workflow without forcing unfinished pages public. It also establishes a small first-pass warning model: page-local edits are called out as local by default, the homepage slug warns because it controls `/`, and shared/global pricing blocks are flagged when a section reads from the shared Pricing global.</impact>
+    <references>
+      <file path="src/collections/Pages/index.ts" />
+      <file path="src/lib/pages/queryPublicPageBySlug.ts" />
+      <file path="src/app/api/internal/page-composer/route.ts" />
+      <file path="src/components/admin-impersonation/PageComposerDrawer.tsx" />
+      <file path="src/app/(frontend)/(sitemaps)/pages-sitemap.xml/route.ts" />
+      <file path="src/lib/pages/pageComposer.ts" />
+    </references>
+  </decision>
+  <decision id="D-content-011">
+    <title>Frontend staff authoring reuses the shared copilot shell instead of adding another page-editor chatbot</title>
+    <summary>The page composer should not grow a second assistant surface. Real admins on the frontend now share the existing copilot shell, while the composer publishes the selected page, section, and media slot into shared context. Focused media work opens the same copilot modal with explicit image, video, or gallery mode selection instead of pushing staff into another detached prompt box.</summary>
+    <impact>This keeps copilot behavior consistent across portal and site-authoring work, lets the AI route reason about selected authoring state, and creates a direct bridge between the visual editor and future assistant-ui interactables without inventing separate state models for every media or copy workflow.</impact>
+    <references>
+      <file path="src/app/(frontend)/layout.tsx" />
+      <file path="src/components/copilot/PortalCopilot.tsx" />
+      <file path="src/components/copilot/PortalCopilotContext.tsx" />
+      <file path="src/components/admin-impersonation/PageComposerDrawer.tsx" />
+      <file path="src/app/api/internal/ai/copilot/route.ts" />
+      <file path="src/lib/ai/copilotAuthoring.ts" />
+    </references>
+  </decision>
+  <decision id="D-testing-001">
+    <title>Local production browser verification for Grime Time should use `localhost` and treat fixed drawers as first-class interaction surfaces</title>
+    <summary>For Grime Time's local production browser checks, `localhost` is the canonical host. Using `127.0.0.1` breaks Clerk's dev middleware rewrite path under `next start`. The page-composer and copilot Playwright coverage should also scope interactions to the fixed drawer or copilot shell rather than relying on global page locators, because these surfaces intentionally overlay the marketing site.</summary>
+    <impact>Playwright config, login helpers, and future browser specs should prefer `http://localhost` and drawer-scoped or copilot-scoped locators. This keeps browser verification aligned with the real staff authoring surfaces and avoids reintroducing the same local-production or overlay-targeting failures.</impact>
+    <references>
+      <file path="playwright.config.ts" />
+      <file path="tests/helpers/login.ts" />
+      <file path="tests/e2e/page-composer.e2e.spec.ts" />
+      <file path="src/components/admin-impersonation/PageComposerDrawer.tsx" />
+      <file path="src/components/copilot/PortalCopilot.tsx" />
+    </references>
+  </decision>
   <decision id="D-ops-001">
     <title>Day-to-day work centers on `/ops` and the team portal, not Payload admin</title>
     <summary>Staff should complete quotes, invoices, CRM follow-up, and ops workflows from **`/portal`** and **`/ops`** once authenticated. **Payload admin (`/admin`)** is for CMS configuration and after-the-fact data fixes—not the primary daily loop.</summary>
@@ -584,6 +690,18 @@
       <file path=".planning/phases/08-ai-ops-assistant/PLAN.xml" />
       <file path="apps/portfolio/app/api/chat/route.ts" />
       <file path="apps/portfolio/components/site/SiteCopilot.tsx" />
+    </references>
+  </decision>
+  <decision id="D-ai-003">
+    <title>AI-assisted authoring uses selected page or section context plus short-lived focused generation sessions</title>
+    <summary>Grime Time should converge on one AI authoring model: the current page, selected section, and selected media slot are exposed as assistant-aware context, and focused generation flows run as short-lived modal sessions over the shared copilot shell rather than as detached one-off prompt boxes. Mode choice (for example image, video, or gallery swap) must be explicit before generation runs.</summary>
+    <impact>The user can stay in one assistant mental model while still entering a focused media-generation mode. Assistant UI interactables, selected state, and tool-rendered results become the bridge between chat guidance and visual editing instead of letting each prompt surface invent its own state model.</impact>
+    <references>
+      <file path="src/components/copilot/PortalCopilot.tsx" />
+      <file path="src/components/admin-impersonation/PageMediaDevtoolsDrawer.tsx" />
+      <file path="src/components/admin-impersonation/PageMediaDevtoolsContext.tsx" />
+      <file path=".planning/workflows/visual-page-composer-and-copilot-experience.md" />
+      <file path="src/content/docs/site-copilot-and-page-composer.md" />
     </references>
   </decision>
   <decision id="D-comms-001">

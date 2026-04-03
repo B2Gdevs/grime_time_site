@@ -23,6 +23,7 @@ import {
 } from 'lucide-react'
 
 import { DemoModeToggle } from '@/components/demo/DemoModeToggle'
+import { PageComposerDrawer } from '@/components/admin-impersonation/PageComposerDrawer'
 import { PageMediaDevtoolsDrawer } from '@/components/admin-impersonation/PageMediaDevtoolsDrawer'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -496,6 +497,7 @@ export function AdminImpersonationToolbar({
                 )}
               </Button>
             ))}
+            <PageComposerDrawer enabled />
             <PageMediaDevtoolsDrawer enabled={localPageMediaEnabled} />
             <DemoModeToggle />
           </div>

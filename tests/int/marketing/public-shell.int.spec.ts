@@ -3,7 +3,6 @@ import { describe, expect, it } from 'vitest'
 import {
   buildMarketingNavLinks,
   extractLexicalPlainText,
-  getHomeServiceGridBlocks,
   resolveCmsLinkHref,
 } from '@/lib/marketing/public-shell'
 
@@ -55,16 +54,5 @@ describe('public shell helpers', () => {
         },
       }),
     ).toBe('Clear scope. Visible results.')
-  })
-
-  it('returns only service grid blocks from home layout', () => {
-    const blocks = getHomeServiceGridBlocks([
-      { blockType: 'content', columns: [] },
-      { blockType: 'serviceGrid', heading: 'What we do' },
-      { blockType: 'pricingTable', inlinePlans: [] },
-      { blockType: 'serviceGrid', heading: 'How pricing works' },
-    ] as never)
-
-    expect(blocks.map((block) => block.heading)).toEqual(['What we do', 'How pricing works'])
   })
 })

@@ -21,6 +21,9 @@ public/robots.txt
 public/sitemap*.xml
 
 
+# Local one-off dev server logs
+.tmp-*.log
+
 # Playwright
 node_modules/
 /test-results/

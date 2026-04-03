@@ -1,0 +1,1291 @@
+'use client'
+/* eslint-disable @next/next/no-img-element */
+
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
+import { AnimatePresence, motion } from 'motion/react'
+import { DndContext, KeyboardSensor, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
+import type { DragEndEvent } from '@dnd-kit/core'
+import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
+import { usePathname, useRouter } from 'next/navigation'
+import {
+  FilePenLineIcon,
+  GripVerticalIcon,
+  ImageIcon,
+  LoaderCircleIcon,
+  PlusIcon,
+  RefreshCwIcon,
+  RocketIcon,
+  SparklesIcon,
+  SquarePenIcon,
+  Trash2Icon,
+  UploadIcon,
+  XIcon,
+} from 'lucide-react'
+
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { usePortalCopilotOptional } from '@/components/copilot/PortalCopilotContext'
+import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Textarea } from '@/components/ui/textarea'
+import { buildMediaDevtoolsSummary, type MediaDevtoolsSummary } from '@/lib/media/pageMediaDevtools'
+import {
+  appendPageLayoutSection,
+  buildPageComposerNotices,
+  pageSlugToFrontendPath,
+  buildPageComposerSectionSummaries,
+  duplicatePageLayoutSection,
+  removePageLayoutSection,
+  type PageComposerDocument,
+  type PageComposerNotice,
+  type PageComposerPageSummary,
+  type PageComposerSectionSummary,
+  type PageComposerSectionTemplate,
+  updatePageLayoutSection,
+} from '@/lib/pages/pageComposer'
+import type { Media, ServiceGridBlock } from '@/payload-types'
+
+type ComposerTab = 'content' | 'media' | 'publish' | 'structure'
+type MediaAction = 'create-and-swap' | 'generate-and-swap' | 'swap-existing-reference'
+type SavingAction = 'publish-page' | 'save-draft'
+type ServiceGridService = NonNullable<ServiceGridBlock['services']>[number]
+
+type MediaLibraryItem = {
+  alt: null | string
+  filename: null | string
+  id: number
+  mimeType: null | string
+  previewUrl: null | string
+  updatedAt: string
+}
+
+type SectionMediaSlot = {
+  label: string
+  media: MediaDevtoolsSummary | null
+  mediaId: number | null
+  mimeType: null | string
+  relationPath: string
+}
+
+function formatTimestamp(value: null | string | undefined): string {
+  if (!value) return 'Not published'
+  try {
+    return new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value))
+  } catch {
+    return value
+  }
+}
+
+function asMedia(value: Media | null | number | undefined): Media | null {
+  return value && typeof value === 'object' ? value : null
+}
+
+function getFileKind(file: File): 'image' | 'video' {
+  return file.type.startsWith('video/') ? 'video' : 'image'
+}
+
+function getMediaKindFromMimeType(mimeType: null | string | undefined): 'image' | 'video' {
+  return mimeType?.startsWith('video/') ? 'video' : 'image'
+}
+
+function buildSlugCandidate(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}
+
+function ComposerNoticeList({ notices }: { notices: PageComposerNotice[] }) {
+  if (!notices.length) {
+    return null
+  }
+
+  return (
+    <div className="grid gap-3">
+      {notices.map((notice) => (
+        <div
+          key={notice.id}
+          className={`rounded-2xl border p-4 text-sm ${
+            notice.tone === 'warning'
+              ? 'border-amber-500/30 bg-amber-500/10 text-amber-950 dark:text-amber-100'
+              : 'border-border/70 bg-card/50 text-muted-foreground'
+          }`}
+        >
+          <div className="font-semibold text-foreground">{notice.title}</div>
+          <div className="mt-1">{notice.description}</div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function SortableSectionRow({
+  active,
+  onClick,
+  onDuplicate,
+  onRemove,
+  summary,
+}: {
+  active: boolean
+  onClick: () => void
+  onDuplicate: () => void
+  onRemove: () => void
+  summary: PageComposerSectionSummary
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: String(summary.index) })
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
+      className={`rounded-2xl border p-3 transition ${active ? 'border-primary/60 bg-primary/5' : 'border-border/70 bg-card/50'}`}
+    >
+      <div className="flex items-start gap-3">
+        <button className="mt-0.5 rounded-lg border border-border/70 bg-background p-2 text-muted-foreground" type="button" {...attributes} {...listeners}>
+          <GripVerticalIcon className="h-4 w-4" />
+        </button>
+        <button className="min-w-0 flex-1 text-left" onClick={onClick} type="button">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm font-semibold text-foreground">{summary.label}</span>
+            <Badge variant="outline">{summary.blockType}</Badge>
+            {summary.variant ? <Badge variant="secondary">{summary.variant}</Badge> : null}
+          </div>
+          <div className="mt-1 text-xs text-muted-foreground">{summary.description}</div>
+        </button>
+        <div className="flex shrink-0 gap-2">
+          <Button onClick={onDuplicate} size="icon" type="button" variant="ghost">
+            <PlusIcon className="h-4 w-4" />
+          </Button>
+          <Button onClick={onRemove} size="icon" type="button" variant="ghost">
+            <Trash2Icon className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
+  const pathname = usePathname()
+  const router = useRouter()
+  const copilot = usePortalCopilotOptional()
+  const setCopilotAuthoringContext = copilot?.setAuthoringContext
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  )
+  const [activeTab, setActiveTab] = useState<ComposerTab>('structure')
+  const [availablePages, setAvailablePages] = useState<PageComposerPageSummary[]>([])
+  const [creatingPage, setCreatingPage] = useState(false)
+  const [draftPage, setDraftPage] = useState<null | PageComposerDocument>(null)
+  const [loading, setLoading] = useState(false)
+  const [mediaKind, setMediaKind] = useState<'image' | 'video'>('image')
+  const [mediaLibrary, setMediaLibrary] = useState<MediaLibraryItem[]>([])
+  const [mediaLoading, setMediaLoading] = useState(false)
+  const [mediaPrompt, setMediaPrompt] = useState('')
+  const [mediaStatus, setMediaStatus] = useState<null | string>(null)
+  const [selectedMediaPath, setSelectedMediaPath] = useState<null | string>(null)
+  const [submittingMediaAction, setSubmittingMediaAction] = useState<null | MediaAction>(null)
+  const [open, setOpen] = useState(false)
+  const [savingAction, setSavingAction] = useState<null | SavingAction>(null)
+  const [selectedIndex, setSelectedIndex] = useState(0)
+  const [status, setStatus] = useState<null | string>(null)
+  const [newPageSlug, setNewPageSlug] = useState('')
+  const [newPageTitle, setNewPageTitle] = useState('')
+  const [titleDraft, setTitleDraft] = useState('')
+  const [slugDraft, setSlugDraft] = useState('')
+  const [visibilityDraft, setVisibilityDraft] = useState<'private' | 'public'>('public')
+  const [newPageVisibility, setNewPageVisibility] = useState<'private' | 'public'>('private')
+  const [dirty, setDirty] = useState(false)
+  const mediaUploadInputRef = useRef<HTMLInputElement | null>(null)
+  const mediaPromptId = useId()
+
+  const sectionSummaries = useMemo(() => buildPageComposerSectionSummaries(draftPage?.layout), [draftPage?.layout])
+  const selectedBlock = draftPage?.layout?.[selectedIndex] || null
+  const selectedServiceGrid = selectedBlock?.blockType === 'serviceGrid' ? (selectedBlock as ServiceGridBlock) : null
+  const mediaSlots = useMemo<SectionMediaSlot[]>(() => {
+    if (!selectedServiceGrid) return []
+    return (selectedServiceGrid.services || []).map((service, serviceIndex) => {
+      const media = buildMediaDevtoolsSummary(asMedia(service.media))
+      return {
+        label: service.name || `Row ${serviceIndex + 1}`,
+        media,
+        mediaId: media?.id || null,
+        mimeType: media?.mimeType || null,
+        relationPath: `layout.${selectedIndex}.services.${serviceIndex}.media`,
+      }
+    })
+  }, [selectedIndex, selectedServiceGrid])
+  const selectedMediaSlot = mediaSlots.find((slot) => slot.relationPath === selectedMediaPath) || mediaSlots[0] || null
+  const mediaActionsLocked = dirty || !draftPage || !selectedMediaSlot
+  const footerStatus = status || mediaStatus || 'Page edits stay local until you save or publish.'
+  const composerNotices = useMemo<PageComposerNotice[]>(
+    () =>
+      draftPage
+        ? buildPageComposerNotices({
+            page: draftPage,
+            selectedBlock,
+          })
+        : [],
+    [draftPage, selectedBlock],
+  )
+
+  useEffect(() => {
+    if (!sectionSummaries.length) return setSelectedIndex(0)
+    setSelectedIndex((current) => Math.min(current, sectionSummaries.length - 1))
+  }, [sectionSummaries.length])
+
+  useEffect(() => {
+    if (!mediaSlots.length) return setSelectedMediaPath(null)
+    setSelectedMediaPath((current) =>
+      current && mediaSlots.some((slot) => slot.relationPath === current) ? current : mediaSlots[0]?.relationPath || null,
+    )
+  }, [mediaSlots])
+
+  useEffect(() => {
+    if (!setCopilotAuthoringContext || !draftPage) {
+      return
+    }
+
+    setCopilotAuthoringContext({
+      mediaSlot: selectedMediaSlot
+        ? {
+            label: selectedMediaSlot.label,
+            mediaId: selectedMediaSlot.mediaId,
+            mimeType: selectedMediaSlot.mimeType,
+            relationPath: selectedMediaSlot.relationPath,
+          }
+        : null,
+      page: {
+        id: draftPage.id,
+        pagePath: draftPage.pagePath,
+        slug: draftPage.slug,
+        status: draftPage._status === 'published' ? 'published' : 'draft',
+        title: draftPage.title,
+        visibility: draftPage.visibility === 'private' ? 'private' : 'public',
+      },
+      section: sectionSummaries[selectedIndex]
+        ? {
+            blockType: sectionSummaries[selectedIndex].blockType,
+            description: sectionSummaries[selectedIndex].description,
+            index: sectionSummaries[selectedIndex].index,
+            label: sectionSummaries[selectedIndex].label,
+            variant: sectionSummaries[selectedIndex].variant,
+          }
+        : null,
+      surface: 'page-composer',
+    })
+  }, [draftPage, sectionSummaries, selectedIndex, selectedMediaSlot, setCopilotAuthoringContext])
+
+  const loadPage = useCallback(
+    async (args?: { pageId?: number; pagePath?: string }) => {
+      if (!enabled) return
+
+      const query = args?.pageId
+        ? `pageId=${args.pageId}`
+        : `pagePath=${encodeURIComponent(args?.pagePath || pathname)}`
+
+      setLoading(true)
+      setStatus(null)
+
+      try {
+        const response = await fetch(`/api/internal/page-composer?${query}`)
+        const payload = (await response.json().catch(() => null)) as
+          | null
+          | { error?: string; page?: PageComposerDocument; pages?: PageComposerPageSummary[] }
+
+        if (!response.ok || !payload?.page) {
+          throw new Error(payload?.error || 'Unable to load the page composer.')
+        }
+
+        setAvailablePages(payload.pages || [])
+        setDraftPage(payload.page)
+        setTitleDraft(payload.page.title || '')
+        setSlugDraft(payload.page.slug || '')
+        setVisibilityDraft(payload.page.visibility === 'private' ? 'private' : 'public')
+        setDirty(false)
+      } catch (error) {
+        setStatus(error instanceof Error ? error.message : 'Unable to load the page composer.')
+      } finally {
+        setLoading(false)
+      }
+    },
+    [enabled, pathname],
+  )
+
+  const loadMediaLibrary = useCallback(async () => {
+    if (!enabled || !open) return
+    setMediaLoading(true)
+    setMediaStatus(null)
+    try {
+      const response = await fetch('/api/internal/page-composer/media')
+      const payload = (await response.json().catch(() => null)) as null | { error?: string; items?: MediaLibraryItem[] }
+      if (!response.ok) throw new Error(payload?.error || 'Unable to load media records.')
+      setMediaLibrary(payload?.items || [])
+    } catch (error) {
+      setMediaStatus(error instanceof Error ? error.message : 'Unable to load media records.')
+    } finally {
+      setMediaLoading(false)
+    }
+  }, [enabled, open])
+
+  useEffect(() => {
+    if (!open) return
+    void loadPage()
+    void loadMediaLibrary()
+  }, [loadMediaLibrary, loadPage, open])
+
+  function mutatePage(mutator: (page: PageComposerDocument) => PageComposerDocument) {
+    setDraftPage((current) => {
+      if (!current) return current
+      setDirty(true)
+      return mutator(current)
+    })
+  }
+
+  function replaceSelectedBlock(block: NonNullable<PageComposerDocument['layout']>[number]) {
+    mutatePage((page) => ({
+      ...page,
+      layout: updatePageLayoutSection({ block, index: selectedIndex, layout: page.layout || [] }),
+    }))
+  }
+
+  function mutateSelectedServiceGrid(mutator: (block: ServiceGridBlock) => ServiceGridBlock) {
+    if (!selectedServiceGrid) return
+    replaceSelectedBlock(mutator(selectedServiceGrid))
+  }
+
+  function mutateSelectedService(serviceIndex: number, mutator: (service: ServiceGridService) => ServiceGridService) {
+    mutateSelectedServiceGrid((block) => {
+      const services = [...(block.services || [])]
+      const current = services[serviceIndex]
+      if (!current) return block
+      services[serviceIndex] = mutator(current)
+      return { ...block, services }
+    })
+  }
+
+  function handleDragEnd(event: DragEndEvent) {
+    const activeId = Number(event.active.id)
+    const overId = Number(event.over?.id)
+    if (!Number.isInteger(activeId) || !Number.isInteger(overId) || activeId === overId) return
+    mutatePage((page) => ({ ...page, layout: arrayMove(page.layout || [], activeId, overId) }))
+    setSelectedIndex(overId)
+  }
+
+  function appendTemplate(template: PageComposerSectionTemplate) {
+    mutatePage((page) => ({ ...page, layout: appendPageLayoutSection({ layout: page.layout || [], template }) }))
+    setSelectedIndex(sectionSummaries.length)
+  }
+
+  async function persistPage(action: SavingAction) {
+    if (!draftPage) return
+    setSavingAction(action)
+    setStatus(null)
+    try {
+      const response = await fetch('/api/internal/page-composer', {
+        body: JSON.stringify({
+          action,
+          layout: draftPage.layout,
+          pageId: draftPage.id,
+          slug: slugDraft.trim(),
+          title: titleDraft.trim(),
+          visibility: visibilityDraft,
+        }),
+        headers: { 'content-type': 'application/json' },
+        method: 'POST',
+      })
+      const payload = (await response.json().catch(() => null)) as
+        | null
+        | { error?: string; page?: PageComposerDocument; pages?: PageComposerPageSummary[] }
+      if (!response.ok || !payload?.page) throw new Error(payload?.error || 'Unable to save the page.')
+      setAvailablePages(payload.pages || [])
+      setDraftPage(payload.page)
+      setTitleDraft(payload.page.title || '')
+      setSlugDraft(payload.page.slug || '')
+      setVisibilityDraft(payload.page.visibility === 'private' ? 'private' : 'public')
+      setDirty(false)
+      setStatus(action === 'publish-page' ? 'Page published.' : 'Draft saved.')
+      router.refresh()
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : 'Unable to save the page.')
+    } finally {
+      setSavingAction(null)
+    }
+  }
+
+  async function createPage() {
+    setCreatingPage(true)
+    setStatus(null)
+
+    try {
+      const response = await fetch('/api/internal/page-composer', {
+        body: JSON.stringify({
+          action: 'create-page',
+          slug: newPageSlug.trim(),
+          title: newPageTitle.trim(),
+          visibility: newPageVisibility,
+        }),
+        headers: { 'content-type': 'application/json' },
+        method: 'POST',
+      })
+      const payload = (await response.json().catch(() => null)) as
+        | null
+        | { error?: string; page?: PageComposerDocument; pages?: PageComposerPageSummary[] }
+
+      if (!response.ok || !payload?.page) {
+        throw new Error(payload?.error || 'Unable to create the page draft.')
+      }
+
+      setAvailablePages(payload.pages || [])
+      setDraftPage(payload.page)
+      setTitleDraft(payload.page.title || '')
+      setSlugDraft(payload.page.slug || '')
+      setVisibilityDraft(payload.page.visibility === 'private' ? 'private' : 'public')
+      setNewPageTitle('')
+      setNewPageSlug('')
+      setNewPageVisibility('private')
+      setSelectedIndex(0)
+      setDirty(false)
+      setStatus('Draft page created.')
+      setActiveTab('content')
+      router.push(payload.page.pagePath)
+      router.refresh()
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : 'Unable to create the page draft.')
+    } finally {
+      setCreatingPage(false)
+    }
+  }
+
+  function switchToPage(pageId: number) {
+    if (dirty) {
+      setStatus('Save, publish, or reload the current page before switching to another page.')
+      return
+    }
+
+    const nextPage = availablePages.find((page) => Number(page.id) === pageId)
+    setSelectedIndex(0)
+    void loadPage({ pageId })
+
+    if (nextPage) {
+      router.push(nextPage.pagePath)
+      router.refresh()
+    }
+  }
+
+  async function submitMediaAction(args: {
+    action: MediaAction
+    file?: File
+    mediaId?: number | null
+    prompt?: string
+    relationPath: string
+    success: string
+  }) {
+    if (!draftPage) return
+    setSubmittingMediaAction(args.action)
+    setMediaStatus(null)
+    try {
+      const formData = new FormData()
+      formData.set('action', args.action)
+      formData.set('pageId', String(draftPage.id))
+      formData.set('relationPath', args.relationPath)
+      formData.set('mediaKind', args.file ? getFileKind(args.file) : mediaKind)
+      if (args.file) formData.set('file', args.file)
+      if (args.mediaId) {
+        formData.set('mediaId', String(args.mediaId))
+        formData.set('sourceMediaId', String(args.mediaId))
+      }
+      if (args.prompt?.trim()) {
+        formData.set('prompt', args.prompt.trim())
+        formData.set('alt', args.prompt.trim().slice(0, 240))
+      }
+      const response = await fetch('/api/internal/page-composer/media', { body: formData, method: 'POST' })
+      const payload = (await response.json().catch(() => null)) as null | { error?: string }
+      if (!response.ok) throw new Error(payload?.error || 'Unable to update section media.')
+      setMediaPrompt('')
+      setMediaStatus(args.success)
+      await loadPage()
+      await loadMediaLibrary()
+      router.refresh()
+    } catch (error) {
+      setMediaStatus(error instanceof Error ? error.message : 'Unable to update section media.')
+    } finally {
+      setSubmittingMediaAction(null)
+    }
+  }
+
+  if (!enabled) return null
+
+  return (
+    <>
+      <Button onClick={() => setOpen(true)} size="sm" type="button" variant="ghost">
+        <FilePenLineIcon className="h-4 w-4" />
+        Page composer
+      </Button>
+
+      <AnimatePresence>
+        {open ? (
+          <>
+            <motion.button
+              aria-label="Close page composer"
+              className="fixed inset-0 z-[88] bg-black/55"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setOpen(false)}
+              type="button"
+            />
+            <motion.aside
+              className="fixed inset-y-0 right-0 z-[89] flex w-[min(100vw,38rem)] flex-col border-l border-border/70 bg-background/96 shadow-2xl backdrop-blur"
+              initial={{ opacity: 0, x: 64 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 64 }}
+              transition={{ duration: 0.18, ease: 'easeOut' }}
+            >
+              <div className="flex items-start justify-between gap-4 border-b border-border/70 px-5 py-4">
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge variant="outline">Staff page composer</Badge>
+                    {draftPage ? <Badge variant="secondary">{draftPage.pagePath}</Badge> : null}
+                    {draftPage ? <Badge variant="outline">{draftPage.visibility || 'public'}</Badge> : null}
+                    {dirty ? <Badge>Unsaved</Badge> : null}
+                  </div>
+                  <h2 className="mt-2 text-lg font-semibold text-foreground">Visual page composer</h2>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Add, remove, duplicate, reorder, rewrite, and manage section media before saving a draft or publishing.
+                  </p>
+                  <div className="mt-3 grid gap-2">
+                    <label className="text-[11px] font-medium uppercase tracking-[0.22em] text-muted-foreground">Working page</label>
+                    {draftPage ? (
+                      <Select
+                        disabled={loading || !availablePages.length}
+                        onValueChange={(value) => switchToPage(Number(value))}
+                        value={String(draftPage.id)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a page" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {availablePages.map((page) => (
+                            <SelectItem key={page.id} value={String(page.id)}>
+                              {page.title} ({page.visibility || 'public'})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <div className="flex h-10 items-center rounded-xl border border-input bg-background px-3 text-sm text-muted-foreground">
+                        {loading ? 'Loading current page...' : 'No page loaded yet'}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <Button aria-label="Dismiss page composer" onClick={() => setOpen(false)} size="icon" type="button" variant="ghost">
+                  <XIcon className="h-4 w-4" />
+                </Button>
+              </div>
+
+              <Tabs className="grid min-h-0 flex-1 grid-rows-[auto_minmax(0,1fr)_auto]" onValueChange={(value) => setActiveTab(value as ComposerTab)} value={activeTab}>
+                <div className="border-b border-border/70 px-5 py-3">
+                  <TabsList className="grid h-auto w-full grid-cols-4 gap-1 rounded-xl p-1">
+                    <TabsTrigger value="structure">Structure</TabsTrigger>
+                    <TabsTrigger value="content">Content</TabsTrigger>
+                    <TabsTrigger value="media">Media</TabsTrigger>
+                    <TabsTrigger value="publish">Publish</TabsTrigger>
+                  </TabsList>
+                </div>
+
+                <TabsContent className="mt-0 min-h-0 overflow-y-auto px-5 py-4" value="structure">
+                  {loading ? (
+                    <div className="rounded-2xl border border-border/70 bg-card/50 px-4 py-6 text-sm text-muted-foreground">
+                      Loading page structure...
+                    </div>
+                  ) : !draftPage ? (
+                    <div className="rounded-2xl border border-border/70 bg-card/50 px-4 py-6 text-sm text-muted-foreground">
+                      {status || 'No page is available for this route.'}
+                    </div>
+                  ) : (
+                    <div className="grid gap-5">
+                      <div className="rounded-2xl border border-border/70 bg-card/50 p-4">
+                        <div className="text-sm font-semibold text-foreground">{draftPage.title}</div>
+                        <div className="mt-1 text-xs text-muted-foreground">
+                          {draftPage.slug} · {sectionSummaries.length} section{sectionSummaries.length === 1 ? '' : 's'}
+                        </div>
+                      </div>
+
+                      <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd} sensors={sensors}>
+                        <SortableContext items={sectionSummaries.map((summary) => String(summary.index))} strategy={verticalListSortingStrategy}>
+                          <div className="grid gap-3">
+                            {sectionSummaries.map((summary) => (
+                              <SortableSectionRow
+                                key={`${summary.index}-${summary.label}`}
+                                active={selectedIndex === summary.index}
+                                onClick={() => {
+                                  setSelectedIndex(summary.index)
+                                  setActiveTab('content')
+                                }}
+                                onDuplicate={() => {
+                                  mutatePage((page) => ({
+                                    ...page,
+                                    layout: duplicatePageLayoutSection({ index: summary.index, layout: page.layout || [] }),
+                                  }))
+                                  setSelectedIndex(summary.index + 1)
+                                }}
+                                onRemove={() => {
+                                  mutatePage((page) => ({
+                                    ...page,
+                                    layout: removePageLayoutSection({ index: summary.index, layout: page.layout || [] }),
+                                  }))
+                                  setSelectedIndex(Math.max(0, summary.index - 1))
+                                }}
+                                summary={summary}
+                              />
+                            ))}
+                          </div>
+                        </SortableContext>
+                      </DndContext>
+
+                      <div className="rounded-2xl border border-border/70 bg-card/50 p-4">
+                        <div className="text-sm font-semibold text-foreground">Add reusable section</div>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <Button onClick={() => appendTemplate('service-feature-cards')} size="sm" type="button" variant="secondary">
+                            What we do
+                          </Button>
+                          <Button onClick={() => appendTemplate('service-pricing-steps')} size="sm" type="button" variant="secondary">
+                            Pricing steps
+                          </Button>
+                          <Button onClick={() => appendTemplate('service-interactive')} size="sm" type="button" variant="secondary">
+                            Interactive service
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </TabsContent>
+
+                <TabsContent className="mt-0 min-h-0 overflow-y-auto px-5 py-4" value="content">
+                  {loading ? (
+                    <div className="rounded-2xl border border-border/70 bg-card/50 px-4 py-6 text-sm text-muted-foreground">
+                      Loading section editor...
+                    </div>
+                  ) : !draftPage || !selectedBlock ? (
+                    <div className="rounded-2xl border border-border/70 bg-card/50 px-4 py-6 text-sm text-muted-foreground">
+                      Select a section from Structure first.
+                    </div>
+                  ) : selectedBlock.blockType === 'serviceGrid' ? (
+                    <div className="grid gap-4">
+                      <div className="rounded-2xl border border-border/70 bg-card/50 p-4">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <div>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <div className="text-sm font-semibold text-foreground">{selectedBlock.heading || 'Service section'}</div>
+                              <Badge variant="outline">serviceGrid</Badge>
+                            </div>
+                            <div className="mt-1 text-xs text-muted-foreground">
+                              Edit the visible copy for this reusable section. Section media now lives in the Media tab for staff-safe swaps and generation.
+                            </div>
+                          </div>
+                          {copilot ? (
+                            <Button onClick={copilot.open} size="sm" type="button" variant="outline">
+                              <SparklesIcon className="h-4 w-4" />
+                              Ask copilot
+                            </Button>
+                          ) : null}
+                        </div>
+                      </div>
+
+                      <ComposerNoticeList notices={composerNotices} />
+
+                      <div className="grid gap-2">
+                        <label className="text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground">Block name</label>
+                        <Input onChange={(event) => replaceSelectedBlock({ ...selectedBlock, blockName: event.target.value || undefined })} value={selectedBlock.blockName || ''} />
+                      </div>
+
+                      <div className="grid gap-2">
+                        <label className="text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground">Display variant</label>
+                        <select
+                          className="h-10 rounded-xl border border-input bg-background px-3 text-sm"
+                          onChange={(event) =>
+                            replaceSelectedBlock({
+                              ...selectedBlock,
+                              displayVariant: event.target.value as 'featureCards' | 'interactive' | 'pricingSteps',
+                            })
+                          }
+                          value={selectedBlock.displayVariant || 'interactive'}
+                        >
+                          <option value="featureCards">Feature cards</option>
+                          <option value="pricingSteps">Pricing steps</option>
+                          <option value="interactive">Interactive detail</option>
+                        </select>
+                      </div>
+
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <div className="grid gap-2">
+                          <label className="text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground">Eyebrow</label>
+                          <Input onChange={(event) => replaceSelectedBlock({ ...selectedBlock, eyebrow: event.target.value })} value={selectedBlock.eyebrow || ''} />
+                        </div>
+                        <div className="grid gap-2">
+                          <label className="text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground">Heading</label>
+                          <Input onChange={(event) => replaceSelectedBlock({ ...selectedBlock, heading: event.target.value })} value={selectedBlock.heading || ''} />
+                        </div>
+                      </div>
+
+                      <div className="grid gap-2">
+                        <label className="text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground">Intro</label>
+                        <Textarea className="min-h-24" onChange={(event) => replaceSelectedBlock({ ...selectedBlock, intro: event.target.value })} value={selectedBlock.intro || ''} />
+                      </div>
+
+                      <div className="grid gap-3">
+                        {(selectedBlock.services || []).map((service, serviceIndex) => (
+                          <div key={`${service.name}-${serviceIndex}`} className="rounded-2xl border border-border/70 bg-card/50 p-4">
+                            <div className="flex items-center justify-between gap-3">
+                              <div className="text-sm font-semibold text-foreground">Row {serviceIndex + 1}</div>
+                              <Button
+                                onClick={() =>
+                                  mutateSelectedServiceGrid((block) => {
+                                    const services = [...(block.services || [])]
+                                    services.splice(serviceIndex, 1)
+                                    return { ...block, services }
+                                  })
+                                }
+                                size="sm"
+                                type="button"
+                                variant="ghost"
+                              >
+                                <Trash2Icon className="h-4 w-4" />
+                                Remove
+                              </Button>
+                            </div>
+
+                            <div className="mt-3 grid gap-3 md:grid-cols-2">
+                              <Input
+                                onChange={(event) => mutateSelectedService(serviceIndex, (current) => ({ ...current, name: event.target.value }))}
+                                placeholder="Name"
+                                value={service.name || ''}
+                              />
+                              <Input
+                                onChange={(event) => mutateSelectedService(serviceIndex, (current) => ({ ...current, eyebrow: event.target.value }))}
+                                placeholder="Eyebrow"
+                                value={service.eyebrow || ''}
+                              />
+                            </div>
+
+                            <div className="mt-3 grid gap-3">
+                              <Textarea
+                                className="min-h-20"
+                                onChange={(event) => mutateSelectedService(serviceIndex, (current) => ({ ...current, summary: event.target.value }))}
+                                placeholder="Summary"
+                                value={service.summary || ''}
+                              />
+                              <Input
+                                onChange={(event) => mutateSelectedService(serviceIndex, (current) => ({ ...current, pricingHint: event.target.value }))}
+                                placeholder="Pricing hint"
+                                value={service.pricingHint || ''}
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <Button
+                        onClick={() =>
+                          mutateSelectedServiceGrid((block) => ({
+                            ...block,
+                            services: [
+                              ...(block.services || []),
+                              {
+                                eyebrow: 'New row',
+                                highlights: [{ text: 'Replace this default proof point.' }],
+                                name: 'New item',
+                                pricingHint: '',
+                                summary: 'Describe this row.',
+                              },
+                            ],
+                          }))
+                        }
+                        size="sm"
+                        type="button"
+                        variant="secondary"
+                      >
+                        <PlusIcon className="h-4 w-4" />
+                        Add row
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="rounded-2xl border border-border/70 bg-card/50 px-4 py-6 text-sm text-muted-foreground">
+                      This first content editor is focused on reusable `serviceGrid` sections. Other block types can still be reordered, duplicated, and removed from Structure.
+                    </div>
+                  )}
+                </TabsContent>
+
+                <TabsContent className="mt-0 min-h-0 overflow-y-auto px-5 py-4" value="media">
+                  {loading ? (
+                    <div className="rounded-2xl border border-border/70 bg-card/50 px-4 py-6 text-sm text-muted-foreground">
+                      Loading section media...
+                    </div>
+                  ) : !draftPage || !selectedBlock ? (
+                    <div className="rounded-2xl border border-border/70 bg-card/50 px-4 py-6 text-sm text-muted-foreground">
+                      Select a section from Structure first.
+                    </div>
+                  ) : !selectedServiceGrid ? (
+                    <div className="rounded-2xl border border-border/70 bg-card/50 px-4 py-6 text-sm text-muted-foreground">
+                      This first media editor is focused on `serviceGrid` rows. Other media relationships still use the existing page media tools while the unified composer expands.
+                    </div>
+                  ) : (
+                    <div className="grid gap-4">
+                      <div className="rounded-2xl border border-border/70 bg-card/50 p-4">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <div className="text-sm font-semibold text-foreground">{selectedServiceGrid.heading || 'Service section'}</div>
+                          <Badge variant="outline">serviceGrid media</Badge>
+                          <Badge variant="secondary">{mediaSlots.length} slots</Badge>
+                        </div>
+                        <div className="mt-1 text-xs text-muted-foreground">
+                          Choose a row, then upload, generate, or swap from recent media without leaving the page.
+                        </div>
+                      </div>
+
+                      {dirty ? (
+                        <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-950 dark:text-amber-100">
+                          Save draft before changing media. Media actions run against the persisted draft layout so relation paths stay aligned with the current section structure.
+                        </div>
+                      ) : null}
+
+                      <div className="grid gap-3">
+                        {mediaSlots.map((slot) => (
+                          <button
+                            key={slot.relationPath}
+                            className={`rounded-2xl border p-3 text-left transition ${
+                              selectedMediaSlot?.relationPath === slot.relationPath
+                                ? 'border-primary/60 bg-primary/5'
+                                : 'border-border/70 bg-card/50 hover:border-primary/30'
+                            }`}
+                            onClick={() => {
+                              setSelectedMediaPath(slot.relationPath)
+                              setMediaKind(getMediaKindFromMimeType(slot.media?.mimeType))
+                            }}
+                            type="button"
+                          >
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="text-sm font-semibold text-foreground">{slot.label}</span>
+                              {slot.mediaId ? <Badge variant="secondary">ID {slot.mediaId}</Badge> : null}
+                              <Badge variant="outline">{slot.relationPath}</Badge>
+                            </div>
+                            <div className="mt-1 text-xs text-muted-foreground">{slot.media?.filename || 'No media assigned yet.'}</div>
+                          </button>
+                        ))}
+                      </div>
+
+                      {selectedMediaSlot ? (
+                        <>
+                          <div className="grid gap-4 md:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
+                            <div className="overflow-hidden rounded-3xl border border-border/70 bg-card/50">
+                              {selectedMediaSlot.media?.previewUrl ? (
+                                getMediaKindFromMimeType(selectedMediaSlot.media.mimeType) === 'video' ? (
+                                  <video className="aspect-video h-full w-full bg-black object-cover" controls muted playsInline src={selectedMediaSlot.media.previewUrl} />
+                                ) : (
+                                  <img
+                                    alt={selectedMediaSlot.media.alt || selectedMediaSlot.label}
+                                    className="aspect-video h-full w-full object-cover"
+                                    src={selectedMediaSlot.media.previewUrl}
+                                  />
+                                )
+                              ) : (
+                                <div className="flex aspect-video items-center justify-center bg-muted/40 text-muted-foreground">
+                                  <div className="flex items-center gap-2 text-sm">
+                                    <ImageIcon className="h-4 w-4" />
+                                    No media assigned
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="grid gap-3 rounded-3xl border border-border/70 bg-card/50 p-4">
+                              <div>
+                                <div className="text-sm font-semibold text-foreground">{selectedMediaSlot.label}</div>
+                                <div className="mt-1 text-xs text-muted-foreground">
+                                  {selectedMediaSlot.media?.alt || 'Use upload, generate, or recent-library swap to fill this row.'}
+                                </div>
+                              </div>
+                              <div className="grid gap-2 text-xs text-muted-foreground">
+                                <div>
+                                  Current file: <span className="text-foreground">{selectedMediaSlot.media?.filename || 'None'}</span>
+                                </div>
+                                <div>
+                                  Last updated: <span className="text-foreground">{formatTimestamp(selectedMediaSlot.media?.updatedAt)}</span>
+                                </div>
+                              </div>
+                              <div className="flex flex-wrap gap-2">
+                                <Button onClick={() => setMediaKind('image')} size="sm" type="button" variant={mediaKind === 'image' ? 'default' : 'outline'}>
+                                  Image
+                                </Button>
+                                <Button onClick={() => setMediaKind('video')} size="sm" type="button" variant={mediaKind === 'video' ? 'default' : 'outline'}>
+                                  Video
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="rounded-3xl border border-border/70 bg-card/50 p-4">
+                            <div className="flex flex-wrap items-center justify-between gap-3">
+                              <div>
+                                <div className="text-sm font-semibold text-foreground">Upload or generate</div>
+                                <div className="mt-1 text-xs text-muted-foreground">
+                                  Upload a file directly or generate a new {mediaKind} for this selected service row.
+                                </div>
+                              </div>
+                              <div className="flex flex-wrap gap-2">
+                                {copilot ? (
+                                  <Button
+                                    disabled={mediaActionsLocked}
+                                    onClick={() =>
+                                      copilot.openFocusedMediaSession({
+                                        mode: mediaKind,
+                                        promptHint: mediaPrompt,
+                                      })
+                                    }
+                                    size="sm"
+                                    type="button"
+                                    variant="outline"
+                                  >
+                                    <SparklesIcon className="h-4 w-4" />
+                                    Focused copilot
+                                  </Button>
+                                ) : null}
+                                <Button disabled={mediaLoading} onClick={() => void loadMediaLibrary()} size="sm" type="button" variant="ghost">
+                                  <RefreshCwIcon className={`h-4 w-4 ${mediaLoading ? 'animate-spin' : ''}`} />
+                                  Refresh library
+                                </Button>
+                              </div>
+                            </div>
+
+                            <input
+                              accept={mediaKind === 'video' ? 'video/*' : 'image/*'}
+                              className="hidden"
+                              ref={mediaUploadInputRef}
+                              type="file"
+                              onChange={async (event) => {
+                                const file = event.target.files?.[0]
+                                if (!file || !selectedMediaSlot) return
+                                await submitMediaAction({
+                                  action: 'create-and-swap',
+                                  file,
+                                  relationPath: selectedMediaSlot.relationPath,
+                                  success: `Updated ${selectedMediaSlot.label}.`,
+                                })
+                                event.currentTarget.value = ''
+                              }}
+                            />
+
+                            <div className="mt-4 flex flex-wrap gap-2">
+                              <Button disabled={mediaActionsLocked || submittingMediaAction !== null} onClick={() => mediaUploadInputRef.current?.click()} size="sm" type="button" variant="secondary">
+                                {submittingMediaAction === 'create-and-swap' ? (
+                                  <>
+                                    <LoaderCircleIcon className="h-4 w-4 animate-spin" />
+                                    Uploading...
+                                  </>
+                                ) : (
+                                  <>
+                                    <UploadIcon className="h-4 w-4" />
+                                    Upload and swap
+                                  </>
+                                )}
+                              </Button>
+                              <Button
+                                disabled={mediaActionsLocked || submittingMediaAction !== null || !mediaPrompt.trim()}
+                                onClick={() => {
+                                  if (!selectedMediaSlot) return
+                                  void submitMediaAction({
+                                    action: 'generate-and-swap',
+                                    mediaId: selectedMediaSlot.mediaId,
+                                    prompt: mediaPrompt,
+                                    relationPath: selectedMediaSlot.relationPath,
+                                    success: `Generated new ${mediaKind} for ${selectedMediaSlot.label}.`,
+                                  })
+                                }}
+                                size="sm"
+                                type="button"
+                              >
+                                {submittingMediaAction === 'generate-and-swap' ? (
+                                  <>
+                                    <LoaderCircleIcon className="h-4 w-4 animate-spin" />
+                                    Generating...
+                                  </>
+                                ) : (
+                                  <>
+                                    <SparklesIcon className="h-4 w-4" />
+                                    Generate and swap
+                                  </>
+                                )}
+                              </Button>
+                            </div>
+
+                            <div className="mt-4 grid gap-2">
+                              <label className="text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground" htmlFor={mediaPromptId}>
+                                Prompt
+                              </label>
+                              <Textarea
+                                className="min-h-24"
+                                id={mediaPromptId}
+                                onChange={(event) => setMediaPrompt(event.target.value)}
+                                placeholder={`Describe the ${mediaKind} for ${selectedMediaSlot.label.toLowerCase()}...`}
+                                value={mediaPrompt}
+                              />
+                            </div>
+                          </div>
+
+                          <div className="rounded-3xl border border-border/70 bg-card/50 p-4">
+                            <div className="flex flex-wrap items-center justify-between gap-3">
+                              <div>
+                                <div className="text-sm font-semibold text-foreground">Recent media</div>
+                                <div className="mt-1 text-xs text-muted-foreground">
+                                  Reuse a recent media record for this row instead of creating a duplicate asset.
+                                </div>
+                              </div>
+                              <Badge variant="outline">{mediaLibrary.length} records</Badge>
+                            </div>
+
+                            <div className="mt-4 grid gap-3">
+                              {mediaLoading ? (
+                                <div className="rounded-2xl border border-border/70 bg-background px-4 py-6 text-sm text-muted-foreground">
+                                  Loading media library...
+                                </div>
+                              ) : mediaLibrary.length ? (
+                                mediaLibrary.slice(0, 12).map((item) => (
+                                  <div key={item.id} className="grid gap-3 rounded-2xl border border-border/70 bg-background p-3 md:grid-cols-[5rem_minmax(0,1fr)_auto]">
+                                    <div className="overflow-hidden rounded-2xl bg-muted/40">
+                                      {item.previewUrl ? (
+                                        getMediaKindFromMimeType(item.mimeType) === 'video' ? (
+                                          <video className="aspect-square h-full w-full object-cover" muted playsInline src={item.previewUrl} />
+                                        ) : (
+                                          <img alt={item.alt || item.filename || `Media ${item.id}`} className="aspect-square h-full w-full object-cover" src={item.previewUrl} />
+                                        )
+                                      ) : (
+                                        <div className="flex aspect-square items-center justify-center text-muted-foreground">
+                                          <ImageIcon className="h-4 w-4" />
+                                        </div>
+                                      )}
+                                    </div>
+                                    <div className="min-w-0">
+                                      <div className="flex flex-wrap items-center gap-2">
+                                        <div className="truncate text-sm font-semibold text-foreground">{item.alt || item.filename || `Media ${item.id}`}</div>
+                                        <Badge variant="secondary">ID {item.id}</Badge>
+                                      </div>
+                                      <div className="mt-1 text-xs text-muted-foreground">{item.filename || 'Untitled media'} · {formatTimestamp(item.updatedAt)}</div>
+                                    </div>
+                                    <Button
+                                      disabled={mediaActionsLocked || submittingMediaAction !== null}
+                                      onClick={() => {
+                                        if (!selectedMediaSlot) return
+                                        void submitMediaAction({
+                                          action: 'swap-existing-reference',
+                                          mediaId: item.id,
+                                          relationPath: selectedMediaSlot.relationPath,
+                                          success: `Swapped ${selectedMediaSlot.label} to media ${item.id}.`,
+                                        })
+                                      }}
+                                      size="sm"
+                                      type="button"
+                                      variant="outline"
+                                    >
+                                      Use this media
+                                    </Button>
+                                  </div>
+                                ))
+                              ) : (
+                                <div className="rounded-2xl border border-border/70 bg-background px-4 py-6 text-sm text-muted-foreground">
+                                  No media records are available yet.
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </>
+                      ) : null}
+                    </div>
+                  )}
+                </TabsContent>
+
+                <TabsContent className="mt-0 min-h-0 overflow-y-auto px-5 py-4" value="publish">
+                  {loading ? (
+                    <div className="rounded-2xl border border-border/70 bg-card/50 px-4 py-6 text-sm text-muted-foreground">
+                      Loading publish controls...
+                    </div>
+                  ) : !draftPage ? (
+                    <div className="rounded-2xl border border-border/70 bg-card/50 px-4 py-6 text-sm text-muted-foreground">
+                      No page is available for this route.
+                    </div>
+                  ) : (
+                    <div className="grid gap-4">
+                      <div className="rounded-2xl border border-border/70 bg-card/50 p-4">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <div className="text-sm font-semibold text-foreground">{draftPage.title}</div>
+                          <Badge variant="outline">{draftPage._status || 'draft'}</Badge>
+                          <Badge variant="secondary">{draftPage.visibility || 'public'}</Badge>
+                        </div>
+                        <div className="mt-2 text-xs text-muted-foreground">
+                          Updated {formatTimestamp(draftPage.updatedAt)} · Published {formatTimestamp(draftPage.publishedAt)}
+                        </div>
+                      </div>
+
+                      <ComposerNoticeList notices={composerNotices} />
+
+                      <div className="grid gap-2">
+                        <label className="text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground">Page title</label>
+                        <Input
+                          onChange={(event) => {
+                            setDirty(true)
+                            setTitleDraft(event.target.value)
+                          }}
+                          value={titleDraft}
+                        />
+                      </div>
+
+                      <div className="grid gap-2">
+                        <label className="text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground">Slug</label>
+                        <Input
+                          onChange={(event) => {
+                            setDirty(true)
+                            setSlugDraft(event.target.value)
+                          }}
+                          value={slugDraft}
+                        />
+                      </div>
+
+                      <div className="grid gap-2">
+                        <label className="text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground">Visibility</label>
+                        <Select
+                          onValueChange={(value) => {
+                            setDirty(true)
+                            setVisibilityDraft(value === 'private' ? 'private' : 'public')
+                          }}
+                          value={visibilityDraft}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Choose visibility" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="public">Public page</SelectItem>
+                            <SelectItem value="private">Private staff page</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="rounded-2xl border border-border/70 bg-card/50 p-4">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <div>
+                            <div className="text-sm font-semibold text-foreground">Route preview</div>
+                            <div className="mt-1 text-xs text-muted-foreground">
+                              {pageSlugToFrontendPath(slugDraft)} {visibilityDraft === 'private' ? '· staff preview only until visibility changes' : '· public route when published'}
+                            </div>
+                          </div>
+                          <Button asChild size="sm" type="button" variant="outline">
+                            <a href={pageSlugToFrontendPath(slugDraft)}>
+                              Open route
+                            </a>
+                          </Button>
+                        </div>
+                      </div>
+
+                      <div className="rounded-2xl border border-border/70 bg-card/50 p-4 text-sm text-muted-foreground">
+                        Save draft to keep the public page unchanged. Publish when the new section order, copy, and media are ready to go live.
+                      </div>
+
+                      <div className="rounded-2xl border border-border/70 bg-card/50 p-4">
+                        <div className="text-sm font-semibold text-foreground">Create new draft page</div>
+                        <div className="mt-1 text-xs text-muted-foreground">
+                          Start a new page in draft mode. Private pages stay staff-only until you change visibility.
+                        </div>
+
+                        <div className="mt-4 grid gap-3">
+                          <Input
+                            onChange={(event) => {
+                              const nextTitle = event.target.value
+                              setNewPageTitle(nextTitle)
+                              setNewPageSlug((current) => (current ? current : buildSlugCandidate(nextTitle)))
+                            }}
+                            placeholder="New page title"
+                            value={newPageTitle}
+                          />
+                          <Input
+                            onChange={(event) => setNewPageSlug(buildSlugCandidate(event.target.value))}
+                            placeholder="new-page-slug"
+                            value={newPageSlug}
+                          />
+                          <Select onValueChange={(value) => setNewPageVisibility(value === 'public' ? 'public' : 'private')} value={newPageVisibility}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Draft visibility" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="private">Private draft page</SelectItem>
+                              <SelectItem value="public">Public draft page</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Button
+                            disabled={creatingPage || dirty || !newPageTitle.trim() || !newPageSlug.trim()}
+                            onClick={() => void createPage()}
+                            size="sm"
+                            type="button"
+                            variant="secondary"
+                          >
+                            {creatingPage ? (
+                              <>
+                                <LoaderCircleIcon className="h-4 w-4 animate-spin" />
+                                Creating...
+                              </>
+                            ) : (
+                              <>
+                                <PlusIcon className="h-4 w-4" />
+                                Create draft page
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </TabsContent>
+
+                <div className="border-t border-border/70 px-5 py-4">
+                  <div className="flex flex-wrap justify-between gap-3">
+                    <div className="text-sm text-muted-foreground">{footerStatus}</div>
+                    <div className="flex flex-wrap gap-2">
+                      <Button disabled={!draftPage || savingAction !== null} onClick={() => void persistPage('save-draft')} size="sm" type="button" variant="outline">
+                        {savingAction === 'save-draft' ? (
+                          <>
+                            <LoaderCircleIcon className="h-4 w-4 animate-spin" />
+                            Saving...
+                          </>
+                        ) : (
+                          <>
+                            <SquarePenIcon className="h-4 w-4" />
+                            Save draft
+                          </>
+                        )}
+                      </Button>
+                      <Button disabled={!draftPage || savingAction !== null} onClick={() => void persistPage('publish-page')} size="sm" type="button">
+                        {savingAction === 'publish-page' ? (
+                          <>
+                            <LoaderCircleIcon className="h-4 w-4 animate-spin" />
+                            Publishing...
+                          </>
+                        ) : (
+                          <>
+                            <RocketIcon className="h-4 w-4" />
+                            Publish
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </Tabs>
+            </motion.aside>
+          </>
+        ) : null}
+      </AnimatePresence>
+    </>
+  )
+}

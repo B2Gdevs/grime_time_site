@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phase-plan>
+  <meta>
+    <phase-id>13</phase-id>
+    <phase-name>Visual page composer and copilot authoring</phase-name>
+    <date>2026-04-02</date>
+  </meta>
+  <status>in_progress</status>
+
+  <problem>
+    <item>Page composition has become the current blocker. The repo already has a useful local page-media workbench, but it does not yet let admins add, remove, reorder, or swap whole sections visually.</item>
+    <item>As of 2026-04-02 there is no dedicated `/home` route in Grime Time. `/` renders the page with slug `home`, and `src/components/home/GrimeTimeMarketingHome.tsx` still special-cases the first service-grid blocks plus extra homepage structure. That makes section reuse harder than it should be.</item>
+    <item>The existing `pages` model and Payload drafts already solve part of the problem, but the specialized homepage React and the local media-only workbench stop short of a real low-code authoring flow.</item>
+    <item>AI-assisted editing is fragmenting into separate prompt boxes. Media generation, page editing, and copilot help need one context model so the assistant can act on the selected section instead of treating the page as one undifferentiated blob.</item>
+    <item>Some edited values may eventually feed shared variables or business calculations. The UI needs to warn the admin when a field is not just page-local copy.</item>
+  </problem>
+
+  <goals>
+    <goal id="G1">Keep Payload `pages`, `layout` blocks, drafts, and versions as the source of truth while adding a faster visual authoring layer on top.</goal>
+    <goal id="G2">Normalize `/` first by extracting the current `/home`-style service and "what we do" treatments into a reusable section-registry path so those sections can move onto `/`, be reordered or removed, and become templates for similar future sections without bespoke React-only composition logic.</goal>
+    <goal id="G3">Deliver the first staff-safe page composer with structure, content, media, and publish surfaces, including drag-drop section order and section-focused editing.</goal>
+    <goal id="G4">Support first-class page creation and draft lifecycle: title, slug, status, visibility, and publish controls, without forcing every new page public immediately.</goal>
+    <goal id="G5">Design one AI-aware authoring model: selected page, section, and media slot become assistant-aware context; focused generation runs in short-lived modal sessions over the shared copilot shell.</goal>
+    <goal id="G6">Document the UX rules from Assistant UI and OpenAI Apps guidance so future composer work stays conversation-first instead of becoming a generic CMS replica.</goal>
+  </goals>
+
+  <non-goals>
+    <item>Do not replace Payload admin or Payload drafts with a second full CMS.</item>
+    <item>Do not ship a giant everything-editor in one pass. Phase 13 should be staff-safe and immediately useful, but still narrow enough to stabilize around section composition, draft lifecycle, and focused AI/media workflows.</item>
+    <item>Do not build a giant website replica inside chat. The assistant should help with focused authoring jobs, not port every page-management screen into conversation.</item>
+    <item>Do not allow AI to publish directly without explicit human confirmation and visible draft state.</item>
+    <item>Do not treat a dedicated `/home` route as required. Reusable sections matter; route duplication does not.</item>
+  </non-goals>
+
+  <product-rules>
+    <item>OpenAI Apps guidance: extract, do not port. Focus on atomic authoring actions instead of mirroring a full website admin inside chat.</item>
+    <item>OpenAI Apps guidance: use UI selectively and optimize for conversation, not navigation. Quick confirmations belong inline; richer authoring belongs in a fullscreen or modal surface that still keeps the chat/composer context available.</item>
+    <item>Assistant UI guidance: treat selected page, section, and media slots as interactables whose state both the user and the assistant can read or update.</item>
+    <item>Assistant UI guidance: focused components need explicit selection so the assistant knows which section the user means when they say "change this heading" or "replace this image".</item>
+    <item>Short-lived generation history is acceptable for focused media work. It may stay local and disappear with local storage reset as long as the actual accepted outputs persist in Payload media records and page drafts.</item>
+  </product-rules>
+
+  <target-architecture>
+    <current-state>
+      <item>`src/collections/Pages/index.ts` already provides drafts, versions, a hero tab, and a `layout` blocks field.</item>
+      <item>`src/app/(frontend)/page.tsx` queries slug `home` and renders `GrimeTimeMarketingHome` rather than the generic page renderer.</item>
+      <item>`src/components/home/GrimeTimeMarketingHome.tsx` treats the first two `serviceGrid` blocks as special home sections and renders the rest through `RenderBlocks`.</item>
+      <item>`src/components/admin-impersonation/PageMediaDevtoolsDrawer.tsx` already supports page-slot selection, upload, generate, swap, image/video tabs, and a local library workbench.</item>
+      <item>`src/components/copilot/PortalCopilot.tsx` already proves the Assistant UI shell pattern in the portal, but it is still portal-focused and not yet a shared page-authoring shell.</item>
+    </current-state>
+
+    <section-registry>
+      <item>Normalize `/` first. The current service and "what we do" treatments that feel like `/home` sections should become explicit reusable section types or block extensions so the page model can express "hero band", "service lane cards", "pricing explainer", "proof gallery", and future variants without a one-off page component remaining the hidden source of layout truth.</item>
+      <item>Prefer section definitions that still compile to the existing page document shape. If a new registry abstraction is introduced, it must map back to `pages.layout` deterministically.</item>
+      <item>Each section must expose a stable id, label, summary, preview metadata, and the field paths it owns so the composer can focus, select, and validate it.</item>
+      <item>`/home` does not need to survive as a route. Its value is as a source of reusable section patterns that can be swapped onto `/` and reused on future pages.</item>
+    </section-registry>
+
+    <composer-workbench>
+      <item>Grow the current local drawer into a page workbench with four surfaces: `Structure`, `Content`, `Media`, and `Publish`.</item>
+      <item>`Structure`: drag-drop section order, add/remove/duplicate section, move section across compatible pages later, and show draft-vs-published markers.</item>
+      <item>`Content`: edit section-local text and settings with field-aware affordances; warn when a value is shared, computed, or used outside the current page.</item>
+      <item>`Media`: keep the existing upload/generate/swap flow, but align it with the selected section or slot instead of treating media changes as a detached tool.</item>
+      <item>`Publish`: page title, slug, status, draft/public visibility, preview, and publish confirmation.</item>
+      <item>Initial delivery should be staff-safe for immediate use from authenticated staff surfaces. The existing localhost-only media drawer can remain as a narrower developer tool, but it is no longer the boundary for the first real composer pass.</item>
+    </composer-workbench>
+
+    <copilot-model>
+      <item>The shared copilot should receive the selected page, selected section, and selected media slot as assistant-aware context. Assistant UI interactables are the intended bridge.</item>
+      <item>Focused generation uses a modal over the shared copilot shell, with explicit mode tabs above the composer. The user must pick a mode, accept a suggestion, or cancel.</item>
+      <item>Accepted results persist into Payload media records and page drafts. The focused session transcript may remain local and short-lived.</item>
+      <item>Later, the same context model can power operator tools, CRM work, and future MCP-style product surfaces without reinventing selection semantics.</item>
+    </copilot-model>
+
+    <page-lifecycle>
+      <item>Creating a new page means more than a title field. The composer must make slug, draft status, visibility, and preview state obvious.</item>
+      <item>Pages that are drafts or intentionally private should not become public just because a section was added visually.</item>
+      <item>If a field participates in shared variables, quote logic, or another cross-page dependency, the authoring UI must surface that relationship before save or publish.</item>
+    </page-lifecycle>
+
+    <references>
+      <file>.planning/workflows/visual-page-composer-and-copilot-experience.md</file>
+      <file>src/content/docs/site-copilot-and-page-composer.md</file>
+      <file>src/collections/Pages/index.ts</file>
+      <file>src/app/(frontend)/page.tsx</file>
+      <file>src/app/(frontend)/[slug]/page.tsx</file>
+      <file>src/components/home/GrimeTimeMarketingHome.tsx</file>
+      <file>src/components/admin-impersonation/PageMediaDevtoolsDrawer.tsx</file>
+      <file>src/components/admin-impersonation/PageMediaDevtoolsContext.tsx</file>
+      <file>src/components/copilot/PortalCopilot.tsx</file>
+      <file>.planning/workflows/local-page-media-devtools.md</file>
+      <file>.planning/workflows/ai-ops-assistant-beta.md</file>
+    </references>
+  </target-architecture>
+
+  <open-questions>
+    <item>After `/` is normalized, which second wave of reusable sections should come next: hero variants, proof/gallery treatments, CTA bands, or pricing explainer variations?</item>
+    <item>Should section-level AI edits write directly into draft state, or should the assistant stage diffs for explicit accept/reject before mutating the page document?</item>
+    <item>What is the smallest viable warning model for shared variables or calculated fields so the UI informs admins without turning every text edit into a policy dialog?</item>
+  </open-questions>
+
+  <tasks>
+    <task ref="13-01">Kickoff, current-state audit, workflow doc, and staff-facing design guide</task>
+    <task ref="13-02">Reusable section registry and homepage normalization</task>
+    <task ref="13-03">Visual page composer workbench over the existing local drawer</task>
+    <task ref="13-04">Draft-page lifecycle, slug management, and variable-aware warnings</task>
+    <task ref="13-05">Shared copilot context plus focused generation modal sessions</task>
+    <task ref="13-06">Tests and localhost-admin verification for add/reorder/swap/generate/publish flows</task>
+  </tasks>
+</phase-plan>

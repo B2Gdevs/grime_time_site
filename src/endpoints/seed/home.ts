@@ -20,6 +20,7 @@ export const home: (args: HomeArgs) => RequiredDataFromCollectionSlug<'pages'> =
   return {
     slug: 'home',
     _status: 'published',
+    visibility: 'public',
     hero: {
       type: 'highImpact',
       links: [],
@@ -58,6 +59,7 @@ export const home: (args: HomeArgs) => RequiredDataFromCollectionSlug<'pages'> =
     layout: [
       {
         blockType: 'serviceGrid',
+        displayVariant: 'featureCards',
         eyebrow: 'Featured services',
         heading: 'What we do',
         intro:
@@ -121,6 +123,7 @@ export const home: (args: HomeArgs) => RequiredDataFromCollectionSlug<'pages'> =
       },
       {
         blockType: 'serviceGrid',
+        displayVariant: 'pricingSteps',
         eyebrow: 'Estimate logic',
         heading: 'How our pricing works',
         intro:

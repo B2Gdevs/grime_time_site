@@ -6,11 +6,11 @@ import { defineConfig, devices } from '@playwright/test'
  */
 import 'dotenv/config'
 
-const playwrightBaseURL = process.env.PLAYWRIGHT_BASE_URL || 'http://127.0.0.1:3100'
+const playwrightBaseURL = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3100'
 const defaultWebServerCommand =
   process.platform === 'win32'
-    ? 'cmd /c "npm run build && npm run start -- --hostname 127.0.0.1 --port 3100"'
-    : 'npm run build && npm run start -- --hostname 127.0.0.1 --port 3100'
+    ? 'cmd /c "npm run build && npm run start -- --hostname localhost --port 3100"'
+    : 'npm run build && npm run start -- --hostname localhost --port 3100'
 
 /**
  * See https://playwright.dev/docs/test-configuration.

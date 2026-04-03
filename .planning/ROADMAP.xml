@@ -5,7 +5,7 @@
     <goal>Repo, RepoPlanner submodule, `.planning/` contract, pushed to `main`.</goal>
     <requirements>REQ-01</requirements>
     <depends></depends>
-    <status>in-progress</status>
+    <status>complete</status>
     <plans>.planning/phases/01-foundation/</plans>
   </phase>
   <phase id="02">
@@ -95,6 +95,14 @@
     <depends>04,07,11</depends>
     <status>in-progress</status>
     <plans>.planning/workflows/orgs-rbac-and-provider-sync.md</plans>
+  </phase>
+  <phase id="13">
+    <title>Visual page composer and copilot authoring</title>
+    <goal>Turn the existing local page-media workbench and Payload page model into a visual authoring system: reusable sections, add/remove/reorder/swap workflows, draft pages and slug management, inline content and media editing, and an AI-aware copilot that understands the selected page or section context.</goal>
+    <requirements>REQ-03</requirements>
+    <depends>03,04,08,12</depends>
+    <status>in-progress</status>
+    <plans>.planning/phases/13-visual-page-composer-and-copilot/</plans>
   </phase>
   <doc-flow>
     <doc name="TASK-REGISTRY.xml">Tasks by phase.</doc>

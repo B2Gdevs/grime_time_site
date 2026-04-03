@@ -102,6 +102,14 @@ const DOCS: PortalDoc[] = [
     slug: 'field-quoting-and-revisions',
     title: 'Field quoting and revisions',
   },
+  {
+    audience: 'admin',
+    description: 'Design rules for the visual page composer, section-focused copilot, and modal media-generation workflow.',
+    filePath: 'src/content/docs/site-copilot-and-page-composer.md',
+    group: 'Team playbooks',
+    slug: 'site-copilot-and-page-composer',
+    title: 'Site copilot and page composer',
+  },
 ]
 
 export function getPortalDocs(options: { isAdmin: boolean }): PortalDoc[] {

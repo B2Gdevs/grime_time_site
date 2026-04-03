@@ -55,6 +55,7 @@ export const about = ({ heroImage, supportImage }: AboutArgs): RequiredDataFromC
   return {
     slug: 'about',
     _status: 'published',
+    visibility: 'public',
     hero: {
       type: 'mediumImpact',
       media: heroImage.id,

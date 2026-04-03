@@ -4,7 +4,10 @@ import React from 'react'
 import { AdminBar } from '@/components/AdminBar'
 import { AdminImpersonationToolbarShell } from '@/components/admin-impersonation/AdminImpersonationToolbarShell'
 import { PageMediaDevtoolsProvider } from '@/components/admin-impersonation/PageMediaDevtoolsContext'
+import { PortalCopilot } from '@/components/copilot/PortalCopilot'
+import { PortalCopilotProvider } from '@/components/copilot/PortalCopilotContext'
 import { MarketingShell } from '@/components/frontend/MarketingShell'
+import { isAiOpsAssistantEnabled } from '@/lib/ai'
 import type { Footer, Header } from '@/payload-types'
 import { SiteTourProvider } from '@/components/tours/SiteTourProvider'
 import { getCurrentAuthContext } from '@/lib/auth/getAuthContext'
@@ -20,6 +23,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const localPageMediaDevtoolsEnabled = await isLocalDevtoolsRequest()
   const auth = await getCurrentAuthContext()
   const canUseLocalPageMediaDevtools = localPageMediaDevtoolsEnabled && auth.isRealAdmin
+  const aiCopilotEnabled = auth.isRealAdmin && isAiOpsAssistantEnabled()
   const [headerData, footerData] = await Promise.all([
     getCachedGlobal('header', 1)(),
     getCachedGlobal('footer', 1)(),
@@ -27,7 +31,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const primaryLinks = buildMarketingNavLinks((headerData as Header | null)?.navItems)
   const footerLinks = buildMarketingNavLinks((footerData as Footer | null)?.navItems)
 
-  return (
+  const shell = (
     <PageMediaDevtoolsProvider enabled={canUseLocalPageMediaDevtools}>
       <SiteTourProvider>
         <AdminBar
@@ -41,6 +45,17 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         </MarketingShell>
       </SiteTourProvider>
     </PageMediaDevtoolsProvider>
+  )
+
+  if (!aiCopilotEnabled) {
+    return shell
+  }
+
+  return (
+    <PortalCopilotProvider>
+      {shell}
+      <PortalCopilot />
+    </PortalCopilotProvider>
   )
 }
 

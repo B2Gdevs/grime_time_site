@@ -150,4 +150,17 @@
       <command>cmd /c npm.cmd run build</command>
     </verification>
   </attempt>
+  <attempt id="13-06-a1" phase="13" task="13-06" status="resolved">
+    <title>Localhost production verification for the page composer and focused copilot flow is now stable</title>
+    <symptom>The first browser pass could not reach a healthy `next start` surface: Playwright readiness timed out, local production routes returned HTTP 500, and the new page-composer coverage could not execute end to end.</symptom>
+    <cause>There were several stacked issues. The page-visibility migration was not idempotent under multi-worker startup, Clerk middleware expected `localhost` rather than `127.0.0.1` during local production rewrites, Node-side ESM resolution was brittle on `next/cache` imports in the Payload boot path, and browser verification exposed additional composer-shell accessibility and overlay-targeting gaps.</cause>
+    <attempted-fix>Make the page-visibility migration idempotent, switch Playwright and login helpers to `localhost`, change the affected `next/cache` imports to `next/cache.js`, then tighten the page-composer drawer and spec together: fix the copilot-authoring render loop, avoid uncontrolled-to-controlled select churn, label the media prompt textarea, label the real close button, and scope browser interactions to the fixed drawer and copilot surfaces so draft-save, media generation, publish, and focused-copilot flows can run reliably.</attempted-fix>
+    <verification>
+      <command>cmd /c npm.cmd exec -- tsc --noEmit</command>
+      <command>cmd /c npm.cmd exec eslint src/components/admin-impersonation/PageComposerDrawer.tsx tests/e2e/page-composer.e2e.spec.ts playwright.config.ts tests/helpers/login.ts src/migrations/20260402_194706_add_page_visibility.ts</command>
+      <command>cmd /c npm.cmd exec vitest run tests/int/lib/ai/copilot-authoring.int.spec.ts tests/int/lib/pages/page-composer.int.spec.ts</command>
+      <command>cmd /c npm.cmd run build</command>
+      <command>cmd /c npm.cmd exec -- playwright test tests/e2e/page-composer.e2e.spec.ts --config=playwright.config.ts</command>
+    </verification>
+  </attempt>
 </errors-and-attempts>

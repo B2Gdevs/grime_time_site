@@ -3,6 +3,7 @@ import { requirePayloadUser } from '@/lib/auth/requirePayloadUser'
 import {
   AI_OPS_ASSISTANT_INSTRUCTIONS,
   buildCopilotInsights,
+  buildCopilotAuthoringSystemMessage,
   buildOpsRagSystemMessage,
   createCopilotChatCompletion,
   enforceCopilotRateLimit,
@@ -11,15 +12,21 @@ import {
   isAiOpsAssistantEnabled,
   isAiOpsAssistantKilled,
   logCopilotAudit,
+  sanitizeCopilotAuthoringContext,
+  sanitizeCopilotFocusedSession,
   searchOpsRag,
+  type CopilotAuthoringContext,
   type CopilotApiResponse,
   type CopilotConversationMessage,
+  type CopilotFocusedSession,
 } from '@/lib/ai'
 
 export const runtime = 'nodejs'
 
 type CopilotRequestBody = {
+  authoringContext?: CopilotAuthoringContext
   currentPath?: string
+  focusedSession?: CopilotFocusedSession
   messages?: Array<{ content?: unknown; role?: unknown }>
 }
 
@@ -87,6 +94,12 @@ export async function POST(request: Request) {
 
   const body = (await request.json().catch(() => null)) as CopilotRequestBody | null
   const conversation = normalizeConversation(body?.messages)
+  const authoringContext = sanitizeCopilotAuthoringContext(body?.authoringContext)
+  const focusedSession = sanitizeCopilotFocusedSession(body?.focusedSession)
+  const authoringSystemMessage = buildCopilotAuthoringSystemMessage({
+    authoringContext,
+    focusedSession,
+  })
   const query = latestUserQuery(conversation)
 
   if (!query) {
@@ -152,6 +165,14 @@ export async function POST(request: Request) {
         content: `Operator context:\n- Name: ${insights.operator.name}\n- Email: ${insights.operator.email}\n- Open tasks assigned to this operator: ${insights.tasks.length}\n- Immediate follow-up items assigned to this operator: ${insights.followUps.length}`,
         role: 'system',
       },
+      ...(authoringSystemMessage
+        ? [
+            {
+              content: authoringSystemMessage,
+              role: 'system' as const,
+            },
+          ]
+        : []),
       ...conversation,
     ],
     model: getAiOpsAssistantModel(),
