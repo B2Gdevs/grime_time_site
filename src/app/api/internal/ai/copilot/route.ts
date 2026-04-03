@@ -20,6 +20,14 @@ import {
   type CopilotConversationMessage,
   type CopilotFocusedSession,
 } from '@/lib/ai'
+import {
+  createRequestTrace,
+  logRequestFailure,
+  logRequestStart,
+  logRequestSuccess,
+  summarizeCopilotRequest,
+  withRequestIdHeader,
+} from '@/lib/observability'
 
 export const runtime = 'nodejs'
 
@@ -58,24 +66,40 @@ function latestUserQuery(messages: CopilotConversationMessage[]): string {
 }
 
 export async function POST(request: Request) {
-  const startedAt = Date.now()
+  const trace = createRequestTrace(request, 'internal.ai.copilot')
+  const startedAt = trace.startedAtMs
+  logRequestStart(trace)
   if (!isAiOpsAssistantEnabled()) {
     logCopilotAudit({
       event: 'copilot_blocked_disabled',
+      requestId: trace.requestId,
     })
-    return Response.json(
-      { error: 'The Grime Time employee copilot is currently disabled.' },
-      { status: 503 },
+    logRequestFailure(trace, 503, undefined, {
+      reason: 'feature_disabled',
+    })
+    return withRequestIdHeader(
+      Response.json(
+        { error: 'The Grime Time employee copilot is currently disabled.' },
+        { status: 503 },
+      ),
+      trace.requestId,
     )
   }
 
   if (isAiOpsAssistantKilled()) {
     logCopilotAudit({
       event: 'copilot_blocked_kill_switch',
+      requestId: trace.requestId,
     })
-    return Response.json(
-      { error: 'The Grime Time employee copilot is temporarily unavailable.' },
-      { status: 503 },
+    logRequestFailure(trace, 503, undefined, {
+      reason: 'kill_switch',
+    })
+    return withRequestIdHeader(
+      Response.json(
+        { error: 'The Grime Time employee copilot is temporarily unavailable.' },
+        { status: 503 },
+      ),
+      trace.requestId,
     )
   }
 
@@ -83,16 +107,28 @@ export async function POST(request: Request) {
   if (!auth || !userIsAdmin(auth.user)) {
     logCopilotAudit({
       event: 'copilot_rejected_unauthorized',
+      requestId: trace.requestId,
     })
-    return Response.json({ error: 'Unauthorized' }, { status: 401 })
+    logRequestFailure(trace, 401, undefined, {
+      reason: 'unauthorized',
+    })
+    return withRequestIdHeader(Response.json({ error: 'Unauthorized' }, { status: 401 }), trace.requestId)
   }
 
   const apiKey = getAiOpsAssistantOpenAiKey()
   if (!apiKey) {
-    return Response.json({ error: 'OpenAI is not configured for the employee copilot.' }, { status: 503 })
+    logRequestFailure(trace, 503, undefined, {
+      reason: 'missing_openai_key',
+      userId: auth.realUser.id,
+    })
+    return withRequestIdHeader(
+      Response.json({ error: 'OpenAI is not configured for the employee copilot.' }, { status: 503 }),
+      trace.requestId,
+    )
   }
 
   const body = (await request.json().catch(() => null)) as CopilotRequestBody | null
+  const requestSummary = summarizeCopilotRequest(body ?? {})
   const conversation = normalizeConversation(body?.messages)
   const authoringContext = sanitizeCopilotAuthoringContext(body?.authoringContext)
   const focusedSession = sanitizeCopilotFocusedSession(body?.focusedSession)
@@ -107,10 +143,19 @@ export async function POST(request: Request) {
       currentPath: body?.currentPath,
       event: 'copilot_rejected_bad_query',
       messageCount: conversation.length,
+      requestId: trace.requestId,
       userEmail: auth.realUser.email ?? undefined,
       userId: auth.realUser.id,
     })
-    return Response.json({ error: 'Ask a question before starting a copilot turn.' }, { status: 400 })
+    logRequestFailure(trace, 400, undefined, {
+      ...requestSummary,
+      reason: 'empty_query',
+      userId: auth.realUser.id,
+    })
+    return withRequestIdHeader(
+      Response.json({ error: 'Ask a question before starting a copilot turn.' }, { status: 400 }),
+      trace.requestId,
+    )
   }
 
   const rateLimit = enforceCopilotRateLimit(`copilot:${auth.realUser.id}`)
@@ -120,17 +165,26 @@ export async function POST(request: Request) {
       event: 'copilot_blocked_rate_limit',
       messageCount: conversation.length,
       query,
+      requestId: trace.requestId,
       userEmail: auth.realUser.email ?? undefined,
       userId: auth.realUser.id,
     })
-    return Response.json(
-      { error: 'Employee copilot is temporarily rate-limited for this user. Please wait a moment and try again.' },
-      {
-        headers: {
-          'Retry-After': String(rateLimit.retryAfterSeconds),
+    logRequestFailure(trace, 429, undefined, {
+      ...requestSummary,
+      retryAfterSeconds: rateLimit.retryAfterSeconds,
+      userId: auth.realUser.id,
+    })
+    return withRequestIdHeader(
+      Response.json(
+        { error: 'Employee copilot is temporarily rate-limited for this user. Please wait a moment and try again.' },
+        {
+          headers: {
+            'Retry-After': String(rateLimit.retryAfterSeconds),
+          },
+          status: 429,
         },
-        status: 429,
-      },
+      ),
+      trace.requestId,
     )
   }
 
@@ -193,10 +247,17 @@ export async function POST(request: Request) {
     event: 'copilot_completed',
     messageCount: conversation.length,
     query,
+    requestId: trace.requestId,
     sourceCount: sources.length,
     userEmail: auth.realUser.email ?? undefined,
     userId: auth.realUser.id,
   })
 
-  return Response.json(response)
+  logRequestSuccess(trace, 200, {
+    ...requestSummary,
+    sourceCount: sources.length,
+    userId: auth.realUser.id,
+  })
+
+  return withRequestIdHeader(Response.json(response), trace.requestId)
 }

@@ -7,8 +7,11 @@ const isAiOpsAssistantKilled = vi.fn()
 const getAiOpsAssistantOpenAiKey = vi.fn()
 const searchOpsRag = vi.fn()
 const buildCopilotInsights = vi.fn()
+const buildCopilotAuthoringSystemMessage = vi.fn(() => null)
 const createCopilotChatCompletion = vi.fn()
 const logCopilotAudit = vi.fn()
+const sanitizeCopilotAuthoringContext = vi.fn((value) => value)
+const sanitizeCopilotFocusedSession = vi.fn((value) => value)
 
 vi.mock('@/lib/auth/requirePayloadUser', () => ({
   requirePayloadUser,
@@ -21,6 +24,7 @@ vi.mock('@/lib/auth/getCurrentPayloadUser', () => ({
 vi.mock('@/lib/ai', () => ({
   AI_OPS_ASSISTANT_INSTRUCTIONS: 'assistant instructions',
   buildCopilotInsights,
+  buildCopilotAuthoringSystemMessage,
   buildOpsRagSystemMessage: vi.fn(() => 'rag context'),
   createCopilotChatCompletion,
   enforceCopilotRateLimit,
@@ -29,14 +33,23 @@ vi.mock('@/lib/ai', () => ({
   isAiOpsAssistantEnabled,
   isAiOpsAssistantKilled,
   logCopilotAudit,
+  sanitizeCopilotAuthoringContext,
+  sanitizeCopilotFocusedSession,
   searchOpsRag,
 }))
 
 describe('internal AI copilot route', () => {
   beforeEach(() => {
+    vi.restoreAllMocks()
     vi.clearAllMocks()
+    buildCopilotAuthoringSystemMessage.mockReturnValue(null)
     enforceCopilotRateLimit.mockReturnValue({ allowed: true, retryAfterSeconds: 0 })
     isAiOpsAssistantKilled.mockReturnValue(false)
+    sanitizeCopilotAuthoringContext.mockImplementation((value) => value)
+    sanitizeCopilotFocusedSession.mockImplementation((value) => value)
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    vi.spyOn(console, 'info').mockImplementation(() => {})
+    vi.spyOn(console, 'warn').mockImplementation(() => {})
   })
 
   it('returns 503 when the feature flag is off', async () => {
@@ -100,11 +113,15 @@ describe('internal AI copilot route', () => {
     const response = await POST(
       new Request('http://localhost/api/internal/ai/copilot', {
         body: JSON.stringify({ currentPath: '/ops', messages: [{ content: 'What should I do next?', role: 'user' }] }),
+        headers: {
+          'x-request-id': 'req-copilot-200',
+        },
         method: 'POST',
       }),
     )
 
     expect(response.status).toBe(200)
+    expect(response.headers.get('x-request-id')).toBe('req-copilot-200')
     const data = (await response.json()) as { sources: Array<{ title: string }>; text: string }
     expect(data.text).toContain('stale quote follow-up')
     expect(data.sources[0]?.title).toBe('Lead to customer runbook')
@@ -124,11 +141,15 @@ describe('internal AI copilot route', () => {
     const response = await POST(
       new Request('http://localhost/api/internal/ai/copilot', {
         body: JSON.stringify({ currentPath: '/ops', messages: [{ content: 'What next?', role: 'user' }] }),
+        headers: {
+          'x-request-id': 'req-copilot-429',
+        },
         method: 'POST',
       }),
     )
 
     expect(response.status).toBe(429)
     expect(response.headers.get('Retry-After')).toBe('42')
+    expect(response.headers.get('x-request-id')).toBe('req-copilot-429')
   })
 })

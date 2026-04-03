@@ -3,6 +3,7 @@ import React from 'react'
 
 import { AdminBar } from '@/components/AdminBar'
 import { AdminImpersonationToolbarShell } from '@/components/admin-impersonation/AdminImpersonationToolbarShell'
+import { VercelAnalytics } from '@/components/analytics/VercelAnalytics'
 import { PageMediaDevtoolsProvider } from '@/components/admin-impersonation/PageMediaDevtoolsContext'
 import { PortalCopilot } from '@/components/copilot/PortalCopilot'
 import { PortalCopilotProvider } from '@/components/copilot/PortalCopilotContext'
@@ -32,19 +33,22 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const footerLinks = buildMarketingNavLinks((footerData as Footer | null)?.navItems)
 
   const shell = (
-    <PageMediaDevtoolsProvider enabled={canUseLocalPageMediaDevtools}>
-      <SiteTourProvider>
-        <AdminBar
-          adminBarProps={{
-            preview: isEnabled,
-          }}
-        />
-        <AdminImpersonationToolbarShell pageMediaDevtoolsEnabled={canUseLocalPageMediaDevtools} />
-        <MarketingShell footerLinks={footerLinks} primaryLinks={primaryLinks}>
-          {children}
-        </MarketingShell>
-      </SiteTourProvider>
-    </PageMediaDevtoolsProvider>
+    <>
+      <PageMediaDevtoolsProvider enabled={canUseLocalPageMediaDevtools}>
+        <SiteTourProvider>
+          <AdminBar
+            adminBarProps={{
+              preview: isEnabled,
+            }}
+          />
+          <AdminImpersonationToolbarShell pageMediaDevtoolsEnabled={canUseLocalPageMediaDevtools} />
+          <MarketingShell footerLinks={footerLinks} primaryLinks={primaryLinks}>
+            {children}
+          </MarketingShell>
+        </SiteTourProvider>
+      </PageMediaDevtoolsProvider>
+      <VercelAnalytics />
+    </>
   )
 
   if (!aiCopilotEnabled) {
