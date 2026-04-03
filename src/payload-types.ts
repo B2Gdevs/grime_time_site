@@ -1444,7 +1444,13 @@ export interface OrganizationMembership {
   id: number;
   organization: number | Organization;
   user: number | User;
-  roleTemplate: 'staff-owner' | 'staff-admin' | 'staff-operator' | 'customer-admin' | 'customer-member';
+  roleTemplate:
+    | 'staff-owner'
+    | 'staff-admin'
+    | 'staff-designer'
+    | 'staff-operator'
+    | 'customer-admin'
+    | 'customer-member';
   status: 'active' | 'suspended' | 'revoked';
   syncSource: 'app' | 'clerk' | 'webhook' | 'bootstrap';
   clerkMembershipID?: string | null;

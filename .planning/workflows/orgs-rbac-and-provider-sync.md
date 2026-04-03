@@ -2,7 +2,7 @@
 
 **Owner:** auth / platform  
 **Tools:** Clerk, Payload, Stripe, internal webhooks/events  
-**Last reviewed:** 2026-04-01
+**Last reviewed:** 2026-04-03
 
 ## Why this exists
 
@@ -22,7 +22,7 @@ Current Grime Time staff org in Clerk:
 
 - `org_3BmXmwG7NpGNO1JKpE3MkR667Mm`
 
-This id should be treated as an external provider id, not the primary app org id.
+This id should be treated as an external provider id, not the primary app org id. The app should read it from `GRIME_TIME_CLERK_ORG_ID`; the current hardcoded value is only a fallback default.
 
 ## Core rule
 
@@ -68,11 +68,12 @@ Do not make Clerk org ids the primary foreign key in app logic.
 
 ### Role model
 
-Start with explicit app roles:
+Current role templates:
 
-- `owner`
-- `admin`
-- `staff`
+- `staff-owner`
+- `staff-admin`
+- `staff-designer`
+- `staff-operator`
 - `customer-admin`
 - `customer-member`
 
@@ -86,6 +87,13 @@ And separate those from entitlements such as:
 - `org:manage-members`
 - `org:manage-settings`
 - `impersonation:use`
+
+Current baseline intent:
+
+- `staff-owner`: full internal access, Payload admin bridge, org management
+- `staff-admin`: internal admin/operator access plus Payload admin bridge
+- `staff-designer`: visual authoring only via `content:write`
+- `staff-operator`: ops and CRM only
 
 The role template grants a baseline entitlement set. Admin can then lock or unlock specific entitlements in first-party app state.
 
@@ -163,6 +171,12 @@ The internal admin/workspace should support:
 
 For the current Grime Time org, staff users in the Grime Time organization should be promotable to admin from our own app/admin surface without requiring manual Clerk dashboard work.
 
+Current authoring rule:
+
+- frontend visual editing authorizes on first-party `content:write`, not raw Payload admin
+- demo personas (`@demo.grimetime.app`) are blocked from the authoring lane even if they still have memberships during local testing
+- external Clerk org members currently map to `staff-designer` by default unless their Clerk role or internal email path maps them higher
+
 ## Stripe linkage
 
 Stripe linkage follows the same rule:
@@ -182,7 +196,9 @@ Status:
 
 - shipped on 2026-04-01 in `src/collections/Organizations`, `src/collections/OrganizationMemberships`, `src/lib/auth/organizationRoles.ts`, `src/lib/auth/organizationAccess.ts`, and `src/lib/auth/organizationSync.ts`
 - current bootstrap maps the Grime Time staff org to Clerk org `org_3BmXmwG7NpGNO1JKpE3MkR667Mm`
+- the official Clerk org id is now env-overridable through `GRIME_TIME_CLERK_ORG_ID`
 - staff/admin auth guards now treat first-party memberships as the source of Payload-admin eligibility, with legacy `users.roles` kept only as a compatibility bridge
+- frontend composer and private-page preview now use first-party `content:write` checks so designers can edit without `/ops`, CRM, docs, or Payload admin
 
 ### Slice B
 

@@ -1,6 +1,7 @@
 import type { Access, Payload, PayloadRequest } from 'payload'
 
 import type { OrganizationMembership, User } from '@/payload-types'
+import { isDemoEmail } from '@/lib/demo/constants'
 import { ORGANIZATION_MEMBERSHIPS_COLLECTION_SLUG } from '@/lib/auth/organizationConstants'
 import { deriveOrganizationEntitlements, roleTemplateCanManageMemberships, roleTemplateCanManageOrganizations, roleTemplateHasPayloadAdminAccess, type OrganizationEntitlement } from '@/lib/auth/organizationRoles'
 import { numericRelationId } from '@/lib/crm/internal/relationship'
@@ -106,6 +107,30 @@ export async function hasPayloadAdminAccess(payload: Payload, user: RoleCarrier)
   }
 
   return (await resolveUserOrganizationAccess(payload, user)).hasPayloadAdminAccess
+}
+
+export async function hasOrganizationEntitlement(
+  payload: Payload,
+  user: RoleCarrier,
+  entitlement: OrganizationEntitlement,
+): Promise<boolean> {
+  if (!user) {
+    return false
+  }
+
+  if (hasLegacyAdminRole(user)) {
+    return true
+  }
+
+  return (await resolveUserOrganizationAccess(payload, user)).entitlements.includes(entitlement)
+}
+
+export async function hasContentAuthoringAccess(payload: Payload, user: RoleCarrier): Promise<boolean> {
+  if (!user || isDemoEmail(typeof user === 'object' ? (user.email as string | null | undefined) : null)) {
+    return false
+  }
+
+  return hasOrganizationEntitlement(payload, user, 'content:write')
 }
 
 export async function syncUserLegacyRolesFromMemberships(

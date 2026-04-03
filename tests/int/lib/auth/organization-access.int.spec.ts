@@ -60,12 +60,12 @@ describe('organizationAccess', () => {
   })
 
   it(
-    'grants payload-admin access from an active staff membership and syncs the legacy admin role',
+    'grants payload-admin access from an active staff-admin membership and syncs the legacy admin role',
     { timeout: 15000 },
     async () => {
       const user = await createUser({
         email: `${runKey}.staff@example.com`,
-        name: 'Staff Operator',
+        name: 'Staff Admin',
         password: 'test-password',
         roles: ['customer'],
       })
@@ -82,7 +82,7 @@ describe('organizationAccess', () => {
 
       await createMembership({
         organization: organization.id,
-        roleTemplate: 'staff-operator',
+        roleTemplate: 'staff-admin',
         status: 'active',
         syncSource: 'app',
         user: user.id,
@@ -106,7 +106,7 @@ describe('organizationAccess', () => {
 
       expect(access.hasPayloadAdminAccess).toBe(true)
       expect(access.canManageOrganizations).toBe(false)
-      expect(access.canManageMemberships).toBe(false)
+      expect(access.canManageMemberships).toBe(true)
       expect(await hasPayloadAdminAccess(payload, reloadedUser)).toBe(true)
       expect(reloadedUser.roles).toEqual(expect.arrayContaining(['admin']))
     },
@@ -187,7 +187,7 @@ describe('organizationAccess', () => {
   )
 
   it(
-    'bootstraps the default Grime Time staff organization from Clerk org membership even for non-domain emails',
+    'bootstraps a designer-grade staff membership from Clerk org membership for non-domain emails',
     { timeout: 15000 },
     async () => {
       const user = await createUser({
@@ -223,8 +223,11 @@ describe('organizationAccess', () => {
           },
         ],
       })
+      const { hasContentAuthoringAccess, hasPayloadAdminAccess } = await import(
+        '@/lib/auth/organizationAccess'
+      )
 
-      expect(membership?.roleTemplate).toBe('staff-operator')
+      expect(membership?.roleTemplate).toBe('staff-designer')
       expect(membership?.syncSource).toBe('clerk')
       expect(membership?.clerkMembershipID).toBe(`${runKey}-mem-1`)
 
@@ -235,7 +238,9 @@ describe('organizationAccess', () => {
         overrideAccess: true,
       })) as User
 
-      expect(reloadedUser.roles).toEqual(expect.arrayContaining(['admin']))
+      expect(await hasContentAuthoringAccess(payload, reloadedUser)).toBe(true)
+      expect(await hasPayloadAdminAccess(payload, reloadedUser)).toBe(false)
+      expect(reloadedUser.roles).toEqual(expect.not.arrayContaining(['admin']))
 
       if (membership?.id) {
         created.push({ collection: 'organization-memberships', id: membership.id })

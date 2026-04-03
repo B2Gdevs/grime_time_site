@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phase-plan>
+  <meta>
+    <phase-id>14</phase-id>
+    <phase-name>Public quote estimator intake and pricing calibration</phase-name>
+    <date>2026-04-02</date>
+  </meta>
+  <status>in_progress</status>
+
+  <problem>
+    <item>The homepage instant quote form currently accepts text inputs only, so staff lose useful job context when a customer could have shown the condition, access constraints, or mixed surfaces with photos.</item>
+    <item>The current public pricing model is mostly square-footage-first with service, condition, stories, and recurrence multipliers. That is fast, but it is too blunt for the team to treat as settled pricing when real scope drivers are more varied.</item>
+    <item>The estimator lives on `/#instant-quote`, so any upgrade has to preserve speed and trust on the main marketing funnel rather than turning the form into a heavy CRM screen.</item>
+    <item>Image intake and pricing changes are coupled: the public range copy, attachment policy, and staff follow-up path should move together so the customer understands what is estimated now versus what is confirmed after review.</item>
+  </problem>
+
+  <goals>
+    <goal id="G1">Keep `/#instant-quote` as a fast public estimator while allowing optional multi-image job-photo intake in the same submission flow.</goal>
+    <goal id="G2">Define a clear storage and review contract for attached photos: limits, validation, persistence, linkage to lead or quote records, and staff visibility.</goal>
+    <goal id="G3">Recalibrate the public pricing model before implementation so `quoteSettings`, estimator copy, and follow-up expectations reflect how staff actually scope jobs.</goal>
+    <goal id="G4">Preserve the current low-friction no-image path so customers can still request a quote in under a minute.</goal>
+    <goal id="G5">Ship the estimator upgrade with automated coverage for pricing math, upload validation, and the homepage submission path.</goal>
+  </goals>
+
+  <non-goals>
+    <item>Do not turn the public estimator into a final guaranteed quote or a customer-facing quote editor.</item>
+    <item>Do not require uploads for every request.</item>
+    <item>Do not design a broad customer gallery or long-lived customer media library in this phase.</item>
+    <item>Do not skip pricing calibration and jump straight to upload UI because that would harden the wrong promise.</item>
+  </non-goals>
+
+  <product-rules>
+    <item>The estimator remains a range and follow-up tool. Final scope is confirmed by staff after review, especially when images surface access, severity, mixed surfaces, or hazards.</item>
+    <item>Optional uploads must feel additive, not blocking. The form should still submit cleanly with zero images.</item>
+    <item>Any new image storage path must stay internal by default and align with the existing Payload media model or another explicit attachment path rather than inventing an untracked blob side channel.</item>
+    <item>Pricing copy and math must stay in sync. If the estimator only covers part of the real scoping logic, the UI should say so plainly.</item>
+  </product-rules>
+
+  <target-architecture>
+    <current-state>
+      <item>`src/components/InstantQuoteSection.tsx` renders the homepage estimator and posts JSON to `src/app/api/lead-forms/instant-quote/route.ts`.</item>
+      <item>`src/lib/forms/instantQuoteRequest.ts` validates text-only fields and computes the live range from `src/lib/quotes/instantQuoteCatalog.ts`.</item>
+      <item>`src/globals/QuoteSettings/config.ts` exposes draftable service rows plus condition, story, and frequency multipliers for the public estimator.</item>
+      <item>The route currently creates a lead-form submission row set only; it does not persist uploaded media or attachment metadata.</item>
+    </current-state>
+
+    <pricing-calibration>
+      <item>Audit each enabled estimator service and identify where square footage is enough versus where access, severity, surface mix, or commercial context should move the request into a broader or staff-reviewed range.</item>
+      <item>Decide whether `quoteSettings` needs new dimensions, new service-level notes, or stronger copy/disclaimer support rather than only different numeric multipliers.</item>
+      <item>Keep the public range honest. If a service cannot be estimated credibly from the current fields, the site should say it is a starting range pending review instead of pretending exactness.</item>
+      <item>Encode the new per-wall pricing rules for house washes: $100 per wall for a 1-story property, $150 per wall for a 2-story property, enforce a 4-wall minimum, and require photo submissions for anything taller than two stories.</item>
+      <item>Adjust driveway/flatwork pricing to flag residential starts (require both sidewalk and driveway images) and note the commercial expansion plan (sidewalks, fences, parking lots, buildings) once trailers and scaled equipment are available.</item>
+      <item>Document how the current reliance on customer-supplied water (hose) fits into estimator copy plus optional backup water hauling for low-water areas.</item>
+    </pricing-calibration>
+
+    <attachment-intake>
+      <item>Allow a small optional image series on the homepage form with explicit count and size limits.</item>
+      <item>Store images in a tracked internal path that staff can reach from the lead or quote follow-up workflow.</item>
+      <item>Record attachment metadata in the submission path so observability and staff review do not lose the context of which estimator request each image belongs to.</item>
+    </attachment-intake>
+
+    <references>
+      <file>.planning/workflows/quote-system-and-texas-compliance.md</file>
+      <file>src/components/InstantQuoteSection.tsx</file>
+      <file>src/lib/forms/instantQuoteRequest.ts</file>
+      <file>src/app/api/lead-forms/instant-quote/route.ts</file>
+      <file>src/lib/quotes/instantQuoteCatalog.ts</file>
+      <file>src/globals/QuoteSettings/config.ts</file>
+      <file>src/content/docs/lead-to-customer-runbook.md</file>
+    </references>
+  </target-architecture>
+
+  <open-questions>
+    <item>What is the right upload cap for the estimator: three, five, or another small number of images?</item>
+    <item>Should uploads attach to the lead-form submission directly, to a dedicated estimator-attachment model, or to a later quote record once staff promote the request?</item>
+    <item>Which services or job shapes need more than square footage in the public estimator: mixed exterior packages, dock work, grease-heavy commercial jobs, severe organic growth, or all of the above?</item>
+    <item>Does the public estimator need new inputs now, or is stronger copy plus optional images enough for the next shipping slice?</item>
+  </open-questions>
+
+  <tasks>
+    <task ref="14-01">Kickoff and requirements capture for public estimator uploads plus pricing recalibration</task>
+    <task ref="14-02">Pricing calibration audit and quoteSettings direction</task>
+    <task ref="14-03">Optional image-intake storage and review contract</task>
+    <task ref="14-04">Homepage estimator UI and API implementation</task>
+    <task ref="14-05">Tests and verification</task>
+  </tasks>
+</phase-plan>

@@ -3,12 +3,14 @@ import React from 'react'
 
 import { AdminBar } from '@/components/AdminBar'
 import { AdminImpersonationToolbarShell } from '@/components/admin-impersonation/AdminImpersonationToolbarShell'
+import { ContentAuthoringToolbar } from '@/components/admin-impersonation/ContentAuthoringToolbar'
 import { VercelAnalytics } from '@/components/analytics/VercelAnalytics'
 import { PageMediaDevtoolsProvider } from '@/components/admin-impersonation/PageMediaDevtoolsContext'
 import { PortalCopilot } from '@/components/copilot/PortalCopilot'
 import { PortalCopilotProvider } from '@/components/copilot/PortalCopilotContext'
 import { MarketingShell } from '@/components/frontend/MarketingShell'
 import { isAiOpsAssistantEnabled } from '@/lib/ai'
+import { hasContentAuthoringAccess } from '@/lib/auth/organizationAccess'
 import type { Footer, Header } from '@/payload-types'
 import { SiteTourProvider } from '@/components/tours/SiteTourProvider'
 import { getCurrentAuthContext } from '@/lib/auth/getAuthContext'
@@ -23,6 +25,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const { isEnabled } = await draftMode()
   const localPageMediaDevtoolsEnabled = await isLocalDevtoolsRequest()
   const auth = await getCurrentAuthContext()
+  const canUseContentAuthoring =
+    auth.realUser ? await hasContentAuthoringAccess(auth.payload, auth.realUser) : false
   const canUseLocalPageMediaDevtools = localPageMediaDevtoolsEnabled && auth.isRealAdmin
   const aiCopilotEnabled = auth.isRealAdmin && isAiOpsAssistantEnabled()
   const [headerData, footerData] = await Promise.all([
@@ -41,7 +45,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               preview: isEnabled,
             }}
           />
-          <AdminImpersonationToolbarShell pageMediaDevtoolsEnabled={canUseLocalPageMediaDevtools} />
+          {auth.isRealAdmin ? (
+            <AdminImpersonationToolbarShell pageMediaDevtoolsEnabled={canUseLocalPageMediaDevtools} />
+          ) : canUseContentAuthoring ? (
+            <ContentAuthoringToolbar />
+          ) : null}
           <MarketingShell footerLinks={footerLinks} primaryLinks={primaryLinks}>
             {children}
           </MarketingShell>

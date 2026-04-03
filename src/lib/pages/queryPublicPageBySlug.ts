@@ -5,6 +5,7 @@ import { cache } from 'react'
 
 import { homeStatic } from '@/endpoints/seed/home-static'
 import { getCurrentAuthContext } from '@/lib/auth/getAuthContext'
+import { hasContentAuthoringAccess } from '@/lib/auth/organizationAccess'
 import { hasDatabaseUrl } from '@/utilities/buildTimeDb'
 
 export function buildPublicPageWhere(args: {
@@ -66,7 +67,9 @@ export const queryPublicPageBySlug = cache(async ({ slug }: { slug: string }) =>
   const { isEnabled: draft } = await draftMode()
   const auth = await getCurrentAuthContext()
   const payload = auth.payload || (await getPayload({ config: configPromise }))
-  const includePrivate = draft || auth.isRealAdmin
+  const canUseContentAuthoring =
+    auth.realUser ? await hasContentAuthoringAccess(payload, auth.realUser) : false
+  const includePrivate = draft || auth.isRealAdmin || canUseContentAuthoring
   const payloadReq = includePrivate
     ? await createLocalReq({ user: auth.realUser || undefined }, payload)
     : undefined

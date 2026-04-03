@@ -1,6 +1,7 @@
 import { createLocalReq, type File as PayloadFile } from 'payload'
 
 import { getCurrentAuthContext } from '@/lib/auth/getAuthContext'
+import { hasContentAuthoringAccess } from '@/lib/auth/organizationAccess'
 import { buildMediaDevtoolsSummary, buildPageMediaUpdateData } from '@/lib/media/pageMediaDevtools'
 import { generateOpenAIImage } from '@/lib/media/openaiImageGeneration'
 import { generateOpenAIVideo } from '@/lib/media/openaiVideoGeneration'
@@ -10,7 +11,7 @@ import type { Media, Page } from '@/payload-types'
 async function requireStaffPageComposerAuth() {
   const auth = await getCurrentAuthContext()
 
-  if (!auth.realUser || !auth.isRealAdmin) {
+  if (!auth.realUser || !(await hasContentAuthoringAccess(auth.payload, auth.realUser))) {
     return null
   }
 

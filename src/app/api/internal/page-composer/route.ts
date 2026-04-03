@@ -1,6 +1,7 @@
 import { createLocalReq } from 'payload'
 
 import { getCurrentAuthContext } from '@/lib/auth/getAuthContext'
+import { hasContentAuthoringAccess } from '@/lib/auth/organizationAccess'
 import {
   frontendPathToPageSlug,
   normalizePageComposerLayoutForSave,
@@ -13,7 +14,7 @@ import type { Page } from '@/payload-types'
 async function requireStaffPageComposerAuth() {
   const auth = await getCurrentAuthContext()
 
-  if (!auth.realUser || !auth.isRealAdmin) {
+  if (!auth.realUser || !(await hasContentAuthoringAccess(auth.payload, auth.realUser))) {
     return null
   }
 

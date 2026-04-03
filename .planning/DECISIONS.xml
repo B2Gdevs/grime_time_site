@@ -154,6 +154,27 @@
       <file path="src/app/api/lead-forms/instant-quote/route.ts" />
     </references>
   </decision>
+  <decision id="D-quotes-003">
+    <title>Homepage instant quote stays fast, but optional customer photo series is part of the intake contract</title>
+    <summary>The public estimator on `/#instant-quote` should remain a low-friction range tool, but customers may optionally attach a small series of property or problem photos with the same request so staff can scope the job faster without forcing an upload requirement on every lead.</summary>
+    <impact>Form, API, storage, privacy copy, and staff review paths must support optional multi-image uploads. Attachments assist human review and follow-up; they do not replace final scope confirmation or turn the public estimator into a guaranteed final quote.</impact>
+    <references>
+      <file path=".planning/phases/14-public-quote-estimator-intake-and-pricing/PLAN.xml" />
+      <file path="src/components/InstantQuoteSection.tsx" />
+      <file path="src/app/api/lead-forms/instant-quote/route.ts" />
+    </references>
+  </decision>
+  <decision id="D-quotes-004">
+    <title>Public estimate math is calibratable guidance, not a fixed truth table</title>
+    <summary>The current square-footage-first estimator is useful for speed but too blunt to be treated as settled pricing. Public quote math should be recalibrated around service-specific baselines, honest range copy, and explicit staff-review lanes for factors such as access, severity, mixed surfaces, commercial complexity, and anything customer images reveal.</summary>
+    <impact>Phase 14 starts with pricing calibration before UI or storage changes ship. `quoteSettings`, homepage copy, and follow-up workflow should evolve together so the public range remains credible instead of drifting away from how staff actually scope jobs.</impact>
+    <references>
+      <file path=".planning/phases/14-public-quote-estimator-intake-and-pricing/PLAN.xml" />
+      <file path=".planning/workflows/quote-system-and-texas-compliance.md" />
+      <file path="src/lib/quotes/instantQuoteCatalog.ts" />
+      <file path="src/globals/QuoteSettings/config.ts" />
+    </references>
+  </decision>
   <decision id="D-ops-001">
     <title>Business scorecard and growth system belong to phase 06</title>
     <summary>KPI definitions, projected revenue, MRR, margin review, liabilities, ops asset inventory, and daily/weekly rhythm are part of advanced ops work. Start them as internal docs/config with real business targets, then promote them to editable Payload data only after schema approval.</summary>
@@ -466,6 +487,20 @@
     <references>
       <file path=".planning/workflows/orgs-rbac-and-provider-sync.md" />
       <file path=".planning/workflows/customer-auth-and-portal-access.md" />
+    </references>
+  </decision>
+  <decision id="D-auth-011">
+    <title>Visual authoring is granted by `content:write`; demo users are excluded</title>
+    <summary>The frontend page composer and its media route should authorize on the first-party `content:write` entitlement instead of requiring full Payload-admin status. External members of the official Grime Time Clerk org currently default to `staff-designer`, which grants visual editing without `/ops`, CRM, docs, impersonation, or Payload admin. Demo personas remain blocked from this authoring lane by email suffix even if demo memberships still exist locally.</summary>
+    <impact>This gives Grime Time a safe designer role for invited staff such as Google-auth users while preserving the Payload admin bridge for real admins. Private and draft page preview must follow the same authoring entitlement so designers can actually work on unpublished pages, and the official Clerk org mapping should stay env-backed via `GRIME_TIME_CLERK_ORG_ID` rather than a permanently hardcoded id.</impact>
+    <references>
+      <file path=".planning/workflows/orgs-rbac-and-provider-sync.md" />
+      <file path="src/lib/auth/organizationAccess.ts" />
+      <file path="src/lib/auth/organizationSync.ts" />
+      <file path="src/app/api/internal/page-composer/route.ts" />
+      <file path="src/app/api/internal/page-composer/media/route.ts" />
+      <file path="src/lib/pages/queryPublicPageBySlug.ts" />
+      <file path="src/lib/demo/constants.ts" />
     </references>
   </decision>
   <decision id="D-eng-001">

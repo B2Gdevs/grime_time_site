@@ -16,6 +16,7 @@ export type OrganizationProvider = (typeof ORGANIZATION_PROVIDER_OPTIONS)[number
 export const ORGANIZATION_MEMBERSHIP_ROLE_OPTIONS = [
   { label: 'Staff Owner', value: 'staff-owner' },
   { label: 'Staff Admin', value: 'staff-admin' },
+  { label: 'Staff Designer', value: 'staff-designer' },
   { label: 'Staff Operator', value: 'staff-operator' },
   { label: 'Customer Admin', value: 'customer-admin' },
   { label: 'Customer Member', value: 'customer-member' },
@@ -44,6 +45,7 @@ const membershipEntitlements: Record<
 > = {
   'customer-admin': ['portal:access'],
   'customer-member': ['portal:access'],
+  'staff-designer': ['content:write'],
   'staff-admin': [
     'admin:payload',
     'billing:write',
@@ -54,11 +56,8 @@ const membershipEntitlements: Record<
     'org:manage-members',
   ],
   'staff-operator': [
-    'admin:payload',
-    'content:write',
-    'crm:write',
-    'impersonation:use',
     'ops:write',
+    'crm:write',
   ],
   'staff-owner': [
     'admin:payload',
@@ -98,4 +97,11 @@ export function roleTemplateCanManageMemberships(
   roleTemplate: null | OrganizationMembershipRoleTemplate | string | undefined,
 ): boolean {
   return deriveOrganizationEntitlements(roleTemplate).includes('org:manage-members')
+}
+
+export function roleTemplateHasEntitlement(
+  roleTemplate: null | OrganizationMembershipRoleTemplate | string | undefined,
+  entitlement: OrganizationEntitlement,
+): boolean {
+  return deriveOrganizationEntitlements(roleTemplate).includes(entitlement)
 }

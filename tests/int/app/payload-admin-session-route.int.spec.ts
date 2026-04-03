@@ -86,4 +86,32 @@ describe('payload admin session route', () => {
       }),
     )
   })
+
+  it('redirects non-admin users back to login without issuing a Payload session', async () => {
+    requireRequestAuth.mockResolvedValue({
+      isRealAdmin: false,
+      payload: {
+        collections: {},
+        config: {
+          cookiePrefix: 'payload',
+          secret: 'payload-secret',
+        },
+      },
+      realUser: {
+        email: 'designer@example.com',
+        id: 23,
+        roles: ['customer'],
+      },
+    })
+
+    const { GET } = await import('@/app/api/internal/admin/payload-session/route')
+    const response = await GET(
+      new Request('http://localhost:5465/api/internal/admin/payload-session?next=/admin'),
+    )
+
+    expect(response.status).toBe(307)
+    expect(response.headers.get('location')).toBe('http://localhost:5465/login')
+    expect(jwtSign).not.toHaveBeenCalled()
+    expect(cookieSet).not.toHaveBeenCalled()
+  })
 })

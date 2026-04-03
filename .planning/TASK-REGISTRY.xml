@@ -586,7 +586,7 @@
       </commands>
     </task>
     <task id="12-02" agent-id="" status="in-progress">
-      <goal>Build admin/workspace controls to assign memberships, promote/demote org role templates, and lock/unlock entitlements from Grime Time, then mirror those changes out to Clerk without making Clerk the canonical authorization store. Current checkpoint: the mapped Clerk Grime Time org now bootstraps staff admin/operator access for non-`@grimetime.app` users, signed-in admins can bridge into Payload admin without re-entering credentials, the public-shell operator toolbar exposes `Ops`, `CRM workspace`, `Docs`, `Customer portal`, and Payload admin directly from the homepage, impersonation routes use membership-aware admin checks, and tracked homepage media can be replaced or regenerated in place from hover controls.</goal>
+      <goal>Build admin/workspace controls to assign memberships, promote/demote org role templates, and lock/unlock entitlements from Grime Time, then mirror those changes out to Clerk without making Clerk the canonical authorization store. Current checkpoint: the mapped Clerk Grime Time org now bootstraps `staff-designer` access for non-`@grimetime.app` members, signed-in staff admins can bridge into Payload admin without re-entering credentials, the frontend composer and composer-media routes now authorize on `content:write` instead of raw Payload-admin status, demo-email users are excluded from that authoring lane, private/draft page preview works for content authors, and demo fixtures were purged from the configured database through `grimetime seed delete demo` / `grimetime seed check demo`.</goal>
       <keywords>admin,roles,entitlements,orgs,sync</keywords>
       <commands>
         <command>See .planning/workflows/orgs-rbac-and-provider-sync.md</command>
@@ -646,6 +646,46 @@
         <command>cmd /c npm.cmd exec vitest run tests/int/lib/ai/copilot-authoring.int.spec.ts tests/int/lib/pages/page-composer.int.spec.ts</command>
         <command>cmd /c npm.cmd run build</command>
         <command>cmd /c npm.cmd exec playwright test tests/e2e/page-composer.e2e.spec.ts</command>
+      </commands>
+    </task>
+  </phase>
+  <phase id="14">
+    <task id="14-01" agent-id="" status="done">
+      <goal>Kick off the public quote-estimator follow-on: capture the new `/` requirements for optional image-series intake, pricing-model recalibration, storage and staff-review expectations, and the fast-estimate UX constraints before implementation resumes.</goal>
+      <keywords>planning,quotes,homepage,uploads,pricing</keywords>
+      <commands>
+        <command>See .planning/phases/14-public-quote-estimator-intake-and-pricing/PLAN.xml</command>
+        <command>See .planning/workflows/quote-system-and-texas-compliance.md</command>
+      </commands>
+    </task>
+    <task id="14-02" agent-id="" status="in-progress">
+      <goal>Calibrate the public estimator math: audit the current square-footage-first pricing ranges, define which service-specific variables should affect the public range versus stay staff-reviewed, and record the copy/disclaimer changes needed so the estimator remains honest while still useful.</goal>
+      <keywords>pricing,estimator,quote-settings,calibration</keywords>
+      <commands>
+        <command>See .planning/phases/14-public-quote-estimator-intake-and-pricing/PLAN.xml</command>
+        <command>See src/lib/quotes/instantQuoteCatalog.ts and src/globals/QuoteSettings/config.ts</command>
+      </commands>
+    </task>
+    <task id="14-03" agent-id="" status="planned">
+      <goal>Define and implement the optional image-intake contract for the homepage estimator: file-count and size limits, validation, storage path, linkage to the lead or quote workflow, and the staff review surface for attached customer photos.</goal>
+      <keywords>uploads,media,lead-intake,quotes,storage</keywords>
+      <commands>
+        <command>See .planning/phases/14-public-quote-estimator-intake-and-pricing/PLAN.xml</command>
+        <command>See src/components/InstantQuoteSection.tsx and src/app/api/lead-forms/instant-quote/route.ts</command>
+      </commands>
+    </task>
+    <task id="14-04" agent-id="" status="planned">
+      <goal>Ship the public `/` estimator update: optional multi-image upload UI, updated request copy, range messaging aligned with the calibrated pricing model, and backend handling that keeps submissions fast when no images are attached.</goal>
+      <keywords>homepage,frontend,quotes,uploads,api</keywords>
+      <commands>
+        <command>See src/components/InstantQuoteSection.tsx and src/app/(frontend)/page.tsx</command>
+      </commands>
+    </task>
+    <task id="14-05" agent-id="" status="planned">
+      <goal>Add verification for the estimator upgrade: validation and pricing tests, upload-route coverage, and browser checks for optional image selection plus no-image fallback on the homepage.</goal>
+      <keywords>tests,vitest,playwright,quotes,uploads</keywords>
+      <commands>
+        <command>Run focused unit/integration tests for quote math and lead-form handling, then browser verification on `/#instant-quote`.</command>
       </commands>
     </task>
   </phase>

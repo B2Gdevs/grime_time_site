@@ -10,8 +10,9 @@
 - **Portal shortcuts:** Admin `/ops` and the portal sidebar should point staff to **Quotes** and **Quote settings**, not to the public `/schedule` page.
 - **Access:** Set `QUOTES_INTERNAL_ENABLED=true` and `QUOTES_INTERNAL_EMAILS` to a comma-separated list of staff emails (must match Payload user emails). When disabled or the list is empty, **no one** can read/create quotes in admin.
 - **Code:** [`src/collections/Quotes`](../../src/collections/Quotes), [`src/utilities/quotesAccess.ts`](../../src/utilities/quotesAccess.ts).
-- **Pricing controls:** The public instant quote math is powered by global [`src/globals/QuoteSettings/config.ts`](../../src/globals/QuoteSettings/config.ts), which has Payload drafts enabled so staff can stage and publish pricing/service changes deliberately.
+- **Pricing controls:** The public instant quote math is powered by global [`src/globals/QuoteSettings/config.ts`](../../src/globals/QuoteSettings/config.ts), which has Payload drafts enabled so staff can stage and publish pricing/service changes deliberately. Phase 14 reopens this model for a calibration pass before the site implies stronger pricing confidence.
 - **Internal pipeline handoff:** Quote detail stays in Payload and should feed a first-party opportunity pipeline for follow-up and pipeline visibility. Current hook boundary: [`src/hooks/beforeQuoteCrm.ts`](../../src/hooks/beforeQuoteCrm.ts).
+- **Estimator attachments (phase 14):** `/#instant-quote` should support optional multi-image intake so customers can submit a small photo series with the same request. Those images support staff review and follow-up; they do not replace final scope confirmation.
 
 ## Texas tax review snapshot (reviewed March 23, 2026)
 
@@ -36,7 +37,7 @@ Operational reading for Grime Time:
 - **Description** of surfaces (siding, concrete, roof, windows, etc.)
 - **Soiling level** (for example light dust to heavily stained / oxidation) - drives labor hours multiplier
 - **Access / hazards** notes (ladder work, vegetation, HOA) - optional risk/time adder
-- **Photos** (future): stored in Payload media or blob; admin-only until published
+- **Photos**: optional public estimator attachments should be stored for internal staff review and remain admin-only unless intentionally reused later in a customer-facing flow
 
 ## Economics (baseline formulas - tune with real data)
 
@@ -83,5 +84,7 @@ Use spreadsheet or internal admin calculators before automating in code.
 - [x] Keep Payload as quote source of truth and plan a first-party opportunity pipeline
 - [x] Optional: link `quotes` -> `form-submissions` - **sourceSubmission** relationship on `quotes`
 - [x] Keep lifecycle metadata on quotes while the first-party opportunity model is being defined
+- [ ] Calibrate the public estimator math so service-specific variables, honest range copy, and manual-review lanes match how the team actually scopes jobs
+- [ ] Define the optional image-intake contract for the homepage estimator: limits, storage path, privacy copy, and lead or quote linkage
 - [ ] Define which quote events create/update an internal opportunity (`sent`, `accepted`, `lost`)
 - [ ] Define internal opportunity stage mapping and owner rules

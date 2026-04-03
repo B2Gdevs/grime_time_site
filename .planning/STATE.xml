@@ -2,8 +2,8 @@
 <state>
   <agent-registry>
   </agent-registry>
-  <current-phase>13</current-phase>
-  <current-plan>13-06</current-plan>
-  <status>complete</status>
-  <next-action>`13-06` is complete: localhost production verification is fixed, the page-composer Playwright coverage now runs end to end against `next start`, and the drawer or copilot surfaces were tightened where browser verification exposed real accessibility and interaction gaps. Phase 13 is now complete; resume the parallel phase 11 or 12 workstreams unless new visual-authoring scope is added.</next-action>
+  <current-phase>14</current-phase>
+  <current-plan>14-02</current-plan>
+  <status>in_progress</status>
+  <next-action>`14-01` is complete: the homepage quote-estimator upgrade is now captured as phase 14. Next execute `14-02` to audit the current square-footage-first pricing model, define the calibration variables and operator override rules, and settle the optional image-intake contract before implementation starts on homepage uploads.</next-action>
 </state>

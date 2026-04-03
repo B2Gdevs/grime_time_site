@@ -101,8 +101,16 @@
     <goal>Turn the existing local page-media workbench and Payload page model into a visual authoring system: reusable sections, add/remove/reorder/swap workflows, draft pages and slug management, inline content and media editing, and an AI-aware copilot that understands the selected page or section context.</goal>
     <requirements>REQ-03</requirements>
     <depends>03,04,08,12</depends>
-    <status>in-progress</status>
+    <status>complete</status>
     <plans>.planning/phases/13-visual-page-composer-and-copilot/</plans>
+  </phase>
+  <phase id="14">
+    <title>Public quote estimator intake and pricing calibration</title>
+    <goal>Upgrade the homepage instant quote experience so it can optionally intake a series of customer job photos, keep the estimator fast and low-friction on `/`, and recalibrate public pricing math before broader quote automation or confidence claims expand.</goal>
+    <requirements>REQ-05, REQ-06</requirements>
+    <depends>05,06,13</depends>
+    <status>in-progress</status>
+    <plans>.planning/phases/14-public-quote-estimator-intake-and-pricing/</plans>
   </phase>
   <doc-flow>
     <doc name="TASK-REGISTRY.xml">Tasks by phase.</doc>

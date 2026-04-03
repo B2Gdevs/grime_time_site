@@ -65,7 +65,7 @@ function mapClerkRoleToOrganizationRole(args: {
     return 'staff-admin'
   }
 
-  return 'staff-operator'
+  return 'staff-designer'
 }
 
 function getDefaultClerkMembership(

@@ -110,6 +110,8 @@ The dashboard should answer these in under 10 seconds:
 - [ ] Clear status workflow in list filters and badges
 - [ ] Duplicate or template path for similar jobs
 - [ ] Promote quotes into the first-party opportunity pipeline for relationship management and follow-up
+- [ ] Recalibrate the homepage instant-quote pricing model so public ranges match real scoping rules more closely
+- [ ] Support optional homepage quote-request photo uploads with an internal review path for staff
 - [ ] Future customer-visible quote flow in a separate doc before shipping anything public
 
 ### E. Cross-cutting

@@ -23,6 +23,7 @@ import * as migration_20260401_170000_clerk_user_id from './20260401_170000_cler
 import * as migration_20260402_022714_add_organizations_and_memberships from './20260402_022714_add_organizations_and_memberships';
 import * as migration_20260402_183806_add_service_grid_display_variant from './20260402_183806_add_service_grid_display_variant';
 import * as migration_20260402_194706_add_page_visibility from './20260402_194706_add_page_visibility';
+import * as migration_20260403_214500_staff_designer_role from './20260403_214500_staff_designer_role';
 
 export const migrations = [
   {
@@ -149,5 +150,10 @@ export const migrations = [
     up: migration_20260402_194706_add_page_visibility.up,
     down: migration_20260402_194706_add_page_visibility.down,
     name: '20260402_194706_add_page_visibility'
+  },
+  {
+    up: migration_20260403_214500_staff_designer_role.up,
+    down: migration_20260403_214500_staff_designer_role.down,
+    name: '20260403_214500_staff_designer_role',
   },
 ];
