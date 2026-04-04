@@ -657,6 +657,16 @@
       <file path="src/lib/ai/copilotAuthoring.ts" />
     </references>
   </decision>
+  <decision id="D-content-012">
+    <title>Composer follow-on work is preview-first and block-constrained, not form-first or style-free</title>
+    <summary>The next composer phase should behave like a constrained no-code builder in the style of Softr or Webflow-lite: the page preview is the primary surface, blocks remain reusable schema-driven components in a vertical stack, editing is explicitly split into structure/content/media/publish, and the main authoring affordances should move closer to the preview through mirrored selection, inline text editing, and compact hover controls.</summary>
+    <impact>Future composer work should prioritize direct manipulation, compact top-bar controls, and state synchronization between preview and structure instead of adding more drawer-only forms or arbitrary style freedom. Guardrails stay intentional: schema-bound blocks, sidebar for deeper config, no early freeform styling system, and targeted performance work to avoid re-rendering the whole page for small edits.</impact>
+    <references>
+      <file path=".planning/phases/15-visual-composer-builder-and-inline-authoring/PLAN.xml" />
+      <file path=".planning/workflows/visual-page-composer-and-copilot-experience.md" />
+      <file path="src/components/admin-impersonation/PageComposerDrawer.tsx" />
+    </references>
+  </decision>
   <decision id="D-testing-001">
     <title>Local production browser verification for Grime Time should use `localhost` and treat fixed drawers as first-class interaction surfaces</title>
     <summary>For Grime Time's local production browser checks, `localhost` is the canonical host. Using `127.0.0.1` breaks Clerk's dev middleware rewrite path under `next start`. The page-composer and copilot Playwright coverage should also scope interactions to the fixed drawer or copilot shell rather than relying on global page locators, because these surfaces intentionally overlay the marketing site.</summary>

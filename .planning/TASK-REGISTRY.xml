@@ -702,5 +702,71 @@
         <command>Draft requirements in .planning/workflows/quote-industry-intake.md and link answers to Phase 14 manual review rules.</command>
       </commands>
     </task>
+    <task id="14-08" agent-id="" status="planned">
+      <goal>Document the composer/copilot docking issue so the UI team can show the copilot panel beside the composer and allow drag/dock behavior.</goal>
+      <keywords>composer,copilot,ux,planning</keywords>
+      <commands>
+        <command>Describe behavior & constraints in .planning/workflows/composer-copilot-ux.md and reference admin toolbar tasks.</command>
+      </commands>
+    </task>
+  </phase>
+  <phase id="15">
+    <task id="15-01" agent-id="" status="planned">
+      <goal>Lock the preview-first builder contract for the composer: confirm the page state model, UI state model, tab responsibilities, and guardrails so the tool behaves like a constrained no-code builder rather than a CMS form.</goal>
+      <keywords>planning,composer,state,ux</keywords>
+      <commands>
+        <command>See .planning/phases/15-visual-composer-builder-and-inline-authoring/PLAN.xml</command>
+        <command>See .planning/workflows/visual-page-composer-and-copilot-experience.md</command>
+      </commands>
+    </task>
+    <task id="15-02" agent-id="" status="planned">
+      <goal>Fix the working-page dropdown layering bug and refactor the composer top bar into the compact two-row layout with title, slug, working-page selector, create-draft action, visibility control, and route preview.</goal>
+      <keywords>composer,header,dropdown,z-index,drafts</keywords>
+      <commands>
+        <command>See src/components/admin-impersonation/PageComposerDrawer.tsx</command>
+      </commands>
+    </task>
+    <task id="15-03" agent-id="" status="planned">
+      <goal>Implement the improved draft workflow controls: inline title and slug editing, one-click create draft, compact visibility UI, instant route preview, and removal of redundant draft explanation text.</goal>
+      <keywords>drafts,title,slug,visibility,preview</keywords>
+      <commands>
+        <command>See src/components/admin-impersonation/PageComposerDrawer.tsx and src/app/api/internal/page-composer/route.ts</command>
+      </commands>
+    </task>
+    <task id="15-04" agent-id="" status="planned">
+      <goal>Add direct-manipulation preview affordances: block hover outline, compact action bar, mirrored selection with structure, and add-below / duplicate / delete controls from the preview surface.</goal>
+      <keywords>preview,selection,hover,blocks,composer</keywords>
+      <commands>
+        <command>See src/components/admin-impersonation/PageComposerDrawer.tsx and src/lib/pages/pageComposer.ts</command>
+      </commands>
+    </task>
+    <task id="15-05" agent-id="" status="planned">
+      <goal>Ship MVP inline preview editing for headings, paragraph text, and CTA labels, with updates synchronized back into the content tab and persisted draft state.</goal>
+      <keywords>inline-editing,preview,text,cta,content</keywords>
+      <commands>
+        <command>See src/components/admin-impersonation/PageComposerDrawer.tsx</command>
+      </commands>
+    </task>
+    <task id="15-06" agent-id="" status="planned">
+      <goal>Refine the structure panel so every block row exposes block name, type, and reusable/hidden/dynamic badges while always mirroring the selected block from the preview.</goal>
+      <keywords>structure,blocks,badges,selection</keywords>
+      <commands>
+        <command>See src/components/admin-impersonation/PageComposerDrawer.tsx</command>
+      </commands>
+    </task>
+    <task id="15-07" agent-id="" status="planned">
+      <goal>Stabilize composer state and performance: support current page vs current draft explicitly, add preview-mode state, and reduce unnecessary full-page re-renders on small edits.</goal>
+      <keywords>state,zustand,performance,drafts,preview-mode</keywords>
+      <commands>
+        <command>See .planning/phases/15-visual-composer-builder-and-inline-authoring/PLAN.xml</command>
+      </commands>
+    </task>
+    <task id="15-08" agent-id="" status="planned">
+      <goal>Add verification for the builder follow-on: focused Vitest/integration coverage for draft switching and inline editing plus browser checks for dropdown layering, top-bar controls, and preview selection sync.</goal>
+      <keywords>tests,vitest,playwright,composer,verification</keywords>
+      <commands>
+        <command>Run focused composer integration tests, `npm.cmd exec -- tsc --noEmit`, and browser verification on the frontend composer.</command>
+      </commands>
+    </task>
   </phase>
 </task-registry>

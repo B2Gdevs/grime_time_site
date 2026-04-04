@@ -1,13 +1,14 @@
 # Visual page composer and copilot experience
 
 **Owner:** TBD  
-**Last reviewed:** 2026-04-02  
+**Last reviewed:** 2026-04-03  
 **Tools:** Payload pages + drafts, local page-media workbench, Assistant UI, OpenAI Apps SDK guidance
 
 Planning anchors
 - Phase: `13`
-- Tasks: `13-01` through `13-06`
-- Related decisions: `D-content-004`, `D-ai-003`
+- Follow-on phase: `15`
+- Tasks: `13-01` through `13-06`, then `15-01` through `15-08`
+- Related decisions: `D-content-004`, `D-ai-003`, `D-content-012`
 
 ## Why this doc exists
 
@@ -79,6 +80,22 @@ Target workbench surfaces:
 - `Publish`: title, slug, draft/public state, preview, publish
 
 Phase 13 should start **staff-safe and authenticated**, not localhost-only. The existing localhost media drawer can remain as a developer-oriented precursor, but the first real composer needs to be usable by staff immediately.
+
+## Phase-15 builder follow-on
+
+The next composer wave should make the tool feel like a real block builder instead of a strong-but-obvious CMS workbench.
+
+Locked follow-on rules:
+
+- The page preview is the primary editing surface.
+- The working-page switcher, draft controls, and page metadata must become compact top-bar controls rather than explanatory subpanels.
+- The dropdown layering bug is phase-blocking and must be fixed before broader UX polish ships.
+- Inline editing starts with high-value text fields only: headings, paragraph content, and CTA labels.
+- Preview and structure must share one selected-block model.
+- Hover affordances should expose small direct-manipulation controls: add below, duplicate, delete.
+- The structure panel should explain each block row at a glance with type plus reusable/hidden/dynamic badges.
+- Deeper settings remain in the sidebar; the preview handles the immediate edits.
+- The composer remains block-constrained. Reuse and composition are the freedom, not arbitrary styling knobs.
 
 ### 4. Treat page creation as a first-class workflow
 

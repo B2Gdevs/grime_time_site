@@ -5,5 +5,5 @@
   <current-phase>14</current-phase>
   <current-plan>14-02</current-plan>
   <status>in_progress</status>
-  <next-action>`14-01` is complete: the homepage quote-estimator upgrade is now captured as phase 14. Next execute `14-02` to audit the current square-footage-first pricing model, define the calibration variables and operator override rules, and settle the optional image-intake contract before implementation starts on homepage uploads.</next-action>
+  <next-action>`14-01` is complete: the homepage quote-estimator upgrade is now captured as phase 14. Next execute `14-02` to audit the current square-footage-first pricing model, define the calibration variables and operator override rules, and settle the optional image-intake contract before implementation starts on homepage uploads. The visual-composer follow-on is now planned as phase `15`; when the team switches back to composer work, start with `15-01` and then execute `15-02` through `15-05` in order because the builder-shell refactor and selection model are prerequisites for inline editing.</next-action>
 </state>
