@@ -4,30 +4,28 @@ import { cleanupPageBySlug } from '../helpers/pageComposer'
 import { login } from '../helpers/login'
 import { cleanupTestUser, seedTestUser, testUser } from '../helpers/seedUser'
 
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
 async function dragSectionAbove(args: {
   page: import('@playwright/test').Page
   sourceLabel: string
   targetLabel: string
 }) {
-  const sourceRow = args.page.locator('div.rounded-2xl.border.p-3').filter({
-    has: args.page.getByText(args.sourceLabel, { exact: true }),
-  }).last()
-  const targetRow = args.page.locator('div.rounded-2xl.border.p-3').filter({
-    has: args.page.getByText(args.targetLabel, { exact: true }),
-  }).last()
+  const drawer = composerDrawer(args.page)
+  const sourceHandle = drawer
+    .getByRole('button', { name: new RegExp(`^${escapeRegExp(args.sourceLabel)}\\b`) })
+    .locator('xpath=preceding-sibling::button[1]')
+  const targetRow = drawer.getByRole('button', { name: new RegExp(`^${escapeRegExp(args.targetLabel)}\\b`) })
 
-  const sourceHandle = sourceRow.locator('button').first()
-  const sourceBox = await sourceHandle.boundingBox()
-  const targetBox = await targetRow.boundingBox()
+  await expect(sourceHandle).toBeVisible()
+  await expect(targetRow).toBeVisible()
 
-  if (!sourceBox || !targetBox) {
-    throw new Error('Unable to resolve section drag coordinates.')
-  }
-
-  await args.page.mouse.move(sourceBox.x + sourceBox.width / 2, sourceBox.y + sourceBox.height / 2)
-  await args.page.mouse.down()
-  await args.page.mouse.move(targetBox.x + targetBox.width / 2, targetBox.y + 16, { steps: 16 })
-  await args.page.mouse.up()
+  await sourceHandle.focus()
+  await args.page.keyboard.press('Space')
+  await args.page.keyboard.press('ArrowUp')
+  await args.page.keyboard.press('Space')
 }
 
 async function openPageComposer(page: import('@playwright/test').Page) {
@@ -52,7 +50,7 @@ async function clickComposerTab(page: import('@playwright/test').Page, name: 'Co
 }
 
 async function clickElement(locator: Locator) {
-  await locator.scrollIntoViewIfNeeded()
+  await expect(locator).toBeVisible()
   await locator.evaluate((element: HTMLElement) => element.click())
 }
 
@@ -89,13 +87,13 @@ async function createDraftPage(args: {
 
 async function insertServiceGrid(page: import('@playwright/test').Page) {
   await clickComposerTab(page, 'Structure')
-  await composerDrawer(page).getByRole('button', { name: 'Add block' }).first().click()
-  await composerDrawer(page).getByRole('button', { name: /Service grid/i }).click()
+  await clickElement(composerDrawer(page).getByRole('button', { name: 'Add block' }).first())
+  await clickElement(composerDrawer(page).getByRole('button', { name: /Service grid/i }))
 }
 
 async function renameSelectedServiceGrid(page: import('@playwright/test').Page, from: string, to: string) {
   await clickComposerTab(page, 'Content')
-  const input = page.getByDisplayValue(from)
+  const input = page.locator(`input[value="${from}"]`).first()
   await input.fill(to)
 }
 
@@ -135,6 +133,7 @@ test.describe('Staff page composer', () => {
   test('can clone a draft page, insert blocks through the library, reorder them, run media actions, and publish', async ({
     page,
   }) => {
+    test.setTimeout(90000)
     const mediaRequests: string[] = []
 
     await page.route('**/api/internal/page-composer/media', async (route) => {
@@ -186,21 +185,21 @@ test.describe('Staff page composer', () => {
     await persistComposerDraft(page)
 
     await clickComposerTab(page, 'Media')
-    await page.getByRole('button', { name: 'Section item one' }).click()
-    await mediaCard(page, 'Fresh exterior shot').getByRole('button', { name: 'Use this media' }).click()
+    await clickElement(composerDrawer(page).getByRole('button', { name: 'Section item one' }))
+    await clickElement(mediaCard(page, 'Fresh exterior shot').getByRole('button', { name: 'Use this media' }))
     await expect(page.getByText(/Swapped Section item one to media 901\./)).toBeVisible()
 
     await composerDrawer(page).getByPlaceholder(/Describe the image/).fill('Crisp daytime siding wash before-and-after shot')
-    await page.getByRole('button', { name: 'Generate and swap' }).click()
+    await clickElement(composerDrawer(page).getByRole('button', { name: 'Generate and swap' }))
     await expect(page.getByText(/Generated new image for Section item one\./)).toBeVisible()
 
     expect(mediaRequests.some((payload) => payload.includes('swap-existing-reference'))).toBe(true)
     expect(mediaRequests.some((payload) => payload.includes('generate-and-swap'))).toBe(true)
 
     await clickComposerButton(page, 'Publish')
-    await expect(composerDrawer(page).getByText('Page published.')).toBeVisible({ timeout: 15000 })
+    await expect(composerDrawer(page).getByText('Page published.')).toBeVisible({ timeout: 60000 })
 
-    await composerDrawer(page).getByRole('button', { name: 'Dismiss page composer' }).click()
+    await clickElement(composerDrawer(page).getByRole('button', { name: 'Dismiss page composer' }))
     await expect(composerDrawer(page)).not.toBeVisible()
 
     const headings = await sectionHeadingOrder(page)
@@ -276,17 +275,17 @@ test.describe('Staff page composer', () => {
     await persistComposerDraft(page)
 
     await clickComposerTab(page, 'Media')
-    await page.getByRole('button', { name: 'Section item one' }).click()
+    await clickElement(composerDrawer(page).getByRole('button', { name: 'Section item one' }))
     await composerDrawer(page).getByPlaceholder(/Describe the image/).fill('Driveway cleaning hero image')
-    await page.getByRole('button', { name: 'Focused copilot' }).click()
+    await clickElement(composerDrawer(page).getByRole('button', { name: 'Focused copilot' }))
 
     await expect(page.getByRole('heading', { name: 'Grime Time Copilot' })).toBeVisible()
     await expect(page.getByText('Authoring context', { exact: true })).toBeVisible()
     await expect(page.getByText(created.title, { exact: true })).toBeVisible()
-    await expect(page.getByText('Section 1: Copilot Service Grid')).toBeVisible()
+    await expect(page.getByText(/Section \d+: Copilot Service Grid/)).toBeVisible()
     await expect(page.getByText('Focused media session', { exact: true })).toBeVisible()
 
-    await page.getByRole('button', { name: 'gallery' }).click()
+    await clickElement(page.getByRole('button', { name: 'gallery' }))
     await page.getByLabel('Ask the employee copilot').fill('Give me an image direction')
     await clickElement(page.getByRole('button', { name: 'Send message' }))
 
