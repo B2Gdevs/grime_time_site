@@ -688,5 +688,19 @@
         <command>Run focused unit/integration tests for quote math and lead-form handling, then browser verification on `/#instant-quote`.</command>
       </commands>
     </task>
+    <task id="14-06" agent-id="" status="planned">
+      <goal>Document SOP method artifacts + formal training sequences for Soft Wash Core, Controlled Pressure Wash, Surface Cleaner Pass, and Organic Displacement so crews know steps/flags before touching code.</goal>
+      <keywords>sop,training,methods,phase-14</keywords>
+      <commands>
+        <command>See .planning/workflows/sops-method-artifacts.md and Phase 14 PLAN.</command>
+      </commands>
+    </task>
+    <task id="14-07" agent-id="" status="planned">
+      <goal>Capture attachment metadata requirements, marketing/contact intake needs, and subscription/payment questions so the quote component can share a reusable metadata tile on the UI.</goal>
+      <keywords>metadata,attachments,marketing,intake</keywords>
+      <commands>
+        <command>Draft requirements in .planning/workflows/quote-industry-intake.md and link answers to Phase 14 manual review rules.</command>
+      </commands>
+    </task>
   </phase>
 </task-registry>
