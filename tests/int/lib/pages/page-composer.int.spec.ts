@@ -7,6 +7,7 @@ import {
   createPageComposerSectionTemplate,
   duplicatePageLayoutSection,
   frontendPathToPageSlug,
+  insertPageLayoutRegisteredBlock,
   normalizePageComposerLayoutForSave,
   pageSlugToFrontendPath,
   removePageLayoutSection,
@@ -62,9 +63,35 @@ describe('page composer helpers', () => {
     ] as never)
 
     expect(summaries[0]).toMatchObject({
+      badges: ['static', 'reusable'],
       blockType: 'serviceGrid',
+      category: 'static',
       label: 'How our pricing works',
       variant: 'pricingSteps',
+    })
+  })
+
+  it('inserts registered blocks at an explicit position', () => {
+    const layout = insertPageLayoutRegisteredBlock({
+      index: 0,
+      layout: [
+        {
+          blockType: 'pricingTable',
+          dataSource: 'global',
+          heading: 'Pricing',
+          inlinePlans: [],
+        },
+      ] as never,
+      type: 'serviceGrid',
+    })
+
+    expect(layout).toHaveLength(2)
+    expect(layout[0]).toMatchObject({
+      blockType: 'serviceGrid',
+      displayVariant: 'interactive',
+    })
+    expect(layout[1]).toMatchObject({
+      blockType: 'pricingTable',
     })
   })
 

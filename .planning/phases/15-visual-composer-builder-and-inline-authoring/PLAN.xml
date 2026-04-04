@@ -2,117 +2,114 @@
 <phase-plan>
   <meta>
     <phase-id>15</phase-id>
-    <phase-name>Visual composer builder UX and inline authoring</phase-name>
+    <phase-name>Visual composer foundations and builder shell</phase-name>
     <date>2026-04-03</date>
   </meta>
   <status>planned</status>
 
   <problem>
-    <item>The current composer shipped the first staff-safe pass, but it still feels like a drawer wrapped around CMS controls instead of a true no-code builder.</item>
-    <item>The top bar is cluttered, draft actions are too text-heavy, and the working-page dropdown currently has a critical layering bug where it can render behind the composer shell.</item>
-    <item>The preview is still mostly passive. Editors can change data in the drawer, but the core authoring surface does not yet support Softr-style inline text editing, hover affordances, or direct block selection and manipulation.</item>
-    <item>Structure, content, media, and publish concerns exist, but the interaction model is not yet cohesive enough to feel like one builder. The system needs stronger state synchronization between preview, structure list, draft selection, and page metadata.</item>
-    <item>Without explicit product guardrails, the composer could drift into either raw CMS forms or uncontrolled styling freedom instead of a constrained block-based builder.</item>
+    <item>The first staff-safe composer exists, but the product model is still partly implicit. Current page data comes from the Payload page template plus Grime Time block work, while the editor UX still behaves like a drawer-centric CMS tool more than a true block builder.</item>
+    <item>The Structure tab, insertion flow, and top-bar controls do not yet match the intended Softr-like mental model. There is a real dropdown layering bug, redundant page/draft UI, and no fully formalized block library flow.</item>
+    <item>Before more UX work lands, the system needs an audit of the real existing blocks and sections already represented in the site and template so the block registry grows from actual product data instead of abstract speculation.</item>
+    <item>Reusable blocks, dynamic blocks, container slots, and custom HTML support need a stable registry contract and insertion model first, even if their deeper behaviors ship in later phases.</item>
   </problem>
 
   <goals>
-    <goal id="G1">Make the visual composer feel like a preview-first block builder: the page remains the primary surface and the editor behaves like no-code composition rather than a CMS form.</goal>
-    <goal id="G2">Refactor the composer header into a compact control bar with inline page title, slug, working-page selection, one-click draft creation, visibility state, and route preview access.</goal>
-    <goal id="G3">Fix the working-page dropdown layering bug across all composer tabs and modal states.</goal>
-    <goal id="G4">Enable inline preview editing for the MVP text surfaces: headings, paragraph content, and CTA labels, with selection synchronized between preview and structure.</goal>
-    <goal id="G5">Tighten the structure panel so each block row clearly communicates block type, status badges, and current selection without forcing the user to inspect the page JSON mentally.</goal>
-    <goal id="G6">Formalize the page and UI state model for multiple drafts, selected block state, preview mode, and tab routing so future composer work has a stable foundation.</goal>
-    <goal id="G7">Preserve guardrails: blocks remain schema-driven, deeper configuration stays in the sidebar, and the editor does not expose arbitrary styling freedom in this phase.</goal>
+    <goal id="G1">Audit the current page-composer and existing page/template sections into a formal block inventory grounded in real implemented content.</goal>
+    <goal id="G2">Define the durable visual-composer foundations: page model, block instance model, block registry contract, reusable-block boundary, insertion target model, and UI state shape.</goal>
+    <goal id="G3">Refactor the builder shell so page-level identity and controls live in the header, not redundantly inside Structure or Publish.</goal>
+    <goal id="G4">Turn Structure into a true block organizer with ordered rows, quick actions, and Softr-style insertion points instead of one-off “Add reusable section” patterns.</goal>
+    <goal id="G5">Ship the first categorized block browser with `dynamic`, `static`, and `container` groups and a first-class `Custom HTML` block entry in the taxonomy.</goal>
+    <goal id="G6">Use one rendering and selection model that stays compatible with the existing live composer and production block renderers.</goal>
   </goals>
 
   <non-goals>
-    <item>Do not turn the composer into a general-purpose style playground with arbitrary typography, spacing, or color overrides.</item>
-    <item>Do not replace the Payload page document or create a second hidden page store.</item>
-    <item>Do not add every possible inline editor in one pass. This phase covers high-value text editing first, not every field type.</item>
-    <item>Do not block phase closure on future slug-uniqueness infrastructure beyond the current validation contract.</item>
-    <item>Do not expand this phase into a full AI/copilot redesign beyond keeping it compatible with the existing shared-shell approach.</item>
+    <item>Do not finish every inline editing behavior in this phase; that moves to the next phase once the shell and registry are stable.</item>
+    <item>Do not overbuild a fully generic query builder for dynamic blocks.</item>
+    <item>Do not add arbitrary styling freedom that breaks brand guardrails.</item>
+    <item>Do not treat reusable block behavior as solved before the registry, insertion model, and shell are coherent.</item>
   </non-goals>
 
   <product-rules>
-    <item>Core model: page equals an ordered vertical list of reusable blocks, and the editor must preserve that mental model everywhere.</item>
-    <item>The preview is the primary surface. Users should edit in-context when possible; the sidebar is for deeper configuration and publish controls.</item>
-    <item>The authoring split remains explicit: `Structure`, `Content`, `Media`, and `Publish` are the four composer surfaces.</item>
-    <item>Reduce clutter aggressively: remove redundant helper copy, explanatory draft text, and duplicated actions.</item>
-    <item>Selection must be mirrored. Clicking a block in preview selects it in structure, and selecting a row in structure highlights it in preview.</item>
-    <item>Performance matters: small edits should not force full-page re-renders when a narrower local update is possible.</item>
-    <item>Blocks stay schema-bound. Reusable composition is the freedom; arbitrary styling is not.</item>
+    <item>A page is an ordered vertical list of blocks.</item>
+    <item>Use “Page”, “Block”, “Block library”, “Reusable block”, “Instance”, “Slot”, “Draft”, and “Published version” consistently.</item>
+    <item>The composer uses a three-surface model: preview canvas, right-side composer rail, and block-library drawer/modal.</item>
+    <item>The Structure tab exists only to answer: what blocks are on this page, in what order, where can I insert another one, what is selected, and what structural actions can I take.</item>
+    <item>Page-level information belongs in the header. Structure must not repeat the current page identity.</item>
+    <item>Softr-style insertion is the rule: plus between blocks, plus at end, block browser opens at exact insertion target, inserted block becomes selected.</item>
   </product-rules>
 
   <target-architecture>
-    <current-state>
-      <item>`src/components/admin-impersonation/PageComposerDrawer.tsx` already ships a four-tab staff-safe composer with page switching, draft save/publish, service-grid editing, and media-slot workflows.</item>
-      <item>Page creation, slug, visibility, and preview already exist, but the current header layout and helper text still reflect an early-workbench phase rather than a refined builder.</item>
-      <item>The composer and preview already share page data, but the selected-block interaction model is not yet rich enough for inline editing and direct-manipulation affordances.</item>
-      <item>The existing shared copilot shell and authoring context should remain compatible with this phase, not be replaced.</item>
-    </current-state>
+    <block-audit>
+      <item>Inventory the currently represented sections/components in the composer and page rendering path.</item>
+      <item>For each one, classify current name, current purpose, block category (`static`, `dynamic`, `container`, or `custom HTML`), schema needs, media needs, reuse needs, and slot/nesting needs.</item>
+      <item>Use this audit to seed the first formal block registry instead of inventing a detached system.</item>
+    </block-audit>
+
+    <registry-contract>
+      <item>Create or extend a central block registry responsible for label, category, description, icon, reusable support, slot definitions, default data, schema metadata, and preview renderer references.</item>
+      <item>The registry must support `dynamic`, `static`, and `container` categories, with `Custom HTML` treated as a first-class block type in the browser and structure list.</item>
+      <item>Dynamic blocks should stay pre-wired per use case for the MVP rather than exposing a general query builder immediately.</item>
+    </registry-contract>
 
     <builder-shell>
-      <item>The top control bar should render in two compact rows: title/slug above, and working-page controls below.</item>
-      <item>Target order: page title input, slug input; then working-page dropdown, create-draft action, visibility control, and route-preview icon action.</item>
-      <item>The dropdown must render through a portal or other reliable layering strategy so it always clears the drawer shell, tab panels, and overlays.</item>
-      <item>Redundant draft explanation copy should be removed once the one-click draft action and explicit publish controls exist.</item>
+      <item>The top composer header should own compact page title, slug, working page, create draft, visibility, and route preview controls.</item>
+      <item>Fix the working-page dropdown layering bug so menus render above the composer shell in every tab.</item>
+      <item>Remove redundant draft explanation text and remove page-name duplication inside Structure.</item>
     </builder-shell>
 
-    <preview-editing>
-      <item>Preview hover affordances should include a visible outline and a compact action bar with add-below, duplicate, and delete.</item>
-      <item>Clicking supported text should enter inline edit mode; blur or explicit commit updates the block state and keeps the content tab synchronized.</item>
-      <item>Preview selection and structure selection must share the same selected-block state rather than maintaining separate local notions of focus.</item>
-    </preview-editing>
+    <structure-model>
+      <item>Structure shows only ordered page blocks and their hierarchy where applicable.</item>
+      <item>Each row should expose block label, type, icon if available, and badges such as reusable, hidden, dynamic, or custom HTML.</item>
+      <item>Quick actions: add below, duplicate, delete, hide/show, and drag reorder.</item>
+      <item>Insertion points between blocks and at page end open the categorized block browser.</item>
+    </structure-model>
 
     <state-model>
-      <item>The page model for the composer must treat `title`, `slug`, `visibility`, `status`, and ordered `blocks` as first-class state.</item>
-      <item>The UI state model should explicitly track selected block id, active tab, preview mode, current page id, and current draft id.</item>
-      <item>Multiple drafts must be supported: switching drafts swaps the composer state, and creating a draft clones the current working state before switching context.</item>
-      <item>A Zustand-backed or equivalent editor-state layer is acceptable if it clearly separates persisted page data from transient UI state.</item>
+      <item>Persisted state: page document, blocks, content, settings, media, visibility, reusable references.</item>
+      <item>Ephemeral state: selected block id, active tab, preview mode, insertion target, expanded structure ids, block-library open state, dirty state, current page id, current draft id.</item>
+      <item>Use the existing page/layout data and render pipeline where possible to minimize drift between preview and live output.</item>
     </state-model>
 
     <references>
+      <file>.planning/workflows/visual-page-composer-requirements.md</file>
       <file>.planning/workflows/visual-page-composer-and-copilot-experience.md</file>
       <file>src/components/admin-impersonation/PageComposerDrawer.tsx</file>
-      <file>src/app/api/internal/page-composer/route.ts</file>
-      <file>src/app/api/internal/page-composer/media/route.ts</file>
       <file>src/lib/pages/pageComposer.ts</file>
-      <file>src/lib/pages/queryPublicPageBySlug.ts</file>
+      <file>src/collections/Pages/index.ts</file>
+      <file>src/app/(frontend)/page.tsx</file>
+      <file>src/app/(frontend)/[slug]/page.tsx</file>
     </references>
   </target-architecture>
 
   <definition-of-done>
-    <item>The working-page dropdown reliably renders above the composer shell in all tabs and is clickable.</item>
-    <item>The header layout matches the compact two-row builder design with title, slug, working-page selection, create-draft, visibility, and route-preview controls.</item>
-    <item>Redundant draft explanation text is removed from the composer surface.</item>
-    <item>Inline editing works in preview for supported text fields and stays synchronized with the content tab.</item>
-    <item>Preview and structure selection are mirrored, and block hover controls expose add-below, duplicate, and delete actions.</item>
-    <item>Structure rows show block name, block type, and applicable badges such as reusable, hidden, or dynamic.</item>
-    <item>The page and UI state flow supports current page, current draft, selected block, and preview mode without state drift when switching drafts.</item>
-    <item>Focused verification passes for composer integration, and build/typecheck remain green.</item>
+    <item>The current composer/page system has a documented block audit grounded in real existing sections.</item>
+    <item>The block registry contract and UI state model are explicit and reference actual existing Grime Time blocks.</item>
+    <item>The top bar owns page-level controls cleanly, the dropdown layering bug is fixed, and redundant page/draft messaging is removed.</item>
+    <item>The Structure tab behaves like a real block organizer rather than a mixed settings panel.</item>
+    <item>A categorized block browser exists for insertion flow, including a visible `Custom HTML` block entry in the taxonomy.</item>
+    <item>The new shell remains compatible with the current page-composer rendering path and existing saved page data.</item>
   </definition-of-done>
 
   <tests-required>
-    <item>Integration coverage for page switching, draft creation, visibility changes, and preview-authoring state synchronization.</item>
-    <item>Component or integration coverage for inline text editing and selected-block mirroring.</item>
-    <item>Browser verification for the dropdown layering fix, top-bar controls, and basic inline editing flow on the frontend composer.</item>
-    <item>`npm.cmd exec -- tsc --noEmit` and the relevant Vitest composer suite must pass before the phase closes.</item>
+    <item>Integration or component coverage for block insertion targeting, top-bar page controls, and structure ordering behavior.</item>
+    <item>Browser verification for dropdown layering, Structure insertion points, and block-browser open/insert flow.</item>
+    <item>`npm.cmd exec -- tsc --noEmit` and focused composer integration tests must pass.</item>
   </tests-required>
 
   <open-questions>
-    <item>Should the working-page selector represent drafts and published versions as one list with status labels, or as grouped options within the same control?</item>
-    <item>Which inline text fields should use blur-to-save versus explicit commit controls to avoid accidental edits?</item>
-    <item>Do block hover controls belong in the page viewport edge, the block boundary itself, or a shared overlay layer to minimize layout jitter?</item>
+    <item>Should `Custom HTML` live under `static` in the initial browser taxonomy or surface as a distinct advanced group later while remaining a first-class block type in the data model?</item>
+    <item>Which existing sections should be promoted to reusable-block-capable definitions first after the audit?</item>
+    <item>How much container depth is worth supporting in the first registry contract before nested editing becomes too confusing?</item>
   </open-questions>
 
   <tasks>
-    <task ref="15-01">Lock the preview-first builder contract: map the page state model, UI state model, and tab responsibilities so the composer behaves like a constrained no-code builder instead of a CMS form.</task>
-    <task ref="15-02">Fix the working-page dropdown layering bug and refactor the top control bar into the compact title/slug plus working-page/draft/visibility/preview layout.</task>
-    <task ref="15-03">Implement the improved draft workflow controls: one-click create-draft, inline title and slug editing, compact visibility control, and route-preview action while removing redundant draft helper text.</task>
-    <task ref="15-04">Add preview selection and hover affordances: block outline, hover action bar, mirrored selection with structure, and direct add-below/duplicate/delete actions.</task>
-    <task ref="15-05">Ship MVP inline preview editing for headings, paragraph text, and CTA labels with content-tab synchronization.</task>
-    <task ref="15-06">Refine the structure tab to show block name, type, reusable/hidden/dynamic badges, and always-mirrored current selection.</task>
-    <task ref="15-07">Stabilize state and performance with explicit current-page/current-draft handling, preview-mode state, and granular updates that avoid unnecessary full-page re-renders.</task>
-    <task ref="15-08">Add verification: focused Vitest/integration coverage for draft switching and inline editing plus browser checks for the top-bar and dropdown behavior.</task>
+    <task ref="15-01">Audit the current composer/page implementation and inventory all existing sections/components into the first real block map.</task>
+    <task ref="15-02">Define the block registry, block metadata contract, page/block/reusable-block model boundaries, and editor UI state shape.</task>
+    <task ref="15-03">Fix the working-page dropdown layering bug and move page-level controls into a compact builder header.</task>
+    <task ref="15-04">Redesign the Structure tab into a clean block organizer: remove redundant page labels, remove the standalone “Add reusable section” pattern, and add structural quick actions.</task>
+    <task ref="15-05">Build the categorized block browser and insertion-target flow for `dynamic`, `static`, and `container` blocks, including `Custom HTML` in the taxonomy.</task>
+    <task ref="15-06">Normalize the currently implemented Grime Time blocks into the registry and browser so insertion uses real block definitions rather than ad hoc templates.</task>
+    <task ref="15-07">Add verification for the builder foundations, shell, and insertion flow.</task>
   </tasks>
 </phase-plan>

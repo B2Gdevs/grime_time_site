@@ -113,12 +113,28 @@
     <plans>.planning/phases/14-public-quote-estimator-intake-and-pricing/</plans>
   </phase>
   <phase id="15">
-    <title>Visual composer builder UX and inline authoring</title>
-    <goal>Push the staff-safe page composer from an early workbench into a true preview-first block builder: fix the page-switcher layering bug, compact the header controls, add one-click draft handling, and bring inline preview editing plus mirrored selection into the main authoring flow.</goal>
+    <title>Visual composer foundations and builder shell</title>
+    <goal>Reconcile the existing Payload page/template data and current composer into a formal block-based builder foundation: audit real existing sections into a block registry, fix the builder shell and page-level controls, turn Structure into a proper block organizer, and ship a Softr-style categorized insertion flow.</goal>
     <requirements>REQ-03</requirements>
     <depends>12,13</depends>
     <status>planned</status>
     <plans>.planning/phases/15-visual-composer-builder-and-inline-authoring/</plans>
+  </phase>
+  <phase id="16">
+    <title>Visual composer inline editing and publish workflow</title>
+    <goal>Make the preview the primary interactive editing surface: mirrored selection, hover actions, inline text editing, responsive preview modes, compact draft handling, and an actionable publish workflow.</goal>
+    <requirements>REQ-03</requirements>
+    <depends>15</depends>
+    <status>planned</status>
+    <plans>.planning/phases/16-visual-composer-inline-editing-and-publish/</plans>
+  </phase>
+  <phase id="17">
+    <title>Visual composer reusable blocks, dynamic data, and containers</title>
+    <goal>Bring the full block system to life with linked-or-detached reusable blocks, pre-wired dynamic blocks, constrained container slots, and a real Custom HTML block with explicit safety rules.</goal>
+    <requirements>REQ-03</requirements>
+    <depends>15,16</depends>
+    <status>planned</status>
+    <plans>.planning/phases/17-visual-composer-reuse-dynamic-and-containers/</plans>
   </phase>
   <doc-flow>
     <doc name="TASK-REGISTRY.xml">Tasks by phase.</doc>

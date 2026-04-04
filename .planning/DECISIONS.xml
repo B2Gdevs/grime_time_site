@@ -667,6 +667,18 @@
       <file path="src/components/admin-impersonation/PageComposerDrawer.tsx" />
     </references>
   </decision>
+  <decision id="D-content-013">
+    <title>Composer expansion starts from a real block audit and a Softr-style insertion model</title>
+    <summary>The composer should not grow from ad hoc templates or repeated “section” shortcuts. The next implementation stream must first audit the currently implemented page/template sections into a formal block inventory, then build a block registry and insertion flow around that real inventory. Structure is the ordered block organizer only, and insertion happens through plus-targets plus a categorized block browser for dynamic, static, and container blocks.</summary>
+    <impact>This keeps the system grounded in real Grime Time content instead of speculative abstractions, removes redundant page identity from Structure, replaces the standalone “Add reusable section” pattern, and gives later reusable/dynamic/container work a stable registry and insertion path. `Custom HTML` is part of the block taxonomy from the start even if its full safety model lands later.</impact>
+    <references>
+      <file path=".planning/workflows/visual-page-composer-requirements.md" />
+      <file path=".planning/phases/15-visual-composer-builder-and-inline-authoring/PLAN.xml" />
+      <file path=".planning/phases/17-visual-composer-reuse-dynamic-and-containers/PLAN.xml" />
+      <file path="src/components/admin-impersonation/PageComposerDrawer.tsx" />
+      <file path="src/lib/pages/pageComposer.ts" />
+    </references>
+  </decision>
   <decision id="D-testing-001">
     <title>Local production browser verification for Grime Time should use `localhost` and treat fixed drawers as first-class interaction surfaces</title>
     <summary>For Grime Time's local production browser checks, `localhost` is the canonical host. Using `127.0.0.1` breaks Clerk's dev middleware rewrite path under `next start`. The page-composer and copilot Playwright coverage should also scope interactions to the fixed drawer or copilot shell rather than relying on global page locators, because these surfaces intentionally overlay the marketing site.</summary>

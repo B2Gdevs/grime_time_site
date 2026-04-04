@@ -33,7 +33,7 @@ async function dragSectionAbove(args: {
 async function openPageComposer(page: import('@playwright/test').Page) {
   await page.goto('/')
   await page.getByRole('button', { name: 'Page composer' }).click()
-  await expect(page.getByRole('heading', { name: 'Visual page composer' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Dismiss page composer' })).toBeVisible()
 }
 
 function composerDrawer(page: import('@playwright/test').Page): Locator {
@@ -73,26 +73,30 @@ async function persistComposerDraft(page: import('@playwright/test').Page) {
   throw lastError || new Error('Unable to persist the page draft.')
 }
 
-function uniquePageDetails(prefix: string) {
-  const suffix = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
-  return {
-    slug: `${prefix}-${suffix}`,
-    title: `E2E ${prefix} ${suffix}`,
-  }
-}
-
 async function createDraftPage(args: {
   page: import('@playwright/test').Page
-  slug: string
-  title: string
 }) {
-  await clickComposerTab(args.page, 'Publish')
-  await args.page.getByPlaceholder('New page title').fill(args.title)
-  await args.page.getByPlaceholder('new-page-slug').fill(args.slug)
-  const createButton = args.page.getByRole('button', { name: 'Create draft page' })
-  await createButton.scrollIntoViewIfNeeded()
-  await createButton.evaluate((button: HTMLButtonElement) => button.click())
-  await expect(args.page).toHaveURL(new RegExp(`/${args.slug}$`))
+  const previousPath = new URL(args.page.url()).pathname
+  await composerDrawer(args.page).getByRole('button', { name: 'Create draft' }).click()
+  await args.page.waitForURL((url) => url.pathname !== previousPath)
+
+  const currentUrl = new URL(args.page.url())
+  const slug = currentUrl.pathname.replace(/^\//, '')
+  const title = await composerDrawer(args.page).locator('input').first().inputValue()
+
+  return { slug, title }
+}
+
+async function insertServiceGrid(page: import('@playwright/test').Page) {
+  await clickComposerTab(page, 'Structure')
+  await composerDrawer(page).getByRole('button', { name: 'Add block' }).first().click()
+  await composerDrawer(page).getByRole('button', { name: /Service grid/i }).click()
+}
+
+async function renameSelectedServiceGrid(page: import('@playwright/test').Page, from: string, to: string) {
+  await clickComposerTab(page, 'Content')
+  const input = page.getByDisplayValue(from)
+  await input.fill(to)
 }
 
 async function sectionHeadingOrder(page: import('@playwright/test').Page): Promise<string[]> {
@@ -128,12 +132,9 @@ test.describe('Staff page composer', () => {
     await login({ page, user: testUser })
   })
 
-  test('can create a draft page, add sections, reorder them, run media actions, and publish', async ({
+  test('can clone a draft page, insert blocks through the library, reorder them, run media actions, and publish', async ({
     page,
   }) => {
-    const details = uniquePageDetails('composer-flow')
-    createdSlugs.add(details.slug)
-
     const mediaRequests: string[] = []
 
     await page.route('**/api/internal/page-composer/media', async (route) => {
@@ -166,32 +167,32 @@ test.describe('Staff page composer', () => {
     })
 
     await openPageComposer(page)
-    await createDraftPage({
-      page,
-      slug: details.slug,
-      title: details.title,
-    })
+    const created = await createDraftPage({ page })
+    createdSlugs.add(created.slug)
+
+    await insertServiceGrid(page)
+    await renameSelectedServiceGrid(page, 'Interactive service section', 'Composer Alpha')
+
+    await insertServiceGrid(page)
+    await renameSelectedServiceGrid(page, 'Interactive service section', 'Composer Beta')
 
     await clickComposerTab(page, 'Structure')
-    await page.getByRole('button', { name: 'What we do' }).click()
-    await page.getByRole('button', { name: 'Pricing steps' }).click()
-
     await dragSectionAbove({
       page,
-      sourceLabel: 'How our pricing works',
-      targetLabel: 'What we do',
+      sourceLabel: 'Composer Beta',
+      targetLabel: 'Composer Alpha',
     })
 
     await persistComposerDraft(page)
 
     await clickComposerTab(page, 'Media')
-    await page.getByRole('button', { name: 'First pricing step' }).click()
+    await page.getByRole('button', { name: 'Section item one' }).click()
     await mediaCard(page, 'Fresh exterior shot').getByRole('button', { name: 'Use this media' }).click()
-    await expect(page.getByText(/Swapped First pricing step to media 901\./)).toBeVisible()
+    await expect(page.getByText(/Swapped Section item one to media 901\./)).toBeVisible()
 
     await composerDrawer(page).getByPlaceholder(/Describe the image/).fill('Crisp daytime siding wash before-and-after shot')
     await page.getByRole('button', { name: 'Generate and swap' }).click()
-    await expect(page.getByText(/Generated new image for First pricing step\./)).toBeVisible()
+    await expect(page.getByText(/Generated new image for Section item one\./)).toBeVisible()
 
     expect(mediaRequests.some((payload) => payload.includes('swap-existing-reference'))).toBe(true)
     expect(mediaRequests.some((payload) => payload.includes('generate-and-swap'))).toBe(true)
@@ -200,19 +201,16 @@ test.describe('Staff page composer', () => {
     await expect(composerDrawer(page).getByText('Page published.')).toBeVisible({ timeout: 15000 })
 
     await composerDrawer(page).getByRole('button', { name: 'Dismiss page composer' }).click()
-    await expect(page.getByRole('heading', { name: 'Visual page composer' })).not.toBeVisible()
+    await expect(composerDrawer(page)).not.toBeVisible()
 
     const headings = await sectionHeadingOrder(page)
-    expect(headings.indexOf('How our pricing works')).toBeGreaterThanOrEqual(0)
-    expect(headings.indexOf('What we do')).toBeGreaterThanOrEqual(0)
-    expect(headings.indexOf('How our pricing works')).toBeLessThan(headings.indexOf('What we do'))
+    expect(headings.indexOf('Composer Beta')).toBeGreaterThanOrEqual(0)
+    expect(headings.indexOf('Composer Alpha')).toBeGreaterThanOrEqual(0)
+    expect(headings.indexOf('Composer Beta')).toBeLessThan(headings.indexOf('Composer Alpha'))
   })
 
   test('focused copilot sends selected page, section, and media-slot context', async ({ page }) => {
     test.skip(!copilotEnabled, 'Enable AI_OPS_ASSISTANT_ENABLED=true to run the shared copilot authoring flow.')
-
-    const details = uniquePageDetails('composer-copilot')
-    createdSlugs.add(details.slug)
 
     let capturedCopilotBody: Record<string, unknown> | null = null
 
@@ -270,25 +268,22 @@ test.describe('Staff page composer', () => {
     })
 
     await openPageComposer(page)
-    await createDraftPage({
-      page,
-      slug: details.slug,
-      title: details.title,
-    })
+    const created = await createDraftPage({ page })
+    createdSlugs.add(created.slug)
 
-    await clickComposerTab(page, 'Structure')
-    await page.getByRole('button', { name: 'Pricing steps' }).click()
+    await insertServiceGrid(page)
+    await renameSelectedServiceGrid(page, 'Interactive service section', 'Copilot Service Grid')
     await persistComposerDraft(page)
 
     await clickComposerTab(page, 'Media')
-    await page.getByRole('button', { name: 'First pricing step' }).click()
+    await page.getByRole('button', { name: 'Section item one' }).click()
     await composerDrawer(page).getByPlaceholder(/Describe the image/).fill('Driveway cleaning hero image')
     await page.getByRole('button', { name: 'Focused copilot' }).click()
 
     await expect(page.getByRole('heading', { name: 'Grime Time Copilot' })).toBeVisible()
     await expect(page.getByText('Authoring context', { exact: true })).toBeVisible()
-    await expect(page.getByText(details.title, { exact: true })).toBeVisible()
-    await expect(page.getByText('Section 1: How our pricing works')).toBeVisible()
+    await expect(page.getByText(created.title, { exact: true })).toBeVisible()
+    await expect(page.getByText('Section 1: Copilot Service Grid')).toBeVisible()
     await expect(page.getByText('Focused media session', { exact: true })).toBeVisible()
 
     await page.getByRole('button', { name: 'gallery' }).click()
@@ -297,7 +292,7 @@ test.describe('Staff page composer', () => {
 
     await expect(page.getByText('Use a wide residential exterior frame with strong daylight contrast.')).toBeVisible()
     expect(capturedCopilotBody).not.toBeNull()
-    const body = capturedCopilotBody as unknown as Record<string, unknown>
+    const body = capturedCopilotBody as Record<string, unknown>
 
     const authoringContext = body.authoringContext as
       | {
@@ -310,12 +305,12 @@ test.describe('Staff page composer', () => {
       | { mode?: string; promptHint?: string; type?: string }
       | undefined
 
-    expect(authoringContext?.page?.slug).toBe(details.slug)
-    expect(authoringContext?.page?.pagePath).toBe(`/${details.slug}`)
-    expect(authoringContext?.page?.title).toBe(details.title)
-    expect(authoringContext?.section?.label).toBe('How our pricing works')
-    expect(authoringContext?.section?.variant).toBe('pricingSteps')
-    expect(authoringContext?.mediaSlot?.label).toBe('First pricing step')
+    expect(authoringContext?.page?.slug).toBe(created.slug)
+    expect(authoringContext?.page?.pagePath).toBe(`/${created.slug}`)
+    expect(authoringContext?.page?.title).toBe(created.title)
+    expect(authoringContext?.section?.label).toBe('Copilot Service Grid')
+    expect(authoringContext?.section?.variant).toBe('interactive')
+    expect(authoringContext?.mediaSlot?.label).toBe('Section item one')
     expect(focusedSession).toMatchObject({
       mode: 'gallery',
       promptHint: 'Driveway cleaning hero image',

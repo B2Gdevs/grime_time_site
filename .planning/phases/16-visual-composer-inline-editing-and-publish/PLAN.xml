@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phase-plan>
+  <meta>
+    <phase-id>16</phase-id>
+    <phase-name>Visual composer inline editing and publish workflow</phase-name>
+    <date>2026-04-03</date>
+  </meta>
+  <status>planned</status>
+
+  <problem>
+    <item>Once the builder shell is coherent, the preview still needs to become the primary interactive surface instead of a passive rendering beside forms.</item>
+    <item>Selection, hover actions, inline text editing, responsive preview behavior, and publish validation are all necessary to make the composer feel like a modern no-code builder.</item>
+  </problem>
+
+  <goals>
+    <goal id="G1">Make preview interaction first-class with mirrored selection between preview and Structure.</goal>
+    <goal id="G2">Ship MVP inline editing for headings, paragraph text, and CTA labels.</goal>
+    <goal id="G3">Keep draft creation/switching lightweight and integrated into the working-page model.</goal>
+    <goal id="G4">Improve Publish so validation is actionable, page status is clear, and errors can point back to affected blocks.</goal>
+    <goal id="G5">Support desktop, tablet, and mobile preview modes without mutating content state.</goal>
+  </goals>
+
+  <non-goals>
+    <item>Do not tackle full reusable-block reference management or deep dynamic/container behavior here; that is phase 17.</item>
+    <item>Do not add every inline-editable field type in this phase.</item>
+  </non-goals>
+
+  <definition-of-done>
+    <item>Clicking blocks in preview and Structure keeps selection synchronized.</item>
+    <item>Preview hover shows outline and direct quick actions.</item>
+    <item>Supported text fields can be edited inline and stay synchronized with Content state.</item>
+    <item>Draft/page switching and create-draft flow remain compact and reliable.</item>
+    <item>Publish shows page status, changed-block count, and actionable validation summary.</item>
+  </definition-of-done>
+
+  <tasks>
+    <task ref="16-01">Implement the mirrored selection model across preview and Structure, including selected-block outline behavior.</task>
+    <task ref="16-02">Add preview hover UI and direct block actions such as add above/below, duplicate, delete, and hide/show where appropriate.</task>
+    <task ref="16-03">Ship inline preview editing for MVP text fields and keep Content-tab forms synchronized.</task>
+    <task ref="16-04">Refine draft lifecycle and working-page switching so draft context stays clean when creating or switching pages.</task>
+    <task ref="16-05">Improve Publish with validation summary, changed-block count, and page-level workflow state.</task>
+    <task ref="16-06">Add responsive preview-mode controls and verification for preview parity plus inline-editing flows.</task>
+  </tasks>
+</phase-plan>

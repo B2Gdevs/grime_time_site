@@ -1,3 +1,9 @@
+import {
+  createPageComposerBlock,
+  findPageComposerBlockDefinition,
+  type PageComposerBlockCategory,
+  type PageComposerInsertableBlockType,
+} from '@/lib/pages/pageComposerBlockRegistry'
 import type { Page } from '@/payload-types'
 
 export type PageComposerSectionTemplate =
@@ -6,7 +12,9 @@ export type PageComposerSectionTemplate =
   | 'service-pricing-steps'
 
 export type PageComposerSectionSummary = {
+  badges: string[]
   blockType: Page['layout'][number]['blockType']
+  category: PageComposerBlockCategory
   description: string
   index: number
   label: string
@@ -73,6 +81,25 @@ function relationId(value: unknown): null | number {
   }
 
   return typeof value === 'number' ? value : null
+}
+
+function buildSummaryBadges(blockType: Page['layout'][number]['blockType']): {
+  badges: string[]
+  category: PageComposerBlockCategory
+} {
+  const definition = findPageComposerBlockDefinition(blockType)
+
+  if (!definition) {
+    return {
+      badges: [],
+      category: 'static',
+    }
+  }
+
+  return {
+    badges: [definition.category, ...(definition.supportsReusable ? ['reusable'] : [])],
+    category: definition.category,
+  }
 }
 
 export function frontendPathToPageSlug(pagePath: string): null | string {
@@ -156,13 +183,17 @@ export function buildPageComposerSectionSummaries(
   layout: null | Page['layout'] | undefined,
 ): PageComposerSectionSummary[] {
   return (layout || []).map((block, index) => {
+    const summaryMeta = buildSummaryBadges(block.blockType)
+
     if (block.blockType === 'serviceGrid') {
       const variant = block.displayVariant || 'interactive'
       const count = block.services?.length || 0
 
       return {
+        badges: summaryMeta.badges,
         blockType: block.blockType,
-        description: `${variant} • ${count} row${count === 1 ? '' : 's'}`,
+        category: summaryMeta.category,
+        description: `${variant} - ${count} row${count === 1 ? '' : 's'}`,
         index,
         label: block.heading || `Service section ${index + 1}`,
         variant,
@@ -171,7 +202,9 @@ export function buildPageComposerSectionSummaries(
 
     if (block.blockType === 'mediaBlock') {
       return {
+        badges: summaryMeta.badges,
         blockType: block.blockType,
+        category: summaryMeta.category,
         description: block.media ? 'Media assigned' : 'No media assigned yet',
         index,
         label: block.blockName?.trim() || `Media block ${index + 1}`,
@@ -180,7 +213,9 @@ export function buildPageComposerSectionSummaries(
     }
 
     return {
+      badges: summaryMeta.badges,
       blockType: block.blockType,
+      category: summaryMeta.category,
       description: block.blockName?.trim() || `${block.blockType} section`,
       index,
       label: block.blockName?.trim() || `${block.blockType} block ${index + 1}`,
@@ -268,6 +303,29 @@ export function updatePageLayoutSection(args: {
 
   next[args.index] = cloneValue(args.block)
   return next
+}
+
+export function insertPageLayoutBlock(args: {
+  block: Page['layout'][number]
+  index: number
+  layout: Page['layout']
+}): Page['layout'] {
+  const next = cloneValue(args.layout || [])
+  const insertionIndex = Math.max(0, Math.min(args.index, next.length))
+  next.splice(insertionIndex, 0, cloneValue(args.block))
+  return next
+}
+
+export function insertPageLayoutRegisteredBlock(args: {
+  index: number
+  layout: Page['layout']
+  type: PageComposerInsertableBlockType
+}): Page['layout'] {
+  return insertPageLayoutBlock({
+    block: createPageComposerBlock(args.type),
+    index: args.index,
+    layout: args.layout,
+  })
 }
 
 export function appendPageLayoutSection(args: {

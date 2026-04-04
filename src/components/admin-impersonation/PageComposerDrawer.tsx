@@ -1,7 +1,7 @@
 'use client'
 /* eslint-disable @next/next/no-img-element */
 
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { DndContext, KeyboardSensor, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
 import type { DragEndEvent } from '@dnd-kit/core'
@@ -9,9 +9,12 @@ import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, v
 import { CSS } from '@dnd-kit/utilities'
 import { usePathname, useRouter } from 'next/navigation'
 import {
+  CopyPlusIcon,
+  EyeIcon,
   FilePenLineIcon,
   GripVerticalIcon,
   ImageIcon,
+  Link2Icon,
   LoaderCircleIcon,
   PlusIcon,
   RefreshCwIcon,
@@ -19,6 +22,7 @@ import {
   SparklesIcon,
   SquarePenIcon,
   Trash2Icon,
+  TypeIcon,
   UploadIcon,
   XIcon,
 } from 'lucide-react'
@@ -32,19 +36,22 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { buildMediaDevtoolsSummary, type MediaDevtoolsSummary } from '@/lib/media/pageMediaDevtools'
 import {
-  appendPageLayoutSection,
   buildPageComposerNotices,
   pageSlugToFrontendPath,
   buildPageComposerSectionSummaries,
   duplicatePageLayoutSection,
+  insertPageLayoutRegisteredBlock,
   removePageLayoutSection,
   type PageComposerDocument,
   type PageComposerNotice,
   type PageComposerPageSummary,
   type PageComposerSectionSummary,
-  type PageComposerSectionTemplate,
   updatePageLayoutSection,
 } from '@/lib/pages/pageComposer'
+import {
+  getPageComposerBlockDefinitions,
+  type PageComposerInsertableBlockType,
+} from '@/lib/pages/pageComposerBlockRegistry'
 import type { Media, ServiceGridBlock } from '@/payload-types'
 
 type ComposerTab = 'content' | 'media' | 'publish' | 'structure'
@@ -90,14 +97,6 @@ function getMediaKindFromMimeType(mimeType: null | string | undefined): 'image' 
   return mimeType?.startsWith('video/') ? 'video' : 'image'
 }
 
-function buildSlugCandidate(value: string): string {
-  return value
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-}
-
 function ComposerNoticeList({ notices }: { notices: PageComposerNotice[] }) {
   if (!notices.length) {
     return null
@@ -122,14 +121,57 @@ function ComposerNoticeList({ notices }: { notices: PageComposerNotice[] }) {
   )
 }
 
+function HeaderField({
+  icon,
+  label,
+  onChange,
+  placeholder,
+  value,
+}: {
+  icon: ReactNode
+  label: string
+  onChange: (value: string) => void
+  placeholder: string
+  value: string
+}) {
+  return (
+    <label className="grid gap-1.5">
+      <span className="text-[11px] font-medium uppercase tracking-[0.22em] text-muted-foreground">{label}</span>
+      <div className="relative">
+        <div className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-muted-foreground">{icon}</div>
+        <Input className="h-10 pl-10" onChange={(event) => onChange(event.target.value)} placeholder={placeholder} value={value} />
+      </div>
+    </label>
+  )
+}
+
+function StructureInsertButton({
+  onClick,
+}: {
+  onClick: () => void
+}) {
+  return (
+    <button
+      className="flex h-11 w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-border/70 bg-card/40 text-sm text-muted-foreground transition hover:border-primary/40 hover:bg-primary/5 hover:text-foreground"
+      onClick={onClick}
+      type="button"
+    >
+      <PlusIcon className="h-4 w-4" />
+      Add block
+    </button>
+  )
+}
+
 function SortableSectionRow({
   active,
+  onAddBelow,
   onClick,
   onDuplicate,
   onRemove,
   summary,
 }: {
   active: boolean
+  onAddBelow: () => void
   onClick: () => void
   onDuplicate: () => void
   onRemove: () => void
@@ -152,12 +194,22 @@ function SortableSectionRow({
             <span className="text-sm font-semibold text-foreground">{summary.label}</span>
             <Badge variant="outline">{summary.blockType}</Badge>
             {summary.variant ? <Badge variant="secondary">{summary.variant}</Badge> : null}
+            {summary.badges
+              .filter((badge) => badge !== summary.variant)
+              .map((badge) => (
+                <Badge key={badge} variant={badge === 'reusable' ? 'secondary' : 'outline'}>
+                  {badge}
+                </Badge>
+              ))}
           </div>
           <div className="mt-1 text-xs text-muted-foreground">{summary.description}</div>
         </button>
         <div className="flex shrink-0 gap-2">
-          <Button onClick={onDuplicate} size="icon" type="button" variant="ghost">
+          <Button aria-label={`Add block below ${summary.label}`} onClick={onAddBelow} size="icon" type="button" variant="ghost">
             <PlusIcon className="h-4 w-4" />
+          </Button>
+          <Button onClick={onDuplicate} size="icon" type="button" variant="ghost">
+            <CopyPlusIcon className="h-4 w-4" />
           </Button>
           <Button onClick={onRemove} size="icon" type="button" variant="ghost">
             <Trash2Icon className="h-4 w-4" />
@@ -179,8 +231,11 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
   )
   const [activeTab, setActiveTab] = useState<ComposerTab>('structure')
   const [availablePages, setAvailablePages] = useState<PageComposerPageSummary[]>([])
-  const [creatingPage, setCreatingPage] = useState(false)
+  const [blockLibraryQuery, setBlockLibraryQuery] = useState('')
+  const [blockLibraryTargetIndex, setBlockLibraryTargetIndex] = useState<null | number>(null)
+  const [creatingDraftClone, setCreatingDraftClone] = useState(false)
   const [draftPage, setDraftPage] = useState<null | PageComposerDocument>(null)
+  const [isBlockLibraryOpen, setIsBlockLibraryOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [mediaKind, setMediaKind] = useState<'image' | 'video'>('image')
   const [mediaLibrary, setMediaLibrary] = useState<MediaLibraryItem[]>([])
@@ -193,17 +248,28 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
   const [savingAction, setSavingAction] = useState<null | SavingAction>(null)
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [status, setStatus] = useState<null | string>(null)
-  const [newPageSlug, setNewPageSlug] = useState('')
-  const [newPageTitle, setNewPageTitle] = useState('')
   const [titleDraft, setTitleDraft] = useState('')
   const [slugDraft, setSlugDraft] = useState('')
   const [visibilityDraft, setVisibilityDraft] = useState<'private' | 'public'>('public')
-  const [newPageVisibility, setNewPageVisibility] = useState<'private' | 'public'>('private')
   const [dirty, setDirty] = useState(false)
   const mediaUploadInputRef = useRef<HTMLInputElement | null>(null)
   const mediaPromptId = useId()
 
   const sectionSummaries = useMemo(() => buildPageComposerSectionSummaries(draftPage?.layout), [draftPage?.layout])
+  const blockDefinitions = useMemo(() => getPageComposerBlockDefinitions(), [])
+  const filteredBlockDefinitions = useMemo(() => {
+    const query = blockLibraryQuery.trim().toLowerCase()
+
+    if (!query) {
+      return blockDefinitions
+    }
+
+    return blockDefinitions.filter((definition) =>
+      [definition.label, definition.description, ...definition.keywords].some((value) =>
+        value.toLowerCase().includes(query),
+      ),
+    )
+  }, [blockDefinitions, blockLibraryQuery])
   const selectedBlock = draftPage?.layout?.[selectedIndex] || null
   const selectedServiceGrid = selectedBlock?.blockType === 'serviceGrid' ? (selectedBlock as ServiceGridBlock) : null
   const mediaSlots = useMemo<SectionMediaSlot[]>(() => {
@@ -338,6 +404,13 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
     void loadMediaLibrary()
   }, [loadMediaLibrary, loadPage, open])
 
+  useEffect(() => {
+    if (open) return
+    setIsBlockLibraryOpen(false)
+    setBlockLibraryTargetIndex(null)
+    setBlockLibraryQuery('')
+  }, [open])
+
   function mutatePage(mutator: (page: PageComposerDocument) => PageComposerDocument) {
     setDraftPage((current) => {
       if (!current) return current
@@ -376,9 +449,29 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
     setSelectedIndex(overId)
   }
 
-  function appendTemplate(template: PageComposerSectionTemplate) {
-    mutatePage((page) => ({ ...page, layout: appendPageLayoutSection({ layout: page.layout || [], template }) }))
-    setSelectedIndex(sectionSummaries.length)
+  function openBlockLibrary(index: number) {
+    setBlockLibraryTargetIndex(index)
+    setBlockLibraryQuery('')
+    setIsBlockLibraryOpen(true)
+  }
+
+  function insertRegisteredBlock(type: PageComposerInsertableBlockType) {
+    if (blockLibraryTargetIndex === null) {
+      return
+    }
+
+    mutatePage((page) => ({
+      ...page,
+      layout: insertPageLayoutRegisteredBlock({
+        index: blockLibraryTargetIndex,
+        layout: page.layout || [],
+        type,
+      }),
+    }))
+    setSelectedIndex(blockLibraryTargetIndex)
+    setIsBlockLibraryOpen(false)
+    setBlockLibraryTargetIndex(null)
+    setActiveTab('content')
   }
 
   async function persistPage(action: SavingAction) {
@@ -417,17 +510,22 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
     }
   }
 
-  async function createPage() {
-    setCreatingPage(true)
+  async function createDraftClone() {
+    if (!draftPage) return
+
+    if (dirty) {
+      setStatus('Save or publish the current page before creating a new draft from it.')
+      return
+    }
+
+    setCreatingDraftClone(true)
     setStatus(null)
 
     try {
       const response = await fetch('/api/internal/page-composer', {
         body: JSON.stringify({
-          action: 'create-page',
-          slug: newPageSlug.trim(),
-          title: newPageTitle.trim(),
-          visibility: newPageVisibility,
+          action: 'clone-page',
+          sourcePageId: draftPage.id,
         }),
         headers: { 'content-type': 'application/json' },
         method: 'POST',
@@ -445,19 +543,16 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
       setTitleDraft(payload.page.title || '')
       setSlugDraft(payload.page.slug || '')
       setVisibilityDraft(payload.page.visibility === 'private' ? 'private' : 'public')
-      setNewPageTitle('')
-      setNewPageSlug('')
-      setNewPageVisibility('private')
       setSelectedIndex(0)
       setDirty(false)
-      setStatus('Draft page created.')
+      setStatus('Draft created from the current page.')
       setActiveTab('content')
       router.push(payload.page.pagePath)
       router.refresh()
     } catch (error) {
       setStatus(error instanceof Error ? error.message : 'Unable to create the page draft.')
     } finally {
-      setCreatingPage(false)
+      setCreatingDraftClone(false)
     }
   }
 
@@ -540,7 +635,7 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
               type="button"
             />
             <motion.aside
-              className="fixed inset-y-0 right-0 z-[89] flex w-[min(100vw,38rem)] flex-col border-l border-border/70 bg-background/96 shadow-2xl backdrop-blur"
+              className="fixed inset-y-0 right-0 z-[89] flex w-[min(100vw,38rem)] flex-col border-l border-border/70 bg-background/96 shadow-2xl backdrop-blur relative"
               initial={{ opacity: 0, x: 64 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 64 }}
@@ -549,39 +644,127 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
               <div className="flex items-start justify-between gap-4 border-b border-border/70 px-5 py-4">
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant="outline">Staff page composer</Badge>
+                    <Badge variant="outline">Visual composer</Badge>
                     {draftPage ? <Badge variant="secondary">{draftPage.pagePath}</Badge> : null}
-                    {draftPage ? <Badge variant="outline">{draftPage.visibility || 'public'}</Badge> : null}
+                    {draftPage ? <Badge variant="outline">{draftPage._status || 'draft'}</Badge> : null}
                     {dirty ? <Badge>Unsaved</Badge> : null}
                   </div>
-                  <h2 className="mt-2 text-lg font-semibold text-foreground">Visual page composer</h2>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Add, remove, duplicate, reorder, rewrite, and manage section media before saving a draft or publishing.
-                  </p>
-                  <div className="mt-3 grid gap-2">
-                    <label className="text-[11px] font-medium uppercase tracking-[0.22em] text-muted-foreground">Working page</label>
-                    {draftPage ? (
-                      <Select
-                        disabled={loading || !availablePages.length}
-                        onValueChange={(value) => switchToPage(Number(value))}
-                        value={String(draftPage.id)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a page" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {availablePages.map((page) => (
-                            <SelectItem key={page.id} value={String(page.id)}>
-                              {page.title} ({page.visibility || 'public'})
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      <div className="flex h-10 items-center rounded-xl border border-input bg-background px-3 text-sm text-muted-foreground">
-                        {loading ? 'Loading current page...' : 'No page loaded yet'}
-                      </div>
-                    )}
+
+                  <div className="mt-4 grid gap-3">
+                    <div className="grid gap-3 md:grid-cols-2">
+                      <HeaderField
+                        icon={<TypeIcon className="h-4 w-4" />}
+                        label="Page title"
+                        onChange={(value) => {
+                          setDirty(true)
+                          setTitleDraft(value)
+                        }}
+                        placeholder="Page title"
+                        value={titleDraft}
+                      />
+                      <HeaderField
+                        icon={<Link2Icon className="h-4 w-4" />}
+                        label="Slug"
+                        onChange={(value) => {
+                          setDirty(true)
+                          setSlugDraft(value)
+                        }}
+                        placeholder="page-slug"
+                        value={slugDraft}
+                      />
+                    </div>
+
+                    <div className="grid gap-1.5">
+                      <span className="text-[11px] font-medium uppercase tracking-[0.22em] text-muted-foreground">
+                        Working page
+                      </span>
+                      {draftPage ? (
+                        <div className="grid gap-2 md:grid-cols-[minmax(0,1fr)_auto_auto_auto]">
+                          <Select
+                            disabled={loading || !availablePages.length}
+                            onValueChange={(value) => switchToPage(Number(value))}
+                            value={String(draftPage.id)}
+                          >
+                            <SelectTrigger className="h-10">
+                              <SelectValue placeholder="Select a page" />
+                            </SelectTrigger>
+                            <SelectContent className="z-[130]">
+                              {availablePages.map((page) => (
+                                <SelectItem key={page.id} value={String(page.id)}>
+                                  {page.title} ({page.visibility || 'public'})
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+
+                          <Button
+                            disabled={creatingDraftClone || loading || dirty}
+                            onClick={() => void createDraftClone()}
+                            size="sm"
+                            type="button"
+                            variant="outline"
+                          >
+                            {creatingDraftClone ? (
+                              <>
+                                <LoaderCircleIcon className="h-4 w-4 animate-spin" />
+                                Creating...
+                              </>
+                            ) : (
+                              <>
+                                <PlusIcon className="h-4 w-4" />
+                                Create draft
+                              </>
+                            )}
+                          </Button>
+
+                          <div className="inline-flex h-10 rounded-xl border border-border/70 bg-card/50 p-1">
+                            <button
+                              className={`rounded-lg px-3 text-sm transition ${
+                                visibilityDraft === 'public'
+                                  ? 'bg-foreground text-background'
+                                  : 'text-muted-foreground hover:text-foreground'
+                              }`}
+                              onClick={() => {
+                                setDirty(true)
+                                setVisibilityDraft('public')
+                              }}
+                              type="button"
+                            >
+                              Public
+                            </button>
+                            <button
+                              className={`rounded-lg px-3 text-sm transition ${
+                                visibilityDraft === 'private'
+                                  ? 'bg-foreground text-background'
+                                  : 'text-muted-foreground hover:text-foreground'
+                              }`}
+                              onClick={() => {
+                                setDirty(true)
+                                setVisibilityDraft('private')
+                              }}
+                              type="button"
+                            >
+                              Private
+                            </button>
+                          </div>
+
+                          <Button asChild size="icon" type="button" variant="outline">
+                            <a
+                              aria-label="Open route preview"
+                              href={pageSlugToFrontendPath(slugDraft)}
+                              rel="noreferrer"
+                              target="_blank"
+                            >
+                              <EyeIcon className="h-4 w-4" />
+                            </a>
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex h-10 items-center rounded-xl border border-input bg-background px-3 text-sm text-muted-foreground">
+                          {loading ? 'Loading current page...' : 'No page loaded yet'}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
                 <Button aria-label="Dismiss page composer" onClick={() => setOpen(false)} size="icon" type="button" variant="ghost">
@@ -609,60 +792,61 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
                       {status || 'No page is available for this route.'}
                     </div>
                   ) : (
-                    <div className="grid gap-5">
-                      <div className="rounded-2xl border border-border/70 bg-card/50 p-4">
-                        <div className="text-sm font-semibold text-foreground">{draftPage.title}</div>
-                        <div className="mt-1 text-xs text-muted-foreground">
-                          {draftPage.slug} · {sectionSummaries.length} section{sectionSummaries.length === 1 ? '' : 's'}
+                    <div className="grid gap-4">
+                      <div className="flex items-center justify-between gap-3 rounded-2xl border border-border/70 bg-card/50 px-4 py-3">
+                        <div className="text-sm text-muted-foreground">
+                          {sectionSummaries.length} block{sectionSummaries.length === 1 ? '' : 's'}
                         </div>
+                        <Button onClick={() => openBlockLibrary(sectionSummaries.length)} size="sm" type="button" variant="outline">
+                          <PlusIcon className="h-4 w-4" />
+                          Add block
+                        </Button>
                       </div>
 
-                      <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd} sensors={sensors}>
-                        <SortableContext items={sectionSummaries.map((summary) => String(summary.index))} strategy={verticalListSortingStrategy}>
-                          <div className="grid gap-3">
-                            {sectionSummaries.map((summary) => (
-                              <SortableSectionRow
-                                key={`${summary.index}-${summary.label}`}
-                                active={selectedIndex === summary.index}
-                                onClick={() => {
-                                  setSelectedIndex(summary.index)
-                                  setActiveTab('content')
-                                }}
-                                onDuplicate={() => {
-                                  mutatePage((page) => ({
-                                    ...page,
-                                    layout: duplicatePageLayoutSection({ index: summary.index, layout: page.layout || [] }),
-                                  }))
-                                  setSelectedIndex(summary.index + 1)
-                                }}
-                                onRemove={() => {
-                                  mutatePage((page) => ({
-                                    ...page,
-                                    layout: removePageLayoutSection({ index: summary.index, layout: page.layout || [] }),
-                                  }))
-                                  setSelectedIndex(Math.max(0, summary.index - 1))
-                                }}
-                                summary={summary}
-                              />
-                            ))}
+                      {sectionSummaries.length ? (
+                        <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd} sensors={sensors}>
+                          <SortableContext items={sectionSummaries.map((summary) => String(summary.index))} strategy={verticalListSortingStrategy}>
+                            <div className="grid gap-3">
+                              <StructureInsertButton onClick={() => openBlockLibrary(0)} />
+                              {sectionSummaries.map((summary) => (
+                                <div className="grid gap-3" key={`${summary.index}-${summary.label}`}>
+                                  <SortableSectionRow
+                                    active={selectedIndex === summary.index}
+                                    onAddBelow={() => openBlockLibrary(summary.index + 1)}
+                                    onClick={() => {
+                                      setSelectedIndex(summary.index)
+                                      setActiveTab('content')
+                                    }}
+                                    onDuplicate={() => {
+                                      mutatePage((page) => ({
+                                        ...page,
+                                        layout: duplicatePageLayoutSection({ index: summary.index, layout: page.layout || [] }),
+                                      }))
+                                      setSelectedIndex(summary.index + 1)
+                                    }}
+                                    onRemove={() => {
+                                      mutatePage((page) => ({
+                                        ...page,
+                                        layout: removePageLayoutSection({ index: summary.index, layout: page.layout || [] }),
+                                      }))
+                                      setSelectedIndex(Math.max(0, summary.index - 1))
+                                    }}
+                                    summary={summary}
+                                  />
+                                  <StructureInsertButton onClick={() => openBlockLibrary(summary.index + 1)} />
+                                </div>
+                              ))}
+                            </div>
+                          </SortableContext>
+                        </DndContext>
+                      ) : (
+                        <div className="grid gap-3">
+                          <div className="rounded-2xl border border-dashed border-border/70 bg-card/40 px-4 py-8 text-sm text-muted-foreground">
+                            This page does not have any blocks yet.
                           </div>
-                        </SortableContext>
-                      </DndContext>
-
-                      <div className="rounded-2xl border border-border/70 bg-card/50 p-4">
-                        <div className="text-sm font-semibold text-foreground">Add reusable section</div>
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          <Button onClick={() => appendTemplate('service-feature-cards')} size="sm" type="button" variant="secondary">
-                            What we do
-                          </Button>
-                          <Button onClick={() => appendTemplate('service-pricing-steps')} size="sm" type="button" variant="secondary">
-                            Pricing steps
-                          </Button>
-                          <Button onClick={() => appendTemplate('service-interactive')} size="sm" type="button" variant="secondary">
-                            Interactive service
-                          </Button>
+                          <StructureInsertButton onClick={() => openBlockLibrary(0)} />
                         </div>
-                      </div>
+                      )}
                     </div>
                   )}
                 </TabsContent>
@@ -1132,116 +1316,27 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
 
                       <ComposerNoticeList notices={composerNotices} />
 
-                      <div className="grid gap-2">
-                        <label className="text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground">Page title</label>
-                        <Input
-                          onChange={(event) => {
-                            setDirty(true)
-                            setTitleDraft(event.target.value)
-                          }}
-                          value={titleDraft}
-                        />
-                      </div>
-
-                      <div className="grid gap-2">
-                        <label className="text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground">Slug</label>
-                        <Input
-                          onChange={(event) => {
-                            setDirty(true)
-                            setSlugDraft(event.target.value)
-                          }}
-                          value={slugDraft}
-                        />
-                      </div>
-
-                      <div className="grid gap-2">
-                        <label className="text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground">Visibility</label>
-                        <Select
-                          onValueChange={(value) => {
-                            setDirty(true)
-                            setVisibilityDraft(value === 'private' ? 'private' : 'public')
-                          }}
-                          value={visibilityDraft}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Choose visibility" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="public">Public page</SelectItem>
-                            <SelectItem value="private">Private staff page</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="rounded-2xl border border-border/70 bg-card/50 p-4">
-                        <div className="flex flex-wrap items-center justify-between gap-3">
-                          <div>
-                            <div className="text-sm font-semibold text-foreground">Route preview</div>
-                            <div className="mt-1 text-xs text-muted-foreground">
-                              {pageSlugToFrontendPath(slugDraft)} {visibilityDraft === 'private' ? '· staff preview only until visibility changes' : '· public route when published'}
-                            </div>
+                      <div className="grid gap-3 md:grid-cols-2">
+                        <div className="rounded-2xl border border-border/70 bg-card/50 p-4">
+                          <div className="text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground">Route</div>
+                          <div className="mt-2 text-sm font-semibold text-foreground">
+                            {pageSlugToFrontendPath(slugDraft)}
                           </div>
-                          <Button asChild size="sm" type="button" variant="outline">
-                            <a href={pageSlugToFrontendPath(slugDraft)}>
-                              Open route
-                            </a>
-                          </Button>
-                        </div>
-                      </div>
-
-                      <div className="rounded-2xl border border-border/70 bg-card/50 p-4 text-sm text-muted-foreground">
-                        Save draft to keep the public page unchanged. Publish when the new section order, copy, and media are ready to go live.
-                      </div>
-
-                      <div className="rounded-2xl border border-border/70 bg-card/50 p-4">
-                        <div className="text-sm font-semibold text-foreground">Create new draft page</div>
-                        <div className="mt-1 text-xs text-muted-foreground">
-                          Start a new page in draft mode. Private pages stay staff-only until you change visibility.
+                          <div className="mt-1 text-xs text-muted-foreground">
+                            {visibilityDraft === 'private'
+                              ? 'Private until you change visibility.'
+                              : 'Public when published.'}
+                          </div>
                         </div>
 
-                        <div className="mt-4 grid gap-3">
-                          <Input
-                            onChange={(event) => {
-                              const nextTitle = event.target.value
-                              setNewPageTitle(nextTitle)
-                              setNewPageSlug((current) => (current ? current : buildSlugCandidate(nextTitle)))
-                            }}
-                            placeholder="New page title"
-                            value={newPageTitle}
-                          />
-                          <Input
-                            onChange={(event) => setNewPageSlug(buildSlugCandidate(event.target.value))}
-                            placeholder="new-page-slug"
-                            value={newPageSlug}
-                          />
-                          <Select onValueChange={(value) => setNewPageVisibility(value === 'public' ? 'public' : 'private')} value={newPageVisibility}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Draft visibility" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="private">Private draft page</SelectItem>
-                              <SelectItem value="public">Public draft page</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <Button
-                            disabled={creatingPage || dirty || !newPageTitle.trim() || !newPageSlug.trim()}
-                            onClick={() => void createPage()}
-                            size="sm"
-                            type="button"
-                            variant="secondary"
-                          >
-                            {creatingPage ? (
-                              <>
-                                <LoaderCircleIcon className="h-4 w-4 animate-spin" />
-                                Creating...
-                              </>
-                            ) : (
-                              <>
-                                <PlusIcon className="h-4 w-4" />
-                                Create draft page
-                              </>
-                            )}
-                          </Button>
+                        <div className="rounded-2xl border border-border/70 bg-card/50 p-4">
+                          <div className="text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground">Current draft</div>
+                          <div className="mt-2 text-sm font-semibold text-foreground">
+                            {dirty ? 'Unsaved changes ready to review.' : 'Draft matches the last saved state.'}
+                          </div>
+                          <div className="mt-1 text-xs text-muted-foreground">
+                            {sectionSummaries.length} block{sectionSummaries.length === 1 ? '' : 's'} in this page.
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1282,6 +1377,92 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
                   </div>
                 </div>
               </Tabs>
+
+              {isBlockLibraryOpen ? (
+                <div className="absolute inset-0 z-[130] bg-background/98 backdrop-blur-sm">
+                  <div className="flex items-start justify-between gap-4 border-b border-border/70 px-5 py-4">
+                    <div className="min-w-0 flex-1">
+                      <div className="text-lg font-semibold text-foreground">Block library</div>
+                      <div className="mt-1 text-sm text-muted-foreground">
+                        Insert a block at position {(blockLibraryTargetIndex ?? 0) + 1}.
+                      </div>
+                    </div>
+                    <Button
+                      aria-label="Close block library"
+                      onClick={() => {
+                        setIsBlockLibraryOpen(false)
+                        setBlockLibraryTargetIndex(null)
+                      }}
+                      size="icon"
+                      type="button"
+                      variant="ghost"
+                    >
+                      <XIcon className="h-4 w-4" />
+                    </Button>
+                  </div>
+
+                  <div className="grid h-[calc(100%-5.5rem)] grid-rows-[auto_minmax(0,1fr)] gap-4 px-5 py-4">
+                    <Input
+                      onChange={(event) => setBlockLibraryQuery(event.target.value)}
+                      placeholder="Search blocks"
+                      value={blockLibraryQuery}
+                    />
+
+                    <div className="overflow-y-auto">
+                      <div className="grid gap-5">
+                        {(['dynamic', 'static', 'container'] as const).map((category) => {
+                          const entries = filteredBlockDefinitions.filter((definition) => definition.category === category)
+
+                          if (!entries.length) {
+                            return null
+                          }
+
+                          return (
+                            <section className="grid gap-3" key={category}>
+                              <div className="text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground">
+                                {category}
+                              </div>
+                              <div className="grid gap-3">
+                                {entries.map((definition) => (
+                                  <button
+                                    className={`rounded-2xl border p-4 text-left transition ${
+                                      definition.supportsInsert
+                                        ? 'border-border/70 bg-card/50 hover:border-primary/40 hover:bg-primary/5'
+                                        : 'cursor-not-allowed border-border/50 bg-card/30 opacity-65'
+                                    }`}
+                                    disabled={!definition.supportsInsert}
+                                    key={definition.type}
+                                    onClick={() =>
+                                      definition.supportsInsert
+                                        ? insertRegisteredBlock(definition.type as PageComposerInsertableBlockType)
+                                        : undefined
+                                    }
+                                    type="button"
+                                  >
+                                    <div className="flex flex-wrap items-center gap-2">
+                                      <div className="text-sm font-semibold text-foreground">{definition.label}</div>
+                                      <Badge variant="outline">{definition.type}</Badge>
+                                      {definition.supportsReusable ? <Badge variant="secondary">reusable</Badge> : null}
+                                      {!definition.supportsInsert ? <Badge variant="outline">planned</Badge> : null}
+                                    </div>
+                                    <div className="mt-2 text-sm text-muted-foreground">{definition.description}</div>
+                                  </button>
+                                ))}
+                              </div>
+                            </section>
+                          )
+                        })}
+
+                        {!filteredBlockDefinitions.length ? (
+                          <div className="rounded-2xl border border-border/70 bg-card/50 px-4 py-6 text-sm text-muted-foreground">
+                            No blocks match that search.
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
             </motion.aside>
           </>
         ) : null}

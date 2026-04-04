@@ -6,9 +6,9 @@
 
 Planning anchors
 - Phase: `13`
-- Follow-on phase: `15`
-- Tasks: `13-01` through `13-06`, then `15-01` through `15-08`
-- Related decisions: `D-content-004`, `D-ai-003`, `D-content-012`
+- Follow-on phases: `15`, `16`, and `17`
+- Tasks: `13-01` through `13-06`, then `15-01` through `17-05`
+- Related decisions: `D-content-004`, `D-ai-003`, `D-content-012`, `D-content-013`
 
 ## Why this doc exists
 
@@ -81,21 +81,25 @@ Target workbench surfaces:
 
 Phase 13 should start **staff-safe and authenticated**, not localhost-only. The existing localhost media drawer can remain as a developer-oriented precursor, but the first real composer needs to be usable by staff immediately.
 
-## Phase-15 builder follow-on
+## Builder follow-on stream
 
-The next composer wave should make the tool feel like a real block builder instead of a strong-but-obvious CMS workbench.
+The next composer waves should make the tool feel like a real block builder instead of a strong-but-obvious CMS workbench.
 
 Locked follow-on rules:
 
 - The page preview is the primary editing surface.
 - The working-page switcher, draft controls, and page metadata must become compact top-bar controls rather than explanatory subpanels.
 - The dropdown layering bug is phase-blocking and must be fixed before broader UX polish ships.
-- Inline editing starts with high-value text fields only: headings, paragraph content, and CTA labels.
+- The first implementation step is a real audit of existing page/template blocks into a formal block inventory and registry.
+- Structure should be the ordered block organizer only, not a page-identity panel.
+- Softr-style insertion is the rule: plus targets and a categorized block browser.
+- Inline editing starts with high-value text fields only: headings, paragraph content, and CTA labels, after the shell/registry work stabilizes.
 - Preview and structure must share one selected-block model.
 - Hover affordances should expose small direct-manipulation controls: add below, duplicate, delete.
 - The structure panel should explain each block row at a glance with type plus reusable/hidden/dynamic badges.
 - Deeper settings remain in the sidebar; the preview handles the immediate edits.
 - The composer remains block-constrained. Reuse and composition are the freedom, not arbitrary styling knobs.
+- `Custom HTML` is a first-class block type in the taxonomy and registry, even if its deeper safety model lands in a later phase.
 
 ### 4. Treat page creation as a first-class workflow
 

@@ -712,60 +712,136 @@
   </phase>
   <phase id="15">
     <task id="15-01" agent-id="" status="planned">
-      <goal>Lock the preview-first builder contract for the composer: confirm the page state model, UI state model, tab responsibilities, and guardrails so the tool behaves like a constrained no-code builder rather than a CMS form.</goal>
-      <keywords>planning,composer,state,ux</keywords>
+      <goal>Audit the current composer/page implementation and inventory all existing sections/components into the first real block map, grounded in the current Payload template data and Grime Time renderers.</goal>
+      <keywords>planning,composer,audit,blocks</keywords>
       <commands>
         <command>See .planning/phases/15-visual-composer-builder-and-inline-authoring/PLAN.xml</command>
+        <command>See .planning/workflows/visual-page-composer-requirements.md</command>
         <command>See .planning/workflows/visual-page-composer-and-copilot-experience.md</command>
       </commands>
     </task>
     <task id="15-02" agent-id="" status="planned">
-      <goal>Fix the working-page dropdown layering bug and refactor the composer top bar into the compact two-row layout with title, slug, working-page selector, create-draft action, visibility control, and route preview.</goal>
+      <goal>Define the block registry, block metadata contract, page/block/reusable-block model boundaries, and editor UI state shape so the builder grows from a stable schema-driven core.</goal>
+      <keywords>registry,composer,state,types,blocks</keywords>
+      <commands>
+        <command>See .planning/phases/15-visual-composer-builder-and-inline-authoring/PLAN.xml</command>
+        <command>See .planning/workflows/visual-page-composer-requirements.md</command>
+      </commands>
+    </task>
+    <task id="15-03" agent-id="" status="planned">
+      <goal>Fix the working-page dropdown layering bug and move page-level controls into a compact builder header with title, slug, working page, create draft, visibility, and route preview.</goal>
       <keywords>composer,header,dropdown,z-index,drafts</keywords>
       <commands>
         <command>See src/components/admin-impersonation/PageComposerDrawer.tsx</command>
       </commands>
     </task>
-    <task id="15-03" agent-id="" status="planned">
-      <goal>Implement the improved draft workflow controls: inline title and slug editing, one-click create draft, compact visibility UI, instant route preview, and removal of redundant draft explanation text.</goal>
-      <keywords>drafts,title,slug,visibility,preview</keywords>
-      <commands>
-        <command>See src/components/admin-impersonation/PageComposerDrawer.tsx and src/app/api/internal/page-composer/route.ts</command>
-      </commands>
-    </task>
     <task id="15-04" agent-id="" status="planned">
-      <goal>Add direct-manipulation preview affordances: block hover outline, compact action bar, mirrored selection with structure, and add-below / duplicate / delete controls from the preview surface.</goal>
-      <keywords>preview,selection,hover,blocks,composer</keywords>
+      <goal>Redesign the Structure tab into a clean block organizer: remove redundant page labels, remove the standalone Add reusable section pattern, and add structural quick actions.</goal>
+      <keywords>structure,blocks,composer,ux</keywords>
       <commands>
         <command>See src/components/admin-impersonation/PageComposerDrawer.tsx and src/lib/pages/pageComposer.ts</command>
       </commands>
     </task>
     <task id="15-05" agent-id="" status="planned">
-      <goal>Ship MVP inline preview editing for headings, paragraph text, and CTA labels, with updates synchronized back into the content tab and persisted draft state.</goal>
-      <keywords>inline-editing,preview,text,cta,content</keywords>
+      <goal>Build the categorized block browser and insertion-target flow for dynamic, static, and container blocks, including Custom HTML in the taxonomy.</goal>
+      <keywords>block-browser,insertion,static,dynamic,container,custom-html</keywords>
       <commands>
         <command>See src/components/admin-impersonation/PageComposerDrawer.tsx</command>
       </commands>
     </task>
     <task id="15-06" agent-id="" status="planned">
-      <goal>Refine the structure panel so every block row exposes block name, type, and reusable/hidden/dynamic badges while always mirroring the selected block from the preview.</goal>
-      <keywords>structure,blocks,badges,selection</keywords>
+      <goal>Normalize the currently implemented Grime Time blocks into the registry and browser so insertion uses real block definitions instead of ad hoc templates.</goal>
+      <keywords>registry,blocks,normalization,composer</keywords>
+      <commands>
+        <command>See src/lib/pages/pageComposer.ts, src/app/(frontend)/page.tsx, and src/app/(frontend)/[slug]/page.tsx</command>
+      </commands>
+    </task>
+    <task id="15-07" agent-id="" status="planned">
+      <goal>Add verification for the builder foundations, shell, and insertion flow.</goal>
+      <keywords>tests,vitest,playwright,composer,verification</keywords>
+      <commands>
+        <command>Run focused composer integration tests, `npm.cmd exec -- tsc --noEmit`, and browser verification on the frontend composer.</command>
+      </commands>
+    </task>
+  </phase>
+  <phase id="16">
+    <task id="16-01" agent-id="" status="planned">
+      <goal>Implement the mirrored selection model across preview and Structure, including selected-block outline behavior.</goal>
+      <keywords>selection,preview,structure,composer</keywords>
+      <commands>
+        <command>See .planning/phases/16-visual-composer-inline-editing-and-publish/PLAN.xml</command>
+      </commands>
+    </task>
+    <task id="16-02" agent-id="" status="planned">
+      <goal>Add preview hover UI and direct block actions such as add above/below, duplicate, delete, and hide/show where appropriate.</goal>
+      <keywords>hover,preview,actions,blocks</keywords>
       <commands>
         <command>See src/components/admin-impersonation/PageComposerDrawer.tsx</command>
       </commands>
     </task>
-    <task id="15-07" agent-id="" status="planned">
-      <goal>Stabilize composer state and performance: support current page vs current draft explicitly, add preview-mode state, and reduce unnecessary full-page re-renders on small edits.</goal>
-      <keywords>state,zustand,performance,drafts,preview-mode</keywords>
+    <task id="16-03" agent-id="" status="planned">
+      <goal>Ship inline preview editing for MVP text fields and keep Content-tab forms synchronized.</goal>
+      <keywords>inline-editing,preview,content,text</keywords>
       <commands>
-        <command>See .planning/phases/15-visual-composer-builder-and-inline-authoring/PLAN.xml</command>
+        <command>See src/components/admin-impersonation/PageComposerDrawer.tsx</command>
       </commands>
     </task>
-    <task id="15-08" agent-id="" status="planned">
-      <goal>Add verification for the builder follow-on: focused Vitest/integration coverage for draft switching and inline editing plus browser checks for dropdown layering, top-bar controls, and preview selection sync.</goal>
-      <keywords>tests,vitest,playwright,composer,verification</keywords>
+    <task id="16-04" agent-id="" status="planned">
+      <goal>Refine draft lifecycle and working-page switching so draft context stays clean when creating or switching pages.</goal>
+      <keywords>drafts,pages,composer,state</keywords>
       <commands>
-        <command>Run focused composer integration tests, `npm.cmd exec -- tsc --noEmit`, and browser verification on the frontend composer.</command>
+        <command>See src/app/api/internal/page-composer/route.ts and src/components/admin-impersonation/PageComposerDrawer.tsx</command>
+      </commands>
+    </task>
+    <task id="16-05" agent-id="" status="planned">
+      <goal>Improve Publish with validation summary, changed-block count, and page-level workflow state.</goal>
+      <keywords>publish,validation,drafts,workflow</keywords>
+      <commands>
+        <command>See src/components/admin-impersonation/PageComposerDrawer.tsx</command>
+      </commands>
+    </task>
+    <task id="16-06" agent-id="" status="planned">
+      <goal>Add responsive preview-mode controls and verification for preview parity plus inline-editing flows.</goal>
+      <keywords>responsive,preview,tests,composer</keywords>
+      <commands>
+        <command>Run focused composer integration/browser verification after implementation.</command>
+      </commands>
+    </task>
+  </phase>
+  <phase id="17">
+    <task id="17-01" agent-id="" status="planned">
+      <goal>Define and implement reusable-block insertion semantics, including linked reference vs detached copy behavior.</goal>
+      <keywords>reusable,blocks,linked,copied</keywords>
+      <commands>
+        <command>See .planning/phases/17-visual-composer-reuse-dynamic-and-containers/PLAN.xml</command>
+      </commands>
+    </task>
+    <task id="17-02" agent-id="" status="planned">
+      <goal>Add the first pre-wired dynamic blocks and data-source editors for Grime Time content surfaces.</goal>
+      <keywords>dynamic,blocks,data-sources,composer</keywords>
+      <commands>
+        <command>See .planning/workflows/visual-page-composer-requirements.md</command>
+      </commands>
+    </task>
+    <task id="17-03" agent-id="" status="planned">
+      <goal>Implement the first constrained container blocks with slots, child insertion, and nesting validation.</goal>
+      <keywords>containers,slots,nesting,validation</keywords>
+      <commands>
+        <command>See .planning/workflows/visual-page-composer-requirements.md</command>
+      </commands>
+    </task>
+    <task id="17-04" agent-id="" status="planned">
+      <goal>Add the Custom HTML block to the registry, editor, preview, and structure labeling path, with a documented safe-rendering decision.</goal>
+      <keywords>custom-html,registry,preview,safety</keywords>
+      <commands>
+        <command>See .planning/workflows/visual-page-composer-requirements.md</command>
+      </commands>
+    </task>
+    <task id="17-05" agent-id="" status="planned">
+      <goal>Add verification for reusable, dynamic, container, and custom-HTML flows.</goal>
+      <keywords>tests,reusable,dynamic,containers,custom-html</keywords>
+      <commands>
+        <command>Run focused integration/browser verification after implementation.</command>
       </commands>
     </task>
   </phase>

@@ -100,4 +100,124 @@ describe('internal page composer route', () => {
       },
     })
   })
+
+  it('creates a private draft clone from an existing page', async () => {
+    const payload = {
+      create: vi.fn().mockResolvedValue({
+        _status: 'draft',
+        hero: { type: 'lowImpact' },
+        id: 12,
+        layout: [],
+        publishedAt: null,
+        slug: 'spring-refresh-draft',
+        title: 'Spring Refresh Draft',
+        updatedAt: '2026-04-03T12:30:00.000Z',
+        visibility: 'private',
+      }),
+      find: vi
+        .fn()
+        .mockResolvedValueOnce({
+          docs: [],
+        })
+        .mockResolvedValueOnce({
+          docs: [
+            {
+              _status: 'draft',
+              id: 7,
+              publishedAt: null,
+              slug: 'spring-refresh',
+              title: 'Spring Refresh',
+              updatedAt: '2026-04-03T12:00:00.000Z',
+              visibility: 'private',
+            },
+            {
+              _status: 'draft',
+              id: 12,
+              publishedAt: null,
+              slug: 'spring-refresh-draft',
+              title: 'Spring Refresh Draft',
+              updatedAt: '2026-04-03T12:30:00.000Z',
+              visibility: 'private',
+            },
+          ],
+        }),
+      findByID: vi.fn().mockResolvedValue({
+        _status: 'draft',
+        hero: { media: { id: 55 }, type: 'lowImpact' },
+        id: 7,
+        layout: [
+          {
+            blockType: 'serviceGrid',
+            id: 'block-1',
+            services: [
+              {
+                id: 'row-1',
+                media: { id: 91 },
+                name: 'House wash',
+                summary: 'Exterior cleaning.',
+              },
+            ],
+          },
+        ],
+        publishedAt: null,
+        slug: 'spring-refresh',
+        title: 'Spring Refresh',
+        updatedAt: '2026-04-03T12:00:00.000Z',
+        visibility: 'public',
+      }),
+    }
+
+    getCurrentAuthContext.mockResolvedValue({
+      payload,
+      realUser: { email: 'designer@example.com', id: 32, roles: ['customer'] },
+    })
+    hasContentAuthoringAccess.mockResolvedValue(true)
+
+    const { POST } = await import('@/app/api/internal/page-composer/route')
+    const response = await POST(
+      new Request('http://localhost:5465/api/internal/page-composer', {
+        body: JSON.stringify({
+          action: 'clone-page',
+          sourcePageId: 7,
+        }),
+        headers: { 'content-type': 'application/json' },
+        method: 'POST',
+      }),
+    )
+
+    expect(response.status).toBe(200)
+    expect(payload.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        collection: 'pages',
+        data: expect.objectContaining({
+          hero: expect.objectContaining({
+            media: 55,
+          }),
+          layout: expect.arrayContaining([
+            expect.objectContaining({
+              blockType: 'serviceGrid',
+              services: expect.arrayContaining([
+                expect.objectContaining({
+                  media: 91,
+                }),
+              ]),
+            }),
+          ]),
+          slug: 'spring-refresh-draft',
+          title: 'Spring Refresh Draft',
+          visibility: 'private',
+        }),
+      }),
+    )
+    await expect(response.json()).resolves.toMatchObject({
+      ok: true,
+      page: {
+        id: 12,
+        pagePath: '/spring-refresh-draft',
+        slug: 'spring-refresh-draft',
+        title: 'Spring Refresh Draft',
+        visibility: 'private',
+      },
+    })
+  })
 })

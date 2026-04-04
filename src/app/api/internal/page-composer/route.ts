@@ -59,6 +59,67 @@ function toComposerPageSummary(page: Page): PageComposerPageSummary {
   }
 }
 
+function cloneValue<T>(value: T): T {
+  return structuredClone(value)
+}
+
+function stripNestedIds<T>(value: T): T {
+  if (Array.isArray(value)) {
+    return value.map((item) => stripNestedIds(item)) as T
+  }
+
+  if (value && typeof value === 'object') {
+    const nextEntries = Object.entries(value as Record<string, unknown>)
+      .filter(([key]) => key !== 'id')
+      .map(([key, entryValue]) => [key, stripNestedIds(entryValue)])
+
+    return Object.fromEntries(nextEntries) as T
+  }
+
+  return value
+}
+
+function relationId(value: unknown): null | number {
+  if (value && typeof value === 'object' && 'id' in value) {
+    const record = value as { id?: null | number | string }
+    return typeof record.id === 'number' ? record.id : null
+  }
+
+  return typeof value === 'number' ? value : null
+}
+
+async function findAvailableSlug(args: {
+  payload: Awaited<ReturnType<typeof getCurrentAuthContext>>['payload']
+  req: Awaited<ReturnType<typeof createLocalReq>>
+  slug: string
+}): Promise<string> {
+  const baseSlug = args.slug.trim() || 'draft-page'
+
+  for (let attempt = 0; attempt < 50; attempt += 1) {
+    const candidate = attempt === 0 ? baseSlug : `${baseSlug}-${attempt + 1}`
+    const existing = await args.payload.find({
+      collection: 'pages',
+      depth: 0,
+      draft: true,
+      limit: 1,
+      overrideAccess: false,
+      pagination: false,
+      req: args.req,
+      where: {
+        slug: {
+          equals: candidate,
+        },
+      },
+    })
+
+    if (!existing.docs.length) {
+      return candidate
+    }
+  }
+
+  throw new Error('Unable to generate a unique draft slug.')
+}
+
 async function loadComposerPages(args: {
   payload: Awaited<ReturnType<typeof getCurrentAuthContext>>['payload']
   req: Awaited<ReturnType<typeof createLocalReq>>
@@ -152,23 +213,30 @@ export async function POST(request: Request): Promise<Response> {
 
   const body = (await request.json().catch(() => null)) as
     | null
-    | {
+      | {
         action?: string
         layout?: Page['layout']
         pageId?: number
+        sourcePageId?: number
         slug?: string
         title?: string
         visibility?: Page['visibility']
       }
 
   const pageId = Number(body?.pageId)
+  const sourcePageId = Number(body?.sourcePageId)
   const title = body?.title?.trim() || ''
   const slug = body?.slug?.trim() || ''
   const layout = Array.isArray(body?.layout) ? body?.layout : null
   const action = body?.action || ''
   const visibility = body?.visibility === 'private' ? 'private' : 'public'
 
-  if (action !== 'save-draft' && action !== 'publish-page' && action !== 'create-page') {
+  if (
+    action !== 'save-draft' &&
+    action !== 'publish-page' &&
+    action !== 'create-page' &&
+    action !== 'clone-page'
+  ) {
     return Response.json({ error: 'Unsupported composer action.' }, { status: 400 })
   }
 
@@ -190,6 +258,57 @@ export async function POST(request: Request): Promise<Response> {
           slug,
           title,
           visibility,
+        },
+        depth: 2,
+        draft: true,
+        overrideAccess: false,
+        req: payloadReq,
+      })) as Page
+
+      return Response.json({
+        ok: true,
+        page: toComposerDocument(created, pageSlugToFrontendPath(created.slug)),
+        pages: await loadComposerPages({
+          payload: auth.payload,
+          req: payloadReq,
+        }),
+      })
+    }
+
+    if (action === 'clone-page') {
+      if (!Number.isInteger(sourcePageId) || sourcePageId <= 0) {
+        return Response.json({ error: 'A source page is required to create a draft clone.' }, { status: 400 })
+      }
+
+      const sourcePage = (await auth.payload.findByID({
+        collection: 'pages',
+        depth: 2,
+        draft: true,
+        id: sourcePageId,
+        overrideAccess: false,
+        req: payloadReq,
+      })) as Page
+
+      const nextTitle = `${sourcePage.title} Draft`
+      const nextSlug = await findAvailableSlug({
+        payload: auth.payload,
+        req: payloadReq,
+        slug: `${sourcePage.slug}-draft`,
+      })
+      const hero = cloneValue(sourcePage.hero)
+      const normalizedHero = stripNestedIds({
+        ...hero,
+        ...(relationId(hero.media) !== null ? { media: relationId(hero.media) } : {}),
+      })
+
+      const created = (await auth.payload.create({
+        collection: 'pages',
+        data: {
+          hero: normalizedHero,
+          layout: stripNestedIds(normalizePageComposerLayoutForSave(cloneValue(sourcePage.layout || []))),
+          slug: nextSlug,
+          title: nextTitle,
+          visibility: 'private',
         },
         depth: 2,
         draft: true,

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phase-plan>
+  <meta>
+    <phase-id>17</phase-id>
+    <phase-name>Visual composer reusable blocks, dynamic data, and containers</phase-name>
+    <date>2026-04-03</date>
+  </meta>
+  <status>planned</status>
+
+  <problem>
+    <item>The builder is not complete until reusable blocks, pre-wired dynamic blocks, simple containers, and `Custom HTML` move from taxonomy/planning into real content capabilities.</item>
+    <item>These features need careful constraints so the system gains power without becoming a confusing generic no-code platform.</item>
+  </problem>
+
+  <goals>
+    <goal id="G1">Support reusable block insertion with explicit linked-vs-copy behavior.</goal>
+    <goal id="G2">Implement the first pre-wired dynamic block set for Grime Time rather than a generic query builder.</goal>
+    <goal id="G3">Support a constrained first container model with named slots and nesting validation.</goal>
+    <goal id="G4">Add a real `Custom HTML` block with clear labeling and an explicit safe-rendering strategy.</goal>
+  </goals>
+
+  <non-goals>
+    <item>Do not ship arbitrarily deep freeform nesting.</item>
+    <item>Do not build a fully generic query-builder UI for dynamic blocks.</item>
+    <item>Do not treat raw custom HTML execution as solved without a documented safety decision.</item>
+  </non-goals>
+
+  <definition-of-done>
+    <item>Reusable blocks can be inserted as linked references or detached copies with clear labeling.</item>
+    <item>The first dynamic blocks are powered by Grime Time-specific data bindings and show representative preview states.</item>
+    <item>Supported container blocks expose named slots, child insertion, and structural validation.</item>
+    <item>`Custom HTML` exists as a real block with content editing, preview strategy, and safety notes.</item>
+  </definition-of-done>
+
+  <tasks>
+    <task ref="17-01">Define and implement reusable-block insertion semantics, including linked reference vs detached copy behavior.</task>
+    <task ref="17-02">Add the first pre-wired dynamic blocks and data-source editors for Grime Time content surfaces.</task>
+    <task ref="17-03">Implement the first constrained container blocks with slots, child insertion, and nesting validation.</task>
+    <task ref="17-04">Add the `Custom HTML` block to the registry, editor, preview, and structure labeling path, with a documented safe-rendering decision.</task>
+    <task ref="17-05">Add verification for reusable, dynamic, container, and custom-HTML flows.</task>
+  </tasks>
+</phase-plan>
