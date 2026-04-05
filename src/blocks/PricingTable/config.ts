@@ -1,5 +1,6 @@
 import type { Block } from 'payload'
 
+import { blockVisibilityField } from '@/blocks/shared/blockVisibilityField'
 import { pricingPlanFields } from '@/fields/pricingPlan'
 
 export const PricingTable: Block = {
@@ -43,5 +44,6 @@ export const PricingTable: Block = {
       },
       fields: pricingPlanFields,
     },
+    blockVisibilityField,
   ],
 }

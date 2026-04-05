@@ -54,4 +54,78 @@ test.describe('Frontend marketing pages', () => {
     })
     expect(contactOverflow).toBeLessThanOrEqual(4)
   })
+
+  test('instant quote uses JSON when no images are selected', async ({ page }) => {
+    let requestContentType = ''
+
+    await page.route('**/api/lead-forms/instant-quote', async (route) => {
+      requestContentType = (await route.request().headerValue('content-type')) || ''
+      await route.fulfill({
+        body: JSON.stringify({
+          crmSyncStatus: null,
+          message: 'Estimate request sent. We saved your details and will follow up with a scoped quote.',
+          ok: true,
+          submissionId: 901,
+        }),
+        contentType: 'application/json',
+        status: 200,
+      })
+    })
+
+    await page.goto('/')
+    await page.locator('#instant-quote').scrollIntoViewIfNeeded()
+    await page.getByLabel('Full name').fill('Jamie Customer')
+    await page.getByLabel('Email').fill('jamie@example.com')
+    await page.getByRole('button', { name: 'Send estimate request' }).click()
+
+    await expect(
+      page.getByText('Estimate request sent. We saved your details and will follow up with a scoped quote.'),
+    ).toBeVisible()
+    expect(requestContentType).toContain('application/json')
+  })
+
+  test('instant quote switches to multipart when images are selected', async ({ page }) => {
+    let requestContentType = ''
+
+    await page.route('**/api/lead-forms/instant-quote', async (route) => {
+      requestContentType = (await route.request().headerValue('content-type')) || ''
+      await route.fulfill({
+        body: JSON.stringify({
+          attachmentCount: 1,
+          attachmentSyncStatus: 'saved',
+          crmSyncStatus: null,
+          message:
+            'Estimate request sent. We saved your details and will follow up with a scoped quote. We saved 1 photo for staff review.',
+          ok: true,
+          submissionId: 902,
+        }),
+        contentType: 'application/json',
+        status: 200,
+      })
+    })
+
+    await page.goto('/')
+    await page.locator('#instant-quote').scrollIntoViewIfNeeded()
+    await page.getByLabel('Full name').fill('Jamie Customer')
+    await page.getByLabel('Email').fill('jamie@example.com')
+    await page
+      .locator('#instant-quote input[type="file"][aria-label="Optional job photos"]')
+      .setInputFiles({
+        buffer: Buffer.from('front-yard'),
+        mimeType: 'image/jpeg',
+        name: 'front-yard.jpg',
+      })
+
+    await expect(page.getByText('front-yard.jpg')).toBeVisible()
+    await expect(page.getByText('1 selected')).toBeVisible()
+
+    await page.getByRole('button', { name: 'Send estimate request' }).click()
+
+    await expect(
+      page.getByText(
+        'Estimate request sent. We saved your details and will follow up with a scoped quote. We saved 1 photo for staff review.',
+      ),
+    ).toBeVisible()
+    expect(requestContentType).toContain('multipart/form-data')
+  })
 })

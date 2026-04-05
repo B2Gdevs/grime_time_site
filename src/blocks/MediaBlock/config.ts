@@ -1,5 +1,8 @@
 import type { Block } from 'payload'
 
+import { blockVisibilityField } from '@/blocks/shared/blockVisibilityField'
+import { composerReusableField } from '@/blocks/shared/composerReusableField'
+
 export const MediaBlock: Block = {
   slug: 'mediaBlock',
   interfaceName: 'MediaBlock',
@@ -10,5 +13,7 @@ export const MediaBlock: Block = {
       relationTo: 'media',
       required: true,
     },
+    composerReusableField,
+    blockVisibilityField,
   ],
 }

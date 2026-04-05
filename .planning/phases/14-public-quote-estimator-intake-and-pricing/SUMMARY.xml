@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phase-summary>
+  <meta>
+    <phase-id>14</phase-id>
+    <phase-name>Public quote estimator intake and pricing calibration</phase-name>
+    <date>2026-04-04</date>
+  </meta>
+  <status>complete</status>
+  <highlights>
+    <item>Phase 14 recalibrates the public estimator so house washes now use wall-count pricing, stronger review notes, and explicit manual-review lanes for taller or more complex jobs.</item>
+    <item>The homepage `/#instant-quote` flow now supports optional job-photo intake with a shared validation contract: up to 5 image files, 8MB each, while preserving the fast no-image submission path.</item>
+    <item>Estimator attachments now persist in a dedicated admin-only Payload upload collection linked to the originating `form-submissions` record and ready for later quote linkage.</item>
+    <item>The public route accepts JSON for no-image requests and multipart uploads only when images are selected, so the default lane stays lightweight while photo review still fits in the same request.</item>
+    <item>Focused verification now covers pricing math, attachment validation, route persistence behavior, and browser checks for both JSON and multipart homepage submissions.</item>
+    <item>Phase 14 also closes the follow-on documentation tasks for method-training artifacts, reusable intake metadata, and the composer/copilot docking requirement.</item>
+  </highlights>
+  <verification>
+    <command>npm.cmd exec eslint src/app/api/lead-forms/instant-quote/route.ts src/components/InstantQuoteSection.tsx src/lib/forms/api.ts tests/int/app/instant-quote-route.int.spec.ts tests/int/lib/forms/instant-quote-request.int.spec.ts tests/int/lib/forms/instant-quote-attachments.int.spec.ts tests/e2e/frontend.e2e.spec.ts</command>
+    <command>npm.cmd exec vitest run tests/int/app/instant-quote-route.int.spec.ts tests/int/lib/forms/instant-quote-request.int.spec.ts tests/int/lib/forms/instant-quote-attachments.int.spec.ts</command>
+    <command>npm.cmd run build</command>
+    <command>Manual `next dev --hostname localhost --port 3110` plus `npm.cmd exec -- playwright test tests/e2e/frontend.e2e.spec.ts --grep "instant quote" --config=playwright.local.config.ts` with `PLAYWRIGHT_BASE_URL=http://localhost:3110`</command>
+  </verification>
+  <next>
+    <item>`14-01` through `14-08` are complete.</item>
+    <item>Phase `15` is also complete and should be marked complete in the roadmap.</item>
+    <item>The next implementation stream is phase `16`: mirrored preview/Structure selection, hover actions, inline editing, responsive preview controls, and publish workflow refinement.</item>
+  </next>
+</phase-summary>

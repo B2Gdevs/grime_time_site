@@ -163,4 +163,92 @@
       <command>cmd /c npm.cmd exec -- playwright test tests/e2e/page-composer.e2e.spec.ts --config=playwright.config.ts</command>
     </verification>
   </attempt>
+  <attempt id="15-07-a1" phase="15" task="15-07" status="resolved">
+    <title>Block-visibility schema and production-browser reorder verification both needed final hardening before phase 15 could close</title>
+    <symptom>After phase-15 code added block-level hide/show support, the browser suite failed with missing `is_hidden` columns on page-layout tables. Once the schema was corrected, the production `next start` browser run still exposed a reorder failure because the spec's keyboard drag helper did not consistently drive the DnD handle under the fixed composer drawer.</symptom>
+    <cause>The new `isHidden` field had been added to the Payload block schemas and generated types without a matching Postgres migration for the live and version layout-block tables. Separately, the e2e helper was sending keyboard events through `page.keyboard`, which was less reliable than targeting the actual sortable drag handle element inside the drawer.</cause>
+    <attempted-fix>Add a dedicated migration that creates `is_hidden` across every current page-layout block table and version table, migrate the local database before browser verification, then update the Playwright helper to press the sortable handle directly and assert Structure order before saving and publishing.</attempted-fix>
+    <verification>
+      <command>cmd /c npm.cmd exec eslint src/migrations/20260404_174500_add_page_block_visibility.ts src/migrations/index.ts tests/e2e/page-composer.e2e.spec.ts</command>
+      <command>cmd /c npm.cmd exec -- tsc --noEmit</command>
+      <command>cmd /c npm.cmd run payload migrate</command>
+      <command>cmd /c npm.cmd exec vitest run tests/int/lib/pages/page-composer.int.spec.ts tests/int/app/page-composer-route.int.spec.ts</command>
+      <command>cmd /c npm.cmd run build</command>
+      <command>cmd /c set PLAYWRIGHT_BASE_URL=http://localhost:3110 && npm.cmd exec -- playwright test --config=playwright.local.config.ts tests/e2e/page-composer.e2e.spec.ts</command>
+    </verification>
+  </attempt>
+  <attempt id="14-03-a1" phase="14" task="14-03" status="resolved">
+    <title>The first generated attachment migration pulled unrelated schema noise and had to be reduced to the real contract only</title>
+    <symptom>When the new estimator attachment collection was generated, the migration draft also included unrelated schema churn such as organization-membership enum changes that were not part of the upload contract.</symptom>
+    <cause>The local schema snapshot had drifted enough that the generated migration tried to reconcile more than the new `instant_quote_request_attachments` collection.</cause>
+    <attempted-fix>Replace the generated migration body with a clean hand-edited migration that only creates the estimator attachment enums, table, foreign keys, indexes, and locked-document relation needed for `instant-quote-request-attachments`.</attempted-fix>
+    <verification>
+      <command>cmd /c npm.cmd run generate:types</command>
+      <command>cmd /c npm.cmd run payload migrate</command>
+      <command>cmd /c npm.cmd exec vitest run tests/int/lib/forms/instant-quote-attachments.int.spec.ts</command>
+      <command>cmd /c npm.cmd run build</command>
+    </verification>
+  </attempt>
+  <attempt id="14-05-a1" phase="14" task="14-05" status="resolved">
+    <title>Playwright webServer was not reliable for the targeted homepage estimator browser pass, so verification switched to a manual localhost dev server</title>
+    <symptom>The standard Playwright `webServer` startup path timed out locally, and a manual `next start` on `localhost:3110` still failed because the runtime expected a missing `.next/prerender-manifest.json` even after a successful build.</symptom>
+    <cause>The local Next.js startup path remained brittle under the normal Playwright wrapper, and the targeted estimator browser checks only needed a healthy frontend surface plus mocked route responses rather than full production server semantics.</cause>
+    <attempted-fix>Keep build verification as a separate command, then run the focused estimator browser tests against a manually started `next dev --hostname localhost --port 3110` process with a temporary Playwright config that omits `webServer` and points `PLAYWRIGHT_BASE_URL` at that live server.</attempted-fix>
+    <verification>
+      <command>cmd /c npm.cmd run build</command>
+      <command>cmd /c npm.cmd exec -- playwright test tests/e2e/frontend.e2e.spec.ts --grep "instant quote" --config=playwright.local.config.ts</command>
+    </verification>
+  </attempt>
+  <attempt id="17-05-a1" phase="17" task="17-05" status="resolved">
+    <title>Composer runtime verification required a matching Payload migration and split-surface e2e locator updates</title>
+    <symptom>After the preview-first composer and reusable/custom-html schema work compiled, the frontend homepage failed at runtime with missing `composer_reusable_*` columns on page-version block tables. Once the migration was applied, the browser spec still failed because old locators treated the drawer as a single-column surface and matched the new preview canvas instead of the active Structure or Media tabs.</symptom>
+    <cause>The new block fields and `customHtml` block tables needed a real Postgres migration before the runtime could query page versions. Separately, the e2e spec still assumed the composer only exposed one interaction surface, so button-name locators became ambiguous once the preview canvas and tab panels were both interactive.</cause>
+    <attempted-fix>Generate and apply a dedicated Payload migration for reusable metadata plus `customHtml`, then update the Playwright helpers to scope interactions to the active tabpanel for Structure and Media while leaving preview interaction available separately.</attempted-fix>
+    <verification>
+      <command>cmd /c npm.cmd run generate:types</command>
+      <command>cmd /c npm.cmd run payload migrate</command>
+      <command>cmd /c npm.cmd exec -- tsc --noEmit</command>
+      <command>cmd /c npm.cmd exec vitest run tests/int/lib/pages/page-composer.int.spec.ts tests/int/app/page-composer-route.int.spec.ts</command>
+      <command>cmd /c npm.cmd run build</command>
+      <command>cmd /c set PLAYWRIGHT_BASE_URL=http://localhost:3111 &amp;&amp; npm.cmd exec -- playwright test tests/e2e/page-composer.e2e.spec.ts --config=playwright.local.config.ts</command>
+    </verification>
+  </attempt>
+  <attempt id="18-01-a1" phase="18" task="18-01" status="resolved">
+    <title>Shared-section schema work exposed two Payload persistence mismatches that needed explicit correction before UI work could build safely</title>
+    <symptom>The first generated `shared-sections` migration created the live enum for `status` as `draft|published` even though the collection contract included `archived`, and the collection hook normalized tags to `string[]` while the Payload field stored tag rows as `{ tag }[]`.</symptom>
+    <cause>Payload's generated migration reused the draft-status enum shape for the new `status` column in this collection/version surface, and the conceptual shared-section contract was intentionally flatter than Payload's array-row storage model for tags.</cause>
+    <attempted-fix>Keep the conceptual shared-section contract in helper code, convert tags back to Payload row objects at the collection boundary, and add a follow-up manual migration that inserts `archived` into the relevant shared-section enums after the generated collection migration runs.</attempted-fix>
+    <verification>
+      <command>cmd /c npm.cmd exec eslint src/lib/pages/sharedSections.ts src/lib/auth/sharedSectionPermissions.ts src/collections/SharedSections.ts src/lib/pages/sharedSectionLibrary.ts src/app/api/internal/shared-sections/route.ts tests/int/lib/pages/shared-sections.int.spec.ts tests/int/lib/auth/shared-section-permissions.int.spec.ts tests/int/app/shared-sections-route.int.spec.ts</command>
+      <command>cmd /c npm.cmd exec vitest run tests/int/lib/pages/shared-sections.int.spec.ts tests/int/lib/auth/shared-section-permissions.int.spec.ts tests/int/app/shared-sections-route.int.spec.ts</command>
+      <command>cmd /c npm.cmd exec -- tsc --noEmit</command>
+      <command>cmd /c npm.cmd run generate:types</command>
+      <command>cmd /c npm.cmd run payload migrate</command>
+      <command>cmd /c npm.cmd run build</command>
+    </verification>
+  </attempt>
+  <attempt id="18-02-a1" phase="18" task="18-02" status="resolved">
+    <title>Local build verification conflicted with stale Next dev and start processes, so the verification pass had to clear the old server state before trusting build artifacts</title>
+    <symptom>`npm run build` first reported that another Next build was already running because a leftover `next dev --port 3110` process still held `.next/dev/lock`. After that server was stopped, the build command outlived the shell timeout while still writing fresh `.next` production artifacts.</symptom>
+    <cause>Phase 14 and 17 browser verification left manual `next dev` and `next start` processes behind for local Playwright passes, and those long-lived processes reused the same `.next` surface that the phase 18 build verification needed.</cause>
+    <attempted-fix>Stop the stale `next dev` process before rerunning build verification, then confirm the build completed by waiting for the active `next build` processes to exit and checking for a fresh `.next/BUILD_ID` plus updated production manifest files.</attempted-fix>
+    <verification>
+      <command>cmd /c npm.cmd exec vitest run tests/int/components/portal/shared-sections/shared-sections-library.int.spec.tsx tests/int/lib/navigation/portal-sidebar.int.spec.ts tests/int/lib/auth/portal-nav-surface.int.spec.tsx</command>
+      <command>cmd /c npm.cmd exec eslint src/lib/pages/sharedSections.ts src/lib/pages/sharedSectionLibrary.ts src/lib/query/queryKeys.ts src/lib/auth/portalNavSurface.ts src/lib/navigation/portalSidebar.ts src/components/portal/shared-sections/SharedSectionsLibrary.tsx "src/app/(portal)/shared-sections/page.tsx" tests/int/components/portal/shared-sections/shared-sections-library.int.spec.tsx tests/int/lib/navigation/portal-sidebar.int.spec.ts tests/int/lib/auth/portal-nav-surface.int.spec.tsx</command>
+      <command>powershell -NoProfile -Command "Stop-Process -Id 30280,23712 -Force"</command>
+      <command>powershell -NoProfile -Command "Wait-Process -Id 23520,14632 -Timeout 600"</command>
+      <command>powershell -NoProfile -Command "Get-Content .next/BUILD_ID"</command>
+    </verification>
+  </attempt>
+  <attempt id="18-02-a2" phase="18" task="18-02" status="resolved">
+    <title>Shared-section reusable metadata triggered a Postgres enum-name overflow during Next build</title>
+    <symptom>`npm run build` failed during Payload init for static-page data collection with `Exceeded max identifier length for table or enum name of 63 characters` on `enum_pages_blocks_testimonials_block_composer_reusable_source_type`.</symptom>
+    <cause>The new `composerReusable.sourceType` select field lived under block tables with long generated table names, and Postgres enum identifiers inherited the full nested path. The field contract itself was correct, but the default generated enum name exceeded Postgres's identifier limit.</cause>
+    <attempted-fix>Keep the hidden reusable metadata field, but assign short explicit `enumName` values for the nested `sourceType` and `mode` select fields in `src/blocks/shared/composerReusableField.ts` so Payload's generated Postgres enums stay within identifier limits.</attempted-fix>
+    <verification>
+      <command>cmd /c npm.cmd exec eslint src/blocks/shared/composerReusableField.ts</command>
+      <command>cmd /c npm.cmd exec -- tsc --noEmit</command>
+      <command>cmd /c npm.cmd run build</command>
+    </verification>
+  </attempt>
 </errors-and-attempts>

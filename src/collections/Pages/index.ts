@@ -6,6 +6,7 @@ import { Archive } from '../../blocks/ArchiveBlock/config'
 import { CallToAction } from '../../blocks/CallToAction/config'
 import { Content } from '../../blocks/Content/config'
 import { ContactRequest } from '../../blocks/ContactRequest/config'
+import { CustomHtml } from '../../blocks/CustomHtml/config'
 import { FormBlock } from '../../blocks/Form/config'
 import { MediaBlock } from '../../blocks/MediaBlock/config'
 import { PricingTable } from '../../blocks/PricingTable/config'
@@ -86,6 +87,7 @@ export const Pages: CollectionConfig<'pages'> = {
                 FormBlock,
                 ContactRequest,
                 TestimonialsBlock,
+                CustomHtml,
               ],
               required: true,
               admin: {

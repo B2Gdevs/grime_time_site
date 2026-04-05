@@ -2,7 +2,7 @@ import type { Page } from '@/payload-types'
 
 export type PageComposerBlockCategory = 'container' | 'dynamic' | 'static'
 export type PageComposerRegisteredBlockType = Page['layout'][number]['blockType'] | 'customHtml'
-export type PageComposerInsertableBlockType = Exclude<PageComposerRegisteredBlockType, 'customHtml'>
+export type PageComposerInsertableBlockType = PageComposerRegisteredBlockType
 
 export type PageComposerBlockDefinition = {
   category: PageComposerBlockCategory
@@ -93,7 +93,7 @@ const pageComposerBlockDefinitions: PageComposerBlockDefinition[] = [
     label: 'Media block',
     supportsInsert: true,
     supportsNesting: false,
-    supportsReusable: false,
+    supportsReusable: true,
     type: 'mediaBlock',
   },
   {
@@ -133,15 +133,15 @@ const pageComposerBlockDefinitions: PageComposerBlockDefinition[] = [
     label: 'Testimonials',
     supportsInsert: true,
     supportsNesting: false,
-    supportsReusable: false,
+    supportsReusable: true,
     type: 'testimonialsBlock',
   },
   {
     category: 'static',
-    description: 'Planned advanced block for embeds or trusted custom widget markup.',
+    description: 'Trusted embed or markup block with sanitized rendering for approved HTML snippets.',
     keywords: ['html', 'embed', 'widget', 'custom code'],
     label: 'Custom HTML',
-    supportsInsert: false,
+    supportsInsert: true,
     supportsNesting: false,
     supportsReusable: false,
     type: 'customHtml',
@@ -242,6 +242,14 @@ export function createPageComposerBlock(type: PageComposerInsertableBlockType): 
       blockType: 'contactRequest',
       layoutVariant: 'default',
     }
+  }
+
+  if (type === 'customHtml') {
+    return {
+      blockType: 'customHtml',
+      html: '<div class="gt-embed-shell">Trusted HTML snippet</div>',
+      label: 'Custom HTML',
+    } as LayoutBlock
   }
 
   return {

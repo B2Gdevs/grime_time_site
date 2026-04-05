@@ -37,3 +37,21 @@ export async function postJsonForm<TRequest extends object, TResponse = unknown>
 
   return payload as TResponse
 }
+
+export async function postMultipartForm<TResponse = unknown>(
+  url: string,
+  formData: FormData,
+): Promise<TResponse> {
+  const response = await fetch(url, {
+    method: 'POST',
+    body: formData,
+  })
+
+  const payload = await response.json().catch(() => null)
+
+  if (!response.ok) {
+    throw new Error(readApiErrorMessage(payload, 'Could not submit the form.'))
+  }
+
+  return payload as TResponse
+}

@@ -8,6 +8,7 @@ import { resolveServiceGridDisplayVariant } from '@/blocks/ServiceGrid/variants'
 import { InlinePageMediaEditor } from '@/components/admin-impersonation/InlinePageMediaEditor'
 import { InstantQuoteSection } from '@/components/InstantQuoteSection'
 import { extractLexicalPlainText, getMediaUrl } from '@/lib/marketing/public-shell'
+import { getVisiblePageLayoutBlocks } from '@/lib/pages/pageLayoutVisibility'
 import type { InstantQuoteCatalog } from '@/lib/quotes/instantQuoteCatalog'
 import { formatCurrency } from '@/lib/quotes/instantQuoteCatalog'
 import type { Media, ServiceGridBlock } from '@/payload-types'
@@ -36,9 +37,10 @@ export async function GrimeTimeMarketingHome({
     extractLexicalPlainText(page.hero.richText) ||
     page.meta?.description ||
     'North Texas exterior cleaning with a clearer quote path and visible proof.'
+  const visibleLayout = getVisiblePageLayoutBlocks(page.layout)
   const heroMedia = asMedia(page.hero.media)
   const heroImageUrl = getMediaUrl(heroMedia)
-  const featureCardsBlock = page.layout.find(
+  const featureCardsBlock = visibleLayout.find(
     (block): block is ServiceGridBlock =>
       block.blockType === 'serviceGrid' && resolveServiceGridDisplayVariant(block) === 'featureCards',
   )
@@ -144,7 +146,7 @@ export async function GrimeTimeMarketingHome({
         </div>
       </section>
 
-      <div className="pb-8">{await RenderBlocks({ blocks: page.layout })}</div>
+      <div className="pb-8">{await RenderBlocks({ blocks: visibleLayout })}</div>
 
       <InstantQuoteSection catalog={instantQuoteCatalog} />
     </div>

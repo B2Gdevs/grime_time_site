@@ -69,6 +69,7 @@ export interface Config {
   blocks: {};
   collections: {
     pages: Page;
+    'shared-sections': SharedSection;
     posts: Post;
     testimonials: Testimonial;
     media: Media;
@@ -81,6 +82,7 @@ export interface Config {
     'billing-events': BillingEvent;
     contacts: Contact;
     leads: Lead;
+    'instant-quote-request-attachments': InstantQuoteRequestAttachment;
     opportunities: Opportunity;
     'crm-activities': CrmActivity;
     'crm-sequences': CrmSequence;
@@ -112,6 +114,7 @@ export interface Config {
   };
   collectionsSelect: {
     pages: PagesSelect<false> | PagesSelect<true>;
+    'shared-sections': SharedSectionsSelect<false> | SharedSectionsSelect<true>;
     posts: PostsSelect<false> | PostsSelect<true>;
     testimonials: TestimonialsSelect<false> | TestimonialsSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
@@ -124,6 +127,7 @@ export interface Config {
     'billing-events': BillingEventsSelect<false> | BillingEventsSelect<true>;
     contacts: ContactsSelect<false> | ContactsSelect<true>;
     leads: LeadsSelect<false> | LeadsSelect<true>;
+    'instant-quote-request-attachments': InstantQuoteRequestAttachmentsSelect<false> | InstantQuoteRequestAttachmentsSelect<true>;
     opportunities: OpportunitiesSelect<false> | OpportunitiesSelect<true>;
     'crm-activities': CrmActivitiesSelect<false> | CrmActivitiesSelect<true>;
     'crm-sequences': CrmSequencesSelect<false> | CrmSequencesSelect<true>;
@@ -286,6 +290,7 @@ export interface Page {
     | FormBlock
     | ContactRequestBlock
     | TestimonialsSectionBlock
+    | CustomHtmlBlock
   )[];
   meta?: {
     title?: string | null;
@@ -1108,6 +1113,15 @@ export interface ServiceGridBlock {
         id?: string | null;
       }[]
     | null;
+  composerReusable?: {
+    mode?: ('linked' | 'detached') | null;
+    key?: string | null;
+    label?: string | null;
+  };
+  /**
+   * Keep this block in the page draft and composer, but omit it from the rendered page until it is shown again.
+   */
+  isHidden?: boolean | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'serviceGrid';
@@ -1169,6 +1183,10 @@ export interface PricingTableBlock {
         id?: string | null;
       }[]
     | null;
+  /**
+   * Keep this block in the page draft and composer, but omit it from the rendered page until it is shown again.
+   */
+  isHidden?: boolean | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'pricingTable';
@@ -1217,6 +1235,15 @@ export interface CallToActionBlock {
         id?: string | null;
       }[]
     | null;
+  composerReusable?: {
+    mode?: ('linked' | 'detached') | null;
+    key?: string | null;
+    label?: string | null;
+  };
+  /**
+   * Keep this block in the page draft and composer, but omit it from the rendered page until it is shown again.
+   */
+  isHidden?: boolean | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'cta';
@@ -1267,6 +1294,15 @@ export interface ContentBlock {
         id?: string | null;
       }[]
     | null;
+  composerReusable?: {
+    mode?: ('linked' | 'detached') | null;
+    key?: string | null;
+    label?: string | null;
+  };
+  /**
+   * Keep this block in the page draft and composer, but omit it from the rendered page until it is shown again.
+   */
+  isHidden?: boolean | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'content';
@@ -1277,6 +1313,10 @@ export interface ContentBlock {
  */
 export interface MediaBlock {
   media: number | Media;
+  /**
+   * Keep this block in the page draft and composer, but omit it from the rendered page until it is shown again.
+   */
+  isHidden?: boolean | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'mediaBlock';
@@ -1311,6 +1351,10 @@ export interface ArchiveBlock {
         value: number | Post;
       }[]
     | null;
+  /**
+   * Keep this block in the page draft and composer, but omit it from the rendered page until it is shown again.
+   */
+  isHidden?: boolean | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'archive';
@@ -1337,6 +1381,10 @@ export interface FormBlock {
     };
     [k: string]: unknown;
   } | null;
+  /**
+   * Keep this block in the page draft and composer, but omit it from the rendered page until it is shown again.
+   */
+  isHidden?: boolean | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'formBlock';
@@ -1350,6 +1398,10 @@ export interface ContactRequestBlock {
    * Layout options for this block may expand later; the site currently uses the default shell.
    */
   layoutVariant?: 'default' | null;
+  /**
+   * Keep this block in the page draft and composer, but omit it from the rendered page until it is shown again.
+   */
+  isHidden?: boolean | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'contactRequest';
@@ -1384,6 +1436,10 @@ export interface TestimonialsSectionBlock {
    * Used for “Latest published”.
    */
   limit?: number | null;
+  /**
+   * Keep this block in the page draft and composer, but omit it from the rendered page until it is shown again.
+   */
+  isHidden?: boolean | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'testimonialsBlock';
@@ -1415,6 +1471,75 @@ export interface Testimonial {
   sortOrder?: number | null;
   updatedAt: string;
   createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "CustomHtmlBlock".
+ */
+export interface CustomHtmlBlock {
+  label?: string | null;
+  html: string;
+  /**
+   * Keep this block in the page draft and composer, but omit it from the rendered page until it is shown again.
+   */
+  isHidden?: boolean | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'customHtml';
+}
+/**
+ * Reusable shared sections for the visual composer. These are global source records, not page-local content.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "shared-sections".
+ */
+export interface SharedSection {
+  id: number;
+  name: string;
+  description?: string | null;
+  category: 'hero' | 'content' | 'cta' | 'social-proof' | 'media' | 'utility';
+  /**
+   * Draft edits stay local to the shared source until Publish is invoked.
+   */
+  status: 'draft' | 'published' | 'archived';
+  currentVersion: number;
+  /**
+   * Use tags for specific business semantics such as before-after, residential, or faq.
+   */
+  tags?:
+    | {
+        tag: string;
+        id?: string | null;
+      }[]
+    | null;
+  usageCount?: number | null;
+  structure:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  preview: {
+    url?: string | null;
+    status: 'pending' | 'ready' | 'failed';
+    updatedAt?: string | null;
+    errorMessage?: string | null;
+  };
+  createdBy?: (number | null) | User;
+  updatedBy?: (number | null) | User;
+  publishedAt?: string | null;
+  archivedAt?: string | null;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  slug: string;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1665,6 +1790,50 @@ export interface Lead {
   notes?: string | null;
   updatedAt: string;
   createdAt: string;
+}
+/**
+ * Internal estimator photos linked to form submissions and later quote review. These files are not part of the public media library.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "instant-quote-request-attachments".
+ */
+export interface InstantQuoteRequestAttachment {
+  id: number;
+  /**
+   * The instant-quote form submission that created this attachment.
+   */
+  submission: number | FormSubmission;
+  /**
+   * Optional quote linked later during staff review.
+   */
+  quote?: (number | null) | Quote;
+  attachmentStatus: 'new' | 'reviewed' | 'linked_to_quote';
+  intakeSource: 'instant_quote';
+  customerFilename: string;
+  contentType: string;
+  fileSizeBytes: number;
+  reviewNotes?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
+  sizes?: {
+    thumbnail?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+  };
 }
 /**
  * Pipeline records linked to quotes, accounts, contacts, and follow-up work.
@@ -2300,6 +2469,10 @@ export interface PayloadLockedDocument {
         value: number | Page;
       } | null)
     | ({
+        relationTo: 'shared-sections';
+        value: number | SharedSection;
+      } | null)
+    | ({
         relationTo: 'posts';
         value: number | Post;
       } | null)
@@ -2346,6 +2519,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'leads';
         value: number | Lead;
+      } | null)
+    | ({
+        relationTo: 'instant-quote-request-attachments';
+        value: number | InstantQuoteRequestAttachment;
       } | null)
     | ({
         relationTo: 'opportunities';
@@ -2511,6 +2688,7 @@ export interface PagesSelect<T extends boolean = true> {
         formBlock?: T | FormBlockSelect<T>;
         contactRequest?: T | ContactRequestBlockSelect<T>;
         testimonialsBlock?: T | TestimonialsSectionBlockSelect<T>;
+        customHtml?: T | CustomHtmlBlockSelect<T>;
       };
   meta?:
     | T
@@ -2552,6 +2730,14 @@ export interface ServiceGridBlockSelect<T extends boolean = true> {
             };
         id?: T;
       };
+  composerReusable?:
+    | T
+    | {
+        mode?: T;
+        key?: T;
+        label?: T;
+      };
+  isHidden?: T;
   id?: T;
   blockName?: T;
 }
@@ -2588,6 +2774,7 @@ export interface PricingTableBlockSelect<T extends boolean = true> {
             };
         id?: T;
       };
+  isHidden?: T;
   id?: T;
   blockName?: T;
 }
@@ -2612,6 +2799,14 @@ export interface CallToActionBlockSelect<T extends boolean = true> {
             };
         id?: T;
       };
+  composerReusable?:
+    | T
+    | {
+        mode?: T;
+        key?: T;
+        label?: T;
+      };
+  isHidden?: T;
   id?: T;
   blockName?: T;
 }
@@ -2638,6 +2833,14 @@ export interface ContentBlockSelect<T extends boolean = true> {
             };
         id?: T;
       };
+  composerReusable?:
+    | T
+    | {
+        mode?: T;
+        key?: T;
+        label?: T;
+      };
+  isHidden?: T;
   id?: T;
   blockName?: T;
 }
@@ -2647,6 +2850,7 @@ export interface ContentBlockSelect<T extends boolean = true> {
  */
 export interface MediaBlockSelect<T extends boolean = true> {
   media?: T;
+  isHidden?: T;
   id?: T;
   blockName?: T;
 }
@@ -2661,6 +2865,7 @@ export interface ArchiveBlockSelect<T extends boolean = true> {
   categories?: T;
   limit?: T;
   selectedDocs?: T;
+  isHidden?: T;
   id?: T;
   blockName?: T;
 }
@@ -2672,6 +2877,7 @@ export interface FormBlockSelect<T extends boolean = true> {
   form?: T;
   enableIntro?: T;
   introContent?: T;
+  isHidden?: T;
   id?: T;
   blockName?: T;
 }
@@ -2681,6 +2887,7 @@ export interface FormBlockSelect<T extends boolean = true> {
  */
 export interface ContactRequestBlockSelect<T extends boolean = true> {
   layoutVariant?: T;
+  isHidden?: T;
   id?: T;
   blockName?: T;
 }
@@ -2694,8 +2901,56 @@ export interface TestimonialsSectionBlockSelect<T extends boolean = true> {
   selectionMode?: T;
   testimonials?: T;
   limit?: T;
+  isHidden?: T;
   id?: T;
   blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "CustomHtmlBlock_select".
+ */
+export interface CustomHtmlBlockSelect<T extends boolean = true> {
+  label?: T;
+  html?: T;
+  isHidden?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "shared-sections_select".
+ */
+export interface SharedSectionsSelect<T extends boolean = true> {
+  name?: T;
+  description?: T;
+  category?: T;
+  status?: T;
+  currentVersion?: T;
+  tags?:
+    | T
+    | {
+        tag?: T;
+        id?: T;
+      };
+  usageCount?: T;
+  structure?: T;
+  preview?:
+    | T
+    | {
+        url?: T;
+        status?: T;
+        updatedAt?: T;
+        errorMessage?: T;
+      };
+  createdBy?: T;
+  updatedBy?: T;
+  publishedAt?: T;
+  archivedAt?: T;
+  generateSlug?: T;
+  slug?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -3146,6 +3401,45 @@ export interface LeadsSelect<T extends boolean = true> {
   notes?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "instant-quote-request-attachments_select".
+ */
+export interface InstantQuoteRequestAttachmentsSelect<T extends boolean = true> {
+  submission?: T;
+  quote?: T;
+  attachmentStatus?: T;
+  intakeSource?: T;
+  customerFilename?: T;
+  contentType?: T;
+  fileSizeBytes?: T;
+  reviewNotes?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
+  focalX?: T;
+  focalY?: T;
+  sizes?:
+    | T
+    | {
+        thumbnail?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+      };
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -4071,6 +4365,24 @@ export interface QuoteSetting {
     biannual: number;
     quarterly: number;
   };
+  /**
+   * House washes now calibrate from exterior wall count rather than square footage for the public estimator.
+   */
+  houseWashPricing: {
+    oneStoryPerWall: number;
+    twoStoryPerWall: number;
+    minimumWalls: number;
+    manualReviewNote: string;
+  };
+  /**
+   * Shared public estimator copy so the homepage promise stays aligned with the current pricing model.
+   */
+  estimatorMessaging: {
+    estimateDisclaimer: string;
+    waterAccessNote: string;
+    drivewayPhotoNote: string;
+    commercialExpansionNote: string;
+  };
   _status?: ('draft' | 'published') | null;
   updatedAt?: string | null;
   createdAt?: string | null;
@@ -4276,6 +4588,22 @@ export interface QuoteSettingsSelect<T extends boolean = true> {
         oneTime?: T;
         biannual?: T;
         quarterly?: T;
+      };
+  houseWashPricing?:
+    | T
+    | {
+        oneStoryPerWall?: T;
+        twoStoryPerWall?: T;
+        minimumWalls?: T;
+        manualReviewNote?: T;
+      };
+  estimatorMessaging?:
+    | T
+    | {
+        estimateDisclaimer?: T;
+        waterAccessNote?: T;
+        drivewayPhotoNote?: T;
+        commercialExpansionNote?: T;
       };
   _status?: T;
   updatedAt?: T;

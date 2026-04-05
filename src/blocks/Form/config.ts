@@ -1,5 +1,6 @@
 import type { Block } from 'payload'
 
+import { blockVisibilityField } from '@/blocks/shared/blockVisibilityField'
 import {
   FixedToolbarFeature,
   HeadingFeature,
@@ -40,6 +41,7 @@ export const FormBlock: Block = {
       }),
       label: 'Intro Content',
     },
+    blockVisibilityField,
   ],
   graphQL: {
     singularName: 'FormBlock',

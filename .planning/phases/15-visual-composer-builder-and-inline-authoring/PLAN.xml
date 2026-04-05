@@ -5,7 +5,7 @@
     <phase-name>Visual composer foundations and builder shell</phase-name>
     <date>2026-04-03</date>
   </meta>
-  <status>planned</status>
+  <status>complete</status>
 
   <problem>
     <item>The first staff-safe composer exists, but the product model is still partly implicit. Current page data comes from the Payload page template plus Grime Time block work, while the editor UX still behaves like a drawer-centric CMS tool more than a true block builder.</item>

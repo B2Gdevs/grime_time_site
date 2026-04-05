@@ -1,4 +1,6 @@
 import React, { Fragment } from 'react'
+import config from '@payload-config'
+import { getPayload } from 'payload'
 
 import type { Page, Pricing } from '@/payload-types'
 
@@ -6,11 +8,18 @@ import { ArchiveBlock } from '@/blocks/ArchiveBlock/Component'
 import { CallToActionBlock } from '@/blocks/CallToAction/Component'
 import { ContactRequestBlock } from '@/blocks/ContactRequest/Component'
 import { ContentBlock } from '@/blocks/Content/Component'
+import { CustomHtmlBlock } from '@/blocks/CustomHtml/Component'
 import { FormBlock } from '@/blocks/Form/Component'
 import { MediaBlock } from '@/blocks/MediaBlock/Component'
 import { PricingTableBlock } from '@/blocks/PricingTable/Component'
 import { ServiceGridBlock } from '@/blocks/ServiceGrid/Component'
 import { TestimonialsBlock } from '@/blocks/Testimonials/Component'
+import { getVisiblePageLayoutBlocks } from '@/lib/pages/pageLayoutVisibility'
+import {
+  linkedSharedSectionId,
+  resolvePageComposerReusableBlock,
+} from '@/lib/pages/pageComposerReusableBlocks'
+import { loadPublishedSharedSectionsByIds } from '@/lib/pages/sharedSectionLibrary'
 import { getCachedGlobal } from '@/utilities/getGlobals'
 
 type Props = {
@@ -20,26 +29,38 @@ type Props = {
 }
 
 export async function RenderBlocks({ blocks, pricingGlobal: pricingProp }: Props) {
-  const hasBlocks = blocks && Array.isArray(blocks) && blocks.length > 0
-  const needsPricingGlobal = hasBlocks && blocks.some((b) => b.blockType === 'pricingTable')
+  const visibleBlocks = getVisiblePageLayoutBlocks(blocks)
+  const hasBlocks = visibleBlocks.length > 0
+  const sharedSectionIds = Array.from(
+    new Set(visibleBlocks.map((block) => linkedSharedSectionId(block)).filter((id): id is number => typeof id === 'number')),
+  )
+  const needsPricingGlobal = hasBlocks && visibleBlocks.some((b) => b.blockType === 'pricingTable')
   const pricingGlobal =
     pricingProp !== undefined
       ? pricingProp
       : needsPricingGlobal
         ? await getCachedGlobal('pricing', 2)()
         : null
+  const sharedSectionsById =
+    sharedSectionIds.length > 0
+      ? await loadPublishedSharedSectionsByIds({
+          ids: sharedSectionIds,
+          payload: await getPayload({ config }),
+        })
+      : undefined
 
   if (!hasBlocks) return null
 
   return (
     <Fragment>
-      {blocks.map((block, index) => {
-        const { blockType } = block
+      {visibleBlocks.map((block, index) => {
+        const resolvedBlock = resolvePageComposerReusableBlock(block, { sharedSectionsById })
+        const { blockType } = resolvedBlock
 
         if (blockType === 'pricingTable') {
           return (
             <div className="my-16" key={index}>
-              <PricingTableBlock {...block} globalPricing={pricingGlobal} />
+              <PricingTableBlock {...resolvedBlock} globalPricing={pricingGlobal} />
             </div>
           )
         }
@@ -47,7 +68,7 @@ export async function RenderBlocks({ blocks, pricingGlobal: pricingProp }: Props
         if (blockType === 'serviceGrid') {
           return (
             <div className="my-16" key={index}>
-              <ServiceGridBlock {...block} blockIndex={index} />
+              <ServiceGridBlock {...resolvedBlock} blockIndex={index} />
             </div>
           )
         }
@@ -55,14 +76,14 @@ export async function RenderBlocks({ blocks, pricingGlobal: pricingProp }: Props
         if (blockType === 'archive') {
           return (
             <div className="my-16" key={index}>
-              <ArchiveBlock {...(block as unknown as React.ComponentProps<typeof ArchiveBlock>)} />
+              <ArchiveBlock {...(resolvedBlock as unknown as React.ComponentProps<typeof ArchiveBlock>)} />
             </div>
           )
         }
         if (blockType === 'content') {
           return (
             <div className="my-16" key={index}>
-              <ContentBlock {...(block as unknown as React.ComponentProps<typeof ContentBlock>)} />
+              <ContentBlock {...(resolvedBlock as unknown as React.ComponentProps<typeof ContentBlock>)} />
             </div>
           )
         }
@@ -70,7 +91,7 @@ export async function RenderBlocks({ blocks, pricingGlobal: pricingProp }: Props
           return (
             <div className="my-16" key={index}>
               <CallToActionBlock
-                {...(block as unknown as React.ComponentProps<typeof CallToActionBlock>)}
+                {...(resolvedBlock as unknown as React.ComponentProps<typeof CallToActionBlock>)}
               />
             </div>
           )
@@ -78,7 +99,7 @@ export async function RenderBlocks({ blocks, pricingGlobal: pricingProp }: Props
         if (blockType === 'formBlock') {
           return (
             <div className="my-16" key={index}>
-              <FormBlock {...(block as unknown as React.ComponentProps<typeof FormBlock>)} />
+              <FormBlock {...(resolvedBlock as unknown as React.ComponentProps<typeof FormBlock>)} />
             </div>
           )
         }
@@ -92,7 +113,7 @@ export async function RenderBlocks({ blocks, pricingGlobal: pricingProp }: Props
         if (blockType === 'testimonialsBlock') {
           return (
             <div className="my-8" key={index}>
-              <TestimonialsBlock {...(block as React.ComponentProps<typeof TestimonialsBlock>)} />
+              <TestimonialsBlock {...(resolvedBlock as React.ComponentProps<typeof TestimonialsBlock>)} />
             </div>
           )
         }
@@ -100,9 +121,16 @@ export async function RenderBlocks({ blocks, pricingGlobal: pricingProp }: Props
           return (
             <div className="my-16" key={index}>
               <MediaBlock
-                {...(block as unknown as React.ComponentProps<typeof MediaBlock>)}
+                {...(resolvedBlock as unknown as React.ComponentProps<typeof MediaBlock>)}
                 disableInnerContainer
               />
+            </div>
+          )
+        }
+        if (blockType === 'customHtml') {
+          return (
+            <div className="my-16" key={index}>
+              <CustomHtmlBlock {...(resolvedBlock as React.ComponentProps<typeof CustomHtmlBlock>)} />
             </div>
           )
         }

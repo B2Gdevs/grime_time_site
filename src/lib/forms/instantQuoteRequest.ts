@@ -5,6 +5,7 @@ import {
   calculateInstantQuote,
   defaultInstantQuoteCatalog,
   formatCurrency,
+  getInstantQuoteMeasurementConfig,
   getInstantQuoteService,
   instantQuoteServiceKeys,
   type InstantQuoteCatalog,
@@ -50,13 +51,7 @@ const schedulingWindowValues = scheduleWindowOptions.map((option) => option.valu
 export const instantQuoteRequestSchema = z
   .object({
     serviceKey: z.enum(instantQuoteServiceKeys),
-    sqft: requiredTrimmedString(1, 20, 'Enter the approximate square footage.').refine(
-      (value) => {
-        const parsed = Number.parseFloat(value)
-        return Number.isFinite(parsed) && parsed > 0 && parsed <= 250000
-      },
-      { message: 'Enter a valid square-footage estimate.' },
-    ),
+    sqft: requiredTrimmedString(1, 20, 'Enter the job size.'),
     stories: z.enum(instantQuoteStoriesOptions.map((option) => option.value)),
     condition: z.enum(instantQuoteConditionOptions.map((option) => option.value)),
     frequency: z.enum(instantQuoteFrequencyOptions.map((option) => option.value)),
@@ -76,6 +71,30 @@ export const instantQuoteRequestSchema = z
     scheduleApproximateSize: optionalTrimmedString(80),
   })
   .superRefine((data, ctx) => {
+    const measure = Number.parseFloat(data.sqft)
+
+    if (data.serviceKey === 'house_wash') {
+      if (!Number.isFinite(measure) || !Number.isInteger(measure)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Enter the number of exterior walls as a whole number.',
+          path: ['sqft'],
+        })
+      } else if (measure < defaultInstantQuoteCatalog.houseWashPricing.minimumWalls || measure > 24) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `House-wash estimates start at ${defaultInstantQuoteCatalog.houseWashPricing.minimumWalls} exterior walls.`,
+          path: ['sqft'],
+        })
+      }
+    } else if (!Number.isFinite(measure) || measure <= 0 || measure > 250000) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Enter a valid square-footage estimate.',
+        path: ['sqft'],
+      })
+    }
+
     if (!data.requestScheduling) return
 
     const phoneDigits = data.phone?.replace(/\D/g, '') ?? ''
@@ -143,6 +162,7 @@ export function instantQuoteRequestToSubmissionRows(
 ) {
   const estimate = buildInstantQuoteEstimate(values, catalog)
   const service = getInstantQuoteService(values.serviceKey as InstantQuoteServiceKey, catalog)
+  const measurementConfig = getInstantQuoteMeasurementConfig(values.serviceKey as InstantQuoteServiceKey, catalog)
   const storiesLabel =
     instantQuoteStoriesOptions.find((option) => option.value === values.stories)?.label ?? values.stories
   const conditionLabel =
@@ -156,13 +176,25 @@ export function instantQuoteRequestToSubmissionRows(
     { field: 'phone', value: values.phone },
     { field: 'serviceType', value: service.label },
     { field: 'propertyAddress', value: values.address },
-    { field: 'serviceAreaSqft', value: values.sqft },
+    {
+      field: 'serviceAreaSqft',
+      value:
+        service.measurementMode === 'walls'
+          ? `${values.sqft} walls`
+          : `${values.sqft} sq ft`,
+    },
+    { field: 'serviceMeasureLabel', value: measurementConfig.label },
     { field: 'stories', value: storiesLabel },
     { field: 'condition', value: conditionLabel },
     { field: 'frequency', value: frequencyLabel },
     {
       field: 'estimatedRange',
-      value: `${formatCurrency(estimate.low)} to ${formatCurrency(estimate.high)}`,
+      value:
+        estimate.kind === 'manual-review'
+          ? 'Staff-reviewed quote required'
+          : estimate.kind === 'starting-price'
+            ? `Starting estimate: ${formatCurrency(estimate.low || 0)}`
+            : `${formatCurrency(estimate.low || 0)} to ${formatCurrency(estimate.high || 0)}`,
     },
     { field: 'details', value: values.details },
     { field: 'leadSource', value: 'instant_quote' },

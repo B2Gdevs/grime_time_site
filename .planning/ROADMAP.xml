@@ -69,7 +69,7 @@
     <goal>Modular, first-class seeding for this repo only: split foundation vs demo data, slice by media/pages/globals/modules, a polished CLI (dry-run, confirmations, overwrite policy), redundancy and media safety reporting, and demo fixtures wired for unit/integration/e2e tests.</goal>
     <requirements>REQ-03, REQ-05</requirements>
     <depends>03,05</depends>
-    <status>planned</status>
+    <status>complete</status>
     <plans>.planning/phases/09-seed-system-and-cli/</plans>
   </phase>
   <phase id="10">
@@ -77,7 +77,7 @@
     <goal>Evaluate later-lifecycle lead-capture channels such as Google Business Profile messaging and only enable them when response-time coverage, inbox routing, and follow-up ownership are strong enough to protect conversion and local-search reputation.</goal>
     <requirements>REQ-05, REQ-06</requirements>
     <depends>07</depends>
-    <status>planned</status>
+    <status>complete</status>
     <plans>.planning/workflows/google-business-profile-chat.md</plans>
   </phase>
   <phase id="11">
@@ -85,7 +85,7 @@
     <goal>Ship employee quote-notification email first, then add a shared Grime Time tool surface for field-agent messaging and an OpenClaw plugin path, while keeping Stripe as the default infrastructure for recurring services and subscriptions.</goal>
     <requirements>REQ-05, REQ-06</requirements>
     <depends>07,08</depends>
-    <status>in-progress</status>
+    <status>complete</status>
     <plans>.planning/workflows/field-agent-messaging-and-notifications.md</plans>
   </phase>
   <phase id="12">
@@ -93,7 +93,7 @@
     <goal>Define a first-party organization and membership model, keep Clerk as the identity provider rather than the business-authorization source of truth, support role and entitlement changes from Grime Time admin, and sync org/user changes safely to external providers and downstream apps.</goal>
     <requirements>REQ-04, REQ-05, REQ-06</requirements>
     <depends>04,07,11</depends>
-    <status>in-progress</status>
+    <status>complete</status>
     <plans>.planning/workflows/orgs-rbac-and-provider-sync.md</plans>
   </phase>
   <phase id="13">
@@ -109,7 +109,7 @@
     <goal>Upgrade the homepage instant quote experience so it can optionally intake a series of customer job photos, keep the estimator fast and low-friction on `/`, and recalibrate public pricing math before broader quote automation or confidence claims expand.</goal>
     <requirements>REQ-05, REQ-06</requirements>
     <depends>05,06,13</depends>
-    <status>in-progress</status>
+    <status>complete</status>
     <plans>.planning/phases/14-public-quote-estimator-intake-and-pricing/</plans>
   </phase>
   <phase id="15">
@@ -117,7 +117,7 @@
     <goal>Reconcile the existing Payload page/template data and current composer into a formal block-based builder foundation: audit real existing sections into a block registry, fix the builder shell and page-level controls, turn Structure into a proper block organizer, and ship a Softr-style categorized insertion flow.</goal>
     <requirements>REQ-03</requirements>
     <depends>12,13</depends>
-    <status>planned</status>
+    <status>complete</status>
     <plans>.planning/phases/15-visual-composer-builder-and-inline-authoring/</plans>
   </phase>
   <phase id="16">
@@ -125,7 +125,7 @@
     <goal>Make the preview the primary interactive editing surface: mirrored selection, hover actions, inline text editing, responsive preview modes, compact draft handling, and an actionable publish workflow.</goal>
     <requirements>REQ-03</requirements>
     <depends>15</depends>
-    <status>planned</status>
+    <status>complete</status>
     <plans>.planning/phases/16-visual-composer-inline-editing-and-publish/</plans>
   </phase>
   <phase id="17">
@@ -133,8 +133,16 @@
     <goal>Bring the full block system to life with linked-or-detached reusable blocks, pre-wired dynamic blocks, constrained container slots, and a real Custom HTML block with explicit safety rules.</goal>
     <requirements>REQ-03</requirements>
     <depends>15,16</depends>
-    <status>planned</status>
+    <status>complete</status>
     <plans>.planning/phases/17-visual-composer-reuse-dynamic-and-containers/</plans>
+  </phase>
+  <phase id="18">
+    <title>Shared sections and constrained reuse authoring</title>
+    <goal>Turn reusable authoring into a CMS-managed shared-section system with explicit source editing, promote/detach/replace flows, lightweight version restore, and a constrained shallow layout contract that avoids a freeform builder.</goal>
+    <requirements>REQ-03</requirements>
+    <depends>15,16,17</depends>
+    <status>in-progress</status>
+    <plans>.planning/phases/18-shared-sections-and-constrained-reuse/</plans>
   </phase>
   <doc-flow>
     <doc name="TASK-REGISTRY.xml">Tasks by phase.</doc>

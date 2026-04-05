@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phase-summary>
+  <meta>
+    <phase-id>17</phase-id>
+    <phase-name>Visual composer reusable blocks, dynamic data, and containers</phase-name>
+    <date>2026-04-04</date>
+  </meta>
+  <status>complete</status>
+  <highlights>
+    <item>Reusable insertion is now explicit in the block library: supported presets can be inserted as linked references or detached local copies, and the structure/preview surfaces label those states clearly.</item>
+    <item>Linked reusable blocks are code-backed presets resolved at render time, while detached copies keep their current content locally and can be edited inline after detaching.</item>
+    <item>Dynamic Grime Time blocks now have representative preview states and stay in the shared preview-first editing flow instead of disappearing into a structure-only taxonomy.</item>
+    <item>The first constrained container model is now formalized around content slots: editors can add/remove slots, set widths, edit slot copy inline, and publish validation flags empty containers.</item>
+    <item>`Custom HTML` is now a real block in the page schema, block registry, public renderer, preview surface, and publish validation path, with sanitizer-backed rendering instead of raw execution.</item>
+    <item>Phase 17 required and now includes a dedicated Payload migration for reusable metadata columns and the new custom-HTML block tables.</item>
+  </highlights>
+  <verification>
+    <command>npm.cmd run generate:types</command>
+    <command>npm.cmd run payload migrate</command>
+    <command>npm.cmd exec eslint src/blocks/CustomHtml/config.ts src/blocks/CustomHtml/Component.tsx src/blocks/RenderBlocks.tsx src/collections/Pages/index.ts src/lib/pages/customHtml.ts src/lib/pages/pageComposerReusableBlocks.ts tests/int/lib/pages/page-composer.int.spec.ts tests/e2e/page-composer.e2e.spec.ts</command>
+    <command>npm.cmd exec -- tsc --noEmit</command>
+    <command>npm.cmd exec vitest run tests/int/lib/pages/page-composer.int.spec.ts tests/int/app/page-composer-route.int.spec.ts</command>
+    <command>npm.cmd run build</command>
+    <command>set PLAYWRIGHT_BASE_URL=http://localhost:3111 &amp;&amp; npm.cmd exec -- playwright test tests/e2e/page-composer.e2e.spec.ts --config=playwright.local.config.ts</command>
+  </verification>
+  <next>
+    <item>`17-01` through `17-05` are complete.</item>
+    <item>No further composer phase is queued yet; any deeper reusable/container work should open a new planned phase instead of extending `17` informally.</item>
+  </next>
+</phase-summary>

@@ -15,6 +15,7 @@ import { CrmSequences } from './collections/CrmSequences'
 import { CrmTasks } from './collections/CrmTasks'
 import { GrowthMilestones } from './collections/GrowthMilestones'
 import { Invoices } from './collections/Invoices'
+import { InstantQuoteRequestAttachments } from './collections/InstantQuoteRequestAttachments'
 import { Leads } from './collections/Leads'
 import { Media } from './collections/Media'
 import { OrganizationMemberships } from './collections/OrganizationMemberships'
@@ -25,6 +26,7 @@ import { OpsScorecardRows } from './collections/OpsScorecardRows'
 import { Opportunities } from './collections/Opportunities'
 import { Pages } from './collections/Pages'
 import { Posts } from './collections/Posts'
+import { SharedSections } from './collections/SharedSections'
 import { Testimonials } from './collections/Testimonials'
 import { Quotes } from './collections/Quotes'
 import { SequenceEnrollments } from './collections/SequenceEnrollments'
@@ -125,6 +127,7 @@ export default buildConfig({
   }),
   collections: [
     Pages,
+    SharedSections,
     Posts,
     Testimonials,
     Media,
@@ -137,6 +140,7 @@ export default buildConfig({
     BillingEvents,
     Contacts,
     Leads,
+    InstantQuoteRequestAttachments,
     Opportunities,
     CrmActivities,
     CrmSequences,

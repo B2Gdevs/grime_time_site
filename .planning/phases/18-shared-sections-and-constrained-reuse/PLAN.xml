@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phase-plan>
+  <meta>
+    <phase-id>18</phase-id>
+    <phase-name>Shared sections and constrained reuse authoring</phase-name>
+    <date>2026-04-04</date>
+  </meta>
+  <status>in-progress</status>
+
+  <intent>
+    <item>Build a repeatable revenue-page system for a service business, not a generic page builder.</item>
+    <item>Favor reuse, speed, and consistency over deep layout freedom.</item>
+    <item>Let editors scale service, location, and campaign pages by updating shared content once instead of hand-editing every page.</item>
+  </intent>
+
+  <problem>
+    <item>The phase-17 reusable model proved the interaction pattern, but code-backed presets alone are not enough for real multi-page content reuse across service, location, and landing-page surfaces.</item>
+    <item>Without CMS-managed shared sections, the composer will accumulate manual per-page edits and create fast authoring debt as the page count grows.</item>
+    <item>Deep layout power is tempting but premature: arbitrary nesting and freeform layout would add complexity faster than it adds business value for Grime Time's predictable marketing pages.</item>
+  </problem>
+
+  <goals>
+    <goal id="G1">Introduce a first-class `shared_sections` CMS model that stores reusable section content, metadata, and lightweight version history.</goal>
+    <goal id="G2">Make shared-section authoring explicit in the composer with dedicated source editing, insert, detach, and replace flows.</goal>
+    <goal id="G3">Split insertion into clear buckets for Layouts, Sections, and Shared so reusable content is discoverable without confusing presets and live shared content.</goal>
+    <goal id="G4">Keep the layout model intentionally shallow and constrained so reuse stays compatible with predictable structure trees and future AI automation.</goal>
+    <goal id="G5">Support lightweight restore for shared sections and pages without pulling phase 18 into approvals, scheduling, or heavy diff tooling.</goal>
+  </goals>
+
+  <requirements>
+    <item>Phase 18 shared sections are created from the shared-section library and dedicated shared-section routes rather than by promoting existing page sections.</item>
+    <item>Linked shared sections update all instances only through an explicit `Edit Source` flow that opens a dedicated shared-section editing route using the same builder shell. No implicit global edits are allowed.</item>
+    <item>Composer actions in phase 18 must include `Insert shared section`, `Detach from reusable`, `Edit source`, and `Replace with reusable`.</item>
+    <item>Reusable starter presets and CMS-managed shared sections both exist, but they are distinct concepts: presets are code-backed starters, shared sections are editable CMS content.</item>
+    <item>Layout remains shallow: section -> row -> column -> block. No arbitrary recursive nesting.</item>
+    <item>Layout patterns stay fixed and opinionated. Avoid a freeform flexbox or slot-builder UI.</item>
+    <item>Local overrides on linked shared-section instances are limited to safe placement metadata such as visibility, anchor id, and instance label. Content, structure, styling primitives, and layout composition remain source-owned.</item>
+    <item>If spacing overrides ever exist, they must be tokenized variants rather than raw spacing controls, and they are not part of v1 scope.</item>
+    <item>Shared sections should support a preview-image field in the data model, but v1 should not depend on visible preview-image UI or manual preview curation.</item>
+    <item>Initial shared-section taxonomy should use a small set of navigation categories plus tags for semantics.</item>
+    <item>Dynamic data bindings remain phase-19 work, except where phase 18 needs a stable contract boundary for future shared-section compatibility.</item>
+    <item>Publish workflow remains single-editor and lightweight in this phase. No approvals or scheduling.</item>
+  </requirements>
+
+  <resolved-answers>
+    <answer area="reusable-authoring">
+      <item>Shared sections are a section-level abstraction, not an arbitrary nested-fragment abstraction.</item>
+      <item>Phase 18 creates shared sections from the shared-section library and dedicated shared-section routes, not by promoting an existing page section into shared content.</item>
+      <item>Linked reusable instances are edited globally only via an intentional source-edit path.</item>
+      <item>`Edit Source` should open on a dedicated shared-section route that reuses the builder shell, rather than keeping page and shared-source editing inside one ambiguous drawer context.</item>
+      <item>Presets and shared sections both exist: presets are code-backed and not source-editable; shared sections are CMS-managed and editable.</item>
+    </answer>
+    <answer area="layout-power">
+      <item>Deep layout power is explicitly deferred.</item>
+      <item>The allowed depth target is section -> row -> column -> block.</item>
+      <item>Layouts should use fixed patterns such as hero, two-column, three-column, grid, and CTA band.</item>
+      <item>Responsive controls stay preset-based rather than exposing custom breakpoint design tooling.</item>
+    </answer>
+    <answer area="dynamic-bindings">
+      <item>Dynamic bindings are deferred to phase 19, with first priority on before/after jobs, testimonials, services plus pricing, service areas, and FAQs.</item>
+      <item>The future binding model should stay prewired and opinionated rather than becoming a generic query builder.</item>
+      <item>Mixed static plus dynamic content inside the same section is a valid future requirement.</item>
+    </answer>
+    <answer area="publish-workflow">
+      <item>Phase 18 remains single-editor.</item>
+      <item>Add lightweight restore for page versions and shared-section versions.</item>
+      <item>Do not add scheduling, approvals, visual diffing, or a structural diff viewer in this phase.</item>
+    </answer>
+    <answer area="instance-overrides">
+      <item>Linked shared-section instances may override only safe placement metadata in v1: visibility, anchor id, and instance label.</item>
+      <item>Raw spacing controls are excluded from v1 because they create reuse drift; a tokenized spacing variant can be considered later if a real need appears.</item>
+      <item>Content, structure, styling primitives, and layout composition must remain source-owned unless the instance is detached.</item>
+    </answer>
+    <answer area="preview-images">
+      <item>Preview images are not required in the v1 shared library UI.</item>
+      <item>The shared-section data model should still include a preview-image field so the library can adopt previews later without schema churn.</item>
+      <item>Manual preview curation and screenshot infrastructure are both deferred.</item>
+    </answer>
+    <answer area="taxonomy">
+      <item>Initial library navigation categories should stay minimal: `Hero`, `Content`, `CTA`, `Social Proof`, `Media`, and `Utility`.</item>
+      <item>Specific business semantics such as `before-after`, `services`, `faq`, and `trust` should be expressed through tags rather than more top-level categories.</item>
+    </answer>
+  </resolved-answers>
+
+  <non-goals>
+    <item>Do not build Webflow-style arbitrary drag-anywhere layout composition.</item>
+    <item>Do not add container-in-container-in-container nesting or a generic slot engine.</item>
+    <item>Do not expand phase 18 into full dynamic data-binding UI.</item>
+    <item>Do not add publish approvals, multi-user locking, or scheduling.</item>
+    <item>Do not blur code-backed presets and CMS-managed shared sections into one vague reusable bucket.</item>
+    <item>Do not allow ad hoc local styling or layout drift on linked instances.</item>
+    <item>Do not expand the initial library taxonomy into a long list of overlapping business categories.</item>
+  </non-goals>
+
+  <definition-of-done>
+    <item>`shared_sections` exists as a first-class CMS entity with stable structure storage, category metadata, and version baseline.</item>
+    <item>Editors can create and edit shared sections through dedicated shared-section routes, replace a page section with a shared section, detach a linked section, and explicitly edit the shared source through a dedicated shared-section route.</item>
+    <item>The insertion UI clearly separates fixed layouts, preset sections, and live shared sections.</item>
+    <item>Linked shared sections show clear linked-state indicators and instance-impact messaging.</item>
+    <item>Linked shared-section instances enforce the allowed local-override boundary and do not expose raw local content/styling edits.</item>
+    <item>The composer enforces the intended shallow layout contract and does not regress into arbitrary nesting.</item>
+    <item>The shared-section library uses minimal navigation categories plus tags, with preview-image support scaffolded in data but not required in the first UI pass.</item>
+    <item>Shared-section publishing updates all linked published pages, and draft pages resolve against the latest published shared-section version by default in v1.</item>
+    <item>Pages and shared sections support lightweight restore behavior appropriate for a single-editor workflow.</item>
+    <item>Focused integration and browser tests cover shared authoring, propagation, detach, replace, and restore flows.</item>
+  </definition-of-done>
+
+  <open-questions>
+    <item>None currently blocking. The remaining implementation work is execution detail inside the phase contract rather than unresolved product direction.</item>
+  </open-questions>
+
+  <tasks>
+    <task ref="18-01">Define the CMS-backed shared-section contract: collection schema, versioning baseline, usage tracking, minimal category-plus-tags taxonomy, preview-image scaffolding, and source-vs-instance data boundaries.</task>
+    <task ref="18-02">Implement first-class composer actions for insert shared section, edit source, detach from reusable, and replace with reusable, using an explicit global-edit confirmation flow and a dedicated shared-section editing route.</task>
+    <task ref="18-03">Ship a CMS-backed shared-section library and insertion flow grouped into Layouts, Sections, and Shared, with linked badges, instance-impact messaging, and the minimal taxonomy model.</task>
+    <task ref="18-04">Codify the constrained shallow layout model for reusable sections so composition stays at section, row, column, and block depth without turning into a freeform drag-anywhere builder.</task>
+    <task ref="18-05">Add lightweight restore flows for shared-section versions and page versions, without introducing approvals, scheduling, or full diff tooling.</task>
+    <task ref="18-06">Verify shared-section authoring, propagation, detaching, replace flows, constrained layout rules, and lightweight restore behavior with focused integration and browser coverage.</task>
+  </tasks>
+</phase-plan>

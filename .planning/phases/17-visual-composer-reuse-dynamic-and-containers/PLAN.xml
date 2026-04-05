@@ -5,7 +5,7 @@
     <phase-name>Visual composer reusable blocks, dynamic data, and containers</phase-name>
     <date>2026-04-03</date>
   </meta>
-  <status>planned</status>
+  <status>complete</status>
 
   <problem>
     <item>The builder is not complete until reusable blocks, pre-wired dynamic blocks, simple containers, and `Custom HTML` move from taxonomy/planning into real content capabilities.</item>

@@ -1,5 +1,7 @@
 import type { Block } from 'payload'
 
+import { blockVisibilityField } from '@/blocks/shared/blockVisibilityField'
+import { composerReusableField } from '@/blocks/shared/composerReusableField'
 import { serviceGridDisplayVariantOptions } from './variants'
 
 export const ServiceGrid: Block = {
@@ -83,5 +85,7 @@ export const ServiceGrid: Block = {
         },
       ],
     },
+    composerReusableField,
+    blockVisibilityField,
   ],
 }

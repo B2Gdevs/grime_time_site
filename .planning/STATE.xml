@@ -2,8 +2,8 @@
 <state>
   <agent-registry>
   </agent-registry>
-  <current-phase>14</current-phase>
-  <current-plan>14-02</current-plan>
-  <status>in_progress</status>
-  <next-action>`14-01` is complete: the homepage quote-estimator upgrade is now captured as phase 14. Next execute `14-02` to audit the current square-footage-first pricing model, define the calibration variables and operator override rules, and settle the optional image-intake contract before implementation starts on homepage uploads. The visual-composer stream is now planned as phases `15` through `17`: start with `15-01` to audit existing blocks from the current Payload/template implementation, then complete phase `15` before moving to phase `16` inline editing and phase `17` reusable/dynamic/container depth.</next-action>
+  <current-phase>18</current-phase>
+  <current-plan>18-05</current-plan>
+  <status>in-progress</status>
+  <next-action>Phase `18` is in progress. `18-01` through `18-04` are complete: `shared-sections` now has a version-aware Payload collection contract, permissions, migrations, library routes, a dedicated `/shared-sections/[id]/edit` source editor, composer insert/replace/detach flows for linked shared sections, a block browser grouped into `Layouts`, `Sections`, and `Shared`, and explicit validation that keeps shared-section structures constrained to the current shallow single-block phase-18 model. Next, start `18-05` by adding lightweight restore flows for shared-section versions and page versions without expanding into approvals, scheduling, or diff tooling.</next-action>
 </state>

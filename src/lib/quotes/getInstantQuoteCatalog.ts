@@ -20,6 +20,7 @@ function mapQuoteSettingsToCatalog(doc?: QuoteSetting | null): InstantQuoteCatal
         label: service.label,
         description: service.description,
         recommendedFor: service.recommendedFor,
+        measurementMode: service.serviceKey === 'house_wash' ? 'walls' : 'sqft',
         minimum: typeof service.minimum === 'number' ? service.minimum : 0,
         sqftLowRate: typeof service.sqftLowRate === 'number' ? service.sqftLowRate : 0,
         sqftHighRate: typeof service.sqftHighRate === 'number' ? service.sqftHighRate : 0,
@@ -70,6 +71,37 @@ function mapQuoteSettingsToCatalog(doc?: QuoteSetting | null): InstantQuoteCatal
         typeof doc.frequencyMultipliers?.quarterly === 'number'
           ? doc.frequencyMultipliers.quarterly
           : defaultInstantQuoteCatalog.frequencyMultipliers.quarterly,
+    },
+    houseWashPricing: {
+      oneStoryPerWall:
+        typeof doc.houseWashPricing?.oneStoryPerWall === 'number'
+          ? doc.houseWashPricing.oneStoryPerWall
+          : defaultInstantQuoteCatalog.houseWashPricing.oneStoryPerWall,
+      twoStoryPerWall:
+        typeof doc.houseWashPricing?.twoStoryPerWall === 'number'
+          ? doc.houseWashPricing.twoStoryPerWall
+          : defaultInstantQuoteCatalog.houseWashPricing.twoStoryPerWall,
+      minimumWalls:
+        typeof doc.houseWashPricing?.minimumWalls === 'number'
+          ? doc.houseWashPricing.minimumWalls
+          : defaultInstantQuoteCatalog.houseWashPricing.minimumWalls,
+      manualReviewNote:
+        doc.houseWashPricing?.manualReviewNote?.trim() ||
+        defaultInstantQuoteCatalog.houseWashPricing.manualReviewNote,
+    },
+    messaging: {
+      estimateDisclaimer:
+        doc.estimatorMessaging?.estimateDisclaimer?.trim() ||
+        defaultInstantQuoteCatalog.messaging.estimateDisclaimer,
+      waterAccessNote:
+        doc.estimatorMessaging?.waterAccessNote?.trim() ||
+        defaultInstantQuoteCatalog.messaging.waterAccessNote,
+      drivewayPhotoNote:
+        doc.estimatorMessaging?.drivewayPhotoNote?.trim() ||
+        defaultInstantQuoteCatalog.messaging.drivewayPhotoNote,
+      commercialExpansionNote:
+        doc.estimatorMessaging?.commercialExpansionNote?.trim() ||
+        defaultInstantQuoteCatalog.messaging.commercialExpansionNote,
     },
   })
 }

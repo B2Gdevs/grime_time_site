@@ -1,5 +1,7 @@
 import type { Block } from 'payload'
 
+import { blockVisibilityField } from '@/blocks/shared/blockVisibilityField'
+import { composerReusableField } from '@/blocks/shared/composerReusableField'
 import {
   FixedToolbarFeature,
   HeadingFeature,
@@ -64,6 +66,8 @@ export const TestimonialsBlock: Block = {
         condition: (_, siblingData) => siblingData?.selectionMode === 'featuredLatest',
       },
     },
+    composerReusableField,
+    blockVisibilityField,
   ],
   labels: {
     plural: 'Testimonials sections',

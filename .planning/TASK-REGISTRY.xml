@@ -658,7 +658,7 @@
         <command>See .planning/workflows/quote-system-and-texas-compliance.md</command>
       </commands>
     </task>
-    <task id="14-02" agent-id="" status="in-progress">
+    <task id="14-02" agent-id="" status="done">
       <goal>Calibrate the public estimator math: audit the current square-footage-first pricing ranges, define which service-specific variables should affect the public range versus stay staff-reviewed, and record the copy/disclaimer changes needed so the estimator remains honest while still useful.</goal>
       <keywords>pricing,estimator,quote-settings,calibration</keywords>
       <commands>
@@ -666,7 +666,7 @@
         <command>See src/lib/quotes/instantQuoteCatalog.ts and src/globals/QuoteSettings/config.ts</command>
       </commands>
     </task>
-    <task id="14-03" agent-id="" status="planned">
+    <task id="14-03" agent-id="" status="done">
       <goal>Define and implement the optional image-intake contract for the homepage estimator: file-count and size limits, validation, storage path, linkage to the lead or quote workflow, and the staff review surface for attached customer photos.</goal>
       <keywords>uploads,media,lead-intake,quotes,storage</keywords>
       <commands>
@@ -674,35 +674,35 @@
         <command>See src/components/InstantQuoteSection.tsx and src/app/api/lead-forms/instant-quote/route.ts</command>
       </commands>
     </task>
-    <task id="14-04" agent-id="" status="planned">
+    <task id="14-04" agent-id="" status="done">
       <goal>Ship the public `/` estimator update: optional multi-image upload UI, updated request copy, range messaging aligned with the calibrated pricing model, and backend handling that keeps submissions fast when no images are attached.</goal>
       <keywords>homepage,frontend,quotes,uploads,api</keywords>
       <commands>
         <command>See src/components/InstantQuoteSection.tsx and src/app/(frontend)/page.tsx</command>
       </commands>
     </task>
-    <task id="14-05" agent-id="" status="planned">
+    <task id="14-05" agent-id="" status="done">
       <goal>Add verification for the estimator upgrade: validation and pricing tests, upload-route coverage, and browser checks for optional image selection plus no-image fallback on the homepage.</goal>
       <keywords>tests,vitest,playwright,quotes,uploads</keywords>
       <commands>
         <command>Run focused unit/integration tests for quote math and lead-form handling, then browser verification on `/#instant-quote`.</command>
       </commands>
     </task>
-    <task id="14-06" agent-id="" status="planned">
+    <task id="14-06" agent-id="" status="done">
       <goal>Document SOP method artifacts + formal training sequences for Soft Wash Core, Controlled Pressure Wash, Surface Cleaner Pass, and Organic Displacement so crews know steps/flags before touching code.</goal>
       <keywords>sop,training,methods,phase-14</keywords>
       <commands>
         <command>See .planning/workflows/sops-method-artifacts.md and Phase 14 PLAN.</command>
       </commands>
     </task>
-    <task id="14-07" agent-id="" status="planned">
+    <task id="14-07" agent-id="" status="done">
       <goal>Capture attachment metadata requirements, marketing/contact intake needs, and subscription/payment questions so the quote component can share a reusable metadata tile on the UI.</goal>
       <keywords>metadata,attachments,marketing,intake</keywords>
       <commands>
         <command>Draft requirements in .planning/workflows/quote-industry-intake.md and link answers to Phase 14 manual review rules.</command>
       </commands>
     </task>
-    <task id="14-08" agent-id="" status="planned">
+    <task id="14-08" agent-id="" status="done">
       <goal>Document the composer/copilot docking issue so the UI team can show the copilot panel beside the composer and allow drag/dock behavior.</goal>
       <keywords>composer,copilot,ux,planning</keywords>
       <commands>
@@ -711,7 +711,7 @@
     </task>
   </phase>
   <phase id="15">
-    <task id="15-01" agent-id="" status="planned">
+    <task id="15-01" agent-id="" status="done">
       <goal>Audit the current composer/page implementation and inventory all existing sections/components into the first real block map, grounded in the current Payload template data and Grime Time renderers.</goal>
       <keywords>planning,composer,audit,blocks</keywords>
       <commands>
@@ -720,7 +720,7 @@
         <command>See .planning/workflows/visual-page-composer-and-copilot-experience.md</command>
       </commands>
     </task>
-    <task id="15-02" agent-id="" status="planned">
+    <task id="15-02" agent-id="" status="done">
       <goal>Define the block registry, block metadata contract, page/block/reusable-block model boundaries, and editor UI state shape so the builder grows from a stable schema-driven core.</goal>
       <keywords>registry,composer,state,types,blocks</keywords>
       <commands>
@@ -728,35 +728,35 @@
         <command>See .planning/workflows/visual-page-composer-requirements.md</command>
       </commands>
     </task>
-    <task id="15-03" agent-id="" status="planned">
+    <task id="15-03" agent-id="" status="done">
       <goal>Fix the working-page dropdown layering bug and move page-level controls into a compact builder header with title, slug, working page, create draft, visibility, and route preview.</goal>
       <keywords>composer,header,dropdown,z-index,drafts</keywords>
       <commands>
         <command>See src/components/admin-impersonation/PageComposerDrawer.tsx</command>
       </commands>
     </task>
-    <task id="15-04" agent-id="" status="planned">
+    <task id="15-04" agent-id="" status="done">
       <goal>Redesign the Structure tab into a clean block organizer: remove redundant page labels, remove the standalone Add reusable section pattern, and add structural quick actions.</goal>
       <keywords>structure,blocks,composer,ux</keywords>
       <commands>
         <command>See src/components/admin-impersonation/PageComposerDrawer.tsx and src/lib/pages/pageComposer.ts</command>
       </commands>
     </task>
-    <task id="15-05" agent-id="" status="planned">
+    <task id="15-05" agent-id="" status="done">
       <goal>Build the categorized block browser and insertion-target flow for dynamic, static, and container blocks, including Custom HTML in the taxonomy.</goal>
       <keywords>block-browser,insertion,static,dynamic,container,custom-html</keywords>
       <commands>
         <command>See src/components/admin-impersonation/PageComposerDrawer.tsx</command>
       </commands>
     </task>
-    <task id="15-06" agent-id="" status="planned">
+    <task id="15-06" agent-id="" status="done">
       <goal>Normalize the currently implemented Grime Time blocks into the registry and browser so insertion uses real block definitions instead of ad hoc templates.</goal>
       <keywords>registry,blocks,normalization,composer</keywords>
       <commands>
         <command>See src/lib/pages/pageComposer.ts, src/app/(frontend)/page.tsx, and src/app/(frontend)/[slug]/page.tsx</command>
       </commands>
     </task>
-    <task id="15-07" agent-id="" status="planned">
+    <task id="15-07" agent-id="" status="done">
       <goal>Add verification for the builder foundations, shell, and insertion flow.</goal>
       <keywords>tests,vitest,playwright,composer,verification</keywords>
       <commands>
@@ -765,42 +765,42 @@
     </task>
   </phase>
   <phase id="16">
-    <task id="16-01" agent-id="" status="planned">
+    <task id="16-01" agent-id="" status="done">
       <goal>Implement the mirrored selection model across preview and Structure, including selected-block outline behavior.</goal>
       <keywords>selection,preview,structure,composer</keywords>
       <commands>
         <command>See .planning/phases/16-visual-composer-inline-editing-and-publish/PLAN.xml</command>
       </commands>
     </task>
-    <task id="16-02" agent-id="" status="planned">
+    <task id="16-02" agent-id="" status="done">
       <goal>Add preview hover UI and direct block actions such as add above/below, duplicate, delete, and hide/show where appropriate.</goal>
       <keywords>hover,preview,actions,blocks</keywords>
       <commands>
         <command>See src/components/admin-impersonation/PageComposerDrawer.tsx</command>
       </commands>
     </task>
-    <task id="16-03" agent-id="" status="planned">
+    <task id="16-03" agent-id="" status="done">
       <goal>Ship inline preview editing for MVP text fields and keep Content-tab forms synchronized.</goal>
       <keywords>inline-editing,preview,content,text</keywords>
       <commands>
         <command>See src/components/admin-impersonation/PageComposerDrawer.tsx</command>
       </commands>
     </task>
-    <task id="16-04" agent-id="" status="planned">
+    <task id="16-04" agent-id="" status="done">
       <goal>Refine draft lifecycle and working-page switching so draft context stays clean when creating or switching pages.</goal>
       <keywords>drafts,pages,composer,state</keywords>
       <commands>
         <command>See src/app/api/internal/page-composer/route.ts and src/components/admin-impersonation/PageComposerDrawer.tsx</command>
       </commands>
     </task>
-    <task id="16-05" agent-id="" status="planned">
+    <task id="16-05" agent-id="" status="done">
       <goal>Improve Publish with validation summary, changed-block count, and page-level workflow state.</goal>
       <keywords>publish,validation,drafts,workflow</keywords>
       <commands>
         <command>See src/components/admin-impersonation/PageComposerDrawer.tsx</command>
       </commands>
     </task>
-    <task id="16-06" agent-id="" status="planned">
+    <task id="16-06" agent-id="" status="done">
       <goal>Add responsive preview-mode controls and verification for preview parity plus inline-editing flows.</goal>
       <keywords>responsive,preview,tests,composer</keywords>
       <commands>
@@ -809,39 +809,83 @@
     </task>
   </phase>
   <phase id="17">
-    <task id="17-01" agent-id="" status="planned">
+    <task id="17-01" agent-id="" status="done">
       <goal>Define and implement reusable-block insertion semantics, including linked reference vs detached copy behavior.</goal>
       <keywords>reusable,blocks,linked,copied</keywords>
       <commands>
         <command>See .planning/phases/17-visual-composer-reuse-dynamic-and-containers/PLAN.xml</command>
       </commands>
     </task>
-    <task id="17-02" agent-id="" status="planned">
+    <task id="17-02" agent-id="" status="done">
       <goal>Add the first pre-wired dynamic blocks and data-source editors for Grime Time content surfaces.</goal>
       <keywords>dynamic,blocks,data-sources,composer</keywords>
       <commands>
         <command>See .planning/workflows/visual-page-composer-requirements.md</command>
       </commands>
     </task>
-    <task id="17-03" agent-id="" status="planned">
+    <task id="17-03" agent-id="" status="done">
       <goal>Implement the first constrained container blocks with slots, child insertion, and nesting validation.</goal>
       <keywords>containers,slots,nesting,validation</keywords>
       <commands>
         <command>See .planning/workflows/visual-page-composer-requirements.md</command>
       </commands>
     </task>
-    <task id="17-04" agent-id="" status="planned">
+    <task id="17-04" agent-id="" status="done">
       <goal>Add the Custom HTML block to the registry, editor, preview, and structure labeling path, with a documented safe-rendering decision.</goal>
       <keywords>custom-html,registry,preview,safety</keywords>
       <commands>
         <command>See .planning/workflows/visual-page-composer-requirements.md</command>
       </commands>
     </task>
-    <task id="17-05" agent-id="" status="planned">
+    <task id="17-05" agent-id="" status="done">
       <goal>Add verification for reusable, dynamic, container, and custom-HTML flows.</goal>
       <keywords>tests,reusable,dynamic,containers,custom-html</keywords>
       <commands>
         <command>Run focused integration/browser verification after implementation.</command>
+      </commands>
+    </task>
+  </phase>
+  <phase id="18">
+    <task id="18-01" agent-id="" status="done">
+      <goal>Define the CMS-backed shared-section contract: collection schema, versioning baseline, usage tracking, category model, and source-vs-instance data boundaries.</goal>
+      <keywords>shared-sections,cms,versions,composer,reuse</keywords>
+      <commands>
+        <command>See .planning/phases/18-shared-sections-and-constrained-reuse/PLAN.xml</command>
+      </commands>
+    </task>
+    <task id="18-02" agent-id="" status="done">
+      <goal>Implement first-class composer actions for insert shared section, edit source, detach from reusable, and replace with reusable, using an explicit global-edit confirmation flow.</goal>
+      <keywords>shared-sections,composer,edit-source,detach,replace</keywords>
+      <commands>
+        <command>See src/components/admin-impersonation/PageComposerDrawer.tsx and related composer state helpers.</command>
+      </commands>
+    </task>
+    <task id="18-03" agent-id="" status="done">
+      <goal>Ship a CMS-backed shared-section library and insertion flow grouped into Layouts, Sections, and Shared, with linked badges and instance-impact messaging.</goal>
+      <keywords>shared-library,insertion,layouts,shared,badges</keywords>
+      <commands>
+        <command>See src/components/admin-impersonation/PageComposerDrawer.tsx and the block browser/insertion surfaces.</command>
+      </commands>
+    </task>
+    <task id="18-04" agent-id="" status="done">
+      <goal>Codify the constrained shallow layout model for reusable sections so composition stays at section, row, column, and block depth without turning into a freeform drag-anywhere builder.</goal>
+      <keywords>layout,rows,columns,constraints,composer</keywords>
+      <commands>
+        <command>See .planning/phases/18-shared-sections-and-constrained-reuse/PLAN.xml</command>
+      </commands>
+    </task>
+    <task id="18-05" agent-id="" status="planned">
+      <goal>Add lightweight restore flows for shared-section versions and page versions, without introducing approvals, scheduling, or full diff tooling.</goal>
+      <keywords>versions,restore,shared-sections,pages</keywords>
+      <commands>
+        <command>See Pages versions behavior, the future shared-section collection, and composer publish/history surfaces.</command>
+      </commands>
+    </task>
+    <task id="18-06" agent-id="" status="planned">
+      <goal>Verify shared-section authoring, propagation, detaching, replace flows, constrained layout rules, and lightweight restore behavior with focused integration and browser coverage.</goal>
+      <keywords>tests,playwright,vitest,reusable,restore</keywords>
+      <commands>
+        <command>Run focused composer integration/browser verification after implementation.</command>
       </commands>
     </task>
   </phase>

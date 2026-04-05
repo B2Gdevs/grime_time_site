@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phase-summary>
+  <meta>
+    <phase-id>15</phase-id>
+    <phase-name>Visual composer foundations and builder shell</phase-name>
+    <date>2026-04-04</date>
+  </meta>
+  <status>complete</status>
+  <highlights>
+    <item>Phase 15 is now closed with a documented block audit and registry/state contract grounded in the current Payload page layout and Grime Time renderers.</item>
+    <item>The composer now has a formal block registry with `dynamic`, `static`, and `container` categories plus a visible `Custom HTML` taxonomy entry.</item>
+    <item>The builder header owns page-level title, slug, working page, draft creation, visibility, route preview, and publish controls without repeating page identity inside Structure.</item>
+    <item>The Structure tab now behaves like a real block organizer: ordered rows, add-below, duplicate, delete, hide/show, drag reorder, and insertion targets that open the block library at the exact target index.</item>
+    <item>Phase 15 adds persisted block visibility across the current page-layout block tables, keeps hidden blocks visible to editors with badges, and omits them from public rendering through a shared visibility helper.</item>
+    <item>The categorized block browser now inserts real Grime Time block definitions instead of ad hoc templates and keeps the registry aligned with existing production blocks.</item>
+    <item>Verification now covers the builder foundations through focused integration tests, production typecheck/build, and browser verification against a real `next start` surface.</item>
+  </highlights>
+  <next>
+    <item>`15-01` through `15-07` are complete.</item>
+    <item>The global project focus remains phase `14`, task `14-02` for quote-estimator pricing calibration.</item>
+    <item>When composer work resumes, phase `16` is the next stream: mirrored selection, hover actions, inline editing, responsive preview modes, and publish workflow refinement.</item>
+  </next>
+</phase-summary>

@@ -11,6 +11,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import {
   CopyPlusIcon,
   EyeIcon,
+  EyeOffIcon,
   FilePenLineIcon,
   GripVerticalIcon,
   ImageIcon,
@@ -29,6 +30,7 @@ import {
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { PageComposerPreview, type PageComposerPreviewMode } from '@/components/admin-impersonation/PageComposerPreview'
 import { usePortalCopilotOptional } from '@/components/copilot/PortalCopilotContext'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -36,12 +38,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { buildMediaDevtoolsSummary, type MediaDevtoolsSummary } from '@/lib/media/pageMediaDevtools'
 import {
+  buildPageComposerValidationSummary,
   buildPageComposerNotices,
-  pageSlugToFrontendPath,
   buildPageComposerSectionSummaries,
+  countPageComposerChangedBlocks,
   duplicatePageLayoutSection,
   insertPageLayoutRegisteredBlock,
+  pageSlugToFrontendPath,
   removePageLayoutSection,
+  togglePageLayoutSectionHidden,
   type PageComposerDocument,
   type PageComposerNotice,
   type PageComposerPageSummary,
@@ -49,9 +54,20 @@ import {
   updatePageLayoutSection,
 } from '@/lib/pages/pageComposer'
 import {
+  createPageComposerBlock,
   getPageComposerBlockDefinitions,
   type PageComposerInsertableBlockType,
 } from '@/lib/pages/pageComposerBlockRegistry'
+import {
+  createReusablePresetBlock,
+  createSharedSectionLinkedBlock,
+  getPageComposerReusablePresets,
+  linkedSharedSectionId,
+  isLinkedSharedSectionBlock,
+  resolvePageComposerReusableBlock,
+  type ReusableAwareLayoutBlock,
+} from '@/lib/pages/pageComposerReusableBlocks'
+import type { SharedSectionRecord } from '@/lib/pages/sharedSections'
 import type { Media, ServiceGridBlock } from '@/payload-types'
 
 type ComposerTab = 'content' | 'media' | 'publish' | 'structure'
@@ -67,6 +83,8 @@ type MediaLibraryItem = {
   previewUrl: null | string
   updatedAt: string
 }
+
+type BlockLibraryMode = 'insert' | 'replace'
 
 type SectionMediaSlot = {
   label: string
@@ -168,6 +186,7 @@ function SortableSectionRow({
   onClick,
   onDuplicate,
   onRemove,
+  onToggleHidden,
   summary,
 }: {
   active: boolean
@@ -175,6 +194,7 @@ function SortableSectionRow({
   onClick: () => void
   onDuplicate: () => void
   onRemove: () => void
+  onToggleHidden: () => void
   summary: PageComposerSectionSummary
 }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: String(summary.index) })
@@ -183,7 +203,9 @@ function SortableSectionRow({
     <div
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={`rounded-2xl border p-3 transition ${active ? 'border-primary/60 bg-primary/5' : 'border-border/70 bg-card/50'}`}
+      className={`rounded-2xl border p-3 transition ${
+        active ? 'border-primary/60 bg-primary/5' : 'border-border/70 bg-card/50'
+      } ${summary.hidden ? 'opacity-75' : ''}`}
     >
       <div className="flex items-start gap-3">
         <button className="mt-0.5 rounded-lg border border-border/70 bg-background p-2 text-muted-foreground" type="button" {...attributes} {...listeners}>
@@ -205,6 +227,15 @@ function SortableSectionRow({
           <div className="mt-1 text-xs text-muted-foreground">{summary.description}</div>
         </button>
         <div className="flex shrink-0 gap-2">
+          <Button
+            aria-label={`${summary.hidden ? 'Show' : 'Hide'} block ${summary.label}`}
+            onClick={onToggleHidden}
+            size="icon"
+            type="button"
+            variant="ghost"
+          >
+            {summary.hidden ? <EyeIcon className="h-4 w-4" /> : <EyeOffIcon className="h-4 w-4" />}
+          </Button>
           <Button aria-label={`Add block below ${summary.label}`} onClick={onAddBelow} size="icon" type="button" variant="ghost">
             <PlusIcon className="h-4 w-4" />
           </Button>
@@ -232,6 +263,7 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
   const [activeTab, setActiveTab] = useState<ComposerTab>('structure')
   const [availablePages, setAvailablePages] = useState<PageComposerPageSummary[]>([])
   const [blockLibraryQuery, setBlockLibraryQuery] = useState('')
+  const [blockLibraryMode, setBlockLibraryMode] = useState<BlockLibraryMode>('insert')
   const [blockLibraryTargetIndex, setBlockLibraryTargetIndex] = useState<null | number>(null)
   const [creatingDraftClone, setCreatingDraftClone] = useState(false)
   const [draftPage, setDraftPage] = useState<null | PageComposerDocument>(null)
@@ -245,7 +277,12 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
   const [selectedMediaPath, setSelectedMediaPath] = useState<null | string>(null)
   const [submittingMediaAction, setSubmittingMediaAction] = useState<null | MediaAction>(null)
   const [open, setOpen] = useState(false)
+  const [previewMode, setPreviewMode] = useState<PageComposerPreviewMode>('desktop')
   const [savingAction, setSavingAction] = useState<null | SavingAction>(null)
+  const [savedPage, setSavedPage] = useState<null | PageComposerDocument>(null)
+  const [sharedSections, setSharedSections] = useState<SharedSectionRecord[]>([])
+  const [sharedSectionsLoading, setSharedSectionsLoading] = useState(false)
+  const [sharedSectionsStatus, setSharedSectionsStatus] = useState<null | string>(null)
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [status, setStatus] = useState<null | string>(null)
   const [titleDraft, setTitleDraft] = useState('')
@@ -255,8 +292,16 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
   const mediaUploadInputRef = useRef<HTMLInputElement | null>(null)
   const mediaPromptId = useId()
 
-  const sectionSummaries = useMemo(() => buildPageComposerSectionSummaries(draftPage?.layout), [draftPage?.layout])
+  const sharedSectionsById = useMemo(
+    () => new Map(sharedSections.map((item) => [item.id, item])),
+    [sharedSections],
+  )
+  const sectionSummaries = useMemo(
+    () => buildPageComposerSectionSummaries(draftPage?.layout, sharedSectionsById),
+    [draftPage?.layout, sharedSectionsById],
+  )
   const blockDefinitions = useMemo(() => getPageComposerBlockDefinitions(), [])
+  const reusablePresets = useMemo(() => getPageComposerReusablePresets(), [])
   const filteredBlockDefinitions = useMemo(() => {
     const query = blockLibraryQuery.trim().toLowerCase()
 
@@ -270,8 +315,36 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
       ),
     )
   }, [blockDefinitions, blockLibraryQuery])
+  const filteredReusablePresets = useMemo(() => {
+    const query = blockLibraryQuery.trim().toLowerCase()
+
+    return reusablePresets.filter((preset) => {
+      if (!query) return true
+      return [preset.label, preset.description, preset.key, preset.blockType].some((value) =>
+        value.toLowerCase().includes(query),
+      )
+    })
+  }, [blockLibraryQuery, reusablePresets])
+  const filteredSharedSections = useMemo(() => {
+    const query = blockLibraryQuery.trim().toLowerCase()
+
+    return sharedSections.filter((item) => {
+      if (!query) return true
+      return [item.name, item.description || '', item.slug, item.category, ...item.tags].some((value) =>
+        value.toLowerCase().includes(query),
+      )
+    })
+  }, [blockLibraryQuery, sharedSections])
   const selectedBlock = draftPage?.layout?.[selectedIndex] || null
-  const selectedServiceGrid = selectedBlock?.blockType === 'serviceGrid' ? (selectedBlock as ServiceGridBlock) : null
+  const resolvedSelectedBlock = selectedBlock
+    ? resolvePageComposerReusableBlock(selectedBlock, { sharedSectionsById })
+    : null
+  const selectedServiceGrid =
+    resolvedSelectedBlock?.blockType === 'serviceGrid'
+      ? (resolvedSelectedBlock as ServiceGridBlock)
+      : null
+  const selectedSharedSectionId = linkedSharedSectionId(selectedBlock)
+  const selectedBlockIsLinkedSharedSection = isLinkedSharedSectionBlock(selectedBlock)
   const mediaSlots = useMemo<SectionMediaSlot[]>(() => {
     if (!selectedServiceGrid) return []
     return (selectedServiceGrid.services || []).map((service, serviceIndex) => {
@@ -288,15 +361,38 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
   const selectedMediaSlot = mediaSlots.find((slot) => slot.relationPath === selectedMediaPath) || mediaSlots[0] || null
   const mediaActionsLocked = dirty || !draftPage || !selectedMediaSlot
   const footerStatus = status || mediaStatus || 'Page edits stay local until you save or publish.'
+  const changedBlockCount = useMemo(
+    () =>
+      countPageComposerChangedBlocks({
+        baselineLayout: savedPage?.layout,
+        draftLayout: draftPage?.layout,
+      }),
+    [draftPage?.layout, savedPage?.layout],
+  )
+  const validationSummary = useMemo(
+    () =>
+      draftPage
+        ? buildPageComposerValidationSummary({
+            page: {
+              ...draftPage,
+              slug: slugDraft,
+              title: titleDraft,
+              visibility: visibilityDraft,
+            },
+            sharedSectionsById,
+          })
+        : null,
+    [draftPage, sharedSectionsById, slugDraft, titleDraft, visibilityDraft],
+  )
   const composerNotices = useMemo<PageComposerNotice[]>(
     () =>
       draftPage
         ? buildPageComposerNotices({
             page: draftPage,
-            selectedBlock,
+            selectedBlock: resolvedSelectedBlock || undefined,
           })
         : [],
-    [draftPage, selectedBlock],
+    [draftPage, resolvedSelectedBlock],
   )
 
   useEffect(() => {
@@ -369,6 +465,7 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
 
         setAvailablePages(payload.pages || [])
         setDraftPage(payload.page)
+        setSavedPage(payload.page)
         setTitleDraft(payload.page.title || '')
         setSlugDraft(payload.page.slug || '')
         setVisibilityDraft(payload.page.visibility === 'private' ? 'private' : 'public')
@@ -398,15 +495,37 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
     }
   }, [enabled, open])
 
+  const loadSharedSectionLibrary = useCallback(async () => {
+    if (!enabled || !open) return
+    setSharedSectionsLoading(true)
+    setSharedSectionsStatus(null)
+    try {
+      const response = await fetch('/api/internal/shared-sections?status=published')
+      const payload = (await response.json().catch(() => null)) as
+        | null
+        | { error?: string; items?: SharedSectionRecord[] }
+      if (!response.ok) {
+        throw new Error(payload?.error || 'Unable to load shared sections.')
+      }
+      setSharedSections(payload?.items || [])
+    } catch (error) {
+      setSharedSectionsStatus(error instanceof Error ? error.message : 'Unable to load shared sections.')
+    } finally {
+      setSharedSectionsLoading(false)
+    }
+  }, [enabled, open])
+
   useEffect(() => {
     if (!open) return
     void loadPage()
     void loadMediaLibrary()
-  }, [loadMediaLibrary, loadPage, open])
+    void loadSharedSectionLibrary()
+  }, [loadMediaLibrary, loadPage, loadSharedSectionLibrary, open])
 
   useEffect(() => {
     if (open) return
     setIsBlockLibraryOpen(false)
+    setBlockLibraryMode('insert')
     setBlockLibraryTargetIndex(null)
     setBlockLibraryQuery('')
   }, [open])
@@ -449,29 +568,45 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
     setSelectedIndex(overId)
   }
 
-  function openBlockLibrary(index: number) {
+  function openBlockLibrary(index: number, mode: BlockLibraryMode = 'insert') {
+    setBlockLibraryMode(mode)
     setBlockLibraryTargetIndex(index)
     setBlockLibraryQuery('')
     setIsBlockLibraryOpen(true)
   }
 
-  function insertRegisteredBlock(type: PageComposerInsertableBlockType) {
+  function applyBlockLibrarySelection(nextBlock: NonNullable<PageComposerDocument['layout']>[number]) {
     if (blockLibraryTargetIndex === null) {
       return
     }
 
-    mutatePage((page) => ({
-      ...page,
-      layout: insertPageLayoutRegisteredBlock({
-        index: blockLibraryTargetIndex,
-        layout: page.layout || [],
-        type,
-      }),
-    }))
-    setSelectedIndex(blockLibraryTargetIndex)
+    if (blockLibraryMode === 'replace') {
+      updateBlockAtIndex(blockLibraryTargetIndex, nextBlock)
+    } else {
+      mutatePage((page) => ({
+        ...page,
+        layout: insertPageLayoutRegisteredBlock({
+          index: blockLibraryTargetIndex,
+          layout: page.layout || [],
+          type: nextBlock.blockType as PageComposerInsertableBlockType,
+        }).map((block, index) => (index === blockLibraryTargetIndex ? nextBlock : block)),
+      }))
+      setSelectedIndex(blockLibraryTargetIndex)
+    }
+
     setIsBlockLibraryOpen(false)
+    setBlockLibraryMode('insert')
     setBlockLibraryTargetIndex(null)
     setActiveTab('content')
+  }
+
+  function insertRegisteredBlock(type: PageComposerInsertableBlockType) {
+    applyBlockLibrarySelection(createPageComposerBlock(type))
+  }
+
+  function openSharedSectionSourceEditor(sharedSectionId: number) {
+    setOpen(false)
+    router.push(`/shared-sections/${sharedSectionId}/edit`)
   }
 
   async function persistPage(action: SavingAction) {
@@ -497,6 +632,7 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
       if (!response.ok || !payload?.page) throw new Error(payload?.error || 'Unable to save the page.')
       setAvailablePages(payload.pages || [])
       setDraftPage(payload.page)
+      setSavedPage(payload.page)
       setTitleDraft(payload.page.title || '')
       setSlugDraft(payload.page.slug || '')
       setVisibilityDraft(payload.page.visibility === 'private' ? 'private' : 'public')
@@ -540,6 +676,7 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
 
       setAvailablePages(payload.pages || [])
       setDraftPage(payload.page)
+      setSavedPage(payload.page)
       setTitleDraft(payload.page.title || '')
       setSlugDraft(payload.page.slug || '')
       setVisibilityDraft(payload.page.visibility === 'private' ? 'private' : 'public')
@@ -570,6 +707,85 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
       router.push(nextPage.pagePath)
       router.refresh()
     }
+  }
+
+  function duplicateBlock(index: number) {
+    mutatePage((page) => ({
+      ...page,
+      layout: duplicatePageLayoutSection({ index, layout: page.layout || [] }),
+    }))
+    setSelectedIndex(index + 1)
+  }
+
+  function removeBlock(index: number) {
+    mutatePage((page) => ({
+      ...page,
+      layout: removePageLayoutSection({ index, layout: page.layout || [] }),
+    }))
+    setSelectedIndex(Math.max(0, index - 1))
+  }
+
+  function toggleBlockHidden(index: number) {
+    mutatePage((page) => ({
+      ...page,
+      layout: togglePageLayoutSectionHidden({
+        index,
+        layout: page.layout || [],
+      }),
+    }))
+    setSelectedIndex(index)
+  }
+
+  function updateBlockAtIndex(index: number, block: NonNullable<PageComposerDocument['layout']>[number]) {
+    mutatePage((page) => ({
+      ...page,
+      layout: updatePageLayoutSection({ block, index, layout: page.layout || [] }),
+    }))
+    setSelectedIndex(index)
+  }
+
+  function insertReusablePreset(args: { key: string; mode: 'detached' | 'linked' }) {
+    const nextBlock = createReusablePresetBlock(args)
+
+    if (!nextBlock) {
+      return
+    }
+
+    applyBlockLibrarySelection(nextBlock)
+  }
+
+  function insertSharedSection(args: { item: SharedSectionRecord; mode: 'detached' | 'linked' }) {
+    const nextBlock = createSharedSectionLinkedBlock({
+      mode: args.mode,
+      sharedSection: args.item,
+    })
+
+    if (!nextBlock) {
+      setStatus('This shared section cannot be inserted until its source structure maps to a single composer block.')
+      return
+    }
+
+    applyBlockLibrarySelection(nextBlock)
+  }
+
+  function detachReusableBlock(index: number) {
+    const block = draftPage?.layout?.[index]
+
+    if (!block) {
+      return
+    }
+
+    const resolved = resolvePageComposerReusableBlock(block, { sharedSectionsById })
+    const reusableMeta = (block as ReusableAwareLayoutBlock).composerReusable
+    updateBlockAtIndex(index, {
+      ...resolved,
+      composerReusable: reusableMeta
+        ? {
+            ...reusableMeta,
+            mode: 'detached',
+          }
+        : undefined,
+    } as NonNullable<PageComposerDocument['layout']>[number])
   }
 
   async function submitMediaAction(args: {
@@ -635,7 +851,7 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
               type="button"
             />
             <motion.aside
-              className="fixed inset-y-0 right-0 z-[89] flex w-[min(100vw,38rem)] flex-col border-l border-border/70 bg-background/96 shadow-2xl backdrop-blur relative"
+              className="fixed inset-y-0 right-0 z-[89] flex w-[min(100vw,92rem)] flex-col border-l border-border/70 bg-background/96 shadow-2xl backdrop-blur relative"
               initial={{ opacity: 0, x: 64 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 64 }}
@@ -772,17 +988,36 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
                 </Button>
               </div>
 
-              <Tabs className="grid min-h-0 flex-1 grid-rows-[auto_minmax(0,1fr)_auto]" onValueChange={(value) => setActiveTab(value as ComposerTab)} value={activeTab}>
-                <div className="border-b border-border/70 px-5 py-3">
+              <div className="grid min-h-0 flex-1 lg:grid-cols-[minmax(0,1.3fr)_26rem]">
+                <div className="min-h-0 border-r border-border/70 px-5 py-4">
+                  <PageComposerPreview
+                    onAddAbove={(index) => openBlockLibrary(index)}
+                    onAddBelow={(index) => openBlockLibrary(index + 1)}
+                    onDetachReusable={detachReusableBlock}
+                    onDuplicate={duplicateBlock}
+                    onPreviewModeChange={setPreviewMode}
+                    onRemove={removeBlock}
+                    onSelect={setSelectedIndex}
+                    onToggleHidden={toggleBlockHidden}
+                    onUpdateBlock={updateBlockAtIndex}
+                    page={draftPage}
+                    previewMode={previewMode}
+                    selectedIndex={selectedIndex}
+                    sharedSectionsById={sharedSectionsById}
+                  />
+                </div>
+
+                <Tabs className="grid min-h-0 grid-rows-[auto_minmax(0,1fr)_auto]" onValueChange={(value) => setActiveTab(value as ComposerTab)} value={activeTab}>
+                  <div className="border-b border-border/70 px-5 py-3">
                   <TabsList className="grid h-auto w-full grid-cols-4 gap-1 rounded-xl p-1">
                     <TabsTrigger value="structure">Structure</TabsTrigger>
                     <TabsTrigger value="content">Content</TabsTrigger>
                     <TabsTrigger value="media">Media</TabsTrigger>
                     <TabsTrigger value="publish">Publish</TabsTrigger>
                   </TabsList>
-                </div>
+                  </div>
 
-                <TabsContent className="mt-0 min-h-0 overflow-y-auto px-5 py-4" value="structure">
+                  <TabsContent className="mt-0 min-h-0 overflow-y-auto px-5 py-4" value="structure">
                   {loading ? (
                     <div className="rounded-2xl border border-border/70 bg-card/50 px-4 py-6 text-sm text-muted-foreground">
                       Loading page structure...
@@ -813,24 +1048,10 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
                                   <SortableSectionRow
                                     active={selectedIndex === summary.index}
                                     onAddBelow={() => openBlockLibrary(summary.index + 1)}
-                                    onClick={() => {
-                                      setSelectedIndex(summary.index)
-                                      setActiveTab('content')
-                                    }}
-                                    onDuplicate={() => {
-                                      mutatePage((page) => ({
-                                        ...page,
-                                        layout: duplicatePageLayoutSection({ index: summary.index, layout: page.layout || [] }),
-                                      }))
-                                      setSelectedIndex(summary.index + 1)
-                                    }}
-                                    onRemove={() => {
-                                      mutatePage((page) => ({
-                                        ...page,
-                                        layout: removePageLayoutSection({ index: summary.index, layout: page.layout || [] }),
-                                      }))
-                                      setSelectedIndex(Math.max(0, summary.index - 1))
-                                    }}
+                                    onClick={() => setSelectedIndex(summary.index)}
+                                    onDuplicate={() => duplicateBlock(summary.index)}
+                                    onRemove={() => removeBlock(summary.index)}
+                                    onToggleHidden={() => toggleBlockHidden(summary.index)}
                                     summary={summary}
                                   />
                                   <StructureInsertButton onClick={() => openBlockLibrary(summary.index + 1)} />
@@ -849,7 +1070,7 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
                       )}
                     </div>
                   )}
-                </TabsContent>
+                  </TabsContent>
 
                 <TabsContent className="mt-0 min-h-0 overflow-y-auto px-5 py-4" value="content">
                   {loading ? (
@@ -859,6 +1080,47 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
                   ) : !draftPage || !selectedBlock ? (
                     <div className="rounded-2xl border border-border/70 bg-card/50 px-4 py-6 text-sm text-muted-foreground">
                       Select a section from Structure first.
+                    </div>
+                  ) : selectedBlockIsLinkedSharedSection && selectedSharedSectionId ? (
+                    <div className="grid gap-4">
+                      <div className="rounded-2xl border border-primary/30 bg-primary/5 p-4 text-sm text-foreground">
+                        This block is linked to a shared section source. Edit the source in the dedicated shared-section editor or detach a local copy before changing page-only content.
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <Button onClick={() => openSharedSectionSourceEditor(selectedSharedSectionId)} size="sm" type="button">
+                            <SquarePenIcon className="h-4 w-4" />
+                            Edit source
+                          </Button>
+                          <Button onClick={() => detachReusableBlock(selectedIndex)} size="sm" type="button" variant="outline">
+                            <CopyPlusIcon className="h-4 w-4" />
+                            Detach copy
+                          </Button>
+                          <Button onClick={() => openBlockLibrary(selectedIndex, 'replace')} size="sm" type="button" variant="outline">
+                            <RefreshCwIcon className="h-4 w-4" />
+                            Replace section
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="rounded-2xl border border-border/70 bg-card/50 p-4 text-sm text-muted-foreground">
+                        Publishing the shared source updates every linked published page using it. Local page overrides stay limited to placement and visibility metadata.
+                      </div>
+                      <ComposerNoticeList notices={composerNotices} />
+                    </div>
+                  ) : (selectedBlock as ReusableAwareLayoutBlock).composerReusable?.mode === 'linked' ? (
+                    <div className="grid gap-4">
+                      <div className="rounded-2xl border border-primary/30 bg-primary/5 p-4 text-sm text-foreground">
+                        This block is using a linked reusable preset. Detach it before editing local copy, or replace it with another reusable source.
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <Button onClick={() => detachReusableBlock(selectedIndex)} size="sm" type="button" variant="outline">
+                            <CopyPlusIcon className="h-4 w-4" />
+                            Detach copy
+                          </Button>
+                          <Button onClick={() => openBlockLibrary(selectedIndex, 'replace')} size="sm" type="button" variant="outline">
+                            <RefreshCwIcon className="h-4 w-4" />
+                            Replace section
+                          </Button>
+                        </div>
+                      </div>
+                      <ComposerNoticeList notices={composerNotices} />
                     </div>
                   ) : selectedBlock.blockType === 'serviceGrid' ? (
                     <div className="grid gap-4">
@@ -879,6 +1141,12 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
                               Ask copilot
                             </Button>
                           ) : null}
+                        </div>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <Button onClick={() => openBlockLibrary(selectedIndex, 'replace')} size="sm" type="button" variant="outline">
+                            <RefreshCwIcon className="h-4 w-4" />
+                            Replace section
+                          </Button>
                         </div>
                       </div>
 
@@ -1000,8 +1268,19 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
                       </Button>
                     </div>
                   ) : (
-                    <div className="rounded-2xl border border-border/70 bg-card/50 px-4 py-6 text-sm text-muted-foreground">
-                      This first content editor is focused on reusable `serviceGrid` sections. Other block types can still be reordered, duplicated, and removed from Structure.
+                    <div className="grid gap-4">
+                      <div className="rounded-2xl border border-border/70 bg-card/50 p-4">
+                        <div className="text-sm font-semibold text-foreground">{sectionSummaries[selectedIndex]?.label || 'Selected block'}</div>
+                        <div className="mt-1 text-sm text-muted-foreground">
+                          This first content editor is focused on reusable `serviceGrid` sections. Other block types can still be replaced, reordered, duplicated, and removed while the shared-section authoring surface expands.
+                        </div>
+                        <div className="mt-3">
+                          <Button onClick={() => openBlockLibrary(selectedIndex, 'replace')} size="sm" type="button" variant="outline">
+                            <RefreshCwIcon className="h-4 w-4" />
+                            Replace section
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </TabsContent>
@@ -1335,9 +1614,45 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
                             {dirty ? 'Unsaved changes ready to review.' : 'Draft matches the last saved state.'}
                           </div>
                           <div className="mt-1 text-xs text-muted-foreground">
-                            {sectionSummaries.length} block{sectionSummaries.length === 1 ? '' : 's'} in this page.
+                            {sectionSummaries.length} block{sectionSummaries.length === 1 ? '' : 's'} in this page · {changedBlockCount} changed block{changedBlockCount === 1 ? '' : 's'}.
                           </div>
                         </div>
+                      </div>
+
+                      <div className="rounded-2xl border border-border/70 bg-card/50 p-4">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div>
+                            <div className="text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground">Publish review</div>
+                            <div className="mt-2 text-sm font-semibold text-foreground">
+                              {validationSummary?.pageStatus === 'published' ? 'Published page with active draft edits' : 'Draft page'}
+                            </div>
+                          </div>
+                          <Badge variant={validationSummary?.issues.length ? 'outline' : 'secondary'}>
+                            {validationSummary?.issues.length || 0} validation issue{validationSummary?.issues.length === 1 ? '' : 's'}
+                          </Badge>
+                        </div>
+
+                        {validationSummary?.issues.length ? (
+                          <div className="mt-4 grid gap-2">
+                            {validationSummary.issues.map((issue) => (
+                              <div
+                                className={`rounded-2xl border px-3 py-3 text-sm ${
+                                  issue.tone === 'warning'
+                                    ? 'border-amber-500/30 bg-amber-500/10 text-amber-950 dark:text-amber-100'
+                                    : 'border-border/70 bg-background/70 text-muted-foreground'
+                                }`}
+                                key={issue.id}
+                              >
+                                {issue.blockIndex !== null ? `Block ${issue.blockIndex + 1}: ` : ''}
+                                {issue.message}
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="mt-3 text-sm text-muted-foreground">
+                            Validation is clear for the currently supported composer checks.
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
@@ -1377,6 +1692,7 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
                   </div>
                 </div>
               </Tabs>
+              </div>
 
               {isBlockLibraryOpen ? (
                 <div className="absolute inset-0 z-[130] bg-background/98 backdrop-blur-sm">
@@ -1384,7 +1700,9 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
                     <div className="min-w-0 flex-1">
                       <div className="text-lg font-semibold text-foreground">Block library</div>
                       <div className="mt-1 text-sm text-muted-foreground">
-                        Insert a block at position {(blockLibraryTargetIndex ?? 0) + 1}.
+                        {blockLibraryMode === 'replace'
+                          ? `Replace block ${Math.max(1, (blockLibraryTargetIndex ?? 0) + 1)} with another layout, preset, or shared source.`
+                          : `Insert a block at position ${(blockLibraryTargetIndex ?? 0) + 1}.`}
                       </div>
                     </div>
                     <Button
@@ -1410,52 +1728,139 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
 
                     <div className="overflow-y-auto">
                       <div className="grid gap-5">
-                        {(['dynamic', 'static', 'container'] as const).map((category) => {
-                          const entries = filteredBlockDefinitions.filter((definition) => definition.category === category)
+                        {filteredBlockDefinitions.length ? (
+                          <section className="grid gap-3">
+                            <div className="text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground">
+                              Layouts
+                            </div>
+                            <div className="grid gap-3">
+                              {filteredBlockDefinitions.map((definition) => (
+                                <button
+                                  className={`rounded-2xl border p-4 text-left transition ${
+                                    definition.supportsInsert
+                                      ? 'border-border/70 bg-card/50 hover:border-primary/40 hover:bg-primary/5'
+                                      : 'cursor-not-allowed border-border/50 bg-card/30 opacity-65'
+                                  }`}
+                                  disabled={!definition.supportsInsert}
+                                  key={definition.type}
+                                  onClick={() =>
+                                    definition.supportsInsert
+                                      ? insertRegisteredBlock(definition.type as PageComposerInsertableBlockType)
+                                      : undefined
+                                  }
+                                  type="button"
+                                >
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <div className="text-sm font-semibold text-foreground">{definition.label}</div>
+                                    <Badge variant="outline">{definition.type}</Badge>
+                                    <Badge variant="outline">{definition.category}</Badge>
+                                    {definition.supportsReusable ? <Badge variant="secondary">reusable-ready</Badge> : null}
+                                    {!definition.supportsInsert ? <Badge variant="outline">planned</Badge> : null}
+                                  </div>
+                                  <div className="mt-2 text-sm text-muted-foreground">{definition.description}</div>
+                                </button>
+                              ))}
+                            </div>
+                          </section>
+                        ) : null}
 
-                          if (!entries.length) {
-                            return null
-                          }
-
-                          return (
-                            <section className="grid gap-3" key={category}>
-                              <div className="text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground">
-                                {category}
-                              </div>
-                              <div className="grid gap-3">
-                                {entries.map((definition) => (
-                                  <button
-                                    className={`rounded-2xl border p-4 text-left transition ${
-                                      definition.supportsInsert
-                                        ? 'border-border/70 bg-card/50 hover:border-primary/40 hover:bg-primary/5'
-                                        : 'cursor-not-allowed border-border/50 bg-card/30 opacity-65'
-                                    }`}
-                                    disabled={!definition.supportsInsert}
-                                    key={definition.type}
-                                    onClick={() =>
-                                      definition.supportsInsert
-                                        ? insertRegisteredBlock(definition.type as PageComposerInsertableBlockType)
-                                        : undefined
-                                    }
-                                    type="button"
-                                  >
+                        {filteredReusablePresets.length ? (
+                          <section className="grid gap-3">
+                            <div className="text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground">
+                              Sections
+                            </div>
+                            <div className="grid gap-3">
+                              {filteredReusablePresets.map((preset) => (
+                                  <div className="rounded-2xl border border-border/70 bg-card/50 p-4" key={preset.key}>
                                     <div className="flex flex-wrap items-center gap-2">
-                                      <div className="text-sm font-semibold text-foreground">{definition.label}</div>
-                                      <Badge variant="outline">{definition.type}</Badge>
-                                      {definition.supportsReusable ? <Badge variant="secondary">reusable</Badge> : null}
-                                      {!definition.supportsInsert ? <Badge variant="outline">planned</Badge> : null}
+                                      <div className="text-sm font-semibold text-foreground">{preset.label}</div>
+                                      <Badge variant="outline">{preset.blockType}</Badge>
+                                      <Badge variant="secondary">reusable</Badge>
                                     </div>
-                                    <div className="mt-2 text-sm text-muted-foreground">{definition.description}</div>
-                                  </button>
+                                    <div className="mt-2 text-sm text-muted-foreground">{preset.description}</div>
+                                    <div className="mt-3 flex flex-wrap gap-2">
+                                      <Button onClick={() => insertReusablePreset({ key: preset.key, mode: 'linked' })} size="sm" type="button" variant="outline">
+                                        {blockLibraryMode === 'replace' ? 'Replace with linked' : 'Insert linked'}
+                                      </Button>
+                                      <Button onClick={() => insertReusablePreset({ key: preset.key, mode: 'detached' })} size="sm" type="button">
+                                        {blockLibraryMode === 'replace' ? 'Replace with detached copy' : 'Insert detached copy'}
+                                      </Button>
+                                    </div>
+                                  </div>
                                 ))}
-                              </div>
-                            </section>
-                          )
-                        })}
+                            </div>
+                          </section>
+                        ) : null}
 
-                        {!filteredBlockDefinitions.length ? (
+                        <section className="grid gap-3">
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground">
+                              Shared sections
+                            </div>
+                            {sharedSectionsLoading ? <Badge variant="outline">Loading</Badge> : null}
+                          </div>
+
+                          {sharedSectionsStatus ? (
+                            <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-950 dark:text-amber-100">
+                              {sharedSectionsStatus}
+                            </div>
+                          ) : null}
+
+                          {filteredSharedSections.length ? (
+                            <div className="grid gap-3">
+                              {filteredSharedSections.map((item) => (
+                                <div className="rounded-2xl border border-border/70 bg-card/50 p-4" key={`shared-${item.id}`}>
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <div className="text-sm font-semibold text-foreground">{item.name}</div>
+                                    <Badge variant={item.status === 'published' ? 'secondary' : 'outline'}>{item.status}</Badge>
+                                    <Badge variant="outline">{item.category}</Badge>
+                                    <Badge variant="outline">v{item.currentVersion}</Badge>
+                                  </div>
+                                  <div className="mt-2 text-sm text-muted-foreground">
+                                    {item.description || 'Shared section source ready for linked reuse.'}
+                                  </div>
+                                  <div className="mt-2 flex flex-wrap gap-1.5">
+                                    {item.tags.length ? (
+                                      item.tags.map((tag) => (
+                                        <Badge key={`${item.id}-${tag}`} variant="secondary">
+                                          {tag}
+                                        </Badge>
+                                      ))
+                                    ) : (
+                                      <Badge variant="outline">No tags</Badge>
+                                    )}
+                                    <Badge variant="outline">
+                                      {item.usageCount} {item.usageCount === 1 ? 'page' : 'pages'}
+                                    </Badge>
+                                  </div>
+                                  <div className="mt-3 flex flex-wrap gap-2">
+                                    <Button onClick={() => insertSharedSection({ item, mode: 'linked' })} size="sm" type="button" variant="outline">
+                                      {blockLibraryMode === 'replace' ? 'Replace with linked' : 'Insert linked'}
+                                    </Button>
+                                    <Button onClick={() => insertSharedSection({ item, mode: 'detached' })} size="sm" type="button">
+                                      {blockLibraryMode === 'replace' ? 'Replace with detached copy' : 'Insert detached copy'}
+                                    </Button>
+                                    <Button onClick={() => openSharedSectionSourceEditor(item.id)} size="sm" type="button" variant="ghost">
+                                      Edit source
+                                    </Button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : sharedSectionsLoading ? (
+                            <div className="rounded-2xl border border-border/70 bg-card/50 px-4 py-6 text-sm text-muted-foreground">
+                              Loading published shared sections...
+                            </div>
+                          ) : (
+                            <div className="rounded-2xl border border-border/70 bg-card/50 px-4 py-6 text-sm text-muted-foreground">
+                              No published shared sections match that search yet.
+                            </div>
+                          )}
+                        </section>
+
+                        {!filteredBlockDefinitions.length && !filteredReusablePresets.length && !filteredSharedSections.length ? (
                           <div className="rounded-2xl border border-border/70 bg-card/50 px-4 py-6 text-sm text-muted-foreground">
-                            No blocks match that search.
+                            No layouts, presets, or shared sections match that search.
                           </div>
                         ) : null}
                       </div>

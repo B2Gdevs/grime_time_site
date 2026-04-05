@@ -2,6 +2,7 @@ import type { LucideIcon } from 'lucide-react'
 import {
   CalendarClockIcon,
   FileTextIcon,
+  FolderTreeIcon,
   HomeIcon,
   LayoutDashboardIcon,
   LifeBuoyIcon,
@@ -52,6 +53,11 @@ export function buildPortalMainNav(args: {
         icon: LayoutDashboardIcon,
         title: 'Ops dashboard',
         url: '/ops',
+      },
+      {
+        icon: FolderTreeIcon,
+        title: 'Shared sections',
+        url: '/shared-sections',
       },
     ]
   }

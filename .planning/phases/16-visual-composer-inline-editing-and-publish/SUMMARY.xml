@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phase-summary>
+  <meta>
+    <phase-id>16</phase-id>
+    <phase-name>Visual composer inline editing and publish workflow</phase-name>
+    <date>2026-04-04</date>
+  </meta>
+  <status>complete</status>
+  <highlights>
+    <item>The composer drawer now uses a split preview-plus-controls shell so the preview becomes the primary editing surface instead of a passive byproduct of the page form.</item>
+    <item>Selection is mirrored between the preview canvas and Structure, with clear selected-block outline treatment and shared quick actions for add above/below, duplicate, delete, and hide/show.</item>
+    <item>The preview now supports inline editing for the MVP text lanes the composer already owns directly: service-grid heading and intro copy, row copy, CTA copy and labels, inline pricing plans, content-slot text, and custom HTML snippets.</item>
+    <item>Draft switching and create-draft flows remain compact in the header while the publish tab now shows changed-block count, page workflow state, and an actionable validation summary.</item>
+    <item>Responsive preview controls now support desktop, tablet, and mobile widths without mutating stored page content.</item>
+  </highlights>
+  <verification>
+    <command>npm.cmd exec eslint src/components/admin-impersonation/PageComposerDrawer.tsx src/components/admin-impersonation/PageComposerPreview.tsx src/lib/pages/pageComposer.ts src/lib/pages/pageComposerBlockRegistry.ts src/lib/pages/pageComposerReusableBlocks.ts src/lib/pages/pageComposerLexical.ts tests/e2e/page-composer.e2e.spec.ts</command>
+    <command>npm.cmd exec -- tsc --noEmit</command>
+    <command>npm.cmd exec vitest run tests/int/lib/pages/page-composer.int.spec.ts tests/int/app/page-composer-route.int.spec.ts</command>
+    <command>npm.cmd run build</command>
+    <command>set PLAYWRIGHT_BASE_URL=http://localhost:3111 &amp;&amp; npm.cmd exec -- playwright test tests/e2e/page-composer.e2e.spec.ts --config=playwright.local.config.ts</command>
+  </verification>
+  <next>
+    <item>`16-01` through `16-06` are complete.</item>
+    <item>The next composer stream is phase `17`: reusable semantics, dynamic blocks, container slot behavior, and Custom HTML.</item>
+  </next>
+</phase-summary>

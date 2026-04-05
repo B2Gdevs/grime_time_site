@@ -4,28 +4,22 @@ import { cleanupPageBySlug } from '../helpers/pageComposer'
 import { login } from '../helpers/login'
 import { cleanupTestUser, seedTestUser, testUser } from '../helpers/seedUser'
 
-function escapeRegExp(value: string) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-}
-
 async function dragSectionAbove(args: {
   page: import('@playwright/test').Page
   sourceLabel: string
   targetLabel: string
 }) {
-  const drawer = composerDrawer(args.page)
-  const sourceHandle = drawer
-    .getByRole('button', { name: new RegExp(`^${escapeRegExp(args.sourceLabel)}\\b`) })
-    .locator('xpath=preceding-sibling::button[1]')
-  const targetRow = drawer.getByRole('button', { name: new RegExp(`^${escapeRegExp(args.targetLabel)}\\b`) })
+  const sourceRow = structureRow(args.page, args.sourceLabel)
+  const targetRow = structureRow(args.page, args.targetLabel).locator('button.min-w-0.flex-1.text-left')
+  const sourceHandle = sourceRow.locator('button').first()
 
   await expect(sourceHandle).toBeVisible()
   await expect(targetRow).toBeVisible()
 
   await sourceHandle.focus()
-  await args.page.keyboard.press('Space')
-  await args.page.keyboard.press('ArrowUp')
-  await args.page.keyboard.press('Space')
+  await sourceHandle.press('Space')
+  await sourceHandle.press('ArrowUp')
+  await sourceHandle.press('Space')
 }
 
 async function openPageComposer(page: import('@playwright/test').Page) {
@@ -36,6 +30,18 @@ async function openPageComposer(page: import('@playwright/test').Page) {
 
 function composerDrawer(page: import('@playwright/test').Page): Locator {
   return page.getByRole('complementary')
+}
+
+function activeComposerPanel(page: import('@playwright/test').Page): Locator {
+  return composerDrawer(page).locator('[role="tabpanel"][data-state="active"]')
+}
+
+function structureRow(page: import('@playwright/test').Page, label: string): Locator {
+  return activeComposerPanel(page)
+    .locator('div.rounded-2xl.border.p-3')
+    .filter({
+      has: page.locator('span.text-sm.font-semibold.text-foreground', { hasText: label }),
+    })
 }
 
 async function clickComposerButton(page: import('@playwright/test').Page, name: 'Publish' | 'Save draft') {
@@ -87,19 +93,25 @@ async function createDraftPage(args: {
 
 async function insertServiceGrid(page: import('@playwright/test').Page) {
   await clickComposerTab(page, 'Structure')
-  await clickElement(composerDrawer(page).getByRole('button', { name: 'Add block' }).first())
+  await clickElement(activeComposerPanel(page).getByRole('button', { name: 'Add block' }).first())
   await clickElement(composerDrawer(page).getByRole('button', { name: /Service grid/i }))
 }
 
 async function renameSelectedServiceGrid(page: import('@playwright/test').Page, from: string, to: string) {
   await clickComposerTab(page, 'Content')
-  const input = page.locator(`input[value="${from}"]`).first()
+  const input = activeComposerPanel(page).locator(`input[value="${from}"]`).first()
   await input.fill(to)
 }
 
 async function sectionHeadingOrder(page: import('@playwright/test').Page): Promise<string[]> {
   return page
     .locator('main h2')
+    .evaluateAll((nodes) => nodes.map((node) => node.textContent?.trim() || '').filter(Boolean))
+}
+
+async function structureSectionOrder(page: import('@playwright/test').Page): Promise<string[]> {
+  return activeComposerPanel(page)
+    .locator('button.min-w-0.flex-1.text-left span.text-sm.font-semibold.text-foreground')
     .evaluateAll((nodes) => nodes.map((node) => node.textContent?.trim() || '').filter(Boolean))
 }
 
@@ -181,11 +193,26 @@ test.describe('Staff page composer', () => {
       sourceLabel: 'Composer Beta',
       targetLabel: 'Composer Alpha',
     })
+    await expect.poll(() => structureSectionOrder(page)).toContainEqual('Composer Beta')
+    await expect
+      .poll(async () => {
+        const order = await structureSectionOrder(page)
+        const alpha = order.indexOf('Composer Alpha')
+        const beta = order.indexOf('Composer Beta')
+
+        return alpha >= 0 && beta >= 0 && beta < alpha
+      })
+      .toBe(true)
+
+    await clickElement(activeComposerPanel(page).getByRole('button', { name: 'Hide block Composer Alpha' }))
+    await expect(activeComposerPanel(page).getByRole('button', { name: 'Show block Composer Alpha' })).toBeVisible()
+    await clickElement(activeComposerPanel(page).getByRole('button', { name: 'Show block Composer Alpha' }))
+    await expect(activeComposerPanel(page).getByRole('button', { name: 'Hide block Composer Alpha' })).toBeVisible()
 
     await persistComposerDraft(page)
 
     await clickComposerTab(page, 'Media')
-    await clickElement(composerDrawer(page).getByRole('button', { name: 'Section item one' }))
+    await clickElement(activeComposerPanel(page).getByRole('button', { name: 'Section item one' }))
     await clickElement(mediaCard(page, 'Fresh exterior shot').getByRole('button', { name: 'Use this media' }))
     await expect(page.getByText(/Swapped Section item one to media 901\./)).toBeVisible()
 
@@ -275,9 +302,9 @@ test.describe('Staff page composer', () => {
     await persistComposerDraft(page)
 
     await clickComposerTab(page, 'Media')
-    await clickElement(composerDrawer(page).getByRole('button', { name: 'Section item one' }))
+    await clickElement(activeComposerPanel(page).getByRole('button', { name: 'Section item one' }))
     await composerDrawer(page).getByPlaceholder(/Describe the image/).fill('Driveway cleaning hero image')
-    await clickElement(composerDrawer(page).getByRole('button', { name: 'Focused copilot' }))
+    await clickElement(activeComposerPanel(page).getByRole('button', { name: 'Focused copilot' }))
 
     await expect(page.getByRole('heading', { name: 'Grime Time Copilot' })).toBeVisible()
     await expect(page.getByText('Authoring context', { exact: true })).toBeVisible()
@@ -291,7 +318,10 @@ test.describe('Staff page composer', () => {
 
     await expect(page.getByText('Use a wide residential exterior frame with strong daylight contrast.')).toBeVisible()
     expect(capturedCopilotBody).not.toBeNull()
-    const body = capturedCopilotBody as Record<string, unknown>
+    if (!capturedCopilotBody) {
+      throw new Error('Expected the copilot request body to be captured.')
+    }
+    const body: Record<string, unknown> = capturedCopilotBody
 
     const authoringContext = body.authoringContext as
       | {

@@ -175,6 +175,41 @@
       <file path="src/globals/QuoteSettings/config.ts" />
     </references>
   </decision>
+  <decision id="D-quotes-005">
+    <title>Phase-14 calibration uses wall-count house washes, honest estimator guidance, and explicit review notes before uploads ship</title>
+    <summary>The public estimator should stop pretending every exterior-cleaning lane is square-footage-first. House washes now calibrate from exterior wall count for one-story and two-story homes, three-story-and-taller house washes move to staff review, and shared estimator messaging now states plainly that final scope is confirmed after access, condition, and photo review.</summary>
+    <impact>`quoteSettings` now owns house-wash wall pricing plus shared estimator disclaimer copy, water-access guidance, driveway photo guidance, and the commercial expansion note. This lets the next upload task attach customer photos to a truthful estimator contract instead of hardening the old generic math.</impact>
+    <references>
+      <file path=".planning/phases/14-public-quote-estimator-intake-and-pricing/PRICING-CALIBRATION.md" />
+      <file path="src/lib/quotes/instantQuoteCatalog.ts" />
+      <file path="src/lib/forms/instantQuoteRequest.ts" />
+      <file path="src/components/InstantQuoteSection.tsx" />
+      <file path="src/globals/QuoteSettings/config.ts" />
+    </references>
+  </decision>
+  <decision id="D-quotes-006">
+    <title>Estimator photos live in a dedicated internal attachment collection linked to submissions first</title>
+    <summary>Optional `/#instant-quote` photos should not go into the public marketing media library or an untracked blob side path. Phase 14 stores them in a dedicated admin-only upload collection with enforced image limits, immediate linkage to the originating `form-submissions` row, and an optional later relationship to `quotes` when staff promote the request.</summary>
+    <impact>This keeps the public estimator fast for no-image requests, gives staff a first review surface without exposing customer uploads publicly, and creates a stable contract for the upcoming homepage multipart submission flow.</impact>
+    <references>
+      <file path=".planning/phases/14-public-quote-estimator-intake-and-pricing/ATTACHMENT-CONTRACT.md" />
+      <file path="src/collections/InstantQuoteRequestAttachments.ts" />
+      <file path="src/lib/forms/instantQuoteAttachments.ts" />
+      <file path="src/app/api/lead-forms/instant-quote/route.ts" />
+    </references>
+  </decision>
+  <decision id="D-quotes-007">
+    <title>Instant quote transport stays dual-mode: JSON by default, multipart only when photos are selected</title>
+    <summary>The estimator should not pay upload overhead on every request. The homepage keeps the existing JSON submission path for no-image requests, but switches to multipart only when the user actually selects photos, while the route accepts both transports and returns honest follow-up copy about attachment persistence.</summary>
+    <impact>This preserves the low-friction default estimator lane, keeps the upload path explicit, and gives future quote or intake surfaces a reusable pattern for optional attachments plus manual-review messaging.</impact>
+    <references>
+      <file path=".planning/phases/14-public-quote-estimator-intake-and-pricing/SUMMARY.xml" />
+      <file path="src/components/InstantQuoteSection.tsx" />
+      <file path="src/app/api/lead-forms/instant-quote/route.ts" />
+      <file path="tests/int/app/instant-quote-route.int.spec.ts" />
+      <file path="tests/e2e/frontend.e2e.spec.ts" />
+    </references>
+  </decision>
   <decision id="D-ops-001">
     <title>Business scorecard and growth system belong to phase 06</title>
     <summary>KPI definitions, projected revenue, MRR, margin review, liabilities, ops asset inventory, and daily/weekly rhythm are part of advanced ops work. Start them as internal docs/config with real business targets, then promote them to editable Payload data only after schema approval.</summary>
@@ -679,6 +714,29 @@
       <file path="src/lib/pages/pageComposer.ts" />
     </references>
   </decision>
+  <decision id="D-content-014">
+    <title>Phase-15 composer foundations stay schema-first, keep hidden blocks editable, and treat Custom HTML as planned static taxonomy</title>
+    <summary>The first builder-shell pass keeps the Payload page document as the only persisted authoring source of truth. Registry entries describe the current real layout blocks, hidden blocks stay visible to editors in Structure with badges and quick actions while public rendering omits them, and `Custom HTML` appears in the taxonomy as a planned static block without becoming insertable before its safety model exists.</summary>
+    <impact>This avoids inventing a second builder store, keeps structure and rendering aligned with saved page data, makes block visibility a durable page-level property instead of transient UI state, and gives later phase-17 work a stable place to land reusable semantics, deeper container editing, and safe custom markup rendering.</impact>
+    <references>
+      <file path=".planning/phases/15-visual-composer-builder-and-inline-authoring/BLOCK-AUDIT.md" />
+      <file path=".planning/phases/15-visual-composer-builder-and-inline-authoring/CONTRACT.md" />
+      <file path="src/lib/pages/pageComposerBlockRegistry.ts" />
+      <file path="src/lib/pages/pageLayoutVisibility.ts" />
+      <file path="src/components/admin-impersonation/PageComposerDrawer.tsx" />
+      <file path="src/blocks/RenderBlocks.tsx" />
+    </references>
+  </decision>
+  <decision id="D-content-015">
+    <title>Composer-launched copilot sessions should auto-dock beside the builder instead of hiding behind it</title>
+    <summary>When the copilot is opened from the visual composer, the default experience should be a left-gutter docked panel that stays co-present with the right-side composer controls. Floating mode remains available, but it is an override rather than the starting state.</summary>
+    <impact>This gives the upcoming phase-16 follow-on work a concrete layout rule: shared authoring context between composer and copilot, explicit dock state in a shared UI store, responsive fallback on narrow screens, and z-index rules that keep both panes interactive.</impact>
+    <references>
+      <file path=".planning/workflows/composer-copilot-ux.md" />
+      <file path=".planning/phases/14-public-quote-estimator-intake-and-pricing/SUMMARY.xml" />
+      <file path=".planning/phases/16-visual-composer-inline-editing-and-publish/PLAN.xml" />
+    </references>
+  </decision>
   <decision id="D-testing-001">
     <title>Local production browser verification for Grime Time should use `localhost` and treat fixed drawers as first-class interaction surfaces</title>
     <summary>For Grime Time's local production browser checks, `localhost` is the canonical host. Using `127.0.0.1` breaks Clerk's dev middleware rewrite path under `next start`. The page-composer and copilot Playwright coverage should also scope interactions to the fixed drawer or copilot shell rather than relying on global page locators, because these surfaces intentionally overlay the marketing site.</summary>
@@ -804,6 +862,38 @@
       <file path=".planning/BLOCKERS.xml" />
       <file path="src/content/docs/field-quoting-and-revisions.md" />
       <file path=".planning/workflows/demo-data-and-flows.md" />
+    </references>
+  </decision>
+  <decision id="D-content-016">
+    <title>Visual composer preview is a client-side canvas backed by draft page state, not the live page DOM</title>
+    <summary>Phase 16 should not try to mutate or instrument the server-rendered public page directly for inline authoring. The stable model is a dedicated client-side preview canvas inside the composer drawer that reads and edits the same draft-page state as Structure, Content, Media, and Publish.</summary>
+    <impact>Selection, quick actions, inline text edits, responsive preview widths, and publish summaries can share one state model without coupling every frontend route to editor-only behavior. This keeps the public page renderer simple while still making the composer feel visual.</impact>
+    <references>
+      <file path="src/components/admin-impersonation/PageComposerDrawer.tsx" />
+      <file path="src/components/admin-impersonation/PageComposerPreview.tsx" />
+      <file path=".planning/phases/16-visual-composer-inline-editing-and-publish/SUMMARY.xml" />
+    </references>
+  </decision>
+  <decision id="D-content-017">
+    <title>Reusable composer blocks are code-backed presets and Custom HTML renders only through sanitizer-backed markup</title>
+    <summary>Phase 17 uses a constrained model rather than a generic builder platform. Reusable blocks are inserted from a small preset catalog as either linked references or detached copies, with linked rendering resolved from code-backed presets at runtime. `Custom HTML` is allowed only through sanitizer-backed rendering that strips scripts, event handlers, and unsafe URLs while limiting iframe embeds to a trusted host list.</summary>
+    <impact>Reusable authoring stays understandable without introducing a separate reusable-block collection or deep dependency graph, and custom markup gains a clear safety boundary instead of silently executing arbitrary code.</impact>
+    <references>
+      <file path="src/lib/pages/pageComposerReusableBlocks.ts" />
+      <file path="src/lib/pages/customHtml.ts" />
+      <file path="src/blocks/CustomHtml/Component.tsx" />
+      <file path=".planning/phases/17-visual-composer-reuse-dynamic-and-containers/SUMMARY.xml" />
+    </references>
+  </decision>
+  <decision id="D-content-018">
+    <title>Phase 18 promotes reusable authoring into CMS-managed shared sections while delaying deep layout power</title>
+    <summary>The phase-17 preset model was the bridge, not the endpoint. Starting in phase 18, reusable authoring should center on CMS-managed shared sections that are created in a dedicated shared-section library, edited through an explicit source-edit flow on a dedicated shared-section route, inserted into pages as linked references, detached locally when needed, and restored through lightweight version history. Phase 18 explicitly does not include promoting an existing page section into shared content. The composer should remain opinionated: shallow section-row-column-block composition, fixed layout patterns, constrained drag-and-drop, minimal library categories plus tags, and no arbitrary freeform nesting or generic flexbox builder UI.</summary>
+    <impact>This keeps the composer aligned with a repeatable service-business revenue page system rather than drifting into a general-purpose layout engine. It also sets a strict reuse boundary: linked instances may override only safe placement metadata such as visibility, anchor id, instance label, and an optional tokenized spacing variant, while content, structure, styling primitives, and layout composition remain source-owned unless detached. Shared-section publish should update all linked published pages, and draft pages should resolve against the latest published shared-section version in v1. Dynamic bindings and more advanced publish workflow should build on top of this shared-section model after phase 18 rather than competing with it.</impact>
+    <references>
+      <file path=".planning/phases/18-shared-sections-and-constrained-reuse/PLAN.xml" />
+      <file path=".planning/phases/18-shared-sections-and-constrained-reuse/CONTRACT.md" />
+      <file path=".planning/ROADMAP.xml" />
+      <file path=".planning/TASK-REGISTRY.xml" />
     </references>
   </decision>
 </decisions>

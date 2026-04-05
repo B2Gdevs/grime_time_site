@@ -215,6 +215,85 @@ export const QuoteSettings: GlobalConfig = {
         },
       ],
     },
+    {
+      name: 'houseWashPricing',
+      type: 'group',
+      admin: {
+        description:
+          'House washes now calibrate from exterior wall count rather than square footage for the public estimator.',
+      },
+      fields: [
+        {
+          type: 'row',
+          fields: [
+            {
+              name: 'oneStoryPerWall',
+              type: 'number',
+              required: true,
+              defaultValue: 100,
+            },
+            {
+              name: 'twoStoryPerWall',
+              type: 'number',
+              required: true,
+              defaultValue: 150,
+            },
+            {
+              name: 'minimumWalls',
+              type: 'number',
+              required: true,
+              defaultValue: 4,
+              min: 1,
+            },
+          ],
+        },
+        {
+          name: 'manualReviewNote',
+          type: 'textarea',
+          required: true,
+          defaultValue:
+            'Three-story and taller homes move to a staff-reviewed quote. Photo review confirms access, setup, and safety before we lock scope.',
+        },
+      ],
+    },
+    {
+      name: 'estimatorMessaging',
+      type: 'group',
+      admin: {
+        description:
+          'Shared public estimator copy so the homepage promise stays aligned with the current pricing model.',
+      },
+      fields: [
+        {
+          name: 'estimateDisclaimer',
+          type: 'textarea',
+          required: true,
+          defaultValue:
+            'Instant quotes are starting guidance. Final scope is confirmed after we review surface condition, access, and any photos you send.',
+        },
+        {
+          name: 'waterAccessNote',
+          type: 'textarea',
+          required: true,
+          defaultValue:
+            'Standard pricing assumes customer-supplied water is available on site. Low-water properties may need a hauling review.',
+        },
+        {
+          name: 'drivewayPhotoNote',
+          type: 'textarea',
+          required: true,
+          defaultValue:
+            'Residential flatwork estimates move faster when we can review both the driveway and the connecting sidewalk.',
+        },
+        {
+          name: 'commercialExpansionNote',
+          type: 'textarea',
+          required: true,
+          defaultValue:
+            'Larger commercial flatwork, parking lots, fences, and building packages stay staff-reviewed until the expanded equipment lane is live.',
+        },
+      ],
+    },
   ],
   hooks: {
     afterChange: [revalidateQuoteSettings],

@@ -4,6 +4,13 @@ import {
   type PageComposerBlockCategory,
   type PageComposerInsertableBlockType,
 } from '@/lib/pages/pageComposerBlockRegistry'
+import { lexicalToPlainText } from '@/lib/pages/pageComposerLexical'
+import {
+  linkedSharedSectionId,
+  resolvePageComposerReusableBlock,
+  type ReusableAwareLayoutBlock,
+} from '@/lib/pages/pageComposerReusableBlocks'
+import type { SharedSectionRecord } from '@/lib/pages/sharedSections'
 import type { Page } from '@/payload-types'
 
 export type PageComposerSectionTemplate =
@@ -16,6 +23,7 @@ export type PageComposerSectionSummary = {
   blockType: Page['layout'][number]['blockType']
   category: PageComposerBlockCategory
   description: string
+  hidden: boolean
   index: number
   label: string
   variant: null | string
@@ -43,6 +51,20 @@ export type PageComposerNotice = {
   title: string
   tone: 'info' | 'warning'
 }
+
+export type PageComposerValidationIssue = {
+  blockIndex: null | number
+  id: string
+  message: string
+  tone: 'info' | 'warning'
+}
+
+export type PageComposerValidationSummary = {
+  issues: PageComposerValidationIssue[]
+  pageStatus: 'draft' | 'published'
+}
+
+type SharedSectionMap = Map<number, Pick<SharedSectionRecord, 'currentVersion' | 'id' | 'name' | 'structure'>>
 
 type ServiceGridLike = Extract<Page['layout'][number], { blockType: 'serviceGrid' }>
 
@@ -176,36 +198,60 @@ export function buildPageComposerNotices(args: {
     })
   }
 
+  if (args.selectedBlock?.isHidden) {
+    notices.push({
+      description:
+        'This block stays in the draft and structure list, but the rendered page omits it until you show it again.',
+      id: 'selected-block-hidden',
+      title: 'Hidden block',
+      tone: 'info',
+    })
+  }
+
   return notices
 }
 
 export function buildPageComposerSectionSummaries(
   layout: null | Page['layout'] | undefined,
+  sharedSectionsById?: SharedSectionMap,
 ): PageComposerSectionSummary[] {
-  return (layout || []).map((block, index) => {
+  return (layout || []).map((rawBlock, index) => {
+    const block = resolvePageComposerReusableBlock(rawBlock, { sharedSectionsById })
     const summaryMeta = buildSummaryBadges(block.blockType)
+    const hidden = Boolean(block.isHidden)
+    const reusableMeta = (rawBlock as ReusableAwareLayoutBlock).composerReusable
+    const reusableMode = reusableMeta?.mode
+    const sharedSectionId = linkedSharedSectionId(rawBlock)
+    const badges = [
+      ...summaryMeta.badges,
+      ...(reusableMode === 'linked' ? ['linked'] : reusableMode === 'detached' ? ['detached'] : []),
+      ...(sharedSectionId ? ['shared'] : []),
+      ...(hidden ? ['hidden'] : []),
+    ]
 
     if (block.blockType === 'serviceGrid') {
       const variant = block.displayVariant || 'interactive'
       const count = block.services?.length || 0
 
       return {
-        badges: summaryMeta.badges,
+        badges,
         blockType: block.blockType,
         category: summaryMeta.category,
         description: `${variant} - ${count} row${count === 1 ? '' : 's'}`,
+        hidden,
         index,
-        label: block.heading || `Service section ${index + 1}`,
+        label: reusableMeta?.label || block.heading || `Service section ${index + 1}`,
         variant,
       }
     }
 
     if (block.blockType === 'mediaBlock') {
       return {
-        badges: summaryMeta.badges,
+        badges,
         blockType: block.blockType,
         category: summaryMeta.category,
         description: block.media ? 'Media assigned' : 'No media assigned yet',
+        hidden,
         index,
         label: block.blockName?.trim() || `Media block ${index + 1}`,
         variant: null,
@@ -213,15 +259,162 @@ export function buildPageComposerSectionSummaries(
     }
 
     return {
-      badges: summaryMeta.badges,
+      badges,
       blockType: block.blockType,
       category: summaryMeta.category,
-      description: block.blockName?.trim() || `${block.blockType} section`,
+      description:
+        block.blockType === 'content'
+          ? `${block.columns?.length || 0} slot${block.columns?.length === 1 ? '' : 's'}`
+          : block.blockType === 'cta'
+            ? lexicalToPlainText(block.richText || null) || `${block.links?.length || 0} CTA links`
+            : block.blockType === 'pricingTable'
+              ? block.dataSource === 'global'
+                ? 'Global pricing source'
+                : `${block.inlinePlans?.length || 0} inline plan${block.inlinePlans?.length === 1 ? '' : 's'}`
+              : block.blockType === 'customHtml'
+                ? block.label?.trim() || 'Trusted custom HTML'
+                : block.blockName?.trim() || `${block.blockType} section`,
+      hidden,
       index,
-      label: block.blockName?.trim() || `${block.blockType} block ${index + 1}`,
+      label:
+        reusableMeta?.label ||
+        (block.blockType === 'pricingTable'
+          ? block.heading || `Pricing block ${index + 1}`
+          : block.blockType === 'customHtml'
+            ? block.label?.trim() || `Custom HTML ${index + 1}`
+            : block.blockName?.trim() || `${block.blockType} block ${index + 1}`),
       variant: null,
     }
   })
+}
+
+export function countPageComposerChangedBlocks(args: {
+  baselineLayout: null | Page['layout'] | undefined
+  draftLayout: null | Page['layout'] | undefined
+}): number {
+  const baseline = normalizePageComposerLayoutForSave(args.baselineLayout || [])
+  const draft = normalizePageComposerLayoutForSave(args.draftLayout || [])
+  const length = Math.max(baseline.length, draft.length)
+  let changed = 0
+
+  for (let index = 0; index < length; index += 1) {
+    if (JSON.stringify(baseline[index] || null) !== JSON.stringify(draft[index] || null)) {
+      changed += 1
+    }
+  }
+
+  return changed
+}
+
+export function buildPageComposerValidationSummary(args: {
+  page: Pick<PageComposerDocument, '_status' | 'layout' | 'slug' | 'title' | 'visibility'>
+  sharedSectionsById?: SharedSectionMap
+}): PageComposerValidationSummary {
+  const issues: PageComposerValidationIssue[] = []
+
+  if (!args.page.title?.trim()) {
+    issues.push({
+      blockIndex: null,
+      id: 'missing-title',
+      message: 'Page title is required before publish.',
+      tone: 'warning',
+    })
+  }
+
+  if (!args.page.slug?.trim()) {
+    issues.push({
+      blockIndex: null,
+      id: 'missing-slug',
+      message: 'Slug is required before publish.',
+      tone: 'warning',
+    })
+  }
+
+  if (!(args.page.layout || []).length) {
+    issues.push({
+      blockIndex: null,
+      id: 'empty-layout',
+      message: 'The page does not contain any blocks yet.',
+      tone: 'warning',
+    })
+  }
+
+  ;(args.page.layout || []).forEach((rawBlock, index) => {
+    const sharedSectionId = linkedSharedSectionId(rawBlock)
+
+    if (
+      sharedSectionId &&
+      args.sharedSectionsById &&
+      !args.sharedSectionsById.has(sharedSectionId)
+    ) {
+      issues.push({
+        blockIndex: index,
+        id: `shared-section-missing-${index}`,
+        message: `Linked shared section ${sharedSectionId} is not available for block ${index + 1}.`,
+        tone: 'warning',
+      })
+    }
+
+    const block = resolvePageComposerReusableBlock(rawBlock, {
+      sharedSectionsById: args.sharedSectionsById,
+    })
+
+    if (block.blockType === 'serviceGrid') {
+      if (!block.heading?.trim()) {
+        issues.push({
+          blockIndex: index,
+          id: `service-grid-heading-${index}`,
+          message: `Block ${index + 1} needs a heading.`,
+          tone: 'warning',
+        })
+      }
+
+      if (!(block.services || []).length) {
+        issues.push({
+          blockIndex: index,
+          id: `service-grid-rows-${index}`,
+          message: `Block ${index + 1} needs at least one service row.`,
+          tone: 'warning',
+        })
+      }
+    }
+
+    if (block.blockType === 'content' && !(block.columns || []).length) {
+      issues.push({
+        blockIndex: index,
+        id: `content-slots-${index}`,
+        message: `Content block ${index + 1} needs at least one slot.`,
+        tone: 'warning',
+      })
+    }
+
+    if (block.blockType === 'pricingTable' && block.dataSource === 'inline' && !(block.inlinePlans || []).length) {
+      issues.push({
+        blockIndex: index,
+        id: `pricing-inline-${index}`,
+        message: `Pricing block ${index + 1} is set to inline plans but does not have any plans yet.`,
+        tone: 'warning',
+      })
+    }
+
+    if (block.blockType === 'customHtml') {
+      const sanitizedHtml = block.html?.trim() ? block.html.trim() : ''
+
+      if (!sanitizedHtml) {
+        issues.push({
+          blockIndex: index,
+          id: `custom-html-empty-${index}`,
+          message: `Custom HTML block ${index + 1} is empty.`,
+          tone: 'warning',
+        })
+      }
+    }
+  })
+
+  return {
+    issues,
+    pageStatus: args.page._status === 'published' ? 'published' : 'draft',
+  }
 }
 
 export function movePageLayoutSection(args: {
@@ -287,6 +480,30 @@ export function removePageLayoutSection(args: {
   }
 
   next.splice(args.index, 1)
+  return next
+}
+
+export function togglePageLayoutSectionHidden(args: {
+  index: number
+  layout: Page['layout']
+}): Page['layout'] {
+  const next = cloneValue(args.layout || [])
+
+  if (args.index < 0 || args.index >= next.length) {
+    return next
+  }
+
+  const block = next[args.index]
+
+  if (!block) {
+    return next
+  }
+
+  next[args.index] = {
+    ...block,
+    isHidden: !Boolean(block.isHidden),
+  }
+
   return next
 }
 

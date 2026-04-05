@@ -747,12 +747,24 @@ async function pushGlobals(ctx: PushCtx): Promise<void> {
         twoStories: defaultInstantQuoteCatalog.storyMultipliers['2'],
         threePlusStories: defaultInstantQuoteCatalog.storyMultipliers['3+'],
       },
-      frequencyMultipliers: {
-        oneTime: defaultInstantQuoteCatalog.frequencyMultipliers.one_time,
-        biannual: defaultInstantQuoteCatalog.frequencyMultipliers.biannual,
-        quarterly: defaultInstantQuoteCatalog.frequencyMultipliers.quarterly,
-      },
-    }),
+        frequencyMultipliers: {
+          oneTime: defaultInstantQuoteCatalog.frequencyMultipliers.one_time,
+          biannual: defaultInstantQuoteCatalog.frequencyMultipliers.biannual,
+          quarterly: defaultInstantQuoteCatalog.frequencyMultipliers.quarterly,
+        },
+        houseWashPricing: {
+          oneStoryPerWall: defaultInstantQuoteCatalog.houseWashPricing.oneStoryPerWall,
+          twoStoryPerWall: defaultInstantQuoteCatalog.houseWashPricing.twoStoryPerWall,
+          minimumWalls: defaultInstantQuoteCatalog.houseWashPricing.minimumWalls,
+          manualReviewNote: defaultInstantQuoteCatalog.houseWashPricing.manualReviewNote,
+        },
+        estimatorMessaging: {
+          estimateDisclaimer: defaultInstantQuoteCatalog.messaging.estimateDisclaimer,
+          waterAccessNote: defaultInstantQuoteCatalog.messaging.waterAccessNote,
+          drivewayPhotoNote: defaultInstantQuoteCatalog.messaging.drivewayPhotoNote,
+          commercialExpansionNote: defaultInstantQuoteCatalog.messaging.commercialExpansionNote,
+        },
+      }),
     upsertGlobalBySlug(payload, req, 'servicePlanSettings', {
       billingInstallmentsPerYear: 12,
       customerSummary:

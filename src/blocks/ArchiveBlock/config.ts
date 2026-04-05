@@ -1,5 +1,6 @@
 import type { Block } from 'payload'
 
+import { blockVisibilityField } from '@/blocks/shared/blockVisibilityField'
 import {
   FixedToolbarFeature,
   HeadingFeature,
@@ -86,6 +87,7 @@ export const Archive: Block = {
       label: 'Selection',
       relationTo: ['posts'],
     },
+    blockVisibilityField,
   ],
   labels: {
     plural: 'Archives',

@@ -5,7 +5,7 @@
     <phase-name>Visual composer inline editing and publish workflow</phase-name>
     <date>2026-04-03</date>
   </meta>
-  <status>planned</status>
+  <status>complete</status>
 
   <problem>
     <item>Once the builder shell is coherent, the preview still needs to become the primary interactive surface instead of a passive rendering beside forms.</item>

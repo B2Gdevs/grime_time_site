@@ -1,5 +1,7 @@
 import type { Block, Field } from 'payload'
 
+import { blockVisibilityField } from '@/blocks/shared/blockVisibilityField'
+import { composerReusableField } from '@/blocks/shared/composerReusableField'
 import {
   FixedToolbarFeature,
   HeadingFeature,
@@ -75,5 +77,7 @@ export const Content: Block = {
       },
       fields: columnFields,
     },
+    composerReusableField,
+    blockVisibilityField,
   ],
 }
