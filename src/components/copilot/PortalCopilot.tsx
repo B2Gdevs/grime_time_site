@@ -9,9 +9,18 @@ import {
   useAuiState,
   useLocalRuntime,
 } from '@assistant-ui/react'
-import { BotIcon, LifeBuoyIcon, SparklesIcon, XIcon } from 'lucide-react'
+import { BotIcon, GripIcon, LifeBuoyIcon, SparklesIcon, XIcon } from 'lucide-react'
 import { usePathname } from 'next/navigation'
-import { type Dispatch, type SetStateAction, useEffect, useState } from 'react'
+import { AnimatePresence, motion, useDragControls } from 'motion/react'
+import {
+  type Dispatch,
+  type PointerEvent as ReactPointerEvent,
+  type SetStateAction,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 
 import type { CopilotApiResponse, CopilotConversationMessage } from '@/lib/ai'
 import { Badge } from '@/components/ui/badge'
@@ -20,6 +29,124 @@ import { cn } from '@/utilities/ui'
 
 import { usePortalCopilot } from './PortalCopilotContext'
 import { RecordList, SourcesList, TourList, type CopilotBundle } from './PortalCopilotPanels'
+
+type Corner = 'bottom-left' | 'bottom-right' | 'top-left' | 'top-right'
+
+const STORAGE_KEY = 'portal-copilot-corner-v1'
+
+function readStoredCorner(fallback: Corner): Corner {
+  if (typeof window === 'undefined') {
+    return fallback
+  }
+
+  const stored = window.localStorage.getItem(STORAGE_KEY)
+  return stored === 'top-left' ||
+    stored === 'top-right' ||
+    stored === 'bottom-left' ||
+    stored === 'bottom-right'
+    ? stored
+    : fallback
+}
+
+function pickCorner(point: { x: number; y: number }): Corner {
+  if (typeof window === 'undefined') {
+    return 'bottom-left'
+  }
+
+  const corners: Record<Corner, { x: number; y: number }> = {
+    'bottom-left': { x: 0, y: window.innerHeight },
+    'bottom-right': { x: window.innerWidth, y: window.innerHeight },
+    'top-left': { x: 0, y: 0 },
+    'top-right': { x: window.innerWidth, y: 0 },
+  }
+
+  let nearest: Corner = 'bottom-left'
+  let nearestDistance = Number.POSITIVE_INFINITY
+
+  for (const [corner, cornerPoint] of Object.entries(corners) as Array<[Corner, { x: number; y: number }]>) {
+    const distance = Math.hypot(point.x - cornerPoint.x, point.y - cornerPoint.y)
+
+    if (distance < nearestDistance) {
+      nearest = corner
+      nearestDistance = distance
+    }
+  }
+
+  return nearest
+}
+
+function pickCornerFromRect(rect: DOMRect): Corner {
+  return pickCorner({
+    x: rect.left + rect.width / 2,
+    y: rect.top + rect.height / 2,
+  })
+}
+
+function clampPosition(value: number, max: number): number {
+  return Math.min(Math.max(value, 0), Math.max(max, 0))
+}
+
+function readCssPixelVariable(name: string, fallback: number): number {
+  if (typeof window === 'undefined') {
+    return fallback
+  }
+
+  const value = window.getComputedStyle(document.documentElement).getPropertyValue(name).trim()
+  const parsed = Number.parseFloat(value)
+
+  return Number.isFinite(parsed) ? parsed : fallback
+}
+
+function resolveCornerPosition(args: {
+  corner: Corner
+  height: number
+  width: number
+}): { x: number; y: number } {
+  if (typeof window === 'undefined') {
+    return { x: 0, y: 0 }
+  }
+
+  const floatingOffset = readCssPixelVariable('--portal-floating-offset', 16)
+  const stickyTop = readCssPixelVariable('--portal-sticky-top', 80)
+  const maxX = window.innerWidth - args.width
+  const maxY = window.innerHeight - args.height
+
+  const left = clampPosition(floatingOffset, maxX)
+  const right = clampPosition(window.innerWidth - args.width - floatingOffset, maxX)
+  const top = clampPosition(stickyTop, maxY)
+  const bottom = clampPosition(window.innerHeight - args.height - floatingOffset, maxY)
+
+  switch (args.corner) {
+    case 'top-left':
+      return { x: left, y: top }
+    case 'top-right':
+      return { x: right, y: top }
+    case 'bottom-right':
+      return { x: right, y: bottom }
+    case 'bottom-left':
+    default:
+      return { x: left, y: bottom }
+  }
+}
+
+function defaultCornerForPath(_pathname: string): Corner {
+  return 'bottom-left'
+}
+
+function DragHandle({ onPointerDown }: { onPointerDown: (event: ReactPointerEvent<HTMLDivElement>) => void }) {
+  return (
+    <motion.div
+      aria-label="Move copilot"
+      className="flex size-8 cursor-grab touch-none items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground active:cursor-grabbing"
+      onPointerDown={onPointerDown}
+      role="button"
+      tabIndex={0}
+      whileTap={{ scale: 0.96 }}
+    >
+      <GripIcon className="size-4" />
+    </motion.div>
+  )
+}
 
 type AssistantUiMessagePart = {
   text?: string
@@ -261,6 +388,10 @@ function Composer() {
 export function PortalCopilot() {
   const pathname = usePathname()
   const { authoringContext, close, focusedSession, isOpen, open } = usePortalCopilot()
+  const dragControls = useDragControls()
+  const panelRef = useRef<HTMLDivElement | null>(null)
+  const [corner, setCorner] = useState<Corner>('bottom-left')
+  const [panelSize, setPanelSize] = useState({ height: 0, width: 0 })
   const [pendingBundle, setPendingBundle] = useState<CopilotBundle | null>(null)
   const [panelsByMessageId, setPanelsByMessageId] = useState<Record<string, CopilotBundle>>({})
 
@@ -317,61 +448,164 @@ export function PortalCopilot() {
     {},
   )
 
+  useEffect(() => {
+    setCorner(readStoredCorner(defaultCornerForPath(pathname)))
+  }, [pathname])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    window.localStorage.setItem(STORAGE_KEY, corner)
+  }, [corner])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    function syncSize() {
+      const rect = panelRef.current?.getBoundingClientRect()
+      if (!rect) {
+        return
+      }
+
+      setPanelSize((current) => {
+        const next = { height: Math.round(rect.height), width: Math.round(rect.width) }
+        return current.height === next.height && current.width === next.width ? current : next
+      })
+    }
+
+    syncSize()
+
+    const observer =
+      typeof ResizeObserver !== 'undefined'
+        ? new ResizeObserver(() => {
+            syncSize()
+          })
+        : null
+
+    if (panelRef.current && observer) {
+      observer.observe(panelRef.current)
+    }
+
+    window.addEventListener('resize', syncSize)
+
+    return () => {
+      observer?.disconnect()
+      window.removeEventListener('resize', syncSize)
+    }
+  }, [isOpen])
+
+  const targetPosition = useMemo(
+    () =>
+      resolveCornerPosition({
+        corner,
+        height: panelSize.height,
+        width: panelSize.width,
+      }),
+    [corner, panelSize.height, panelSize.width],
+  )
+
   return (
     <AssistantRuntimeProvider runtime={runtime}>
-      <button
-        className="fixed bottom-5 right-5 z-40 inline-flex items-center gap-2 rounded-full border bg-primary px-4 py-3 text-sm font-medium text-primary-foreground shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl"
-        onClick={open}
-        type="button"
-      >
-        <LifeBuoyIcon className="size-4" />
-        Copilot
-      </button>
+      <motion.div
+        ref={panelRef}
+        drag
+        dragControls={dragControls}
+        dragListener={false}
+        dragMomentum={false}
+        onDragEnd={() => {
+          const rect = panelRef.current?.getBoundingClientRect()
+          if (!rect) return
 
-      {isOpen ? (
-        <div className="fixed inset-0 z-50 flex items-end justify-end bg-black/20 p-3 backdrop-blur-[2px] sm:p-6">
-          <div className="grid h-[min(46rem,calc(100vh-1.5rem))] w-full max-w-[min(58rem,calc(100vw-1.5rem))] grid-cols-1 overflow-hidden rounded-[2rem] border bg-background shadow-2xl">
-            <header className="flex items-center justify-between gap-3 border-b px-5 py-4">
-              <div>
-                <p className="text-[0.68rem] uppercase tracking-[0.3em] text-muted-foreground">Staff beta</p>
-                <h2 className="mt-1 text-xl font-semibold tracking-tight">Grime Time Copilot</h2>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Internal docs, assigned tasks, stale follow-up, tour launchers, and page-authoring context in one panel.
-                </p>
-              </div>
+          setCorner(pickCornerFromRect(rect))
+        }}
+        className={`fixed left-0 top-0 ${isOpen ? 'z-[96] w-[min(34rem,calc(100vw-1.5rem))]' : 'z-[72] w-auto max-w-[calc(100vw-1.5rem)]'}`}
+        initial={{ opacity: 0, scale: 0.92 }}
+        animate={{ opacity: 1, scale: 1, x: targetPosition.x, y: targetPosition.y }}
+        transition={{
+          opacity: { duration: 0.18, ease: 'easeOut' },
+          scale: { duration: 0.18, ease: 'easeOut' },
+          x: { type: 'spring', stiffness: 380, damping: 32 },
+          y: { type: 'spring', stiffness: 380, damping: 32 },
+        }}
+      >
+        <AnimatePresence mode="wait">
+          {isOpen ? (
+            <motion.div
+              key="open"
+              className="grid h-[min(42rem,calc(100vh-1.5rem))] grid-cols-1 overflow-hidden rounded-[2rem] border bg-background shadow-2xl"
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.98 }}
+              transition={{ duration: 0.16, ease: 'easeOut' }}
+            >
+              <header className="flex items-start justify-between gap-3 border-b px-5 py-4">
+                <div className="flex min-w-0 items-start gap-3">
+                  <DragHandle onPointerDown={(event) => dragControls.start(event)} />
+                  <div>
+                    <p className="text-[0.68rem] uppercase tracking-[0.3em] text-muted-foreground">Staff beta</p>
+                    <h2 className="mt-1 text-xl font-semibold tracking-tight">Grime Time Copilot</h2>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Internal docs, assigned tasks, stale follow-up, tour launchers, and page-authoring context in one panel.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  aria-label="Close employee copilot"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border text-muted-foreground transition hover:bg-accent"
+                  onClick={close}
+                  type="button"
+                >
+                  <XIcon className="size-4" />
+                </button>
+              </header>
+              <ThreadPrimitive.Root className="flex min-h-0 flex-1 flex-col px-4 pb-4 pt-5 sm:px-5">
+                <AuthoringContextSummary authoringContext={activeAuthoringContext} focusedSession={focusedSession} />
+                <ThreadPrimitive.Viewport className="min-h-0 flex-1 overflow-y-auto px-1">
+                  <ThreadPrimitive.Empty>
+                    <EmptyState />
+                  </ThreadPrimitive.Empty>
+                  <ThreadPrimitive.Messages>
+                    {() => (
+                      <CopilotMessage
+                        panelsByMessageId={panelsByMessageId}
+                        pendingBundle={pendingBundle}
+                        setPanelsByMessageId={setPanelsByMessageId}
+                        setPendingBundle={setPendingBundle}
+                      />
+                    )}
+                  </ThreadPrimitive.Messages>
+                </ThreadPrimitive.Viewport>
+                <div className="pt-4">
+                  <Composer />
+                </div>
+              </ThreadPrimitive.Root>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="closed"
+              className="flex items-center gap-2 rounded-full border bg-primary px-3 py-2 text-primary-foreground shadow-lg"
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.98 }}
+              transition={{ duration: 0.16, ease: 'easeOut' }}
+            >
+              <DragHandle onPointerDown={(event) => dragControls.start(event)} />
               <button
-                aria-label="Close employee copilot"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border text-muted-foreground transition hover:bg-accent"
-                onClick={close}
+                className="inline-flex items-center gap-2 rounded-full px-1 text-sm font-medium"
+                onClick={open}
                 type="button"
               >
-                <XIcon className="size-4" />
+                <LifeBuoyIcon className="size-4" />
+                Copilot
               </button>
-            </header>
-            <ThreadPrimitive.Root className="flex min-h-0 flex-1 flex-col px-4 pb-4 pt-5 sm:px-5">
-              <AuthoringContextSummary authoringContext={activeAuthoringContext} focusedSession={focusedSession} />
-              <ThreadPrimitive.Viewport className="min-h-0 flex-1 overflow-y-auto px-1">
-                <ThreadPrimitive.Empty>
-                  <EmptyState />
-                </ThreadPrimitive.Empty>
-                <ThreadPrimitive.Messages>
-                  {() => (
-                    <CopilotMessage
-                      panelsByMessageId={panelsByMessageId}
-                      pendingBundle={pendingBundle}
-                      setPanelsByMessageId={setPanelsByMessageId}
-                      setPendingBundle={setPendingBundle}
-                    />
-                  )}
-                </ThreadPrimitive.Messages>
-              </ThreadPrimitive.Viewport>
-              <div className="pt-4">
-                <Composer />
-              </div>
-            </ThreadPrimitive.Root>
-          </div>
-        </div>
-      ) : null}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
     </AssistantRuntimeProvider>
   )
 }

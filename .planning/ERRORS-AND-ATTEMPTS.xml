@@ -263,4 +263,17 @@
       <command>cmd /c npm.cmd run build</command>
     </verification>
   </attempt>
+  <attempt id="18-05-a1" phase="18" task="18-05" status="resolved">
+    <title>Page composer launch regressed through an admin-auth mismatch and a client-side copilot sync loop</title>
+    <symptom>Operators could see the page composer button on the live site, but clicking it in deployed or local admin contexts failed with `Unable to load the page composer.` After the route auth was corrected, opening the composer still tripped a `Maximum update depth exceeded` client error while syncing authoring context into the site copilot. Localhost testing also exposed that the quick admin bypass worked for server-rendered auth but still left request routes like `/api/internal/impersonation/users` returning `401`.</symptom>
+    <cause>The frontend shell exposed composer access to real admins, but `/api/internal/page-composer` only admitted content-authoring users. Separately, the composer was writing fresh authoring-context objects into copilot state on every render, which created a React update loop once the drawer mounted. The localhost bypass had been added only to `getCurrentAuthContext`, not to request-route auth, so admin tool APIs still behaved as unauthenticated during dev.</cause>
+    <attempted-fix>Allow real admins through the page-composer route even without content-authoring membership, add stable equality gating to copilot authoring-context writes, move the page-composer launcher to a right-edge docked surface, convert the site copilot to a draggable floating panel like the admin toolbar, and centralize the localhost-only admin bypass so both server-component auth and request-route auth share the same fallback user resolution.</attempted-fix>
+    <verification>
+      <command>cmd /c npm.cmd exec eslint src/lib/auth/localDevBypass.ts src/lib/auth/getAuthContext.ts src/lib/auth/requirePayloadUser.ts src/components/copilot/PortalCopilotContext.tsx src/components/copilot/PortalCopilot.tsx src/components/admin-impersonation/ContentAuthoringToolbar.tsx src/app/api/internal/page-composer/route.ts tests/int/app/page-composer-route.int.spec.ts</command>
+      <command>cmd /c npm.cmd exec vitest run tests/int/app/page-composer-route.int.spec.ts</command>
+      <command>cmd /c npm.cmd exec -- tsc --noEmit</command>
+      <command>cmd /c npm.cmd run build</command>
+      <command>browser check: localhost:3115 home page shows draggable copilot, page composer opens as right drawer, and `/api/internal/impersonation/users` returns 200 under localhost bypass</command>
+    </verification>
+  </attempt>
 </errors-and-attempts>

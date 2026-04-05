@@ -5,5 +5,5 @@
   <current-phase>18</current-phase>
   <current-plan>18-05</current-plan>
   <status>in-progress</status>
-  <next-action>Phase `18` is still in progress on `18-05`. The shared-section authoring work from `18-01` through `18-04` remains complete, and a follow-up corrective migration now patches the previously incomplete `composer_reusable_*` schema across both live page block tables and `_pages_v` version block tables so deployed runtime draft queries can read shared-section metadata safely again. With the production schema regression closed, resume `18-05`: lightweight restore flows for shared-section versions and page versions without expanding into approvals, scheduling, or diff tooling.</next-action>
+  <next-action>Phase `18` is still in progress on `18-05`. The shared-section authoring work from `18-01` through `18-04` remains complete, the corrective reusable-metadata migration is in place for live and `_pages_v` tables, and the page-authoring shell hotfix now restores a usable right-edge composer launcher plus draggable site copilot with a shared localhost-only admin auth bypass for testing. Resume `18-05`: lightweight restore flows for shared-section versions and page versions without expanding into approvals, scheduling, or diff tooling.</next-action>
 </state>

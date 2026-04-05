@@ -4,6 +4,7 @@ import { getPayload } from 'payload'
 
 import type { User } from '@/payload-types'
 import { getImpersonationUserIdFromCookieHeader } from '@/lib/auth/impersonation'
+import { loadLocalDevBypassUser } from '@/lib/auth/localDevBypass'
 import { hasPayloadAdminAccess } from '@/lib/auth/organizationAccess'
 import { resolveAppAuthActor } from '@/lib/auth/resolveAppAuthActor'
 
@@ -58,7 +59,14 @@ export async function requireRequestAuth(request: Request): Promise<null | Paylo
     payload,
     payloadHeaderCandidates: [request.headers, fallbackHeaders],
   })
-  const realUser = resolvedAuth.realUser
+  const requestHeaders = request.headers
+  const bypassUser = resolvedAuth.realUser
+    ? null
+    : await loadLocalDevBypassUser({
+        payload: resolvedAuth.payload,
+        requestHeaders,
+      })
+  const realUser = resolvedAuth.realUser ?? bypassUser
   const isRealAdmin = realUser
     ? await hasPayloadAdminAccess(resolvedAuth.payload, realUser)
     : false

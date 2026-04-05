@@ -14,7 +14,11 @@ import type { Page } from '@/payload-types'
 async function requireStaffPageComposerAuth() {
   const auth = await getCurrentAuthContext()
 
-  if (!auth.realUser || !(await hasContentAuthoringAccess(auth.payload, auth.realUser))) {
+  if (!auth.realUser) {
+    return null
+  }
+
+  if (!auth.isRealAdmin && !(await hasContentAuthoringAccess(auth.payload, auth.realUser))) {
     return null
   }
 

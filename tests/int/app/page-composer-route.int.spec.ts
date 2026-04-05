@@ -24,6 +24,7 @@ describe('internal page composer route', () => {
 
   it('rejects users without content authoring access', async () => {
     getCurrentAuthContext.mockResolvedValue({
+      isRealAdmin: false,
       payload: {},
       realUser: { email: 'viewer@example.com', id: 31, roles: ['customer'] },
     })
@@ -67,6 +68,7 @@ describe('internal page composer route', () => {
     }
 
     getCurrentAuthContext.mockResolvedValue({
+      isRealAdmin: false,
       payload,
       realUser: { email: 'designer@example.com', id: 32, roles: ['customer'] },
     })
@@ -97,6 +99,61 @@ describe('internal page composer route', () => {
         slug: 'spring-refresh',
         title: 'Spring Refresh',
         visibility: 'private',
+      },
+    })
+  })
+
+  it('allows a real admin to load composer data without content authoring membership', async () => {
+    const payload = {
+      find: vi.fn().mockResolvedValue({
+        docs: [
+          {
+            _status: 'published',
+            id: 7,
+            pagePath: '/',
+            publishedAt: '2026-04-03T12:00:00.000Z',
+            slug: 'home',
+            title: 'Home',
+            updatedAt: '2026-04-03T12:00:00.000Z',
+            visibility: 'public',
+          },
+        ],
+      }),
+      findByID: vi.fn().mockResolvedValue({
+        _status: 'published',
+        hero: { type: 'highImpact' },
+        id: 7,
+        layout: [],
+        publishedAt: '2026-04-03T12:00:00.000Z',
+        slug: 'home',
+        title: 'Home',
+        updatedAt: '2026-04-03T12:00:00.000Z',
+        visibility: 'public',
+      }),
+    }
+
+    getCurrentAuthContext.mockResolvedValue({
+      isRealAdmin: true,
+      payload,
+      realUser: { email: 'admin@example.com', id: 1, roles: ['admin'] },
+    })
+    hasContentAuthoringAccess.mockResolvedValue(false)
+
+    const { GET } = await import('@/app/api/internal/page-composer/route')
+    const response = await GET(
+      new Request('http://localhost:5465/api/internal/page-composer?pageId=7'),
+    )
+
+    expect(response.status).toBe(200)
+    expect(hasContentAuthoringAccess).not.toHaveBeenCalled()
+    await expect(response.json()).resolves.toMatchObject({
+      ok: true,
+      page: {
+        id: 7,
+        pagePath: '/',
+        slug: 'home',
+        title: 'Home',
+        visibility: 'public',
       },
     })
   })
@@ -168,6 +225,7 @@ describe('internal page composer route', () => {
     }
 
     getCurrentAuthContext.mockResolvedValue({
+      isRealAdmin: false,
       payload,
       realUser: { email: 'designer@example.com', id: 32, roles: ['customer'] },
     })

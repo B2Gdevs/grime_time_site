@@ -3,6 +3,7 @@ import { cookies, headers } from 'next/headers'
 import { getPayload } from 'payload'
 
 import type { User } from '@/payload-types'
+import { loadLocalDevBypassUser } from '@/lib/auth/localDevBypass'
 import { hasPayloadAdminAccess } from '@/lib/auth/organizationAccess'
 import { resolveAppAuthActor } from '@/lib/auth/resolveAppAuthActor'
 import { getImpersonationUserIdFromCookies } from './impersonation'
@@ -52,7 +53,13 @@ export async function getCurrentAuthContext(): Promise<PayloadAuthContext> {
     payload,
     payloadHeaderCandidates: [requestHeaders],
   })
-  const realUser = resolvedAuth.realUser
+  const bypassUser = resolvedAuth.realUser
+    ? null
+    : await loadLocalDevBypassUser({
+        payload: resolvedAuth.payload,
+        requestHeaders,
+      })
+  const realUser = resolvedAuth.realUser ?? bypassUser
   const isRealAdmin = realUser
     ? await hasPayloadAdminAccess(resolvedAuth.payload, realUser)
     : false
