@@ -276,4 +276,18 @@
       <command>browser check: localhost:3115 home page shows draggable copilot, page composer opens as right drawer, and `/api/internal/impersonation/users` returns 200 under localhost bypass</command>
     </verification>
   </attempt>
+  <attempt id="18-05-a2" phase="18" task="18-05" status="resolved">
+    <title>Composer rail still mounted in the wrong layer after the first launcher hotfix</title>
+    <symptom>The public-site composer could be launched again, but it still rendered as a global fixed overlay on top of the impersonation toolbar instead of docking into the frontend shell. Operators also reported that the site copilot was missing during authoring on the public site.</symptom>
+    <cause>`PageComposerDrawer` still owned its own `fixed` viewport panel and trigger button, so the composer was instantiated from floating toolbars instead of from the app shell. Separately, frontend copilot visibility was still gated to real admins, which hid it from content-authoring users even when the authoring tools were available.</cause>
+    <attempted-fix>Introduce a shared composer UI context, convert the toolbars into launcher-only surfaces, mount a single composer rail inside `MarketingShell`, offset the admin toolbar when the rail is open, and broaden frontend copilot visibility to content-authoring users when the AI assistant feature flag is enabled.</attempted-fix>
+    <verification>
+      <command>cmd /c npm.cmd exec eslint src/components/admin-impersonation/PageComposerContext.tsx src/components/admin-impersonation/PageComposerDrawer.tsx src/components/admin-impersonation/AdminImpersonationToolbar.tsx src/components/admin-impersonation/ContentAuthoringToolbar.tsx src/components/frontend/MarketingShell.tsx "src/app/(frontend)/layout.tsx" tests/int/components/admin-impersonation/page-composer-shell.int.spec.tsx</command>
+      <command>cmd /c npm.cmd exec vitest run tests/int/components/admin-impersonation/page-composer-shell.int.spec.tsx tests/int/app/page-composer-route.int.spec.ts</command>
+      <command>powershell -NoProfile -Command "if (Test-Path '.next') { Remove-Item -Recurse -Force '.next' }"</command>
+      <command>cmd /c npm.cmd run build</command>
+      <command>cmd /c npm.cmd exec -- tsc --noEmit</command>
+      <command>browser check: localhost:3116 home page shows a right-rail `complementary` composer inside the shell and a visible draggable copilot launcher</command>
+    </verification>
+  </attempt>
 </errors-and-attempts>

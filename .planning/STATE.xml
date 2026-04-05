@@ -5,5 +5,5 @@
   <current-phase>18</current-phase>
   <current-plan>18-05</current-plan>
   <status>in-progress</status>
-  <next-action>Phase `18` is still in progress on `18-05`. The shared-section authoring work from `18-01` through `18-04` remains complete, the corrective reusable-metadata migration is in place for live and `_pages_v` tables, and the page-authoring shell hotfix now restores a usable right-edge composer launcher plus draggable site copilot with a shared localhost-only admin auth bypass for testing. Resume `18-05`: lightweight restore flows for shared-section versions and page versions without expanding into approvals, scheduling, or diff tooling.</next-action>
+  <next-action>Phase `18` is still in progress on `18-05`. The shared-section authoring work from `18-01` through `18-04` remains complete, the corrective reusable-metadata migration is in place for live and `_pages_v` tables, and the frontend authoring shell has now been corrected again so the page composer mounts as a shell-owned right rail instead of a floating viewport overlay while the site copilot is visible to content-authoring users when enabled. Resume `18-05`: lightweight restore flows for shared-section versions and page versions without expanding into approvals, scheduling, or diff tooling.</next-action>
 </state>

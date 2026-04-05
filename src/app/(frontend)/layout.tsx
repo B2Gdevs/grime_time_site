@@ -4,6 +4,7 @@ import React from 'react'
 import { AdminBar } from '@/components/AdminBar'
 import { AdminImpersonationToolbarShell } from '@/components/admin-impersonation/AdminImpersonationToolbarShell'
 import { ContentAuthoringToolbar } from '@/components/admin-impersonation/ContentAuthoringToolbar'
+import { PageComposerProvider } from '@/components/admin-impersonation/PageComposerContext'
 import { VercelAnalytics } from '@/components/analytics/VercelAnalytics'
 import { PageMediaDevtoolsProvider } from '@/components/admin-impersonation/PageMediaDevtoolsContext'
 import { PortalCopilot } from '@/components/copilot/PortalCopilot'
@@ -27,8 +28,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const auth = await getCurrentAuthContext()
   const canUseContentAuthoring =
     auth.realUser ? await hasContentAuthoringAccess(auth.payload, auth.realUser) : false
+  const pageComposerEnabled = auth.isRealAdmin || canUseContentAuthoring
   const canUseLocalPageMediaDevtools = localPageMediaDevtoolsEnabled && auth.isRealAdmin
-  const aiCopilotEnabled = auth.isRealAdmin && isAiOpsAssistantEnabled()
+  const aiCopilotEnabled = pageComposerEnabled && isAiOpsAssistantEnabled()
   const [headerData, footerData] = await Promise.all([
     getCachedGlobal('header', 1)(),
     getCachedGlobal('footer', 1)(),
@@ -36,7 +38,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const primaryLinks = buildMarketingNavLinks((headerData as Header | null)?.navItems)
   const footerLinks = buildMarketingNavLinks((footerData as Footer | null)?.navItems)
 
-  const shell = (
+  const shellContent = (
     <>
       <PageMediaDevtoolsProvider enabled={canUseLocalPageMediaDevtools}>
         <SiteTourProvider>
@@ -50,13 +52,23 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           ) : canUseContentAuthoring ? (
             <ContentAuthoringToolbar />
           ) : null}
-          <MarketingShell footerLinks={footerLinks} primaryLinks={primaryLinks}>
+          <MarketingShell
+            footerLinks={footerLinks}
+            pageComposerEnabled={pageComposerEnabled}
+            primaryLinks={primaryLinks}
+          >
             {children}
           </MarketingShell>
         </SiteTourProvider>
       </PageMediaDevtoolsProvider>
       <VercelAnalytics />
     </>
+  )
+
+  const shell = pageComposerEnabled ? (
+    <PageComposerProvider>{shellContent}</PageComposerProvider>
+  ) : (
+    shellContent
   )
 
   if (!aiCopilotEnabled) {

@@ -919,4 +919,17 @@
       <file path="src/lib/auth/localDevBypass.ts" />
     </references>
   </decision>
+  <decision id="D-content-021">
+    <title>Frontend composer must be shell-owned, and site copilot should be visible to content-authoring users when the feature flag is on</title>
+    <summary>The visual composer cannot mount as a toolbar-owned viewport overlay. The stable interaction model is a single shell-owned right rail inside the frontend layout, with toolbar and right-edge launchers only toggling shared composer state. On the public site, the copilot should render for content-authoring users as well as real admins when the AI assistant flag is enabled so authoring and copilot testing use the same surface.</summary>
+    <impact>This prevents the composer from overlapping the impersonation toolbar, keeps the panel aligned to the actual app shell, and removes ambiguity about where the editor lives in the layout. It also avoids the “copilot disappeared” failure mode for non-admin authoring users, while preserving the draggable panel interaction once the copilot is visible.</impact>
+    <references>
+      <file path="src/components/admin-impersonation/PageComposerContext.tsx" />
+      <file path="src/components/admin-impersonation/PageComposerDrawer.tsx" />
+      <file path="src/components/admin-impersonation/AdminImpersonationToolbar.tsx" />
+      <file path="src/components/admin-impersonation/ContentAuthoringToolbar.tsx" />
+      <file path="src/components/frontend/MarketingShell.tsx" />
+      <file path="src/app/(frontend)/layout.tsx" />
+    </references>
+  </decision>
 </decisions>

@@ -30,6 +30,7 @@ import {
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { usePageComposerOptional } from '@/components/admin-impersonation/PageComposerContext'
 import { PageComposerPreview, type PageComposerPreviewMode } from '@/components/admin-impersonation/PageComposerPreview'
 import { usePortalCopilotOptional } from '@/components/copilot/PortalCopilotContext'
 import { Input } from '@/components/ui/input'
@@ -251,9 +252,39 @@ function SortableSectionRow({
   )
 }
 
+export function PageComposerLauncherButton({
+  className,
+  label = 'Page composer',
+  variant = 'ghost',
+}: {
+  className?: string
+  label?: string
+  variant?: 'default' | 'ghost' | 'outline' | 'secondary'
+}) {
+  const composer = usePageComposerOptional()
+
+  if (!composer) {
+    return null
+  }
+
+  return (
+    <Button
+      className={className}
+      onClick={composer.isOpen ? composer.close : composer.open}
+      size="sm"
+      type="button"
+      variant={variant}
+    >
+      <FilePenLineIcon className="h-4 w-4" />
+      {composer.isOpen ? 'Close composer' : label}
+    </Button>
+  )
+}
+
 export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
   const pathname = usePathname()
   const router = useRouter()
+  const composer = usePageComposerOptional()
   const copilot = usePortalCopilotOptional()
   const setCopilotAuthoringContext = copilot?.setAuthoringContext
   const sensors = useSensors(
@@ -276,7 +307,6 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
   const [mediaStatus, setMediaStatus] = useState<null | string>(null)
   const [selectedMediaPath, setSelectedMediaPath] = useState<null | string>(null)
   const [submittingMediaAction, setSubmittingMediaAction] = useState<null | MediaAction>(null)
-  const [open, setOpen] = useState(false)
   const [previewMode, setPreviewMode] = useState<PageComposerPreviewMode>('desktop')
   const [savingAction, setSavingAction] = useState<null | SavingAction>(null)
   const [savedPage, setSavedPage] = useState<null | PageComposerDocument>(null)
@@ -291,6 +321,7 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
   const [dirty, setDirty] = useState(false)
   const mediaUploadInputRef = useRef<HTMLInputElement | null>(null)
   const mediaPromptId = useId()
+  const open = composer?.isOpen ?? false
 
   const sharedSectionsById = useMemo(
     () => new Map(sharedSections.map((item) => [item.id, item])),
@@ -605,7 +636,7 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
   }
 
   function openSharedSectionSourceEditor(sharedSectionId: number) {
-    setOpen(false)
+    composer?.close()
     router.push(`/shared-sections/${sharedSectionId}/edit`)
   }
 
@@ -829,34 +860,18 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
     }
   }
 
-  if (!enabled) return null
+  if (!enabled || !composer) return null
 
   return (
-    <>
-      <Button onClick={() => setOpen(true)} size="sm" type="button" variant="ghost">
-        <FilePenLineIcon className="h-4 w-4" />
-        Page composer
-      </Button>
-
-      <AnimatePresence>
-        {open ? (
-          <>
-            <motion.button
-              aria-label="Close page composer"
-              className="fixed inset-0 z-[88] bg-black/55"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setOpen(false)}
-              type="button"
-            />
-            <motion.aside
-              className="fixed inset-y-0 right-0 z-[89] flex w-[min(100vw,92rem)] flex-col border-l border-border/70 bg-background/96 shadow-2xl backdrop-blur relative"
-              initial={{ opacity: 0, x: 64 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 64 }}
-              transition={{ duration: 0.18, ease: 'easeOut' }}
-            >
+    <AnimatePresence initial={false}>
+      {open ? (
+        <motion.aside
+          className="page-composer-rail relative hidden h-[100dvh] min-h-screen w-[min(46rem,calc(100vw-4rem))] shrink-0 flex-col border-l border-border/70 bg-background/96 shadow-2xl backdrop-blur lg:flex"
+          initial={{ opacity: 0, width: 0, x: 40 }}
+          animate={{ opacity: 1, width: 'min(46rem, calc(100vw - 4rem))', x: 0 }}
+          exit={{ opacity: 0, width: 0, x: 40 }}
+          transition={{ duration: 0.18, ease: 'easeOut' }}
+        >
               <div className="flex items-start justify-between gap-4 border-b border-border/70 px-5 py-4">
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
@@ -983,7 +998,7 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
                     </div>
                   </div>
                 </div>
-                <Button aria-label="Dismiss page composer" onClick={() => setOpen(false)} size="icon" type="button" variant="ghost">
+                <Button aria-label="Dismiss page composer" onClick={composer.close} size="icon" type="button" variant="ghost">
                   <XIcon className="h-4 w-4" />
                 </Button>
               </div>
@@ -1868,10 +1883,8 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
                   </div>
                 </div>
               ) : null}
-            </motion.aside>
-          </>
-        ) : null}
-      </AnimatePresence>
-    </>
+        </motion.aside>
+      ) : null}
+    </AnimatePresence>
   )
 }

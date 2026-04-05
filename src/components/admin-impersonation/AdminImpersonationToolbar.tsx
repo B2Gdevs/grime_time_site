@@ -23,7 +23,8 @@ import {
 } from 'lucide-react'
 
 import { DemoModeToggle } from '@/components/demo/DemoModeToggle'
-import { PageComposerDrawer } from '@/components/admin-impersonation/PageComposerDrawer'
+import { PageComposerLauncherButton } from '@/components/admin-impersonation/PageComposerDrawer'
+import { usePageComposerOptional } from '@/components/admin-impersonation/PageComposerContext'
 import { PageMediaDevtoolsDrawer } from '@/components/admin-impersonation/PageMediaDevtoolsDrawer'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -193,6 +194,7 @@ export function AdminImpersonationToolbar({
 }) {
   const pathname = usePathname()
   const router = useRouter()
+  const composer = usePageComposerOptional()
   const dragControls = useDragControls()
   const toolbarRef = useRef<HTMLDivElement | null>(null)
   const [corner, setCorner] = useState<Corner>('top-right')
@@ -316,15 +318,28 @@ export function AdminImpersonationToolbar({
     [],
   )
 
-  const targetPosition = useMemo(
-    () =>
-      resolveCornerPosition({
-        corner,
-        height: toolbarSize.height,
-        width: toolbarSize.width,
-      }),
-    [corner, toolbarSize.height, toolbarSize.width],
-  )
+  const targetPosition = useMemo(() => {
+    const next = resolveCornerPosition({
+      corner,
+      height: toolbarSize.height,
+      width: toolbarSize.width,
+    })
+
+    if (
+      typeof window === 'undefined' ||
+      !composer?.isOpen ||
+      corner === 'top-left' ||
+      corner === 'bottom-left'
+    ) {
+      return next
+    }
+
+    const railWidth = readCssPixelVariable('--page-composer-rail-width', 736)
+    return {
+      ...next,
+      x: clampPosition(next.x - railWidth - 16, window.innerWidth - toolbarSize.width),
+    }
+  }, [composer?.isOpen, corner, toolbarSize.height, toolbarSize.width])
 
   async function startImpersonation(userId: number | string) {
     setSubmitting(true)
@@ -497,7 +512,7 @@ export function AdminImpersonationToolbar({
                 )}
               </Button>
             ))}
-            <PageComposerDrawer enabled />
+            <PageComposerLauncherButton />
             <PageMediaDevtoolsDrawer enabled={localPageMediaEnabled} />
             <DemoModeToggle />
           </div>

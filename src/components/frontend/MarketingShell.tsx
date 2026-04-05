@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 
 import { ClerkCustomerAccessPanel } from '@/components/auth/ClerkCustomerAccessPanel'
+import { PageComposerDrawer } from '@/components/admin-impersonation/PageComposerDrawer'
 import { Logo } from '@/components/Logo/Logo'
 import {
   Sidebar,
@@ -41,6 +42,7 @@ import type { MarketingNavLink } from '@/lib/marketing/public-shell'
 type MarketingShellProps = {
   children: React.ReactNode
   footerLinks: MarketingNavLink[]
+  pageComposerEnabled?: boolean
   primaryLinks: MarketingNavLink[]
 }
 
@@ -270,7 +272,12 @@ function MarketingSidebar({
   )
 }
 
-export function MarketingShell({ children, footerLinks, primaryLinks }: MarketingShellProps) {
+export function MarketingShell({
+  children,
+  footerLinks,
+  pageComposerEnabled = false,
+  primaryLinks,
+}: MarketingShellProps) {
   const pathname = usePathname()
 
   return (
@@ -278,6 +285,7 @@ export function MarketingShell({ children, footerLinks, primaryLinks }: Marketin
       defaultOpen
       style={
         {
+          '--page-composer-rail-width': '46rem',
           '--sidebar-width': '14.5rem',
           '--sidebar-width-icon': '3.25rem',
         } as CSSProperties
@@ -296,9 +304,12 @@ export function MarketingShell({ children, footerLinks, primaryLinks }: Marketin
           </div>
         </div>
 
-        <main className="marketing-shell-main min-h-screen bg-[radial-gradient(circle_at_top,rgba(142,219,62,0.08),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.96),rgba(247,250,252,0.92))] dark:bg-[radial-gradient(circle_at_top,rgba(142,219,62,0.14),transparent_26%),linear-gradient(180deg,rgba(3,10,17,0.98),rgba(7,19,33,0.96))]">
-          {children}
-        </main>
+        <div className="flex min-h-screen min-w-0">
+          <main className="marketing-shell-main min-h-screen min-w-0 flex-1 bg-[radial-gradient(circle_at_top,rgba(142,219,62,0.08),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.96),rgba(247,250,252,0.92))] dark:bg-[radial-gradient(circle_at_top,rgba(142,219,62,0.14),transparent_26%),linear-gradient(180deg,rgba(3,10,17,0.98),rgba(7,19,33,0.96))]">
+            {children}
+          </main>
+          <PageComposerDrawer enabled={pageComposerEnabled} />
+        </div>
       </SidebarInset>
     </SidebarProvider>
   )
