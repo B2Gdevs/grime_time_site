@@ -889,12 +889,13 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
     <AnimatePresence initial={false}>
       {open ? (
         <motion.aside
-          className="page-composer-rail relative hidden h-[100dvh] min-h-screen w-[min(46rem,calc(100vw-4rem))] shrink-0 flex-col border-l border-border/70 bg-background/96 shadow-2xl backdrop-blur lg:flex"
-          initial={{ opacity: 0, width: 0, x: 40 }}
-          animate={{ opacity: 1, width: 'min(46rem, calc(100vw - 4rem))', x: 0 }}
-          exit={{ opacity: 0, width: 0, x: 40 }}
+          className="page-composer-rail relative hidden min-h-0 w-full min-w-0 flex-col overflow-hidden border-l border-border/70 bg-background/96 shadow-2xl backdrop-blur xl:sticky xl:top-0 xl:flex xl:h-[100dvh] xl:self-start"
+          initial={{ opacity: 0, x: 40 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: 40 }}
           transition={{ duration: 0.18, ease: 'easeOut' }}
         >
+            <div className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] overflow-hidden">
               <div className="flex items-start justify-between gap-4 border-b border-border/70 px-5 py-4">
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
@@ -1026,14 +1027,14 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
                 </Button>
               </div>
 
-              <div className="grid min-h-0 flex-1 grid-rows-[auto_minmax(0,1fr)]">
+              <div className="grid min-h-0 grid-rows-[auto_minmax(0,1fr)] overflow-hidden">
                 <div className="border-b border-border/70 px-5 py-4">
                   <div className="rounded-2xl border border-border/70 bg-card/50 px-4 py-3 text-sm text-muted-foreground">
                     The live page is the canvas. Click a section on the page to select it, then use this rail to edit structure, content, media, and publish state.
                   </div>
                 </div>
 
-                <Tabs className="grid min-h-0 grid-rows-[auto_minmax(0,1fr)_auto]" onValueChange={(value) => setActiveTab(value as ComposerTab)} value={activeTab}>
+                <Tabs className="grid min-h-0 grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden" onValueChange={(value) => setActiveTab(value as ComposerTab)} value={activeTab}>
                   <div className="border-b border-border/70 px-5 py-3">
                   <TabsList className="grid h-auto w-full grid-cols-4 gap-1 rounded-xl p-1">
                     <TabsTrigger value="structure">Structure</TabsTrigger>
@@ -1043,7 +1044,7 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
                   </TabsList>
                   </div>
 
-                  <TabsContent className="mt-0 min-h-0 overflow-y-auto px-5 py-4" value="structure">
+                  <TabsContent className="portal-scroll mt-0 min-h-0 px-5 py-4" value="structure">
                   {loading ? (
                     <div className="rounded-2xl border border-border/70 bg-card/50 px-4 py-6 text-sm text-muted-foreground">
                       Loading page structure...
@@ -1098,7 +1099,7 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
                   )}
                   </TabsContent>
 
-                <TabsContent className="mt-0 min-h-0 overflow-y-auto px-5 py-4" value="content">
+                <TabsContent className="portal-scroll mt-0 min-h-0 px-5 py-4" value="content">
                   {loading ? (
                     <div className="rounded-2xl border border-border/70 bg-card/50 px-4 py-6 text-sm text-muted-foreground">
                       Loading section editor...
@@ -1311,7 +1312,7 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
                   )}
                 </TabsContent>
 
-                <TabsContent className="mt-0 min-h-0 overflow-y-auto px-5 py-4" value="media">
+                <TabsContent className="portal-scroll mt-0 min-h-0 px-5 py-4" value="media">
                   {loading ? (
                     <div className="rounded-2xl border border-border/70 bg-card/50 px-4 py-6 text-sm text-muted-foreground">
                       Loading section media...
@@ -1597,7 +1598,7 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
                   )}
                 </TabsContent>
 
-                <TabsContent className="mt-0 min-h-0 overflow-y-auto px-5 py-4" value="publish">
+                <TabsContent className="portal-scroll mt-0 min-h-0 px-5 py-4" value="publish">
                   {loading ? (
                     <div className="rounded-2xl border border-border/70 bg-card/50 px-4 py-6 text-sm text-muted-foreground">
                       Loading publish controls...
@@ -1719,6 +1720,7 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
                 </div>
               </Tabs>
               </div>
+            </div>
 
               {isBlockLibraryOpen ? (
                 <div className="absolute inset-0 z-[130] bg-background/98 backdrop-blur-sm">

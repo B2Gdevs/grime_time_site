@@ -303,4 +303,16 @@
       <command>browser check: localhost:3117 home page shows `Live canvas` controls on the real page, while the composer rail only shows structure/content/media/publish controls</command>
     </verification>
   </attempt>
+  <attempt id="18-05-a4" phase="18" task="18-05" status="resolved">
+    <title>Composer rail lived in page flow, drifted on scroll, and squeezed the canvas</title>
+    <symptom>After removing the mini preview, the composer still behaved like a normal flex child. On long pages the rail scrolled away with the document, the tab content clipped despite available vertical space, and the canvas width collapsed too aggressively because the rail width was oversized and uncontrolled.</symptom>
+    <cause>The shell still treated the composer as an in-flow sidebar instead of a viewport-height authoring rail. Without a proper grid contract, sticky positioning, and a single internal scroll region, the page and composer competed for height and width.</cause>
+    <attempted-fix>Move the frontend authoring shell to an open-state grid with a bounded composer width, convert the rail to a viewport-height sticky column, and push scrolling into the tab bodies using the existing portal scroll convention.</attempted-fix>
+    <verification>
+      <command>cmd /c npm.cmd exec eslint src/components/frontend/MarketingShell.tsx src/components/admin-impersonation/PageComposerDrawer.tsx tests/int/components/admin-impersonation/page-composer-shell.int.spec.tsx</command>
+      <command>cmd /c npm.cmd exec vitest run tests/int/components/admin-impersonation/page-composer-shell.int.spec.tsx tests/int/components/admin-impersonation/page-composer-canvas.int.spec.tsx tests/int/app/page-composer-route.int.spec.ts</command>
+      <command>cmd /c npm.cmd run build</command>
+      <command>cmd /c npm.cmd exec -- tsc --noEmit</command>
+    </verification>
+  </attempt>
 </errors-and-attempts>

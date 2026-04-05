@@ -5,6 +5,6 @@
   <current-phase>18</current-phase>
   <current-plan>18-05</current-plan>
   <status>in-progress</status>
-  <next-action>Phase `18` is still in progress on `18-05`. The shared-section authoring work from `18-01` through `18-04` remains complete, the corrective reusable-metadata migration is in place for live and `_pages_v` tables, the composer mounts as a shell-owned right rail, and the live frontend page now acts as the authoring canvas with section-selection chrome and canvas-width controls instead of a duplicated drawer preview. Resume `18-05`: lightweight restore flows for shared-section versions and page versions without expanding into approvals, scheduling, or diff tooling.</next-action>
+  <next-action>Phase `18` is still in progress on `18-05`. The shared-section authoring work from `18-01` through `18-04` remains complete, the corrective reusable-metadata migration is in place for live and `_pages_v` tables, the live frontend page acts as the authoring canvas, and the composer now uses a bounded viewport-height shell rail with internal tab scrolling instead of an oversized in-flow sidebar. Resume `18-05`: lightweight restore flows for shared-section versions and page versions without expanding into approvals, scheduling, or diff tooling.</next-action>
   <sink-compiled sink="apps/portfolio/content/docs/grime-time/planning/" at="2026-04-05T16:30:16.636Z" />
 </state>

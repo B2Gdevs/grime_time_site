@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 
 import { ClerkCustomerAccessPanel } from '@/components/auth/ClerkCustomerAccessPanel'
+import { usePageComposerOptional } from '@/components/admin-impersonation/PageComposerContext'
 import { PageComposerDrawer } from '@/components/admin-impersonation/PageComposerDrawer'
 import { Logo } from '@/components/Logo/Logo'
 import {
@@ -279,13 +280,15 @@ export function MarketingShell({
   primaryLinks,
 }: MarketingShellProps) {
   const pathname = usePathname()
+  const composer = usePageComposerOptional()
+  const composerOpen = Boolean(pageComposerEnabled && composer?.isOpen)
 
   return (
     <SidebarProvider
       defaultOpen
       style={
         {
-          '--page-composer-rail-width': '46rem',
+          '--page-composer-rail-width': '28rem',
           '--sidebar-width': '14.5rem',
           '--sidebar-width-icon': '3.25rem',
         } as CSSProperties
@@ -304,8 +307,15 @@ export function MarketingShell({
           </div>
         </div>
 
-        <div className="flex min-h-screen min-w-0">
-          <main className="marketing-shell-main min-h-screen min-w-0 flex-1 bg-[radial-gradient(circle_at_top,rgba(142,219,62,0.08),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.96),rgba(247,250,252,0.92))] dark:bg-[radial-gradient(circle_at_top,rgba(142,219,62,0.14),transparent_26%),linear-gradient(180deg,rgba(3,10,17,0.98),rgba(7,19,33,0.96))]">
+        <div
+          className={cn(
+            'min-h-screen min-w-0',
+            composerOpen
+              ? 'xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(24rem,var(--page-composer-rail-width))] xl:items-start'
+              : 'flex',
+          )}
+        >
+          <main className="marketing-shell-main min-h-screen min-w-0 bg-[radial-gradient(circle_at_top,rgba(142,219,62,0.08),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.96),rgba(247,250,252,0.92))] dark:bg-[radial-gradient(circle_at_top,rgba(142,219,62,0.14),transparent_26%),linear-gradient(180deg,rgba(3,10,17,0.98),rgba(7,19,33,0.96))]">
             {children}
           </main>
           <PageComposerDrawer enabled={pageComposerEnabled} />

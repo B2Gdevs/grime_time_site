@@ -98,5 +98,6 @@ describe('PageComposer shell integration', () => {
     expect(screen.getByRole('button', { name: /close composer/i })).toBeTruthy()
     expect(screen.getByText(/the live page is the canvas/i)).toBeTruthy()
     expect(screen.queryByText(/^Preview$/i)).toBeNull()
+    expect(screen.getByRole('complementary')).toBeTruthy()
   })
 })

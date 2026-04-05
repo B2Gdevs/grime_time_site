@@ -945,4 +945,15 @@
       <file path="src/content/docs/site-copilot-and-page-composer.md" />
     </references>
   </decision>
+  <decision id="D-content-023">
+    <title>Composer rail uses a viewport-height shell column with internal scrolling</title>
+    <summary>Once the live page became the primary canvas, the composer could no longer behave like a normal page-flow sidebar. The rail now belongs to the frontend shell layout itself, uses a fixed width contract, stays pinned to the viewport on desktop authoring screens, and scrolls internally by tab body instead of relying on page scroll position.</summary>
+    <impact>This prevents the composer from drifting away during long-page editing, removes wasted space and clipped structure lists caused by nested scroll containers, and protects the page canvas from being crushed by an oversized ad-hoc drawer width. The main authoring model is now a stable shell: page canvas on the left, composer rail on the right.</impact>
+    <references>
+      <file path="src/components/frontend/MarketingShell.tsx" />
+      <file path="src/components/admin-impersonation/PageComposerDrawer.tsx" />
+      <file path="src/app/(frontend)/globals.css" />
+      <file path="tests/int/components/admin-impersonation/page-composer-shell.int.spec.tsx" />
+    </references>
+  </decision>
 </decisions>
