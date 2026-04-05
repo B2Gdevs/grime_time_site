@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 
 import { InstantQuoteSection } from '@/components/InstantQuoteSection'
 import { PayloadRedirects } from '@/components/PayloadRedirects'
+import { PageComposerCanvasViewport } from '@/components/admin-impersonation/PageComposerCanvas'
 import { PageMediaRegistryBridge } from '@/components/admin-impersonation/PageMediaDevtoolsContext'
 import configPromise from '@payload-config'
 import { getPayload, type RequiredDataFromCollectionSlug } from 'payload'
@@ -63,11 +64,13 @@ export default async function Page({ params: paramsPromise }: Args) {
 
       {draft && <LivePreviewListener />}
 
-      <RenderHero {...hero} />
-      <div className="marketing-page-body">
-        {slug === 'home' && instantQuoteCatalog ? <InstantQuoteSection catalog={instantQuoteCatalog} /> : null}
-        {await RenderBlocks({ blocks: layout })}
-      </div>
+      <PageComposerCanvasViewport>
+        <RenderHero {...hero} />
+        <div className="marketing-page-body">
+          {slug === 'home' && instantQuoteCatalog ? <InstantQuoteSection catalog={instantQuoteCatalog} /> : null}
+          {await RenderBlocks({ blocks: layout })}
+        </div>
+      </PageComposerCanvasViewport>
     </article>
   )
 }

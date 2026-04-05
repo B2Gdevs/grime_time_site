@@ -4,6 +4,7 @@ import { getPayload } from 'payload'
 
 import type { Page, Pricing } from '@/payload-types'
 
+import { PageComposerCanvasSection } from '@/components/admin-impersonation/PageComposerCanvas'
 import { ArchiveBlock } from '@/blocks/ArchiveBlock/Component'
 import { CallToActionBlock } from '@/blocks/CallToAction/Component'
 import { ContactRequestBlock } from '@/blocks/ContactRequest/Component'
@@ -15,6 +16,7 @@ import { PricingTableBlock } from '@/blocks/PricingTable/Component'
 import { ServiceGridBlock } from '@/blocks/ServiceGrid/Component'
 import { TestimonialsBlock } from '@/blocks/Testimonials/Component'
 import { getVisiblePageLayoutBlocks } from '@/lib/pages/pageLayoutVisibility'
+import { buildPageComposerSectionSummaries } from '@/lib/pages/pageComposer'
 import {
   linkedSharedSectionId,
   resolvePageComposerReusableBlock,
@@ -29,12 +31,20 @@ type Props = {
 }
 
 export async function RenderBlocks({ blocks, pricingGlobal: pricingProp }: Props) {
-  const visibleBlocks = getVisiblePageLayoutBlocks(blocks)
+  const layoutBlocks = blocks || []
+  const visibleBlocks = getVisiblePageLayoutBlocks(layoutBlocks).map((block) => ({
+    block,
+    index: layoutBlocks.indexOf(block),
+  }))
   const hasBlocks = visibleBlocks.length > 0
   const sharedSectionIds = Array.from(
-    new Set(visibleBlocks.map((block) => linkedSharedSectionId(block)).filter((id): id is number => typeof id === 'number')),
+    new Set(
+      visibleBlocks
+        .map(({ block }) => linkedSharedSectionId(block))
+        .filter((id): id is number => typeof id === 'number'),
+    ),
   )
-  const needsPricingGlobal = hasBlocks && visibleBlocks.some((b) => b.blockType === 'pricingTable')
+  const needsPricingGlobal = hasBlocks && visibleBlocks.some(({ block }) => block.blockType === 'pricingTable')
   const pricingGlobal =
     pricingProp !== undefined
       ? pricingProp
@@ -48,78 +58,80 @@ export async function RenderBlocks({ blocks, pricingGlobal: pricingProp }: Props
           payload: await getPayload({ config }),
         })
       : undefined
+  const sectionSummaries = buildPageComposerSectionSummaries(layoutBlocks, sharedSectionsById)
 
   if (!hasBlocks) return null
 
   return (
     <Fragment>
-      {visibleBlocks.map((block, index) => {
+      {visibleBlocks.map(({ block, index }) => {
         const resolvedBlock = resolvePageComposerReusableBlock(block, { sharedSectionsById })
         const { blockType } = resolvedBlock
+        const summaryLabel = sectionSummaries[index]?.label || `${resolvedBlock.blockType} block ${index + 1}`
+
+        let blockNode: React.ReactNode = null
 
         if (blockType === 'pricingTable') {
-          return (
-            <div className="my-16" key={index}>
+          blockNode = (
+            <div className="my-16">
               <PricingTableBlock {...resolvedBlock} globalPricing={pricingGlobal} />
             </div>
           )
         }
-
-        if (blockType === 'serviceGrid') {
-          return (
-            <div className="my-16" key={index}>
+        else if (blockType === 'serviceGrid') {
+          blockNode = (
+            <div className="my-16">
               <ServiceGridBlock {...resolvedBlock} blockIndex={index} />
             </div>
           )
         }
-
-        if (blockType === 'archive') {
-          return (
-            <div className="my-16" key={index}>
+        else if (blockType === 'archive') {
+          blockNode = (
+            <div className="my-16">
               <ArchiveBlock {...(resolvedBlock as unknown as React.ComponentProps<typeof ArchiveBlock>)} />
             </div>
           )
         }
-        if (blockType === 'content') {
-          return (
-            <div className="my-16" key={index}>
+        else if (blockType === 'content') {
+          blockNode = (
+            <div className="my-16">
               <ContentBlock {...(resolvedBlock as unknown as React.ComponentProps<typeof ContentBlock>)} />
             </div>
           )
         }
-        if (blockType === 'cta') {
-          return (
-            <div className="my-16" key={index}>
+        else if (blockType === 'cta') {
+          blockNode = (
+            <div className="my-16">
               <CallToActionBlock
                 {...(resolvedBlock as unknown as React.ComponentProps<typeof CallToActionBlock>)}
               />
             </div>
           )
         }
-        if (blockType === 'formBlock') {
-          return (
-            <div className="my-16" key={index}>
+        else if (blockType === 'formBlock') {
+          blockNode = (
+            <div className="my-16">
               <FormBlock {...(resolvedBlock as unknown as React.ComponentProps<typeof FormBlock>)} />
             </div>
           )
         }
-        if (blockType === 'contactRequest') {
-          return (
-            <div className="my-8" key={index}>
+        else if (blockType === 'contactRequest') {
+          blockNode = (
+            <div className="my-8">
               <ContactRequestBlock />
             </div>
           )
         }
-        if (blockType === 'testimonialsBlock') {
-          return (
-            <div className="my-8" key={index}>
+        else if (blockType === 'testimonialsBlock') {
+          blockNode = (
+            <div className="my-8">
               <TestimonialsBlock {...(resolvedBlock as React.ComponentProps<typeof TestimonialsBlock>)} />
             </div>
           )
         }
-        if (blockType === 'mediaBlock') {
-          return (
-            <div className="my-16" key={index}>
+        else if (blockType === 'mediaBlock') {
+          blockNode = (
+            <div className="my-16">
               <MediaBlock
                 {...(resolvedBlock as unknown as React.ComponentProps<typeof MediaBlock>)}
                 disableInnerContainer
@@ -127,15 +139,23 @@ export async function RenderBlocks({ blocks, pricingGlobal: pricingProp }: Props
             </div>
           )
         }
-        if (blockType === 'customHtml') {
-          return (
-            <div className="my-16" key={index}>
+        else if (blockType === 'customHtml') {
+          blockNode = (
+            <div className="my-16">
               <CustomHtmlBlock {...(resolvedBlock as React.ComponentProps<typeof CustomHtmlBlock>)} />
             </div>
           )
         }
 
-        return null
+        if (!blockNode) {
+          return null
+        }
+
+        return (
+          <PageComposerCanvasSection index={index} key={index} label={summaryLabel}>
+            {blockNode}
+          </PageComposerCanvasSection>
+        )
       })}
     </Fragment>
   )

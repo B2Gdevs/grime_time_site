@@ -932,4 +932,17 @@
       <file path="src/app/(frontend)/layout.tsx" />
     </references>
   </decision>
+  <decision id="D-content-022">
+    <title>Frontend page authoring uses the live page as the visual canvas and the composer rail as a control surface</title>
+    <summary>The miniature preview inside the composer rail is not the right interaction model for Grime Time. The actual frontend page should be the only visual canvas during authoring, with the composer rail acting as structure, inspector, media, and publish controls. Device-width toggles belong to the live canvas, and section selection should happen on the rendered page through visible authoring chrome instead of through a duplicated preview surface.</summary>
+    <impact>This removes the overflow-prone duplicate preview, aligns the composer with a direct-manipulation low-code workflow, and keeps the user editing one visual source of truth instead of two competing representations. The practical first step is canvas selection chrome and width controls on the real page while the rail remains the editing surface for block surgery.</impact>
+    <references>
+      <file path="src/components/admin-impersonation/PageComposerCanvas.tsx" />
+      <file path="src/components/admin-impersonation/PageComposerDrawer.tsx" />
+      <file path="src/blocks/RenderBlocks.tsx" />
+      <file path="src/app/(frontend)/page.tsx" />
+      <file path="src/app/(frontend)/[slug]/page.tsx" />
+      <file path="src/content/docs/site-copilot-and-page-composer.md" />
+    </references>
+  </decision>
 </decisions>

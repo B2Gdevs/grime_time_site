@@ -15,16 +15,6 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ push, refresh }),
 }))
 
-vi.mock('@/components/admin-impersonation/PageComposerPreview', () => ({
-  PageComposerPreview: ({ onSelect }: { onSelect: (index: number) => void }) => (
-    <div>
-      <button onClick={() => onSelect(0)} type="button">
-        Preview stub
-      </button>
-    </div>
-  ),
-}))
-
 describe('PageComposer shell integration', () => {
   const originalFetch = global.fetch
 
@@ -106,5 +96,7 @@ describe('PageComposer shell integration', () => {
 
     expect(screen.getByText('Visual composer')).toBeTruthy()
     expect(screen.getByRole('button', { name: /close composer/i })).toBeTruthy()
+    expect(screen.getByText(/the live page is the canvas/i)).toBeTruthy()
+    expect(screen.queryByText(/^Preview$/i)).toBeNull()
   })
 })

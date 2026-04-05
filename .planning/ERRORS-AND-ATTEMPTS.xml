@@ -290,4 +290,17 @@
       <command>browser check: localhost:3116 home page shows a right-rail `complementary` composer inside the shell and a visible draggable copilot launcher</command>
     </verification>
   </attempt>
+  <attempt id="18-05-a3" phase="18" task="18-05" status="resolved">
+    <title>Drawer-owned preview duplicated the page and overflowed once the composer became a shell rail</title>
+    <symptom>After the composer moved into a shell-owned right rail, the old embedded preview still rendered inside that rail. The result was a cramped duplicate page surface, visual overflow in the left side of the composer, and a mismatched mental model where users edited one surface while looking at another.</symptom>
+    <cause>The original phase-16 preview-first architecture assumed the composer needed its own dedicated canvas inside the drawer. Once the drawer became a docked rail, that assumption no longer matched the intended low-code workflow for Grime Time, where the real page should be the primary canvas.</cause>
+    <attempted-fix>Remove the drawer-owned preview from the page-composer rail, add a shared frontend canvas layer that wraps the real rendered page with section-selection chrome and device-width controls, and wire page-section selection back into the shared composer state so the rail becomes a control surface rather than a second preview.</attempted-fix>
+    <verification>
+      <command>cmd /c npm.cmd exec eslint src/components/admin-impersonation/PageComposerContext.tsx src/components/admin-impersonation/PageComposerCanvas.tsx src/components/admin-impersonation/PageComposerDrawer.tsx src/blocks/RenderBlocks.tsx "src/app/(frontend)/page.tsx" "src/app/(frontend)/[slug]/page.tsx" tests/int/components/admin-impersonation/page-composer-shell.int.spec.tsx tests/int/components/admin-impersonation/page-composer-canvas.int.spec.tsx</command>
+      <command>cmd /c npm.cmd exec vitest run tests/int/components/admin-impersonation/page-composer-shell.int.spec.tsx tests/int/components/admin-impersonation/page-composer-canvas.int.spec.tsx tests/int/app/page-composer-route.int.spec.ts</command>
+      <command>cmd /c npm.cmd exec -- tsc --noEmit</command>
+      <command>cmd /c npm.cmd run build</command>
+      <command>browser check: localhost:3117 home page shows `Live canvas` controls on the real page, while the composer rail only shows structure/content/media/publish controls</command>
+    </verification>
+  </attempt>
 </errors-and-attempts>

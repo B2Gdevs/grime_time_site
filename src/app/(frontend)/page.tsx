@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 
 import configPromise from '@payload-config'
 import { PayloadRedirects } from '@/components/PayloadRedirects'
+import { PageComposerCanvasViewport } from '@/components/admin-impersonation/PageComposerCanvas'
 import { PageMediaRegistryBridge } from '@/components/admin-impersonation/PageMediaDevtoolsContext'
 import { GrimeTimeMarketingHome } from '@/components/home/GrimeTimeMarketingHome'
 import { collectPageMediaReferences } from '@/lib/media/pageMediaDevtools'
@@ -32,7 +33,9 @@ export default async function HomePage() {
         pageSlug={page.slug}
         pageTitle={page.title}
       />
-      <GrimeTimeMarketingHome instantQuoteCatalog={instantQuoteCatalog} page={page} />
+      <PageComposerCanvasViewport>
+        <GrimeTimeMarketingHome instantQuoteCatalog={instantQuoteCatalog} page={page} />
+      </PageComposerCanvasViewport>
     </>
   )
 }

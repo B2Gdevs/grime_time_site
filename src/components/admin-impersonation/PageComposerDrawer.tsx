@@ -31,7 +31,6 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { usePageComposerOptional } from '@/components/admin-impersonation/PageComposerContext'
-import { PageComposerPreview, type PageComposerPreviewMode } from '@/components/admin-impersonation/PageComposerPreview'
 import { usePortalCopilotOptional } from '@/components/copilot/PortalCopilotContext'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -307,13 +306,11 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
   const [mediaStatus, setMediaStatus] = useState<null | string>(null)
   const [selectedMediaPath, setSelectedMediaPath] = useState<null | string>(null)
   const [submittingMediaAction, setSubmittingMediaAction] = useState<null | MediaAction>(null)
-  const [previewMode, setPreviewMode] = useState<PageComposerPreviewMode>('desktop')
   const [savingAction, setSavingAction] = useState<null | SavingAction>(null)
   const [savedPage, setSavedPage] = useState<null | PageComposerDocument>(null)
   const [sharedSections, setSharedSections] = useState<SharedSectionRecord[]>([])
   const [sharedSectionsLoading, setSharedSectionsLoading] = useState(false)
   const [sharedSectionsStatus, setSharedSectionsStatus] = useState<null | string>(null)
-  const [selectedIndex, setSelectedIndex] = useState(0)
   const [status, setStatus] = useState<null | string>(null)
   const [titleDraft, setTitleDraft] = useState('')
   const [slugDraft, setSlugDraft] = useState('')
@@ -322,6 +319,13 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
   const mediaUploadInputRef = useRef<HTMLInputElement | null>(null)
   const mediaPromptId = useId()
   const open = composer?.isOpen ?? false
+  const selectedIndex = composer?.selectedIndex ?? 0
+  const setSelectedIndex = useCallback(
+    (value: number) => {
+      composer?.setSelectedIndex(value)
+    },
+    [composer],
+  )
 
   const sharedSectionsById = useMemo(
     () => new Map(sharedSections.map((item) => [item.id, item])),
@@ -427,9 +431,15 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
   )
 
   useEffect(() => {
-    if (!sectionSummaries.length) return setSelectedIndex(0)
-    setSelectedIndex((current) => Math.min(current, sectionSummaries.length - 1))
-  }, [sectionSummaries.length])
+    if (!sectionSummaries.length) {
+      setSelectedIndex(0)
+      return
+    }
+
+    if (selectedIndex > sectionSummaries.length - 1) {
+      setSelectedIndex(sectionSummaries.length - 1)
+    }
+  }, [sectionSummaries.length, selectedIndex, setSelectedIndex])
 
   useEffect(() => {
     if (!mediaSlots.length) return setSelectedMediaPath(null)
@@ -437,6 +447,19 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
       current && mediaSlots.some((slot) => slot.relationPath === current) ? current : mediaSlots[0]?.relationPath || null,
     )
   }, [mediaSlots])
+
+  useEffect(() => {
+    if (!composer) {
+      return
+    }
+
+    if (!open) {
+      composer.setActivePagePath(null)
+      return
+    }
+
+    composer.setActivePagePath(draftPage?.pagePath || pathname)
+  }, [composer, draftPage?.pagePath, open, pathname])
 
   useEffect(() => {
     if (!setCopilotAuthoringContext || !draftPage) {
@@ -1003,23 +1026,11 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
                 </Button>
               </div>
 
-              <div className="grid min-h-0 flex-1 lg:grid-cols-[minmax(0,1.3fr)_26rem]">
-                <div className="min-h-0 border-r border-border/70 px-5 py-4">
-                  <PageComposerPreview
-                    onAddAbove={(index) => openBlockLibrary(index)}
-                    onAddBelow={(index) => openBlockLibrary(index + 1)}
-                    onDetachReusable={detachReusableBlock}
-                    onDuplicate={duplicateBlock}
-                    onPreviewModeChange={setPreviewMode}
-                    onRemove={removeBlock}
-                    onSelect={setSelectedIndex}
-                    onToggleHidden={toggleBlockHidden}
-                    onUpdateBlock={updateBlockAtIndex}
-                    page={draftPage}
-                    previewMode={previewMode}
-                    selectedIndex={selectedIndex}
-                    sharedSectionsById={sharedSectionsById}
-                  />
+              <div className="grid min-h-0 flex-1 grid-rows-[auto_minmax(0,1fr)]">
+                <div className="border-b border-border/70 px-5 py-4">
+                  <div className="rounded-2xl border border-border/70 bg-card/50 px-4 py-3 text-sm text-muted-foreground">
+                    The live page is the canvas. Click a section on the page to select it, then use this rail to edit structure, content, media, and publish state.
+                  </div>
                 </div>
 
                 <Tabs className="grid min-h-0 grid-rows-[auto_minmax(0,1fr)_auto]" onValueChange={(value) => setActiveTab(value as ComposerTab)} value={activeTab}>
