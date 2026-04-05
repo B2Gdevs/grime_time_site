@@ -327,4 +327,15 @@
       <command>cmd /c npm.cmd exec -- tsc --noEmit</command>
     </verification>
   </attempt>
+  <attempt id="18-05-a6" phase="18" task="18-05" status="resolved">
+    <title>Impersonation toolbar visually blanked the composer rail at common desktop widths</title>
+    <symptom>After the shell-scroll fix, the composer column existed but looked blank or unreachable on some desktop widths because the fixed impersonation toolbar could overlap the rail and cover the tabs and block controls.</symptom>
+    <cause>The composer remained in the normal stacking order while the impersonation toolbar was rendered as a higher fixed overlay. Even though the composer itself loaded correctly, the toolbar visually sat on top of the rail.</cause>
+    <attempted-fix>Raise the page composer rail above the toolbar in the stacking order while it is open so the authoring controls remain reachable.</attempted-fix>
+    <verification>
+      <command>browser check: localhost:5465 at 1280px and 1366px wide now shows the composer controls above the impersonation toolbar instead of behind it</command>
+      <command>cmd /c npm.cmd exec eslint src/components/admin-impersonation/PageComposerDrawer.tsx</command>
+      <command>cmd /c npm.cmd exec -- vitest run tests/int/components/admin-impersonation/page-composer-shell.int.spec.tsx --testTimeout=20000</command>
+    </verification>
+  </attempt>
 </errors-and-attempts>

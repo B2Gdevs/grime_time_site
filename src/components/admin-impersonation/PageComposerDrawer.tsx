@@ -889,7 +889,7 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
     <AnimatePresence initial={false}>
       {open ? (
         <motion.aside
-          className="page-composer-rail relative hidden min-h-0 w-full min-w-0 flex-col overflow-hidden border-l border-border/70 bg-background/96 shadow-2xl backdrop-blur xl:sticky xl:top-0 xl:flex xl:h-[100dvh] xl:self-start"
+          className="page-composer-rail relative isolate z-[90] hidden min-h-0 w-full min-w-0 flex-col overflow-hidden border-l border-border/70 bg-background/96 shadow-2xl backdrop-blur xl:sticky xl:top-0 xl:flex xl:h-[100dvh] xl:self-start"
           initial={{ opacity: 0, x: 40 }}
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: 40 }}
