@@ -956,4 +956,14 @@
       <file path="tests/int/components/admin-impersonation/page-composer-shell.int.spec.tsx" />
     </references>
   </decision>
+  <decision id="D-content-024">
+    <title>Desktop frontend shell gives scroll ownership only to the main content pane</title>
+    <summary>The marketing shell should not rely on browser-page scrolling during desktop authoring. The left marketing sidebar and right composer rail are treated as viewport-height shell columns, while the center content pane owns vertical scrolling. This keeps both side rails fully available while traversing long pages.</summary>
+    <impact>This removes the visible “end” of the composer and left sidebar during long-page editing, keeps customer access and login affordances anchored, and makes the live page canvas behave like a proper application workspace instead of a long document with attached sidebars.</impact>
+    <references>
+      <file path="src/components/frontend/MarketingShell.tsx" />
+      <file path="src/app/(frontend)/globals.css" />
+      <file path="src/components/ui/sidebar.tsx" />
+    </references>
+  </decision>
 </decisions>

@@ -295,7 +295,7 @@ export function MarketingShell({
       }
     >
       <MarketingSidebar footerLinks={footerLinks} pathname={pathname} primaryLinks={primaryLinks} />
-      <SidebarInset className="min-h-screen bg-background">
+      <SidebarInset className="min-h-screen bg-background xl:h-[100dvh] xl:overflow-hidden">
         <div className="flex border-b border-border/80 bg-background/92 px-4 py-4 backdrop-blur-xl md:hidden">
           <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4">
             <Link href="/" className="min-w-0">
@@ -309,13 +309,13 @@ export function MarketingShell({
 
         <div
           className={cn(
-            'min-h-screen min-w-0',
+            'min-h-screen min-w-0 xl:h-full xl:overflow-hidden',
             composerOpen
               ? 'xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(24rem,var(--page-composer-rail-width))] xl:items-start'
               : 'flex',
           )}
         >
-          <main className="marketing-shell-main min-h-screen min-w-0 bg-[radial-gradient(circle_at_top,rgba(142,219,62,0.08),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.96),rgba(247,250,252,0.92))] dark:bg-[radial-gradient(circle_at_top,rgba(142,219,62,0.14),transparent_26%),linear-gradient(180deg,rgba(3,10,17,0.98),rgba(7,19,33,0.96))]">
+          <main className="marketing-shell-main marketing-main-scroll min-h-screen min-w-0 xl:h-full xl:min-h-0 xl:overflow-y-auto xl:overscroll-contain bg-[radial-gradient(circle_at_top,rgba(142,219,62,0.08),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.96),rgba(247,250,252,0.92))] dark:bg-[radial-gradient(circle_at_top,rgba(142,219,62,0.14),transparent_26%),linear-gradient(180deg,rgba(3,10,17,0.98),rgba(7,19,33,0.96))]">
             {children}
           </main>
           <PageComposerDrawer enabled={pageComposerEnabled} />

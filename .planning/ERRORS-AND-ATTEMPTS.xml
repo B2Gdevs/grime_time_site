@@ -315,4 +315,16 @@
       <command>cmd /c npm.cmd exec -- tsc --noEmit</command>
     </verification>
   </attempt>
+  <attempt id="18-05-a5" phase="18" task="18-05" status="resolved">
+    <title>Browser-page scroll still caused both side rails to end before the user finished traversing the page</title>
+    <symptom>Even after stabilizing the composer rail width and sticky behavior, users could still scroll the browser page itself. That meant the left marketing sidebar and the right composer eventually appeared to end because the entire document was moving instead of just the center page canvas.</symptom>
+    <cause>The frontend shell still let the main document own vertical scrolling. Fixed and sticky side rails alone were not enough because the workspace never switched to an application-style scroll model with a dedicated central scroll pane.</cause>
+    <attempted-fix>Convert the desktop marketing shell into a viewport-height frame, keep the side rails full-height, and move vertical scrolling into the center `marketing-shell-main` pane only.</attempted-fix>
+    <verification>
+      <command>cmd /c npm.cmd exec eslint src/components/frontend/MarketingShell.tsx</command>
+      <command>cmd /c npm.cmd exec -- vitest run tests/int/components/admin-impersonation/page-composer-shell.int.spec.tsx tests/int/components/admin-impersonation/page-composer-canvas.int.spec.tsx tests/int/app/page-composer-route.int.spec.ts --testTimeout=20000</command>
+      <command>cmd /c npm.cmd run build</command>
+      <command>cmd /c npm.cmd exec -- tsc --noEmit</command>
+    </verification>
+  </attempt>
 </errors-and-attempts>
