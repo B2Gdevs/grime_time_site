@@ -1114,9 +1114,12 @@ export interface ServiceGridBlock {
       }[]
     | null;
   composerReusable?: {
+    sourceType?: ('preset' | 'shared-section') | null;
     mode?: ('linked' | 'detached') | null;
     key?: string | null;
     label?: string | null;
+    sharedSectionId?: number | null;
+    syncedVersion?: number | null;
   };
   /**
    * Keep this block in the page draft and composer, but omit it from the rendered page until it is shown again.
@@ -1236,9 +1239,12 @@ export interface CallToActionBlock {
       }[]
     | null;
   composerReusable?: {
+    sourceType?: ('preset' | 'shared-section') | null;
     mode?: ('linked' | 'detached') | null;
     key?: string | null;
     label?: string | null;
+    sharedSectionId?: number | null;
+    syncedVersion?: number | null;
   };
   /**
    * Keep this block in the page draft and composer, but omit it from the rendered page until it is shown again.
@@ -1295,9 +1301,12 @@ export interface ContentBlock {
       }[]
     | null;
   composerReusable?: {
+    sourceType?: ('preset' | 'shared-section') | null;
     mode?: ('linked' | 'detached') | null;
     key?: string | null;
     label?: string | null;
+    sharedSectionId?: number | null;
+    syncedVersion?: number | null;
   };
   /**
    * Keep this block in the page draft and composer, but omit it from the rendered page until it is shown again.
@@ -1313,6 +1322,14 @@ export interface ContentBlock {
  */
 export interface MediaBlock {
   media: number | Media;
+  composerReusable?: {
+    sourceType?: ('preset' | 'shared-section') | null;
+    mode?: ('linked' | 'detached') | null;
+    key?: string | null;
+    label?: string | null;
+    sharedSectionId?: number | null;
+    syncedVersion?: number | null;
+  };
   /**
    * Keep this block in the page draft and composer, but omit it from the rendered page until it is shown again.
    */
@@ -1436,6 +1453,14 @@ export interface TestimonialsSectionBlock {
    * Used for “Latest published”.
    */
   limit?: number | null;
+  composerReusable?: {
+    sourceType?: ('preset' | 'shared-section') | null;
+    mode?: ('linked' | 'detached') | null;
+    key?: string | null;
+    label?: string | null;
+    sharedSectionId?: number | null;
+    syncedVersion?: number | null;
+  };
   /**
    * Keep this block in the page draft and composer, but omit it from the rendered page until it is shown again.
    */
@@ -2733,9 +2758,12 @@ export interface ServiceGridBlockSelect<T extends boolean = true> {
   composerReusable?:
     | T
     | {
+        sourceType?: T;
         mode?: T;
         key?: T;
         label?: T;
+        sharedSectionId?: T;
+        syncedVersion?: T;
       };
   isHidden?: T;
   id?: T;
@@ -2802,9 +2830,12 @@ export interface CallToActionBlockSelect<T extends boolean = true> {
   composerReusable?:
     | T
     | {
+        sourceType?: T;
         mode?: T;
         key?: T;
         label?: T;
+        sharedSectionId?: T;
+        syncedVersion?: T;
       };
   isHidden?: T;
   id?: T;
@@ -2836,9 +2867,12 @@ export interface ContentBlockSelect<T extends boolean = true> {
   composerReusable?:
     | T
     | {
+        sourceType?: T;
         mode?: T;
         key?: T;
         label?: T;
+        sharedSectionId?: T;
+        syncedVersion?: T;
       };
   isHidden?: T;
   id?: T;
@@ -2850,6 +2884,16 @@ export interface ContentBlockSelect<T extends boolean = true> {
  */
 export interface MediaBlockSelect<T extends boolean = true> {
   media?: T;
+  composerReusable?:
+    | T
+    | {
+        sourceType?: T;
+        mode?: T;
+        key?: T;
+        label?: T;
+        sharedSectionId?: T;
+        syncedVersion?: T;
+      };
   isHidden?: T;
   id?: T;
   blockName?: T;
@@ -2901,6 +2945,16 @@ export interface TestimonialsSectionBlockSelect<T extends boolean = true> {
   selectionMode?: T;
   testimonials?: T;
   limit?: T;
+  composerReusable?:
+    | T
+    | {
+        sourceType?: T;
+        mode?: T;
+        key?: T;
+        label?: T;
+        sharedSectionId?: T;
+        syncedVersion?: T;
+      };
   isHidden?: T;
   id?: T;
   blockName?: T;

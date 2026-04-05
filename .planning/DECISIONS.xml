@@ -896,4 +896,14 @@
       <file path=".planning/TASK-REGISTRY.xml" />
     </references>
   </decision>
+  <decision id="D-content-019">
+    <title>Composer block-schema migrations must cover both live and version tables before reusable metadata ships</title>
+    <summary>For page-composer block fields, `pages_*` tables are not enough. Any schema change that affects saved layout block metadata must update the live block tables and the matching `_pages_v_*` version tables in the same migration set, or the frontend and prerender paths will fail while querying draft page versions.</summary>
+    <impact>Future composer migrations should be checked against both runtime surfaces before they are considered complete. Migration status alone is not proof of safety when the SQL body only partially matches the active Payload schema.</impact>
+    <references>
+      <file path="src/migrations/20260404_212516_add_page_composer_reusable_and_custom_html.ts" />
+      <file path="src/migrations/20260405_040500_fix_page_composer_reusable_metadata_schema.ts" />
+      <file path=".planning/ERRORS-AND-ATTEMPTS.xml" />
+    </references>
+  </decision>
 </decisions>

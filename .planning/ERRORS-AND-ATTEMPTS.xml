@@ -251,4 +251,16 @@
       <command>cmd /c npm.cmd run build</command>
     </verification>
   </attempt>
+  <attempt id="18-02-a3" phase="18" task="18-02" status="resolved">
+    <title>Reusable-metadata migration left deployed page-version block tables behind the runtime schema</title>
+    <symptom>Production page loads and build-time prerender queries failed with `column _pages_v__blocks_serviceGrid.composer_reusable_source_type does not exist` while reading `_pages_v` draft versions for the homepage.</symptom>
+    <cause>The original reusable/custom-HTML migration only added `composer_reusable_mode`, `composer_reusable_key`, and `composer_reusable_label` on the service-grid, CTA, and content block tables. It never added `composer_reusable_source_type`, `composer_reusable_shared_section_id`, or `composer_reusable_synced_version`, and it skipped the media-block and testimonials-block live/version tables entirely. Because the migration itself had already been marked as run, later deploys looked healthy on migration status while the runtime schema was still incomplete.</cause>
+    <attempted-fix>Add a new idempotent corrective migration that creates the missing reusable source columns across every affected live and `_pages_v` block table and backfills the missing mode/key/label columns for media and testimonials block tables without assuming a pristine database state.</attempted-fix>
+    <verification>
+      <command>cmd /c npm.cmd run generate:types</command>
+      <command>cmd /c npm.cmd run payload migrate</command>
+      <command>cmd /c npm.cmd exec -- tsc --noEmit</command>
+      <command>cmd /c npm.cmd run build</command>
+    </verification>
+  </attempt>
 </errors-and-attempts>
