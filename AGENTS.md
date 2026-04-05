@@ -1,3 +1,48 @@
+# Agent guide — grime-time-site
+
+This project is managed under the **GAD framework**. Use `gad` CLI for all planning context.
+
+## Context re-hydration
+
+```sh
+gad state --projectid grime-time
+gad tasks --projectid grime-time
+gad decisions --projectid grime-time
+```
+
+Or full snapshot:
+```sh
+gad snapshot --projectid grime-time
+```
+
+## Planning loop
+
+1. `gad state --projectid grime-time` — read current phase and next action
+2. Pick one planned task from `gad tasks --projectid grime-time`
+3. Implement it
+4. Update `.planning/TASK-REGISTRY.xml` — mark task done
+5. Update `.planning/STATE.xml` — update next-action
+6. `gad sink sync` — propagate to docs sink
+7. Commit
+
+## Planning files
+
+| File | Purpose |
+|------|---------|
+| `.planning/STATE.xml` | Current phase, milestone, status, next-action |
+| `.planning/ROADMAP.xml` | Phase breakdown |
+| `.planning/TASK-REGISTRY.xml` | All tasks by phase with status |
+| `.planning/DECISIONS.xml` | Architectural decisions |
+
+## Docs sink
+
+```sh
+gad sink sync                             # compile all projects
+gad sink status --projectid grime-time    # check sync state
+```
+
+---
+
 # Payload CMS Development Rules
 
 ## Planning Execution Contract
