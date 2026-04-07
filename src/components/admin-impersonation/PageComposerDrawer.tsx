@@ -95,6 +95,8 @@ import type {
   ServiceGridBlock,
   TestimonialsSectionBlock,
 } from '@/payload-types'
+import { formatComposerTimestamp } from '@/utilities/formatComposerTimestamp'
+import { parseResponseJson } from '@/utilities/parseResponseJson'
 
 type MediaAction = 'create-and-swap' | 'generate-and-swap' | 'swap-existing-reference'
 type SavingAction = 'publish-page' | 'save-draft'
@@ -125,15 +127,6 @@ type PageComposerResponse = {
   page?: PageComposerDocument
   pages?: PageComposerPageSummary[]
   versions?: PageComposerVersionSummary[]
-}
-
-function formatTimestamp(value: null | string | undefined): string {
-  if (!value) return 'Not published'
-  try {
-    return new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value))
-  } catch {
-    return value
-  }
 }
 
 function asMedia(value: Media | null | number | undefined): Media | null {
@@ -781,7 +774,7 @@ export function PageComposerDrawer({
 
       try {
         const response = await fetch(`/api/internal/page-composer?${query}`)
-        const payload = (await response.json().catch(() => null)) as null | PageComposerResponse
+        const payload = await parseResponseJson<null | PageComposerResponse>(response)
 
         if (!response.ok || !payload?.page) {
           throw new Error(payload?.error || 'Unable to load the page composer.')
@@ -810,7 +803,7 @@ export function PageComposerDrawer({
     setMediaStatus(null)
     try {
       const response = await fetch('/api/internal/page-composer/media')
-      const payload = (await response.json().catch(() => null)) as null | { error?: string; items?: MediaLibraryItem[] }
+      const payload = await parseResponseJson<null | { error?: string; items?: MediaLibraryItem[] }>(response)
       if (!response.ok) throw new Error(payload?.error || 'Unable to load media records.')
       setMediaLibrary(payload?.items || [])
     } catch (error) {
@@ -826,9 +819,7 @@ export function PageComposerDrawer({
     setSharedSectionsStatus(null)
     try {
       const response = await fetch('/api/internal/shared-sections?status=published')
-      const payload = (await response.json().catch(() => null)) as
-        | null
-        | { error?: string; items?: SharedSectionRecord[] }
+      const payload = await parseResponseJson<null | { error?: string; items?: SharedSectionRecord[] }>(response)
       if (!response.ok) {
         throw new Error(payload?.error || 'Unable to load shared sections.')
       }
@@ -978,7 +969,7 @@ export function PageComposerDrawer({
         headers: { 'content-type': 'application/json' },
         method: 'POST',
       })
-      const payload = (await response.json().catch(() => null)) as null | PageComposerResponse
+      const payload = await parseResponseJson<null | PageComposerResponse>(response)
       if (!response.ok || !payload?.page) throw new Error(payload?.error || 'Unable to save the page.')
       setAvailablePages(payload.pages || [])
       setDraftPage(payload.page)
@@ -1017,7 +1008,7 @@ export function PageComposerDrawer({
         headers: { 'content-type': 'application/json' },
         method: 'POST',
       })
-      const payload = (await response.json().catch(() => null)) as null | PageComposerResponse
+      const payload = await parseResponseJson<null | PageComposerResponse>(response)
 
       if (!response.ok || !payload?.page) {
         throw new Error(payload?.error || 'Unable to create the page draft.')
@@ -1050,7 +1041,7 @@ export function PageComposerDrawer({
       typeof window === 'undefined'
         ? true
         : window.confirm(
-            `Restore ${version.title} from ${formatTimestamp(version.updatedAt)} as the current draft? Unsaved page edits will be replaced.`,
+            `Restore ${version.title} from ${formatComposerTimestamp(version.updatedAt)} as the current draft? Unsaved page edits will be replaced.`,
           )
 
     if (!confirmed) {
@@ -1070,7 +1061,7 @@ export function PageComposerDrawer({
         headers: { 'content-type': 'application/json' },
         method: 'POST',
       })
-      const payload = (await response.json().catch(() => null)) as null | PageComposerResponse
+      const payload = await parseResponseJson<null | PageComposerResponse>(response)
 
       if (!response.ok || !payload?.page) {
         throw new Error(payload?.error || 'Unable to restore the page version.')
@@ -1535,7 +1526,7 @@ export function PageComposerDrawer({
         formData.set('alt', args.prompt.trim().slice(0, 240))
       }
       const response = await fetch('/api/internal/page-composer/media', { body: formData, method: 'POST' })
-      const payload = (await response.json().catch(() => null)) as null | { error?: string }
+      const payload = await parseResponseJson<null | { error?: string }>(response)
       if (!response.ok) throw new Error(payload?.error || 'Unable to update section media.')
       setMediaPrompt('')
       setMediaStatus(args.success)
@@ -2058,7 +2049,7 @@ export function PageComposerDrawer({
                                   Current file: <span className="text-foreground">{selectedMediaSlot.media?.filename || 'None'}</span>
                                 </div>
                                 <div>
-                                  Last updated: <span className="text-foreground">{formatTimestamp(selectedMediaSlot.media?.updatedAt)}</span>
+                                  Last updated: <span className="text-foreground">{formatComposerTimestamp(selectedMediaSlot.media?.updatedAt)}</span>
                                 </div>
                               </div>
                               <div className="flex flex-wrap gap-2">
@@ -2217,7 +2208,7 @@ export function PageComposerDrawer({
                                         <div className="truncate text-sm font-semibold text-foreground">{item.alt || item.filename || `Media ${item.id}`}</div>
                                         <Badge variant="secondary">ID {item.id}</Badge>
                                       </div>
-                                      <div className="mt-1 text-xs text-muted-foreground">{item.filename || 'Untitled media'} · {formatTimestamp(item.updatedAt)}</div>
+                                      <div className="mt-1 text-xs text-muted-foreground">{item.filename || 'Untitled media'} · {formatComposerTimestamp(item.updatedAt)}</div>
                                     </div>
                                     <Button
                                       disabled={mediaActionsLocked || submittingMediaAction !== null}
@@ -2269,7 +2260,7 @@ export function PageComposerDrawer({
                           <Badge variant="secondary">{draftPage.visibility || 'public'}</Badge>
                         </div>
                         <div className="mt-2 text-xs text-muted-foreground">
-                          Updated {formatTimestamp(draftPage.updatedAt)} · Published {formatTimestamp(draftPage.publishedAt)}
+                          Updated {formatComposerTimestamp(draftPage.updatedAt)} · Published {formatComposerTimestamp(draftPage.publishedAt)}
                         </div>
                       </div>
 
@@ -2365,7 +2356,7 @@ export function PageComposerDrawer({
                                       {version.latest ? <Badge variant="outline">Current draft</Badge> : null}
                                     </div>
                                     <div className="text-xs text-muted-foreground">
-                                      {version.pagePath} · Saved {formatTimestamp(version.updatedAt)}
+                                      {version.pagePath} · Saved {formatComposerTimestamp(version.updatedAt)}
                                     </div>
                                   </div>
 

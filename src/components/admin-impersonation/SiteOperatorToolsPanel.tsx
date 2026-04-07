@@ -18,6 +18,7 @@ import type { AdminPreviewSearchUser, AdminPreviewUser } from '@/components/admi
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { parseResponseJson } from '@/utilities/parseResponseJson'
 
 function isSecuredAdminPath(pathname: string): boolean {
   return pathname.startsWith('/admin') || pathname.startsWith('/docs') || pathname.startsWith('/ops')
@@ -83,9 +84,7 @@ export function SiteOperatorToolsPanel({
         const response = await fetch(`/api/internal/impersonation/users?q=${encodeURIComponent(query.trim())}`, {
           signal: controller.signal,
         })
-        const payload = (await response.json().catch(() => null)) as
-          | { error?: string; users?: AdminPreviewSearchUser[] }
-          | null
+        const payload = await parseResponseJson<{ error?: string; users?: AdminPreviewSearchUser[] }>(response)
 
         if (!response.ok) {
           setStatus(payload?.error || 'Unable to load users.')
@@ -124,7 +123,7 @@ export function SiteOperatorToolsPanel({
         },
         method: 'POST',
       })
-      const payload = (await response.json().catch(() => null)) as { error?: string } | null
+      const payload = await parseResponseJson<{ error?: string }>(response)
 
       if (!response.ok) {
         setStatus(payload?.error || 'Unable to start preview.')
@@ -147,7 +146,7 @@ export function SiteOperatorToolsPanel({
       const response = await fetch('/api/internal/impersonation/stop', {
         method: 'POST',
       })
-      const payload = (await response.json().catch(() => null)) as { error?: string } | null
+      const payload = await parseResponseJson<{ error?: string }>(response)
 
       if (!response.ok) {
         setStatus(payload?.error || 'Unable to stop preview.')
