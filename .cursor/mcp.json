@@ -1,5 +1,10 @@
 {
   "mcpServers": {
+    "playwright": {
+      "command": "npx",
+      "args": ["@playwright/mcp@latest"],
+      "enabled": true
+    },
     "payload_local": {
       "command": "node",
       "args": ["scripts/payload-mcp-stdio.mjs"],
