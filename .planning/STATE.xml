@@ -1,11 +1,10 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <state>
   <agent-registry>
   </agent-registry>
   <current-phase>18</current-phase>
   <current-plan>18-06</current-plan>
   <status>in-progress</status>
-  <next-action>Quick task `quick-2026-04-07-composer-one-component-per-file` is complete: the canvas viewport and section chrome now split named subcomponents into their own files while keeping `PageComposerCanvas` as the public wrapper. Resume `18-06`.</next-action>
+  <next-action>Quick task `quick-2026-04-07-composer-one-component-per-file` is complete: drawer tab and card surfaces are split into leaf components, and `PageComposerDrawer` remains the orchestrator. Resume `18-06`.</next-action>
   <sink-compiled sink="apps/portfolio/content/docs/grime-time/planning/" at="2026-04-06T20:35:07.079Z" />
 </state>
-

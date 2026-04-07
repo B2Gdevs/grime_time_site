@@ -9,32 +9,14 @@ import {
   useState,
   type PointerEvent as ReactPointerEvent,
 } from 'react'
-import { DndContext, KeyboardSensor, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
+import { KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import type { DragEndEvent } from '@dnd-kit/core'
-import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
+import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import { usePathname, useRouter } from 'next/navigation'
 import { motion, useDragControls } from 'motion/react'
-import {
-  CopyPlusIcon,
-  EyeIcon,
-  EyeOffIcon,
-  FilePenLineIcon,
-  GridIcon,
-  GripVerticalIcon,
-  ImageIcon,
-  LoaderCircleIcon,
-  PlusIcon,
-  RefreshCwIcon,
-  RocketIcon,
-  SquarePenIcon,
-  Trash2Icon,
-  TypeIcon,
-  XIcon,
-} from 'lucide-react'
-
-import { Badge } from '@/components/ui/badge'
+import { FilePenLineIcon, GripVerticalIcon, ImageIcon, RocketIcon, TypeIcon, XIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+
 import {
   PAGE_COMPOSER_TOOLBAR_EVENT,
   usePageComposerOptional,
@@ -42,9 +24,7 @@ import {
   type PageComposerToolbarState,
 } from '@/components/admin-impersonation/PageComposerContext'
 import { usePortalCopilotOptional } from '@/components/copilot/PortalCopilotContext'
-import { Input } from '@/components/ui/input'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Textarea } from '@/components/ui/textarea'
 import { buildMediaDevtoolsSummary, type MediaDevtoolsSummary } from '@/lib/media/pageMediaDevtools'
 import { isUnknownRecord } from '@/lib/is-unknown-record'
 import {
@@ -56,7 +36,6 @@ import {
   removePageLayoutSection,
   togglePageLayoutSectionHidden,
   type PageComposerDocument,
-  type PageComposerSectionSummary,
   type PageComposerVersionSummary,
   updatePageLayoutSection,
 } from '@/lib/pages/pageComposer'
@@ -86,12 +65,13 @@ import type {
 import { formatComposerTimestamp } from '@/utilities/formatComposerTimestamp'
 import { parseResponseJson } from '@/utilities/parseResponseJson'
 import { PageComposerDrawerBlockLibrary } from '@/components/admin-impersonation/page-composer-drawer/PageComposerDrawerBlockLibrary'
+import { PageComposerDrawerContentTab } from '@/components/admin-impersonation/page-composer-drawer/PageComposerDrawerContentTab'
+import { PageComposerDrawerFooter } from '@/components/admin-impersonation/page-composer-drawer/PageComposerDrawerFooter'
 import { PageComposerDrawerMediaTab } from '@/components/admin-impersonation/page-composer-drawer/PageComposerDrawerMediaTab'
 import { PageComposerDrawerPublishTab } from '@/components/admin-impersonation/page-composer-drawer/PageComposerDrawerPublishTab'
+import { PageComposerDrawerStructureTab } from '@/components/admin-impersonation/page-composer-drawer/PageComposerDrawerStructureTab'
 
 import { adminPanelChrome } from './adminPanelChrome'
-import { Tooltip } from '../ui/tooltip'
-import { TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip'
 
 type MediaAction = 'create-and-swap' | 'generate-and-swap' | 'swap-existing-reference'
 type SavingAction = 'publish-page' | 'save-draft'
@@ -129,111 +109,6 @@ function asMedia(value: Media | null | number | undefined): Media | null {
 
 function getFileKind(file: File): 'image' | 'video' {
   return file.type.startsWith('video/') ? 'video' : 'image'
-}
-
-function StructureInsertButton({
-  onClick,
-}: {
-  onClick: () => void
-}) {
-  return (
-    <button
-      aria-label="Add block"
-      className="group relative flex h-7 w-full items-center justify-center"
-      onClick={onClick}
-      type="button"
-    >
-      <span className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-border/70 transition group-hover:bg-primary/40" />
-      <span className={adminPanelChrome.structureAddCircle}>
-        <PlusIcon className="h-4 w-4" />
-      </span>
-    </button>
-  )
-}
-
-function SortableSectionRow({
-  active,
-  onAddBelow,
-  onClick,
-  onDuplicate,
-  onRemove,
-  onToggleHidden,
-  summary,
-}: {
-  active: boolean
-  onAddBelow: () => void
-  onClick: () => void
-  onDuplicate: () => void
-  onRemove: () => void
-  onToggleHidden: () => void
-  summary: PageComposerSectionSummary
-}) {
-  const isHeroSummary = summary.blockType === 'hero'
-  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
-    id: String(summary.index),
-    disabled: isHeroSummary,
-  })
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={`rounded-2xl border p-3 transition ${
-        active ? 'border-primary/60 bg-primary/5' : 'border-border/70 bg-card/50'
-      } ${summary.hidden ? 'opacity-75' : ''}`}
-    >
-      <div className="flex items-start gap-3">
-        <button
-          className="mt-0.5 rounded-lg border border-border/70 bg-background p-2 text-muted-foreground disabled:cursor-default disabled:opacity-50"
-          disabled={isHeroSummary}
-          type="button"
-          {...attributes}
-          {...listeners}
-        >
-          <GripVerticalIcon className="h-4 w-4" />
-        </button>
-        <button className="min-w-0 flex-1 text-left" onClick={onClick} type="button">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-sm font-semibold text-foreground">{summary.label}</span>
-            <Badge variant="outline">{summary.blockType}</Badge>
-            {summary.variant ? <Badge variant="secondary">{summary.variant}</Badge> : null}
-            {summary.badges
-              .filter((badge) => badge !== summary.variant)
-              .map((badge) => (
-                <Badge key={badge} variant={badge === 'reusable' ? 'secondary' : 'outline'}>
-                  {badge}
-                </Badge>
-              ))}
-          </div>
-          <div className="mt-1 text-xs text-muted-foreground">{summary.description}</div>
-        </button>
-        <div className="flex shrink-0 gap-2">
-          <Button aria-label={`Add block below ${summary.label}`} onClick={onAddBelow} size="icon" type="button" variant="ghost">
-            <PlusIcon className="h-4 w-4" />
-          </Button>
-          {!isHeroSummary ? (
-            <>
-              <Button
-                aria-label={`${summary.hidden ? 'Show' : 'Hide'} block ${summary.label}`}
-                onClick={onToggleHidden}
-                size="icon"
-                type="button"
-                variant="ghost"
-              >
-                {summary.hidden ? <EyeIcon className="h-4 w-4" /> : <EyeOffIcon className="h-4 w-4" />}
-              </Button>
-              <Button onClick={onDuplicate} size="icon" type="button" variant="ghost">
-                <CopyPlusIcon className="h-4 w-4" />
-              </Button>
-              <Button onClick={onRemove} size="icon" type="button" variant="ghost">
-                <Trash2Icon className="h-4 w-4" />
-              </Button>
-            </>
-          ) : null}
-        </div>
-      </div>
-    </div>
-  )
 }
 
 export function PageComposerLauncherButton({
@@ -1375,378 +1250,89 @@ export function PageComposerDrawer({
             </div>
           ) : null}
 
-                <TabsContent className="portal-scroll mt-0 min-h-0 px-5 py-4" value="structure">
-                  {loading ? (
-                    <div className={adminPanelChrome.panelEmptyMuted}>
-                      Loading page structure...
-                    </div>
-                  ) : !draftPage ? (
-                    <div className={adminPanelChrome.panelEmptyMuted}>
-                      {status || 'No page is available for this route.'}
-                    </div>
-                  ) : (
-                    <div className="grid gap-4">
-                      <div className={adminPanelChrome.toolbarRow}>
-                        <div className="text-sm text-muted-foreground">
-                          {sectionSummaries.length} composer region{sectionSummaries.length === 1 ? '' : 's'}
-                        </div>
-                        <Button onClick={() => openBlockLibrary(layoutSectionSummaries.length)} size="sm" type="button" variant="outline">
-                          <PlusIcon className="h-4 w-4" />
-                          Add block
-                        </Button>
-                      </div>
+          <TabsContent className="portal-scroll mt-0 min-h-0 px-5 py-4" value="structure">
+            <PageComposerDrawerStructureTab
+              draftPage={draftPage}
+              duplicateBlock={duplicateBlock}
+              handleDragEnd={handleDragEnd}
+              heroSummary={heroSummary}
+              layoutSectionSummaries={layoutSectionSummaries}
+              loading={loading}
+              openBlockLibrary={openBlockLibrary}
+              removeBlock={removeBlock}
+              sectionSummaries={sectionSummaries}
+              selectedIndex={selectedIndex}
+              sensors={sensors}
+              setSelectedIndex={setSelectedIndex}
+              status={status}
+              toggleBlockHidden={toggleBlockHidden}
+            />
+          </TabsContent>
 
-                      {sectionSummaries.length ? (
-                        <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd} sensors={sensors}>
-                          <SortableContext items={layoutSectionSummaries.map((summary) => String(summary.index))} strategy={verticalListSortingStrategy}>
-                            <div className="grid gap-3">
-                              {heroSummary ? (
-                                <div className="grid gap-3">
-                                  <SortableSectionRow
-                                    active={selectedIndex === heroSummary.index}
-                                    onAddBelow={() => openBlockLibrary(0)}
-                                    onClick={() => setSelectedIndex(heroSummary.index)}
-                                    onDuplicate={() => {}}
-                                    onRemove={() => {}}
-                                    onToggleHidden={() => {}}
-                                    summary={heroSummary}
-                                  />
-                                  <StructureInsertButton onClick={() => openBlockLibrary(0)} />
-                                </div>
-                              ) : (
-                                <StructureInsertButton onClick={() => openBlockLibrary(0)} />
-                              )}
-                              {layoutSectionSummaries.map((summary) => (
-                                <div className="grid gap-3" key={`${summary.index}-${summary.label}`}>
-                                  <SortableSectionRow
-                                    active={selectedIndex === summary.index}
-                                    onAddBelow={() => openBlockLibrary(summary.index + 1)}
-                                    onClick={() => setSelectedIndex(summary.index)}
-                                    onDuplicate={() => duplicateBlock(summary.index)}
-                                    onRemove={() => removeBlock(summary.index)}
-                                    onToggleHidden={() => toggleBlockHidden(summary.index)}
-                                    summary={summary}
-                                  />
-                                  <StructureInsertButton onClick={() => openBlockLibrary(summary.index + 1)} />
-                                </div>
-                              ))}
-                            </div>
-                          </SortableContext>
-                        </DndContext>
-                      ) : (
-                        <div className="grid gap-3">
-                          <div className={adminPanelChrome.panelDashedEmpty}>
-                            This page does not have any layout blocks yet.
-                          </div>
-                          <StructureInsertButton onClick={() => openBlockLibrary(0)} />
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  </TabsContent>
+          <TabsContent className="portal-scroll mt-0 min-h-0 px-5 py-4" value="content">
+            <PageComposerDrawerContentTab
+              detachReusableBlock={detachReusableBlock}
+              draftPage={draftPage}
+              loading={loading}
+              mutateSelectedService={mutateSelectedService}
+              mutateSelectedServiceGrid={mutateSelectedServiceGrid}
+              openBlockLibrary={openBlockLibrary}
+              openSharedSectionSourceEditor={openSharedSectionSourceEditor}
+              removeBlock={removeBlock}
+              replaceSelectedBlock={replaceSelectedBlock}
+              selectedBlock={selectedBlock}
+              selectedBlockIsLinkedSharedSection={selectedBlockIsLinkedSharedSection}
+              selectedIndex={selectedIndex}
+              selectedSharedSectionId={selectedSharedSectionId}
+              selectedSummary={selectedSummary}
+              status={status}
+            />
+          </TabsContent>
 
-                <TabsContent className="portal-scroll mt-0 min-h-0 px-5 py-4" value="content">
-                  {loading ? (
-                    <div className={adminPanelChrome.panelEmptyMuted}>
-                      Loading section editor...
-                    </div>
-                  ) : !draftPage ? (
-                    <div className={adminPanelChrome.panelEmptyMuted}>
-                      No page is available for this route.
-                    </div>
-                  ) : selectedIndex < 0 ? (
-                    <div className={adminPanelChrome.panelEmptyMuted}>
-                      Hero copy and hero media edit directly on the live canvas. Click the hero content on the page to update it inline.
-                    </div>
-                  ) : !selectedBlock ? (
-                    <div className={adminPanelChrome.panelEmptyMuted}>
-                      Select a section on the live page to edit its content.
-                    </div>
-                  ) : selectedBlockIsLinkedSharedSection && selectedSharedSectionId ? (
-                    <div className="grid gap-4">
-                      <div className={adminPanelChrome.calloutPrimary}>
-                        This block is linked to a shared section source. Edit the source in the dedicated shared-section editor or detach a local copy before changing page-only content.
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          <Button onClick={() => openSharedSectionSourceEditor(selectedSharedSectionId)} size="sm" type="button">
-                            <SquarePenIcon className="h-4 w-4" />
-                            Edit source
-                          </Button>
-                          <Button onClick={() => detachReusableBlock(selectedIndex)} size="sm" type="button" variant="outline">
-                            <CopyPlusIcon className="h-4 w-4" />
-                            Detach copy
-                          </Button>
-                          <Button onClick={() => openBlockLibrary(selectedIndex, 'replace')} size="sm" type="button" variant="outline">
-                            <RefreshCwIcon className="h-4 w-4" />
-                            Replace section
-                          </Button>
-                          <Button onClick={() => removeBlock(selectedIndex)} size="sm" type="button" variant="outline">
-                            <Trash2Icon className="h-4 w-4" />
-                            Remove from page
-                          </Button>
-                        </div>
-                      </div>
-                      <div className={adminPanelChrome.cardMuted}>
-                        Publishing the shared source updates every linked published page using it. Removing this section here only removes this page instance. The source itself stays intact.
-                      </div>
-                    </div>
-                  ) : (selectedBlock as ReusableAwareLayoutBlock).composerReusable?.mode === 'linked' ? (
-                    <div className="grid gap-4">
-                      <div className={adminPanelChrome.calloutPrimary}>
-                        This block is using a linked reusable preset. Detach it before editing local copy, or replace it with another reusable source.
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          <Button onClick={() => detachReusableBlock(selectedIndex)} size="sm" type="button" variant="outline">
-                            <CopyPlusIcon className="h-4 w-4" />
-                            Detach copy
-                          </Button>
-                          <Button onClick={() => openBlockLibrary(selectedIndex, 'replace')} size="sm" type="button" variant="outline">
-                            <RefreshCwIcon className="h-4 w-4" />
-                            Replace section
-                          </Button>
-                          <Button onClick={() => removeBlock(selectedIndex)} size="sm" type="button" variant="outline">
-                            <Trash2Icon className="h-4 w-4" />
-                            Remove from page
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  ) : selectedBlock.blockType === 'serviceGrid' ? (
-                    <div className="grid gap-4">
-                      <div className={adminPanelChrome.card}>
-                        {/* Swap blocks compact heading and info with icon and tooltip */}
-                        <div className="flex flex-wrap items-center gap-2">
-                          <TooltipProvider delayDuration={200}>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button size="sm" type="button" variant="outline">
-                                  <GridIcon className="h-4 w-4" />
-                                  Find a new block
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Find a new block for the section</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        </div>
-                      </div>
+          <TabsContent className="portal-scroll mt-0 min-h-0 px-5 py-4" value="media">
+            <PageComposerDrawerMediaTab
+              copilot={copilot ? { openFocusedMediaSession: copilot.openFocusedMediaSession } : null}
+              dirty={dirty}
+              draftPage={draftPage ? { pagePath: draftPage.pagePath } : null}
+              loadMediaLibrary={loadMediaLibrary}
+              loading={loading}
+              mediaActionsLocked={mediaActionsLocked}
+              mediaKind={mediaKind}
+              mediaLibrary={mediaLibrary}
+              mediaLoading={mediaLoading}
+              mediaPrompt={mediaPrompt}
+              mediaPromptId={mediaPromptId}
+              mediaSlots={mediaSlots}
+              selectedIndex={selectedIndex}
+              selectedMediaSlot={selectedMediaSlot}
+              selectedServiceGrid={selectedServiceGrid}
+              setMediaKind={setMediaKind}
+              setMediaPrompt={setMediaPrompt}
+              setSelectedMediaPath={setSelectedMediaPath}
+              submitMediaAction={submitMediaAction}
+              submittingMediaAction={submittingMediaAction}
+              mediaUploadInputRef={mediaUploadInputRef}
+            />
+          </TabsContent>
 
+          <TabsContent className="portal-scroll mt-0 min-h-0 px-5 py-4" value="publish">
+            <PageComposerDrawerPublishTab
+              changedBlockCount={changedBlockCount}
+              dirty={dirty}
+              draftPage={draftPage}
+              loading={loading}
+              pageVersions={pageVersions}
+              restoringVersionId={restoringVersionId}
+              savingAction={savingAction}
+              sectionCount={sectionSummaries.length}
+              slugDraft={slugDraft}
+              validationSummary={validationSummary}
+              visibilityDraft={visibilityDraft}
+              restorePageVersion={restorePageVersion}
+            />
+          </TabsContent>
 
-                      <div className="grid gap-2">
-                        <label className={adminPanelChrome.fieldLabel}>Block name</label>
-                        <Input onChange={(event) => replaceSelectedBlock({ ...selectedBlock, blockName: event.target.value || undefined })} value={selectedBlock.blockName || ''} />
-                      </div>
-
-                      <div className="grid gap-2">
-                        <label className={adminPanelChrome.fieldLabel}>Display variant</label>
-                        <select
-                          className="h-10 rounded-xl border border-input bg-background px-3 text-sm"
-                          onChange={(event) =>
-                            replaceSelectedBlock({
-                              ...selectedBlock,
-                              displayVariant: event.target.value as 'featureCards' | 'interactive' | 'pricingSteps',
-                            })
-                          }
-                          value={selectedBlock.displayVariant || 'interactive'}
-                        >
-                          <option value="featureCards">Feature cards</option>
-                          <option value="pricingSteps">Pricing steps</option>
-                          <option value="interactive">Interactive detail</option>
-                        </select>
-                      </div>
-
-                      <div className="grid gap-4 md:grid-cols-2">
-                        <div className="grid gap-2">
-                          <label className={adminPanelChrome.fieldLabel}>Eyebrow</label>
-                          <Input onChange={(event) => replaceSelectedBlock({ ...selectedBlock, eyebrow: event.target.value })} value={selectedBlock.eyebrow || ''} />
-                        </div>
-                        <div className="grid gap-2">
-                          <label className={adminPanelChrome.fieldLabel}>Heading</label>
-                          <Input onChange={(event) => replaceSelectedBlock({ ...selectedBlock, heading: event.target.value })} value={selectedBlock.heading || ''} />
-                        </div>
-                      </div>
-
-                      <div className="grid gap-2">
-                        <label className={adminPanelChrome.fieldLabel}>Intro</label>
-                        <Textarea className="min-h-24" onChange={(event) => replaceSelectedBlock({ ...selectedBlock, intro: event.target.value })} value={selectedBlock.intro || ''} />
-                      </div>
-
-                      <div className="grid gap-3">
-                        {(selectedBlock.services || []).map((service, serviceIndex) => (
-                          <div key={`${service.name}-${serviceIndex}`} className={adminPanelChrome.card}>
-                            <div className="flex items-center justify-between gap-3">
-                              <div className="text-sm font-semibold text-foreground">Row {serviceIndex + 1}</div>
-                              <Button
-                                onClick={() =>
-                                  mutateSelectedServiceGrid((block) => {
-                                    const services = [...(block.services || [])]
-                                    services.splice(serviceIndex, 1)
-                                    return { ...block, services }
-                                  })
-                                }
-                                size="sm"
-                                type="button"
-                                variant="ghost"
-                              >
-                                <Trash2Icon className="h-4 w-4" />
-                                Remove
-                              </Button>
-                            </div>
-
-                            <div className="mt-3 grid gap-3 md:grid-cols-2">
-                              <Input
-                                onChange={(event) => mutateSelectedService(serviceIndex, (current) => ({ ...current, name: event.target.value }))}
-                                placeholder="Name"
-                                value={service.name || ''}
-                              />
-                              <Input
-                                onChange={(event) => mutateSelectedService(serviceIndex, (current) => ({ ...current, eyebrow: event.target.value }))}
-                                placeholder="Eyebrow"
-                                value={service.eyebrow || ''}
-                              />
-                            </div>
-
-                            <div className="mt-3 grid gap-3">
-                              <Textarea
-                                className="min-h-20"
-                                onChange={(event) => mutateSelectedService(serviceIndex, (current) => ({ ...current, summary: event.target.value }))}
-                                placeholder="Summary"
-                                value={service.summary || ''}
-                              />
-                              <Input
-                                onChange={(event) => mutateSelectedService(serviceIndex, (current) => ({ ...current, pricingHint: event.target.value }))}
-                                placeholder="Pricing hint"
-                                value={service.pricingHint || ''}
-                              />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-
-                      <Button
-                        onClick={() =>
-                          mutateSelectedServiceGrid((block) => ({
-                            ...block,
-                            services: [
-                              ...(block.services || []),
-                              {
-                                eyebrow: 'New row',
-                                highlights: [{ text: 'Replace this default proof point.' }],
-                                name: 'New item',
-                                pricingHint: '',
-                                summary: 'Describe this row.',
-                              },
-                            ],
-                          }))
-                        }
-                        size="sm"
-                        type="button"
-                        variant="secondary"
-                      >
-                        <PlusIcon className="h-4 w-4" />
-                        Add row
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="grid gap-4">
-                      <div className={adminPanelChrome.card}>
-                        <div className="text-sm font-semibold text-foreground">{selectedSummary?.label || 'Selected block'}</div>
-                        <div className="mt-1 text-sm text-muted-foreground">
-                          {selectedIndex < 0
-                            ? 'Hero editing now happens directly on the page. Use the live canvas copy and media affordances instead of this side surface.'
-                            : 'This first content editor is focused on reusable `serviceGrid` sections. Other block types can still be replaced, reordered, duplicated, and removed while the shared-section authoring surface expands.'}
-                        </div>
-                        <div className="mt-3">
-                          <Button
-                            disabled={selectedIndex < 0}
-                            onClick={() => openBlockLibrary(selectedIndex, 'replace')}
-                            size="sm"
-                            type="button"
-                            variant="outline"
-                          >
-                            <RefreshCwIcon className="h-4 w-4" />
-                            Replace section
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </TabsContent>
-
-                <TabsContent className="portal-scroll mt-0 min-h-0 px-5 py-4" value="media">
-                  <PageComposerDrawerMediaTab
-                    copilot={copilot ? { openFocusedMediaSession: copilot.openFocusedMediaSession } : null}
-                    dirty={dirty}
-                    draftPage={draftPage ? { pagePath: draftPage.pagePath } : null}
-                    loadMediaLibrary={loadMediaLibrary}
-                    loading={loading}
-                    mediaActionsLocked={mediaActionsLocked}
-                    mediaKind={mediaKind}
-                    mediaLibrary={mediaLibrary}
-                    mediaLoading={mediaLoading}
-                    mediaPrompt={mediaPrompt}
-                    mediaPromptId={mediaPromptId}
-                    mediaSlots={mediaSlots}
-                    selectedIndex={selectedIndex}
-                    selectedMediaSlot={selectedMediaSlot}
-                    selectedServiceGrid={selectedServiceGrid}
-                    setMediaKind={setMediaKind}
-                    setMediaPrompt={setMediaPrompt}
-                    setSelectedMediaPath={setSelectedMediaPath}
-                    submitMediaAction={submitMediaAction}
-                    submittingMediaAction={submittingMediaAction}
-                    mediaUploadInputRef={mediaUploadInputRef}
-                  />
-                </TabsContent>
-
-                <TabsContent className="portal-scroll mt-0 min-h-0 px-5 py-4" value="publish">
-                  <PageComposerDrawerPublishTab
-                    changedBlockCount={changedBlockCount}
-                    dirty={dirty}
-                    draftPage={draftPage}
-                    loading={loading}
-                    pageVersions={pageVersions}
-                    restoringVersionId={restoringVersionId}
-                    savingAction={savingAction}
-                    sectionCount={sectionSummaries.length}
-                    slugDraft={slugDraft}
-                    validationSummary={validationSummary}
-                    visibilityDraft={visibilityDraft}
-                    restorePageVersion={restorePageVersion}
-                  />
-                </TabsContent>
-
-                <div className={adminPanelChrome.drawerFooterStrip}>
-                  <div className="flex flex-wrap justify-between gap-3">
-                    <div className="flex flex-wrap gap-2">
-                      <Button disabled={!draftPage || savingAction !== null || restoringVersionId !== null} onClick={() => void persistPage('save-draft')} size="sm" type="button" variant="outline">
-                        {savingAction === 'save-draft' ? (
-                          <>
-                            <LoaderCircleIcon className="h-4 w-4 animate-spin" />
-                            Saving...
-                          </>
-                        ) : (
-                          <>
-                            <SquarePenIcon className="h-4 w-4" />
-                            Save draft
-                          </>
-                        )}
-                      </Button>
-                      <Button disabled={!draftPage || savingAction !== null || restoringVersionId !== null} onClick={() => void persistPage('publish-page')} size="sm" type="button">
-                        {savingAction === 'publish-page' ? (
-                          <>
-                            <LoaderCircleIcon className="h-4 w-4 animate-spin" />
-                            Publishing...
-                          </>
-                        ) : (
-                          <>
-                            <RocketIcon className="h-4 w-4" />
-                            Publish
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-                </div>
+          <PageComposerDrawerFooter draftPage={draftPage} persistPage={persistPage} restoringVersionId={restoringVersionId} savingAction={savingAction} />
         </Tabs>
 
         {isBlockLibraryOpen ? (
