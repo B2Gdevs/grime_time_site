@@ -201,11 +201,8 @@ export function SiteOperatorToolsPanel({
                 </div>
                 <div className="mt-1 text-sm font-medium text-foreground">
                   {composerVisibleOnPage
-                    ? 'Live toolbar and block controls are active on this page.'
-                    : 'Turn this on to edit blocks, text, and media directly on the live page.'}
-                </div>
-                <div className="mt-1 text-xs text-muted-foreground">
-                  The top canvas bar, block insertion, inline text updates, and media editing all ride the live page when the composer is on.
+                    ? 'Live page editing is enabled here.'
+                    : 'Turn this on to edit blocks, text, and media on the live page.'}
                 </div>
               </div>
 
@@ -225,33 +222,9 @@ export function SiteOperatorToolsPanel({
                   className={`inline-flex h-5 w-5 rounded-full bg-background shadow-sm transition-transform ${
                     composerVisibleOnPage ? 'translate-x-6' : 'translate-x-1'
                   }`}
-                />
-              </button>
-            </div>
-
-            {composerVisibleOnPage ? (
-              <div className="mt-3 flex flex-wrap gap-2">
-                <Button
-                  onClick={() => composer.setActiveTab('content')}
-                  size="sm"
-                  type="button"
-                  variant={composer.activeTab === 'content' ? 'default' : 'outline'}
-                >
-                  Content
-                </Button>
-                <Button
-                  onClick={() => composer.setActiveTab('media')}
-                  size="sm"
-                  type="button"
-                  variant={composer.activeTab === 'media' ? 'default' : 'outline'}
-                >
-                  Media
-                </Button>
-                <div className="inline-flex items-center rounded-full border border-border/70 px-3 text-xs text-muted-foreground">
-                  Use the live page to select sections and add blocks
-                </div>
+                  />
+                </button>
               </div>
-            ) : null}
           </div>
         ) : null}
 

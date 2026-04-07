@@ -109,6 +109,8 @@ describe('SiteOperatorToolsPanel', () => {
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalled()
     })
+    expect(screen.queryByRole('button', { name: /^content$/i })).toBeNull()
+    expect(screen.queryByRole('button', { name: /^media$/i })).toBeNull()
   })
 
   it('toggles the visual composer for the current page from the tools panel', async () => {
@@ -133,6 +135,10 @@ describe('SiteOperatorToolsPanel', () => {
         realUser={{ email: 'admin@grimetime.app', id: 7, name: 'Real Admin' }}
       />,
     )
+
+    expect(screen.getByText(/live page editing is enabled here/i)).toBeTruthy()
+    expect(screen.queryByRole('button', { name: /^content$/i })).toBeNull()
+    expect(screen.queryByRole('button', { name: /^media$/i })).toBeNull()
 
     screen.getByRole('switch', { name: /disable visual composer/i }).click()
 

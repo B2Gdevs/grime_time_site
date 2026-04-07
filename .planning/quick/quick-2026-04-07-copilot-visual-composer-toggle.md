@@ -5,7 +5,7 @@
 
 ## Task
 
-Replace the copilot tools panel's `Open content tools` action with a single `Visual composer` switch that toggles the live page composer for the current route, and swap the copilot header hide action to an icon close control.
+Replace the copilot tools panel's `Open content tools` action with a single `Visual composer` switch that toggles the live page composer for the current route, restore the `Visual composer` label to the live page composer bar, and swap the copilot header hide action to an icon close control in the top-right corner.
 
 ## Verify
 

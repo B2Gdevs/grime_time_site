@@ -35,8 +35,7 @@ vi.mock('@/components/admin-impersonation/PageComposerContext', () => ({
 }))
 
 vi.mock('@/components/admin-impersonation/PageComposerDrawer', () => ({
-  PageComposerDrawer: ({ embedded }: { embedded?: boolean }) =>
-    embedded ? <div>Mock embedded composer</div> : <div>Mock floating composer</div>,
+  PageComposerDrawer: () => null,
 }))
 
 vi.mock('@/components/admin-impersonation/SiteOperatorToolsPanel', () => ({
@@ -121,7 +120,7 @@ describe('PortalCopilot composer tab', () => {
     vi.clearAllMocks()
   })
 
-  it('keeps composer under tools instead of a dedicated header tab', async () => {
+  it('keeps the tools pane free of embedded composer chrome and closes from the top-right control', async () => {
     composerState.isOpen = true
     composerState.activeTab = 'content'
 
@@ -142,13 +141,14 @@ describe('PortalCopilot composer tab', () => {
     fireEvent.click(screen.getByRole('button', { name: /tools/i }))
 
     await waitFor(() => {
-      expect(screen.getByText('Mock embedded composer')).toBeTruthy()
+      expect(screen.getByText('Mock tools panel')).toBeTruthy()
     })
+    expect(screen.queryByText('Mock embedded composer')).toBeNull()
 
-    expect(screen.queryByText(/^Hide$/i)).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: /hide copilot/i }))
 
-    expect(composerState.close).not.toHaveBeenCalled()
-    expect(screen.getByText('Mock embedded composer')).toBeTruthy()
+    await waitFor(() => {
+      expect(screen.queryByText('Mock tools panel')).toBeNull()
+    })
   })
 })

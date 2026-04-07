@@ -1555,7 +1555,7 @@ export function PageComposerDrawer({
     dragControls.start(event)
   }
 
-  const showInlineAdminBar = true
+  const showInlineAdminBar = !embedded
 
   const panel = (
     <aside

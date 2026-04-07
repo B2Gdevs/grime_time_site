@@ -14,6 +14,8 @@ vi.mock('@/components/copilot/CopilotInteractable', () => ({
   useSectionInteractable: () => undefined,
 }))
 
+const onCreateDraft = vi.fn()
+
 function ComposerHarness() {
   const composer = usePageComposer()
 
@@ -52,7 +54,7 @@ function ComposerHarness() {
             loading: false,
             onAddAbove: vi.fn(),
             onAddBelow: vi.fn(),
-            onCreateDraft: vi.fn(),
+            onCreateDraft,
             onDeleteBlock: vi.fn(),
             onDuplicateBlock: vi.fn(),
             onSetSlugDraft: vi.fn(),
@@ -106,6 +108,8 @@ function ComposerHarness() {
 
 describe('PageComposer canvas integration', () => {
   it('uses the live page surface as the selectable canvas when the composer is open', () => {
+    onCreateDraft.mockReset()
+
     render(
       <PageComposerProvider>
         <ComposerHarness />
@@ -114,18 +118,23 @@ describe('PageComposer canvas integration', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Open composer' }))
 
+    expect(screen.getByText('Visual composer')).toBeTruthy()
     expect(screen.getByDisplayValue('Home')).toBeTruthy()
     expect(screen.getByDisplayValue('home')).toBeTruthy()
+    expect(screen.getByRole('button', { name: /create draft/i })).toBeTruthy()
     expect(screen.getByRole('link', { name: /open route preview/i })).toBeTruthy()
     expect(screen.getByRole('button', { name: /desktop preview/i })).toBeTruthy()
     expect(screen.getByRole('button', { name: /^draft$/i })).toBeTruthy()
     expect(screen.getByRole('button', { name: /close composer/i })).toBeTruthy()
 
+    fireEvent.click(screen.getByRole('button', { name: /create draft/i }))
+    expect(onCreateDraft).toHaveBeenCalled()
+
     fireEvent.click(screen.getByText('Section two'))
 
     expect(screen.getByTestId('selected-index').textContent).toBe('1')
     expect(screen.getByText(/Section 2/i)).toBeTruthy()
-    expect(screen.getByText(/How pricing works/i)).toBeTruthy()
+    expect(screen.getAllByText(/How pricing works/i).length).toBeGreaterThan(0)
 
     fireEvent.click(screen.getByRole('button', { name: /close composer/i }))
 

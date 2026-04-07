@@ -234,8 +234,59 @@ export function PageComposerCanvasViewport({ children }: { children: React.React
           <div
             className="pointer-events-auto relative w-full rounded-[1.45rem] border border-border/70 bg-background/94 px-3 py-2.5 shadow-xl backdrop-blur"
           >
-            <div className="flex items-center justify-between gap-2">
-              <div className="min-w-0 flex flex-1 items-center gap-2 overflow-hidden">
+            <div className="grid gap-3">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex min-w-0 flex-wrap items-center gap-2">
+                  <div className="text-[11px] font-medium uppercase tracking-[0.22em] text-muted-foreground">
+                    Visual composer
+                  </div>
+                  {toolbarState?.draftPage ? <Badge variant="secondary">{toolbarState.draftPage.pagePath}</Badge> : null}
+                  {selectedSummary ? <Badge variant="outline">{selectedSummary.label}</Badge> : null}
+                </div>
+                <div className="flex shrink-0 items-center justify-end gap-2">
+                  <Button asChild className="h-10 rounded-xl" type="button" variant="outline">
+                    <a
+                      aria-label="Open route preview"
+                      className="inline-flex items-center gap-2"
+                      href={previewPath}
+                      rel="noreferrer"
+                      target="_blank"
+                    >
+                      Preview
+                      <ExternalLinkIcon className="h-4 w-4 shrink-0" />
+                    </a>
+                  </Button>
+                  <CanvasModeButton
+                    active={composer.previewMode === 'desktop'}
+                    icon={<MonitorIcon className="h-4 w-4" />}
+                    label="Desktop preview"
+                    onClick={() => composer.setPreviewMode('desktop')}
+                  />
+                  <CanvasModeButton
+                    active={composer.previewMode === 'tablet'}
+                    icon={<TabletSmartphoneIcon className="h-4 w-4" />}
+                    label="Tablet preview"
+                    onClick={() => composer.setPreviewMode('tablet')}
+                  />
+                  <CanvasModeButton
+                    active={composer.previewMode === 'mobile'}
+                    icon={<SmartphoneIcon className="h-4 w-4" />}
+                    label="Mobile preview"
+                    onClick={() => composer.setPreviewMode('mobile')}
+                  />
+                  <CanvasActionButton
+                    label="Close composer"
+                    onClick={(event) => {
+                      event.preventDefault()
+                      composer.close()
+                    }}
+                  >
+                    <XIcon className="h-4 w-4" />
+                  </CanvasActionButton>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
                 {toolbarState ? (
                   <>
                     <ToolbarField
@@ -274,13 +325,16 @@ export function PageComposerCanvasViewport({ children }: { children: React.React
                         {toolbarState.loading ? 'Loading current page...' : 'No page loaded yet'}
                       </div>
                     )}
-                  </>
-                ) : null}
-              </div>
-
-              <div className="flex shrink-0 items-center justify-end gap-2">
-                {toolbarState ? (
-                  <>
+                    <Button
+                      className="h-10 rounded-xl"
+                      disabled={toolbarState.creatingDraftClone || toolbarState.loading || toolbarState.dirty}
+                      onClick={toolbarState.onCreateDraft}
+                      type="button"
+                      variant="outline"
+                    >
+                      <PlusIcon className="h-4 w-4" />
+                      {toolbarState.creatingDraftClone ? 'Creating...' : 'Create draft'}
+                    </Button>
                     <Button
                       className="h-10 rounded-xl"
                       onClick={() => {
@@ -318,45 +372,6 @@ export function PageComposerCanvasViewport({ children }: { children: React.React
                     </div>
                   </>
                 ) : null}
-                <Button asChild className="h-10 rounded-xl" type="button" variant="outline">
-                  <a
-                    aria-label="Open route preview"
-                    className="inline-flex items-center gap-2"
-                    href={previewPath}
-                    rel="noreferrer"
-                    target="_blank"
-                  >
-                    Preview
-                    <ExternalLinkIcon className="h-4 w-4 shrink-0" />
-                  </a>
-                </Button>
-                <CanvasModeButton
-                  active={composer.previewMode === 'desktop'}
-                  icon={<MonitorIcon className="h-4 w-4" />}
-                  label="Desktop preview"
-                  onClick={() => composer.setPreviewMode('desktop')}
-                />
-                <CanvasModeButton
-                  active={composer.previewMode === 'tablet'}
-                  icon={<TabletSmartphoneIcon className="h-4 w-4" />}
-                  label="Tablet preview"
-                  onClick={() => composer.setPreviewMode('tablet')}
-                />
-                <CanvasModeButton
-                  active={composer.previewMode === 'mobile'}
-                  icon={<SmartphoneIcon className="h-4 w-4" />}
-                  label="Mobile preview"
-                  onClick={() => composer.setPreviewMode('mobile')}
-                />
-                <CanvasActionButton
-                  label="Close composer"
-                  onClick={(event) => {
-                    event.preventDefault()
-                    composer.close()
-                  }}
-                >
-                  <XIcon className="h-4 w-4" />
-                </CanvasActionButton>
               </div>
             </div>
 

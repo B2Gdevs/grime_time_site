@@ -17,7 +17,6 @@ import {
   useState,
 } from 'react'
 
-import { PageComposerDrawer } from '@/components/admin-impersonation/PageComposerDrawer'
 import { SiteOperatorToolsPanel, type SiteOperatorToolsPanelProps } from '@/components/admin-impersonation/SiteOperatorToolsPanel'
 import { usePageComposerOptional } from '@/components/admin-impersonation/PageComposerContext'
 import { CopilotMediaWorkbench } from '@/components/copilot/CopilotMediaWorkbench'
@@ -406,19 +405,13 @@ export function PortalCopilot({
     operatorTools?.effectiveUser || operatorTools?.impersonatedUser || operatorTools?.realUser,
   )
   const hasSecondaryViews = hasToolsView
-  const showEmbeddedComposerInTools = Boolean(
-    composer?.isOpen && activeView === 'tools' && composer.activeTab !== 'structure',
-  )
-  const shouldKeepEmbeddedComposerMounted = Boolean(
-    composer?.isOpen && (!isOpen || activeView !== 'tools' || composer.activeTab === 'structure'),
-  )
   const activeViewMeta = {
     chat: {
       description: 'Ask about work, docs, follow-up, and active staff context.',
       title: 'Copilot chat',
     },
     tools: {
-      description: 'Jump between operator actions, impersonation context, and composer controls.',
+      description: 'Jump between operator actions and impersonation context.',
       title: 'Operator tools',
     },
   }[activeView]
@@ -536,29 +529,27 @@ export function PortalCopilot({
           {isOpen ? (
             <motion.div
               key="open"
-              className="grid h-[min(42rem,calc(100vh-1.5rem))] grid-cols-1 overflow-hidden rounded-[2rem] border bg-background shadow-2xl"
+              className="relative grid h-[min(42rem,calc(100vh-1.5rem))] grid-cols-1 overflow-hidden rounded-[2rem] border bg-background shadow-2xl"
               initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.98 }}
               transition={{ duration: 0.16, ease: 'easeOut' }}
             >
-              <header className="border-b px-5 py-4">
-                <div className="flex flex-wrap items-start justify-between gap-4">
-                  <div className="min-w-0">
-                    <p className="text-[0.68rem] uppercase tracking-[0.3em] text-muted-foreground">Staff beta</p>
-                    <h2 className="mt-1 text-xl font-semibold tracking-tight">{activeViewMeta.title}</h2>
-                    <p className="mt-1 text-xs text-muted-foreground">{activeViewMeta.description}</p>
-                  </div>
-                  <Button
-                    aria-label="Hide copilot"
-                    className="h-9 w-9 rounded-full text-muted-foreground"
-                    onClick={close}
-                    size="icon"
-                    type="button"
-                    variant="ghost"
-                  >
-                    <XIcon className="size-4" />
-                  </Button>
+              <Button
+                aria-label="Hide copilot"
+                className="absolute right-4 top-4 z-10 h-9 w-9 rounded-full text-muted-foreground"
+                onClick={close}
+                size="icon"
+                type="button"
+                variant="ghost"
+              >
+                <XIcon className="size-4" />
+              </Button>
+              <header className="border-b px-5 py-4 pr-16">
+                <div className="min-w-0">
+                  <p className="text-[0.68rem] uppercase tracking-[0.3em] text-muted-foreground">Staff beta</p>
+                  <h2 className="mt-1 text-xl font-semibold tracking-tight">{activeViewMeta.title}</h2>
+                  <p className="mt-1 text-xs text-muted-foreground">{activeViewMeta.description}</p>
                 </div>
                 {hasSecondaryViews ? (
                   <div className="mt-4 inline-flex rounded-full border border-border/70 bg-muted/40 p-1">
@@ -597,11 +588,6 @@ export function PortalCopilot({
                     localPageMediaEnabled={operatorTools?.localPageMediaEnabled}
                     realUser={operatorTools?.realUser}
                   />
-                  {showEmbeddedComposerInTools ? (
-                    <div className="mt-5 min-h-0 overflow-hidden">
-                      <PageComposerDrawer embedded enabled />
-                    </div>
-                  ) : null}
                 </div>
               ) : (
                 <ThreadPrimitive.Root className="flex min-h-0 flex-1 flex-col px-4 pb-4 pt-5 sm:px-5">
@@ -642,11 +628,6 @@ export function PortalCopilot({
             </motion.div>
           )}
         </AnimatePresence>
-        {shouldKeepEmbeddedComposerMounted ? (
-          <div hidden>
-            <PageComposerDrawer embedded enabled />
-          </div>
-        ) : null}
       </motion.div>
   )
 }
