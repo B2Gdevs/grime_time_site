@@ -1,21 +1,21 @@
-import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowRightIcon, DropletsIcon, WavesIcon } from 'lucide-react'
 import type { RequiredDataFromCollectionSlug } from 'payload'
 
 import { RenderBlocks } from '@/blocks/RenderBlocks'
 import { PageComposerCanvasSection } from '@/components/admin-impersonation/PageComposerCanvas'
+import { PageHeroMediaEditable } from '@/components/home/PageHeroRichTextEditable'
 import { resolveServiceGridDisplayVariant } from '@/blocks/ServiceGrid/variants'
-import { InlinePageMediaEditor } from '@/components/admin-impersonation/InlinePageMediaEditor'
 import { InstantQuoteSection } from '@/components/InstantQuoteSection'
+import { Media } from '@/components/Media'
 import { MarketingHeroLead, MarketingHeroPanel } from '@/components/home/MarketingHeroEditable'
-import { extractLexicalPlainText, getMediaUrl } from '@/lib/marketing/public-shell'
+import { extractLexicalPlainText } from '@/lib/marketing/public-shell'
 import { getVisiblePageLayoutBlocks } from '@/lib/pages/pageLayoutVisibility'
 import type { InstantQuoteCatalog } from '@/lib/quotes/instantQuoteCatalog'
 import { formatCurrency } from '@/lib/quotes/instantQuoteCatalog'
-import type { Media, ServiceGridBlock } from '@/payload-types'
+import type { Media as PayloadMediaType, ServiceGridBlock } from '@/payload-types'
 
-function asMedia(value: Media | number | null | undefined): Media | null {
+function asMedia(value: PayloadMediaType | number | null | undefined): PayloadMediaType | null {
   return value && typeof value === 'object' ? value : null
 }
 
@@ -49,7 +49,6 @@ export async function GrimeTimeMarketingHome({
     'Strong visuals, clear service lanes, and a quote form that explains what moves the number.'
   const visibleLayout = getVisiblePageLayoutBlocks(page.layout)
   const heroMedia = asMedia(page.hero.media)
-  const heroImageUrl = getMediaUrl(heroMedia)
   const featureCardsBlock = visibleLayout.find(
     (block): block is ServiceGridBlock =>
       block.blockType === 'serviceGrid' && resolveServiceGridDisplayVariant(block) === 'featureCards',
@@ -106,20 +105,17 @@ export async function GrimeTimeMarketingHome({
               <div className="absolute bottom-4 right-0 h-28 w-28 rounded-full bg-cyan-400/18 blur-3xl" />
 
               <div className="relative overflow-hidden rounded-[2.3rem] border border-white/10 bg-[#071321] p-4 text-white shadow-[0_32px_100px_-40px_rgba(2,6,23,0.95)]">
-                {heroImageUrl ? (
-                  <InlinePageMediaEditor relationPath="hero.media">
+                {heroMedia ? (
+                  <PageHeroMediaEditable relationPath="hero.media">
                     <div className="relative overflow-hidden rounded-[1.6rem]">
-                      <Image
-                        src={heroImageUrl}
-                        alt={heroMedia?.alt || page.title}
-                        width={heroMedia?.width || 1200}
-                        height={heroMedia?.height || 1400}
-                        className="aspect-[4/4.8] w-full object-cover"
+                      <Media
+                        imgClassName="aspect-[4/4.8] w-full object-cover"
                         priority
+                        resource={heroMedia}
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-[#071321] via-[#071321]/24 to-transparent" />
                     </div>
-                  </InlinePageMediaEditor>
+                  </PageHeroMediaEditable>
                 ) : (
                   <div className="flex aspect-[4/4.8] items-end rounded-[1.6rem] bg-[linear-gradient(180deg,#11314d,#071321)] p-6">
                     <p className="max-w-xs text-sm leading-6 text-white/76">

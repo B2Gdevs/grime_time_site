@@ -184,7 +184,7 @@ export function SiteOperatorToolsPanel({
                   {composer.isOpen ? 'Composer follows the live page.' : 'Composer opens automatically on the homepage.'}
                 </div>
                 <div className="mt-1 text-xs text-muted-foreground">
-                  Structure and publish live on the canvas toolbar. Keep Tools for deeper content editing and impersonation.
+                  Selection, preview, and publishing live on the canvas toolbar. Keep Tools for deeper content editing and impersonation.
                 </div>
               </div>
               <Button
@@ -212,7 +212,7 @@ export function SiteOperatorToolsPanel({
                   Content
                 </Button>
                 <div className="inline-flex items-center rounded-full border border-border/70 px-3 text-xs text-muted-foreground">
-                  Structure and preview live on the canvas bar
+                  Selection and preview live on the canvas bar
                 </div>
               </div>
             ) : null}

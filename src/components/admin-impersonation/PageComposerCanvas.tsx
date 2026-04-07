@@ -1,6 +1,6 @@
 'use client'
 
-import { CopyPlusIcon, EyeIcon, EyeOffIcon, ExternalLinkIcon, FilePenLineIcon, GripVerticalIcon, Link2Icon, LoaderCircleIcon, MonitorIcon, PlusIcon, RocketIcon, SmartphoneIcon, TabletSmartphoneIcon, Trash2Icon, TypeIcon } from 'lucide-react'
+import { CopyPlusIcon, EyeIcon, EyeOffIcon, ExternalLinkIcon, Link2Icon, MonitorIcon, PlusIcon, SmartphoneIcon, TabletSmartphoneIcon, Trash2Icon, TypeIcon, XIcon } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 
@@ -59,29 +59,6 @@ function CanvasModeButton({
       </TooltipTrigger>
       <TooltipContent>{label}</TooltipContent>
     </Tooltip>
-  )
-}
-
-function ComposerTabButton({
-  active,
-  children,
-  onClick,
-}: {
-  active: boolean
-  children: React.ReactNode
-  onClick: () => void
-}) {
-  return (
-    <button
-      className={cn(
-        'inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition',
-        active ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
-      )}
-      onClick={onClick}
-      type="button"
-    >
-      {children}
-    </button>
   )
 }
 
@@ -165,39 +142,24 @@ export function usePageComposerCanvasToolbarState() {
   return toolbarState
 }
 
-function formatComposerBreadcrumbs(pagePath: string) {
-  if (pagePath === '/') {
-    return ['Home']
-  }
-
-  return pagePath
-    .split('/')
-    .filter(Boolean)
-    .map((segment) => segment.replace(/-/g, ' '))
-    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
-}
-
 function ToolbarField({
+  className,
   icon,
-  label,
   onChange,
   placeholder,
   value,
 }: {
+  className?: string
   icon: React.ReactNode
-  label: string
   onChange: (value: string) => void
   placeholder: string
   value: string
 }) {
   return (
-    <label className="grid gap-1.5">
-      <span className="text-[11px] font-medium uppercase tracking-[0.22em] text-muted-foreground">{label}</span>
-      <div className="relative">
-        <div className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-muted-foreground">{icon}</div>
-        <Input className="h-10 pl-10" onChange={(event) => onChange(event.target.value)} placeholder={placeholder} value={value} />
-      </div>
-    </label>
+    <div className={cn('relative', className)}>
+      <div className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-muted-foreground">{icon}</div>
+      <Input className="h-10 pl-10" onChange={(event) => onChange(event.target.value)} placeholder={placeholder} value={value} />
+    </div>
   )
 }
 
@@ -252,9 +214,8 @@ export function PageComposerCanvasViewport({ children }: { children: React.React
   }
 
   const selectedSummary = toolbarState?.sectionSummaries.find((summary) => summary.index === composer.selectedIndex) ?? null
-
-  const breadcrumbs = toolbarState?.draftPage ? formatComposerBreadcrumbs(toolbarState.draftPage.pagePath) : []
   const previewPath = toolbarState ? pageSlugToFrontendPath(toolbarState.slugDraft) : pathname
+  const pageStatusLabel = toolbarState?.draftPage?._status === 'published' ? 'Published' : 'Draft'
 
   return (
     <div className="page-composer-canvas min-w-0">
@@ -268,177 +229,144 @@ export function PageComposerCanvasViewport({ children }: { children: React.React
         selectedIndex={composer.selectedIndex}
         selectedLabel={selectedSummary?.label ?? (composer.selectedIndex === -1 ? 'Hero' : '')}
       />
-      <div className="pointer-events-none fixed inset-x-0 top-[calc(var(--portal-sticky-top)+0.75rem)] z-[95] flex justify-center px-4">
+      <div className="pointer-events-none fixed left-4 right-4 top-[calc(var(--portal-sticky-top)+0.75rem)] z-[95] md:left-[calc(var(--sidebar-width)+1rem)]">
         <TooltipProvider delayDuration={200}>
-          <div className="pointer-events-auto w-full max-w-7xl rounded-[1.6rem] border border-border/70 bg-background/94 px-4 py-3 shadow-xl backdrop-blur">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="grid gap-2">
-              <div className="flex flex-wrap items-center gap-2 text-[11px] font-medium uppercase tracking-[0.22em] text-muted-foreground">
-                <span>Live canvas</span>
-                {breadcrumbs.map((segment, index) => (
-                  <span className="inline-flex items-center gap-2" key={`${segment}-${index}`}>
-                    <span>/</span>
-                    <span>{segment}</span>
-                  </span>
-                ))}
+          <div
+            className="pointer-events-auto relative w-full rounded-[1.45rem] border border-border/70 bg-background/94 px-3 py-2.5 shadow-xl backdrop-blur"
+          >
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0 flex flex-1 items-center gap-2 overflow-hidden">
+                {toolbarState ? (
+                  <>
+                    <ToolbarField
+                      className="min-w-0 flex-[1.3_1_16rem]"
+                      icon={<TypeIcon className="h-4 w-4" />}
+                      onChange={toolbarState.onSetTitleDraft}
+                      placeholder="Page title"
+                      value={toolbarState.titleDraft}
+                    />
+                    <ToolbarField
+                      className="min-w-0 flex-[0.8_1_12rem]"
+                      icon={<Link2Icon className="h-4 w-4" />}
+                      onChange={toolbarState.onSetSlugDraft}
+                      placeholder="page-slug"
+                      value={toolbarState.slugDraft}
+                    />
+                    {toolbarState.draftPage ? (
+                      <Select
+                        disabled={toolbarState.loading || !toolbarState.availablePages.length}
+                        onValueChange={(value) => toolbarState.switchToPage(Number(value))}
+                        value={String(toolbarState.draftPage.id)}
+                      >
+                        <SelectTrigger className="h-10 min-w-0 flex-[0.9_1_13rem] bg-background/90">
+                          <SelectValue placeholder="Select a page" />
+                        </SelectTrigger>
+                        <SelectContent className="z-[130]">
+                          {toolbarState.availablePages.map((page) => (
+                            <SelectItem key={page.id} value={String(page.id)}>
+                              {page.title} ({page.visibility || 'public'})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <div className="flex h-10 min-w-0 flex-[0.9_1_13rem] items-center rounded-xl border border-input bg-background px-3 text-sm text-muted-foreground">
+                        {toolbarState.loading ? 'Loading current page...' : 'No page loaded yet'}
+                      </div>
+                    )}
+                  </>
+                ) : null}
               </div>
-              <div className="flex flex-wrap items-center gap-2">
-                {toolbarState?.draftPage ? <Badge variant="secondary">{toolbarState.draftPage.pagePath}</Badge> : null}
-                {toolbarState?.draftPage ? <Badge variant="outline">{toolbarState.draftPage._status || 'draft'}</Badge> : null}
-                {toolbarState?.dirty ? <Badge>Unsaved</Badge> : null}
-              </div>
-            </div>
 
-            <div className="flex flex-wrap gap-2">
-              <div className="inline-flex h-10 rounded-xl border border-border/70 bg-card/60 p-1">
-                <ComposerTabButton active={composer.activeTab === 'structure'} onClick={() => composer.setActiveTab('structure')}>
-                  <GripVerticalIcon className="h-4 w-4" />
-                  Structure
-                </ComposerTabButton>
-              </div>
-              <Button
-                className="h-10 rounded-xl"
-                onClick={() => {
-                  composer.setActiveTab('publish')
-                  copilot?.openTools()
-                }}
-                type="button"
-                variant={composer.activeTab === 'publish' ? 'default' : 'outline'}
-              >
-                <RocketIcon className="h-4 w-4" />
-                Publish
-              </Button>
-              <Button asChild className="h-10 rounded-xl max-w-[18rem]" type="button" variant="outline">
-                <a
-                  aria-label="Open route preview"
-                  className="inline-flex items-center gap-2 truncate"
-                  href={previewPath}
-                  rel="noreferrer"
-                  target="_blank"
-                >
-                  <EyeIcon className="h-4 w-4" />
-                  <span className="truncate">{previewPath}</span>
-                  <ExternalLinkIcon className="h-4 w-4 shrink-0" />
-                </a>
-              </Button>
-              <CanvasModeButton
-                active={composer.previewMode === 'desktop'}
-                icon={<MonitorIcon className="h-4 w-4" />}
-                label="Desktop preview"
-                onClick={() => composer.setPreviewMode('desktop')}
-              />
-              <CanvasModeButton
-                active={composer.previewMode === 'tablet'}
-                icon={<TabletSmartphoneIcon className="h-4 w-4" />}
-                label="Tablet preview"
-                onClick={() => composer.setPreviewMode('tablet')}
-              />
-              <CanvasModeButton
-                active={composer.previewMode === 'mobile'}
-                icon={<SmartphoneIcon className="h-4 w-4" />}
-                label="Mobile preview"
-                onClick={() => composer.setPreviewMode('mobile')}
-              />
-              <Button
-                className="h-10 rounded-xl"
-                onClick={() => composer.close()}
-                type="button"
-                variant="outline"
-              >
-                <FilePenLineIcon className="h-4 w-4" />
-                Exit composer
-              </Button>
-            </div>
-          </div>
-
-          {toolbarState ? (
-            <div className="mt-4 grid gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(14rem,0.9fr)_auto_auto_auto]">
-              <ToolbarField
-                icon={<TypeIcon className="h-4 w-4" />}
-                label="Page title"
-                onChange={toolbarState.onSetTitleDraft}
-                placeholder="Page title"
-                value={toolbarState.titleDraft}
-              />
-              <ToolbarField
-                icon={<Link2Icon className="h-4 w-4" />}
-                label="Slug"
-                onChange={toolbarState.onSetSlugDraft}
-                placeholder="page-slug"
-                value={toolbarState.slugDraft}
-              />
-              <div className="grid gap-1.5">
-                <span className="text-[11px] font-medium uppercase tracking-[0.22em] text-muted-foreground">Working page</span>
-                {toolbarState.draftPage ? (
-                  <Select
-                    disabled={toolbarState.loading || !toolbarState.availablePages.length}
-                    onValueChange={(value) => toolbarState.switchToPage(Number(value))}
-                    value={String(toolbarState.draftPage.id)}
+              <div className="flex shrink-0 items-center justify-end gap-2">
+                {toolbarState ? (
+                  <>
+                    <Button
+                      className="h-10 rounded-xl"
+                      onClick={() => {
+                        composer.setActiveTab('publish')
+                        copilot?.openTools()
+                      }}
+                      type="button"
+                      variant={composer.activeTab === 'publish' ? 'default' : 'outline'}
+                    >
+                      {pageStatusLabel}
+                    </Button>
+                    <div className="inline-flex h-10 rounded-xl border border-border/70 bg-card/50 p-1">
+                      <button
+                        className={`rounded-lg px-3 text-sm transition ${
+                          toolbarState.visibilityDraft === 'public'
+                            ? 'bg-foreground text-background'
+                            : 'text-muted-foreground hover:text-foreground'
+                        }`}
+                        onClick={() => toolbarState.onSetVisibilityDraft('public')}
+                        type="button"
+                      >
+                        Public
+                      </button>
+                      <button
+                        className={`rounded-lg px-3 text-sm transition ${
+                          toolbarState.visibilityDraft === 'private'
+                            ? 'bg-foreground text-background'
+                            : 'text-muted-foreground hover:text-foreground'
+                        }`}
+                        onClick={() => toolbarState.onSetVisibilityDraft('private')}
+                        type="button"
+                      >
+                        Private
+                      </button>
+                    </div>
+                  </>
+                ) : null}
+                <Button asChild className="h-10 rounded-xl" type="button" variant="outline">
+                  <a
+                    aria-label="Open route preview"
+                    className="inline-flex items-center gap-2"
+                    href={previewPath}
+                    rel="noreferrer"
+                    target="_blank"
                   >
-                    <SelectTrigger className="h-10 bg-background/90">
-                      <SelectValue placeholder="Select a page" />
-                    </SelectTrigger>
-                    <SelectContent className="z-[130]">
-                      {toolbarState.availablePages.map((page) => (
-                        <SelectItem key={page.id} value={String(page.id)}>
-                          {page.title} ({page.visibility || 'public'})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                ) : (
-                  <div className="flex h-10 items-center rounded-xl border border-input bg-background px-3 text-sm text-muted-foreground">
-                    {toolbarState.loading ? 'Loading current page...' : 'No page loaded yet'}
-                  </div>
-                )}
-              </div>
-
-              <Button
-                className="mt-[1.45rem] h-10"
-                disabled={toolbarState.creatingDraftClone || toolbarState.loading || toolbarState.dirty}
-                onClick={toolbarState.onCreateDraft}
-                type="button"
-                variant="outline"
-              >
-                {toolbarState.creatingDraftClone ? (
-                  <>
-                    <LoaderCircleIcon className="h-4 w-4 animate-spin" />
-                    Creating...
-                  </>
-                ) : (
-                  <>
-                    <PlusIcon className="h-4 w-4" />
-                    Create draft
-                  </>
-                )}
-              </Button>
-
-              <div className="mt-[1.45rem] inline-flex h-10 rounded-xl border border-border/70 bg-card/50 p-1">
-                <button
-                  className={`rounded-lg px-3 text-sm transition ${
-                    toolbarState.visibilityDraft === 'public'
-                      ? 'bg-foreground text-background'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                  onClick={() => toolbarState.onSetVisibilityDraft('public')}
-                  type="button"
+                    Preview
+                    <ExternalLinkIcon className="h-4 w-4 shrink-0" />
+                  </a>
+                </Button>
+                <CanvasModeButton
+                  active={composer.previewMode === 'desktop'}
+                  icon={<MonitorIcon className="h-4 w-4" />}
+                  label="Desktop preview"
+                  onClick={() => composer.setPreviewMode('desktop')}
+                />
+                <CanvasModeButton
+                  active={composer.previewMode === 'tablet'}
+                  icon={<TabletSmartphoneIcon className="h-4 w-4" />}
+                  label="Tablet preview"
+                  onClick={() => composer.setPreviewMode('tablet')}
+                />
+                <CanvasModeButton
+                  active={composer.previewMode === 'mobile'}
+                  icon={<SmartphoneIcon className="h-4 w-4" />}
+                  label="Mobile preview"
+                  onClick={() => composer.setPreviewMode('mobile')}
+                />
+                <CanvasActionButton
+                  label="Close composer"
+                  onClick={(event) => {
+                    event.preventDefault()
+                    composer.close()
+                  }}
                 >
-                  Public
-                </button>
-                <button
-                  className={`rounded-lg px-3 text-sm transition ${
-                    toolbarState.visibilityDraft === 'private'
-                      ? 'bg-foreground text-background'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                  onClick={() => toolbarState.onSetVisibilityDraft('private')}
-                  type="button"
-                >
-                  Private
-                </button>
+                  <XIcon className="h-4 w-4" />
+                </CanvasActionButton>
               </div>
             </div>
-          ) : null}
+
+            {toolbarState?.dirty ? (
+              <div className="pointer-events-none absolute left-1/2 top-full z-10 -translate-x-1/2 -translate-y-1/2">
+                <Badge className="rounded-full px-3 py-1 shadow-lg" variant="default">
+                  Unsaved
+                </Badge>
+              </div>
+            ) : null}
           </div>
         </TooltipProvider>
       </div>

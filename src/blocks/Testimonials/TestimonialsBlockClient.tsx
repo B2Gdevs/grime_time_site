@@ -1,9 +1,8 @@
 'use client'
 
-import Image from 'next/image'
-
 import type { Media, Testimonial, TestimonialsSectionBlock } from '@/payload-types'
 
+import { Media as PayloadMedia } from '@/components/Media'
 import RichText from '@/components/RichText'
 import {
   InlineTextarea,
@@ -12,7 +11,6 @@ import {
 } from '@/components/admin-impersonation/PageComposerInlineText'
 import { usePageComposerCanvasToolbarState } from '@/components/admin-impersonation/PageComposerCanvas'
 import { lexicalToPlainText } from '@/lib/pages/pageComposerLexical'
-import { getMediaUrl } from '@/utilities/getMediaUrl'
 
 function TestimonialAvatar({
   authorName,
@@ -22,9 +20,8 @@ function TestimonialAvatar({
   photo: number | Media | null | undefined
 }) {
   const media = typeof photo === 'object' && photo !== null ? photo : null
-  const url = media?.url ? getMediaUrl(media.url, media.updatedAt) : ''
 
-  if (!url) {
+  if (!media?.url) {
     return (
       <div
         aria-hidden
@@ -37,7 +34,7 @@ function TestimonialAvatar({
 
   return (
     <div className="relative size-11 shrink-0 overflow-hidden rounded-full border border-border bg-muted">
-      <Image alt="" className="object-cover" fill sizes="44px" src={url} />
+      <PayloadMedia alt={authorName} fill imgClassName="object-cover" resource={media} size="44px" />
     </div>
   )
 }

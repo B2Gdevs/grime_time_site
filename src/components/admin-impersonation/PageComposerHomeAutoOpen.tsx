@@ -27,7 +27,7 @@ export function PageComposerHomeAutoOpen({
     }
 
     composer.setActivePagePath('/')
-    composer.setActiveTab('structure')
+    composer.setActiveTab('content')
     composer.open()
   }, [composer, enabled, pathname])
 

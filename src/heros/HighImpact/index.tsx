@@ -7,6 +7,7 @@ import React, { useEffect } from 'react'
 import type { Page } from '@/payload-types'
 
 import { Media } from '@/components/Media'
+import { PageHeroMediaEditable } from '@/components/home/PageHeroRichTextEditable'
 import { Button } from '@/components/ui/button'
 
 export const HighImpactHero: React.FC<Page['hero']> = ({ media }) => {
@@ -23,7 +24,9 @@ export const HighImpactHero: React.FC<Page['hero']> = ({ media }) => {
     >
       <div className="absolute inset-0 -z-10 select-none">
         {media && typeof media === 'object' && (
-          <Media fill imgClassName="object-cover opacity-26 saturate-[1.06]" priority resource={media} />
+          <PageHeroMediaEditable>
+            <Media fill imgClassName="object-cover opacity-26 saturate-[1.06]" priority resource={media} />
+          </PageHeroMediaEditable>
         )}
         <div className="hero-denim-noise absolute inset-0 opacity-35" />
         <div className="hero-denim-noise-drift absolute inset-0 opacity-22" />

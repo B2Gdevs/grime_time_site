@@ -543,7 +543,7 @@ export function PageComposerDrawer({
   const mediaUploadInputRef = useRef<HTMLInputElement | null>(null)
   const mediaPromptId = useId()
   const open = composer?.isOpen ?? false
-  const activeTab = composer?.activeTab ?? 'structure'
+  const activeTab = composer?.activeTab ?? 'content'
   const selectedIndex = composer?.selectedIndex ?? 0
 
   const setSelectedIndex = useCallback(
@@ -1555,9 +1555,7 @@ export function PageComposerDrawer({
     dragControls.start(event)
   }
 
-  const usesLiveCanvasToolbar =
-    embedded && open && Boolean(draftPage) && composerActivePagePath === pathname
-  const showInlineAdminBar = !usesLiveCanvasToolbar
+  const showInlineAdminBar = true
 
   const panel = (
     <aside
@@ -1628,13 +1626,7 @@ export function PageComposerDrawer({
         >
           {showInlineAdminBar ? (
             <div className="border-b border-border/70 px-5 py-3">
-              <TabsList className="grid h-auto w-full grid-cols-4 gap-1 rounded-xl p-1">
-                <TabsTrigger value="structure">
-                  <span className="inline-flex items-center gap-2">
-                    <GripVerticalIcon className="h-4 w-4" />
-                    Structure
-                  </span>
-                </TabsTrigger>
+              <TabsList className="grid h-auto w-full grid-cols-3 gap-1 rounded-xl p-1">
                 <TabsTrigger value="content">
                   <span className="inline-flex items-center gap-2">
                     <TypeIcon className="h-4 w-4" />
@@ -1732,9 +1724,17 @@ export function PageComposerDrawer({
                     <div className="rounded-2xl border border-border/70 bg-card/50 px-4 py-6 text-sm text-muted-foreground">
                       Loading section editor...
                     </div>
-                  ) : !draftPage || !selectedBlock ? (
+                  ) : !draftPage ? (
                     <div className="rounded-2xl border border-border/70 bg-card/50 px-4 py-6 text-sm text-muted-foreground">
-                      Select a section from Structure first.
+                      No page is available for this route.
+                    </div>
+                  ) : selectedIndex < 0 ? (
+                    <div className="rounded-2xl border border-border/70 bg-card/50 px-4 py-6 text-sm text-muted-foreground">
+                      Hero copy and hero media edit directly on the live canvas. Click the hero content on the page to update it inline.
+                    </div>
+                  ) : !selectedBlock ? (
+                    <div className="rounded-2xl border border-border/70 bg-card/50 px-4 py-6 text-sm text-muted-foreground">
+                      Select a section on the live page to edit its content.
                     </div>
                   ) : selectedBlockIsLinkedSharedSection && selectedSharedSectionId ? (
                     <div className="grid gap-4">
@@ -1753,10 +1753,14 @@ export function PageComposerDrawer({
                             <RefreshCwIcon className="h-4 w-4" />
                             Replace section
                           </Button>
+                          <Button onClick={() => removeBlock(selectedIndex)} size="sm" type="button" variant="outline">
+                            <Trash2Icon className="h-4 w-4" />
+                            Remove from page
+                          </Button>
                         </div>
                       </div>
                       <div className="rounded-2xl border border-border/70 bg-card/50 p-4 text-sm text-muted-foreground">
-                        Publishing the shared source updates every linked published page using it. Local page overrides stay limited to placement and visibility metadata.
+                        Publishing the shared source updates every linked published page using it. Removing this section here only removes this page instance. The source itself stays intact.
                       </div>
                       <ComposerNoticeList notices={composerNotices} />
                     </div>
@@ -1772,6 +1776,10 @@ export function PageComposerDrawer({
                           <Button onClick={() => openBlockLibrary(selectedIndex, 'replace')} size="sm" type="button" variant="outline">
                             <RefreshCwIcon className="h-4 w-4" />
                             Replace section
+                          </Button>
+                          <Button onClick={() => removeBlock(selectedIndex)} size="sm" type="button" variant="outline">
+                            <Trash2Icon className="h-4 w-4" />
+                            Remove from page
                           </Button>
                         </div>
                       </div>
@@ -1953,9 +1961,17 @@ export function PageComposerDrawer({
                     <div className="rounded-2xl border border-border/70 bg-card/50 px-4 py-6 text-sm text-muted-foreground">
                       Loading section media...
                     </div>
-                  ) : !draftPage || !selectedBlock ? (
+                  ) : !draftPage ? (
                     <div className="rounded-2xl border border-border/70 bg-card/50 px-4 py-6 text-sm text-muted-foreground">
-                      Select a section from Structure first.
+                      No page is available for this route.
+                    </div>
+                  ) : selectedIndex < 0 ? (
+                    <div className="rounded-2xl border border-border/70 bg-card/50 px-4 py-6 text-sm text-muted-foreground">
+                      Hero media swaps and generation live directly on the canvas. Hover the hero image on the page to replace or generate media.
+                    </div>
+                  ) : !selectedBlock ? (
+                    <div className="rounded-2xl border border-border/70 bg-card/50 px-4 py-6 text-sm text-muted-foreground">
+                      Select a section on the live page to edit its media.
                     </div>
                   ) : !selectedServiceGrid ? (
                     <div className="rounded-2xl border border-border/70 bg-card/50 px-4 py-6 text-sm text-muted-foreground">

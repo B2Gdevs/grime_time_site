@@ -114,13 +114,12 @@ describe('PageComposer canvas integration', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Open composer' }))
 
-    expect(screen.getByText(/live canvas/i)).toBeTruthy()
     expect(screen.getByDisplayValue('Home')).toBeTruthy()
+    expect(screen.getByDisplayValue('home')).toBeTruthy()
     expect(screen.getByRole('link', { name: /open route preview/i })).toBeTruthy()
     expect(screen.getByRole('button', { name: /desktop preview/i })).toBeTruthy()
-    expect(screen.getByRole('button', { name: /structure/i })).toBeTruthy()
-    expect(screen.getByRole('button', { name: /^publish$/i })).toBeTruthy()
-    expect(screen.getByRole('button', { name: /exit composer/i })).toBeTruthy()
+    expect(screen.getByRole('button', { name: /^draft$/i })).toBeTruthy()
+    expect(screen.getByRole('button', { name: /close composer/i })).toBeTruthy()
 
     fireEvent.click(screen.getByText('Section two'))
 
@@ -128,8 +127,8 @@ describe('PageComposer canvas integration', () => {
     expect(screen.getByText(/Section 2/i)).toBeTruthy()
     expect(screen.getByText(/How pricing works/i)).toBeTruthy()
 
-    fireEvent.click(screen.getByRole('button', { name: /exit composer/i }))
+    fireEvent.click(screen.getByRole('button', { name: /close composer/i }))
 
-    expect(screen.queryByText(/live canvas/i)).toBeNull()
+    expect(screen.queryByDisplayValue('Home')).toBeNull()
   })
 })

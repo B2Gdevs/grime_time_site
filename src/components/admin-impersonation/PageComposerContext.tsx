@@ -120,7 +120,7 @@ const PageComposerContext = createContext<null | PageComposerContextValue>(null)
 export const PAGE_COMPOSER_TOOLBAR_EVENT = 'page-composer-toolbar-change'
 
 export function PageComposerProvider({ children }: { children: ReactNode }) {
-  const [activeTab, setActiveTab] = useState<PageComposerTab>('structure')
+  const [activeTab, setActiveTab] = useState<PageComposerTab>('content')
   const [activePagePath, setActivePagePath] = useState<null | string>(null)
   const [isOpen, setIsOpen] = useState(false)
   const [previewMode, setPreviewMode] = useState<PageComposerCanvasMode>('desktop')

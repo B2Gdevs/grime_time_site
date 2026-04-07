@@ -94,7 +94,7 @@ function PreviewShell({
         <div>
           <div className="text-sm font-semibold text-foreground">Preview</div>
           <div className="mt-1 text-xs text-muted-foreground">
-            Click blocks here or in Structure. Selected blocks stay mirrored across both surfaces.
+            Click blocks here or on the live page. Selected blocks stay mirrored across both surfaces.
           </div>
         </div>
         <PreviewModeToggle mode={mode} onChange={onModeChange} />

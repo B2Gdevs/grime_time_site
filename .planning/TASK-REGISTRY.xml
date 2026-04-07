@@ -895,5 +895,14 @@
         <command>npm.cmd exec vitest run tests/int/components/admin-impersonation/page-composer-shell.int.spec.tsx tests/int/components/admin-impersonation/site-operator-tools-panel.int.spec.tsx</command>
       </commands>
     </task>
+    <task id="18-08" agent-id="" status="done">
+      <goal>Simplify the live canvas chrome into a single-line toolbar, remove the visible Structure tab, keep page-level metadata controls inside the drawer, and standardize hero/service/testimonial media rendering on the shared media component while preserving inline hero and section text editing on the page.</goal>
+      <keywords>composer,toolbar,canvas,inline-editing,media,hero</keywords>
+      <commands>
+        <command>npm.cmd exec eslint src/components/admin-impersonation/PageComposerCanvas.tsx src/components/admin-impersonation/PageComposerContext.tsx src/components/admin-impersonation/PageComposerDrawer.tsx src/components/admin-impersonation/PageComposerHomeAutoOpen.tsx src/components/admin-impersonation/PageComposerPreview.tsx src/components/admin-impersonation/SiteOperatorToolsPanel.tsx src/components/home/GrimeTimeMarketingHome.tsx src/blocks/ServiceGrid/Component.tsx src/blocks/Testimonials/TestimonialsBlockClient.tsx tests/int/components/admin-impersonation/page-composer-canvas.int.spec.tsx</command>
+        <command>npm.cmd exec vitest run tests/int/components/admin-impersonation/page-composer-canvas.int.spec.tsx tests/int/components/admin-impersonation/page-composer-shell.int.spec.tsx</command>
+        <command>npm.cmd run build</command>
+      </commands>
+    </task>
   </phase>
 </task-registry>

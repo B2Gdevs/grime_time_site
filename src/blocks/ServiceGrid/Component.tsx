@@ -1,6 +1,5 @@
 'use client'
 
-import Image from 'next/image'
 import Link from 'next/link'
 import React from 'react'
 
@@ -371,7 +370,13 @@ const InteractiveServiceGrid: React.FC<
                   <div className="relative aspect-[4/3] overflow-hidden border-b border-border/80 bg-muted sm:aspect-[18/8]">
                     {rowMedia ? (
                       <>
-                        <Media fill imgClassName="object-cover" priority resource={rowMedia} />
+                        {typeof blockIndex === 'number' ? (
+                          <InlinePageMediaEditor relationPath={`layout.${blockIndex}.services.${activeIndex}.media`}>
+                            <Media fill imgClassName="object-cover" priority resource={rowMedia} />
+                          </InlinePageMediaEditor>
+                        ) : (
+                          <Media fill imgClassName="object-cover" priority resource={rowMedia} />
+                        )}
                         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(7,13,25,0.08)_0%,rgba(7,13,25,0.74)_100%)]" />
                       </>
                     ) : (
@@ -592,7 +597,6 @@ const FeatureCardsServiceGrid: React.FC<
       <div className="mt-10 grid gap-6 lg:grid-cols-3">
         {rows.map((service, serviceIndex) => {
           const media = hasMedia(service.media) ? service.media : null
-          const mediaUrl = media?.sizes?.large?.url || media?.sizes?.medium?.url || media?.url || null
           const relationPath =
             typeof blockIndex === 'number' ? `layout.${blockIndex}.services.${serviceIndex}.media` : null
 
@@ -602,24 +606,12 @@ const FeatureCardsServiceGrid: React.FC<
               className="overflow-hidden rounded-[1.9rem] border border-border/70 bg-card/82 shadow-[0_18px_80px_-52px_rgba(2,6,23,0.85)]"
             >
               <div className="relative">
-                {media && mediaUrl && relationPath ? (
+                {media && relationPath ? (
                   <InlinePageMediaEditor relationPath={relationPath}>
-                    <Image
-                      src={mediaUrl}
-                      alt={media.alt || service.name}
-                      width={media.width || 1200}
-                      height={media.height || 900}
-                      className="aspect-[16/10] w-full object-cover"
-                    />
+                    <Media imgClassName="aspect-[16/10] w-full object-cover" resource={media} />
                   </InlinePageMediaEditor>
-                ) : media && mediaUrl ? (
-                  <Image
-                    src={mediaUrl}
-                    alt={media.alt || service.name}
-                    width={media.width || 1200}
-                    height={media.height || 900}
-                    className="aspect-[16/10] w-full object-cover"
-                  />
+                ) : media ? (
+                  <Media imgClassName="aspect-[16/10] w-full object-cover" resource={media} />
                 ) : (
                   <div className="aspect-[16/10] w-full bg-[linear-gradient(180deg,rgba(7,19,33,0.88),rgba(17,49,77,0.72))]" />
                 )}

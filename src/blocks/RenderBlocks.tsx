@@ -134,6 +134,7 @@ export async function RenderBlocks({ blocks, pricingGlobal: pricingProp }: Props
             <div className="my-16">
               <MediaBlock
                 {...(resolvedBlock as unknown as React.ComponentProps<typeof MediaBlock>)}
+                blockIndex={index}
                 disableInnerContainer
               />
             </div>

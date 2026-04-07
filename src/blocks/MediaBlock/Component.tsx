@@ -1,5 +1,6 @@
 import type { StaticImageData } from 'next/image'
 
+import { InlinePageMediaEditor } from '@/components/admin-impersonation/InlinePageMediaEditor'
 import { cn } from '@/utilities/ui'
 import React from 'react'
 import RichText from '@/components/RichText'
@@ -9,6 +10,7 @@ import type { MediaBlock as MediaBlockProps } from '@/payload-types'
 import { Media } from '../../components/Media'
 
 type Props = MediaBlockProps & {
+  blockIndex?: number
   breakout?: boolean
   captionClassName?: string
   className?: string
@@ -20,6 +22,7 @@ type Props = MediaBlockProps & {
 
 export const MediaBlock: React.FC<Props> = (props) => {
   const {
+    blockIndex,
     captionClassName,
     className,
     enableGutter = true,
@@ -42,13 +45,22 @@ export const MediaBlock: React.FC<Props> = (props) => {
         className,
       )}
     >
-      {(media || staticImage) && (
-        <Media
-          imgClassName={cn('border border-border rounded-[0.8rem]', imgClassName)}
-          resource={media}
-          src={staticImage}
-        />
-      )}
+      {(media || staticImage) &&
+        (media && typeof media === 'object' && typeof blockIndex === 'number' ? (
+          <InlinePageMediaEditor relationPath={`layout.${blockIndex}.media`}>
+            <Media
+              imgClassName={cn('border border-border rounded-[0.8rem]', imgClassName)}
+              resource={media}
+              src={staticImage}
+            />
+          </InlinePageMediaEditor>
+        ) : (
+          <Media
+            imgClassName={cn('border border-border rounded-[0.8rem]', imgClassName)}
+            resource={media}
+            src={staticImage}
+          />
+        ))}
       {caption && (
         <div
           className={cn(
