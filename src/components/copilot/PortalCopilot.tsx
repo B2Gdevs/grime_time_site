@@ -22,6 +22,7 @@ import { usePageComposerOptional } from '@/components/admin-impersonation/PageCo
 import { CopilotMediaWorkbench } from '@/components/copilot/CopilotMediaWorkbench'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { isUnknownRecord } from '@/lib/is-unknown-record'
 import { cn } from '@/utilities/ui'
 
 import { usePortalCopilot } from './PortalCopilotContext'
@@ -160,11 +161,11 @@ function DragHandle({ onPointerDown }: { onPointerDown: (event: ReactPointerEven
 }
 
 function asCopilotBundle(value: unknown): CopilotBundle | null {
-  if (!value || typeof value !== 'object') {
+  if (!isUnknownRecord(value)) {
     return null
   }
 
-  const bundle = value as Record<string, unknown>
+  const bundle = value
 
   if (
     typeof bundle.query !== 'string' ||

@@ -53,6 +53,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { buildMediaDevtoolsSummary, type MediaDevtoolsSummary } from '@/lib/media/pageMediaDevtools'
+import { isUnknownRecord } from '@/lib/is-unknown-record'
 import {
   buildPageComposerValidationSummary,
   buildPageComposerNotices,
@@ -136,7 +137,7 @@ function formatTimestamp(value: null | string | undefined): string {
 }
 
 function asMedia(value: Media | null | number | undefined): Media | null {
-  return value && typeof value === 'object' ? value : null
+  return isUnknownRecord(value) ? (value as Media) : null
 }
 
 function getFileKind(file: File): 'image' | 'video' {
