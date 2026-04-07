@@ -49,6 +49,25 @@ export function SiteOperatorToolsPanel({
   const [submitting, setSubmitting] = useState(false)
 
   const canImpersonate = Boolean(effectiveUser && realUser)
+  const composerPagePath = isSecuredAdminPath(pathname) ? '/' : pathname
+  const composerVisibleOnPage = Boolean(
+    composer?.isOpen && composer.activePagePath === composerPagePath,
+  )
+
+  function toggleComposer(enabled: boolean) {
+    if (!composer) {
+      return
+    }
+
+    if (!enabled) {
+      composer.close()
+      return
+    }
+
+    composer.setActivePagePath(composerPagePath)
+    composer.setActiveTab('content')
+    composer.open()
+  }
 
   useEffect(() => {
     if (!canImpersonate) {
@@ -181,27 +200,36 @@ export function SiteOperatorToolsPanel({
                   Visual composer
                 </div>
                 <div className="mt-1 text-sm font-medium text-foreground">
-                  {composer.isOpen ? 'Composer follows the live page.' : 'Composer opens automatically on the homepage.'}
+                  {composerVisibleOnPage
+                    ? 'Live toolbar and block controls are active on this page.'
+                    : 'Turn this on to edit blocks, text, and media directly on the live page.'}
                 </div>
                 <div className="mt-1 text-xs text-muted-foreground">
-                  Selection, preview, and publishing live on the canvas toolbar. Keep Tools for deeper content editing and impersonation.
+                  The top canvas bar, block insertion, inline text updates, and media editing all ride the live page when the composer is on.
                 </div>
               </div>
-              <Button
-                onClick={() => {
-                  composer.setActivePagePath(isSecuredAdminPath(pathname) ? '/' : pathname)
-                  composer.setActiveTab('content')
-                  composer.open()
-                }}
-                size="sm"
+
+              <button
+                aria-checked={composerVisibleOnPage}
+                aria-label={`${composerVisibleOnPage ? 'Disable' : 'Enable'} visual composer`}
+                className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition ${
+                  composerVisibleOnPage
+                    ? 'border-primary bg-primary'
+                    : 'border-border/70 bg-muted/60'
+                }`}
+                onClick={() => toggleComposer(!composerVisibleOnPage)}
+                role="switch"
                 type="button"
-                variant="outline"
               >
-                Open content tools
-              </Button>
+                <span
+                  className={`inline-flex h-5 w-5 rounded-full bg-background shadow-sm transition-transform ${
+                    composerVisibleOnPage ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
             </div>
 
-            {composer.isOpen ? (
+            {composerVisibleOnPage ? (
               <div className="mt-3 flex flex-wrap gap-2">
                 <Button
                   onClick={() => composer.setActiveTab('content')}
@@ -211,8 +239,16 @@ export function SiteOperatorToolsPanel({
                 >
                   Content
                 </Button>
+                <Button
+                  onClick={() => composer.setActiveTab('media')}
+                  size="sm"
+                  type="button"
+                  variant={composer.activeTab === 'media' ? 'default' : 'outline'}
+                >
+                  Media
+                </Button>
                 <div className="inline-flex items-center rounded-full border border-border/70 px-3 text-xs text-muted-foreground">
-                  Selection and preview live on the canvas bar
+                  Use the live page to select sections and add blocks
                 </div>
               </div>
             ) : null}

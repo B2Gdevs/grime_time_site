@@ -6,7 +6,7 @@ import {
   ThreadPrimitive,
   useAuiState,
 } from '@assistant-ui/react'
-import { BotIcon, GripIcon, LifeBuoyIcon, SparklesIcon } from 'lucide-react'
+import { BotIcon, GripIcon, LifeBuoyIcon, SparklesIcon, XIcon } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import { AnimatePresence, motion, useDragControls } from 'motion/react'
 import {
@@ -549,13 +549,16 @@ export function PortalCopilot({
                     <h2 className="mt-1 text-xl font-semibold tracking-tight">{activeViewMeta.title}</h2>
                     <p className="mt-1 text-xs text-muted-foreground">{activeViewMeta.description}</p>
                   </div>
-                  <button
-                    className="inline-flex h-9 items-center justify-center rounded-full border border-border/70 px-3 text-sm font-medium text-muted-foreground transition hover:bg-accent hover:text-accent-foreground"
+                  <Button
+                    aria-label="Hide copilot"
+                    className="h-9 w-9 rounded-full text-muted-foreground"
                     onClick={close}
+                    size="icon"
                     type="button"
+                    variant="ghost"
                   >
-                    Hide
-                  </button>
+                    <XIcon className="size-4" />
+                  </Button>
                 </div>
                 {hasSecondaryViews ? (
                   <div className="mt-4 inline-flex rounded-full border border-border/70 bg-muted/40 p-1">

@@ -145,7 +145,8 @@ describe('PortalCopilot composer tab', () => {
       expect(screen.getByText('Mock embedded composer')).toBeTruthy()
     })
 
-    fireEvent.click(screen.getByRole('button', { name: /hide/i }))
+    expect(screen.queryByText(/^Hide$/i)).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: /hide copilot/i }))
 
     expect(composerState.close).not.toHaveBeenCalled()
     expect(screen.getByText('Mock embedded composer')).toBeTruthy()

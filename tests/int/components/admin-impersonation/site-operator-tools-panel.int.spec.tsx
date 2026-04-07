@@ -1,11 +1,11 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const push = vi.fn()
 const refresh = vi.fn()
 const composerState = {
-  activeTab: 'structure' as 'content' | 'publish' | 'structure',
   activePagePath: null as null | string,
+  activeTab: 'structure' as 'content' | 'media' | 'publish' | 'structure',
   close: vi.fn(),
   isOpen: false,
   open: vi.fn(),
@@ -38,11 +38,25 @@ describe('SiteOperatorToolsPanel', () => {
     push.mockReset()
     refresh.mockReset()
     composerState.isOpen = false
+    composerState.activePagePath = null
     composerState.activeTab = 'structure'
     composerState.open.mockReset()
+    composerState.open.mockImplementation(() => {
+      composerState.isOpen = true
+    })
     composerState.close.mockReset()
+    composerState.close.mockImplementation(() => {
+      composerState.isOpen = false
+      composerState.activePagePath = null
+    })
     composerState.setActivePagePath.mockReset()
+    composerState.setActivePagePath.mockImplementation((value) => {
+      composerState.activePagePath = value
+    })
     composerState.setActiveTab.mockReset()
+    composerState.setActiveTab.mockImplementation((value) => {
+      composerState.activeTab = value
+    })
     global.fetch = vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input)
 
@@ -68,6 +82,7 @@ describe('SiteOperatorToolsPanel', () => {
   })
 
   afterEach(() => {
+    cleanup()
     global.fetch = originalFetch
     vi.clearAllMocks()
   })
@@ -86,7 +101,7 @@ describe('SiteOperatorToolsPanel', () => {
     expect(screen.getByRole('link', { name: /home/i }).getAttribute('href')).toBe('/')
     expect(screen.getByRole('link', { name: /ops/i }).getAttribute('href')).toBe('/ops')
     expect(screen.getByRole('link', { name: /dashboard/i }).getAttribute('href')).toBe('/dashboard')
-    expect(screen.getByRole('button', { name: /open content tools/i })).toBeTruthy()
+    expect(screen.getByRole('switch', { name: /enable visual composer/i })).toBeTruthy()
     expect(screen.getByText(/signed in as/i)).toBeTruthy()
     expect(screen.getByText(/admin direct view/i)).toBeTruthy()
     expect(screen.getByText('Search users')).toBeTruthy()
@@ -96,21 +111,31 @@ describe('SiteOperatorToolsPanel', () => {
     })
   })
 
-  it('opens content tools from the tools panel without exposing a composer switch', async () => {
+  it('toggles the visual composer for the current page from the tools panel', async () => {
     const { SiteOperatorToolsPanel } = await import('@/components/admin-impersonation/SiteOperatorToolsPanel')
 
-    render(
+    const view = render(
       <SiteOperatorToolsPanel
         effectiveUser={{ email: 'preview@grimetime.app', id: 1, name: 'Preview User' }}
         realUser={{ email: 'admin@grimetime.app', id: 7, name: 'Real Admin' }}
       />,
     )
 
-    const [openContentToolsButton] = screen.getAllByRole('button', { name: /open content tools/i })
-    openContentToolsButton.click()
+    screen.getByRole('switch', { name: /enable visual composer/i }).click()
 
     expect(composerState.setActivePagePath).toHaveBeenCalledWith('/')
     expect(composerState.setActiveTab).toHaveBeenCalledWith('content')
     expect(composerState.open).toHaveBeenCalled()
+
+    view.rerender(
+      <SiteOperatorToolsPanel
+        effectiveUser={{ email: 'preview@grimetime.app', id: 1, name: 'Preview User' }}
+        realUser={{ email: 'admin@grimetime.app', id: 7, name: 'Real Admin' }}
+      />,
+    )
+
+    screen.getByRole('switch', { name: /disable visual composer/i }).click()
+
+    expect(composerState.close).toHaveBeenCalled()
   })
 })
