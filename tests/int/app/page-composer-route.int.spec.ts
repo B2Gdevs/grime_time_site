@@ -203,6 +203,59 @@ describe('internal page composer route', () => {
     })
   })
 
+  it('returns a draft seed when the current route does not have a page document yet', async () => {
+    const payload = {
+      find: vi
+        .fn()
+        .mockResolvedValueOnce({
+          docs: [
+            {
+              _status: 'published',
+              id: 7,
+              pagePath: '/',
+              publishedAt: '2026-04-03T12:00:00.000Z',
+              slug: 'home',
+              title: 'Home',
+              updatedAt: '2026-04-03T12:00:00.000Z',
+              visibility: 'public',
+            },
+          ],
+        })
+        .mockResolvedValueOnce({
+          docs: [],
+        }),
+      findVersions: vi.fn(),
+    }
+
+    getCurrentAuthContext.mockResolvedValue({
+      isRealAdmin: true,
+      payload,
+      realUser: { email: 'admin@example.com', id: 1, roles: ['admin'] },
+    })
+    hasContentAuthoringAccess.mockResolvedValue(false)
+
+    const { GET } = await import('@/app/api/internal/page-composer/route')
+    const response = await GET(
+      new Request('http://localhost:5465/api/internal/page-composer?pagePath=%2Ffresh-route'),
+    )
+
+    expect(response.status).toBe(200)
+    expect(payload.findVersions).not.toHaveBeenCalled()
+    await expect(response.json()).resolves.toMatchObject({
+      ok: true,
+      page: {
+        _status: 'draft',
+        id: null,
+        layout: [],
+        pagePath: '/fresh-route',
+        slug: 'fresh-route',
+        title: 'Fresh Route',
+        visibility: 'public',
+      },
+      versions: [],
+    })
+  })
+
   it('creates a private draft clone from an existing page', async () => {
     const payload = {
       create: vi.fn().mockResolvedValue({
@@ -412,6 +465,84 @@ describe('internal page composer route', () => {
         title: 'Spring Refresh',
       },
       versions: [expect.objectContaining({ id: 'version-restore' })],
+    })
+  })
+
+  it('creates a page when saving a draft for a missing route', async () => {
+    const createdPage = buildPage({
+      id: 18,
+      layout: [{ blockType: 'content', columns: [] }],
+      slug: 'fresh-route',
+      title: 'Fresh Route',
+      visibility: 'public',
+    })
+    const payload = {
+      create: vi.fn().mockResolvedValue(createdPage),
+      find: vi.fn().mockResolvedValue({
+        docs: [
+          {
+            _status: 'draft',
+            id: 18,
+            publishedAt: null,
+            slug: 'fresh-route',
+            title: 'Fresh Route',
+            updatedAt: '2026-04-03T12:00:00.000Z',
+            visibility: 'public',
+          },
+        ],
+      }),
+      findVersions: vi.fn().mockResolvedValue({
+        docs: [buildVersion({ id: 'version-18', parent: 18, version: createdPage })],
+      }),
+      update: vi.fn(),
+    }
+
+    getCurrentAuthContext.mockResolvedValue({
+      isRealAdmin: false,
+      payload,
+      realUser: { email: 'designer@example.com', id: 32, roles: ['customer'] },
+    })
+    hasContentAuthoringAccess.mockResolvedValue(true)
+
+    const { POST } = await import('@/app/api/internal/page-composer/route')
+    const response = await POST(
+      new Request('http://localhost:5465/api/internal/page-composer', {
+        body: JSON.stringify({
+          action: 'save-draft',
+          layout: [{ blockType: 'content', columns: [] }],
+          pagePath: '/fresh-route',
+          slug: 'fresh-route',
+          title: 'Fresh Route',
+          visibility: 'public',
+        }),
+        headers: { 'content-type': 'application/json' },
+        method: 'POST',
+      }),
+    )
+
+    expect(response.status).toBe(200)
+    expect(payload.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        collection: 'pages',
+        data: expect.objectContaining({
+          layout: [{ blockType: 'content', columns: [] }],
+          slug: 'fresh-route',
+          title: 'Fresh Route',
+          visibility: 'public',
+        }),
+        draft: true,
+      }),
+    )
+    expect(payload.update).not.toHaveBeenCalled()
+    await expect(response.json()).resolves.toMatchObject({
+      ok: true,
+      page: {
+        id: 18,
+        pagePath: '/fresh-route',
+        slug: 'fresh-route',
+        title: 'Fresh Route',
+      },
+      versions: [expect.objectContaining({ id: 'version-18' })],
     })
   })
 })

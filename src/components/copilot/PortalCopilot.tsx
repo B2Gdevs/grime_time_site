@@ -17,6 +17,7 @@ import {
   useState,
 } from 'react'
 
+import { adminPanelChrome } from '@/components/admin-impersonation/adminPanelChrome'
 import { SiteOperatorToolsPanel, type SiteOperatorToolsPanelProps } from '@/components/admin-impersonation/SiteOperatorToolsPanel'
 import { usePageComposerOptional } from '@/components/admin-impersonation/PageComposerContext'
 import { CopilotMediaWorkbench } from '@/components/copilot/CopilotMediaWorkbench'
@@ -283,7 +284,7 @@ function AuthoringContextSummary({
       ) : null}
 
       {authoringContext?.section ? (
-        <div className="rounded-2xl border border-border/70 bg-background/70 p-3 text-sm">
+        <div className={adminPanelChrome.authoringSectionSummary}>
           <div className="font-medium text-foreground">
             Section {authoringContext.section.index + 1}: {authoringContext.section.label}
           </div>
@@ -296,7 +297,7 @@ function AuthoringContextSummary({
       ) : null}
 
       {focusedSession?.type === 'media-generation' ? (
-        <div className="rounded-2xl border border-primary/20 bg-primary/5 p-3">
+        <div className={adminPanelChrome.copilotPrimarySoftPanel}>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <div className="text-sm font-medium text-foreground">Focused media session</div>
@@ -327,7 +328,7 @@ function AuthoringContextSummary({
       ) : null}
 
       {focusedSession?.type === 'text-generation' ? (
-        <div className="rounded-2xl border border-primary/20 bg-primary/5 p-3">
+        <div className={adminPanelChrome.copilotPrimarySoftPanel}>
           <div className="text-sm font-medium text-foreground">Focused text rewrite</div>
           <div className="mt-1 text-xs text-muted-foreground">
             {focusedSession.fieldLabel} at {focusedSession.fieldPath}
@@ -336,7 +337,7 @@ function AuthoringContextSummary({
             <div className="mt-2 text-xs text-muted-foreground">{focusedSession.instructions}</div>
           ) : null}
           {focusedSession.currentText ? (
-            <div className="mt-3 rounded-2xl border border-border/70 bg-background/80 p-3 text-sm text-muted-foreground">
+            <div className={cn('mt-3', adminPanelChrome.copilotMutedDraftPanel)}>
               Current copy: {focusedSession.currentText}
             </div>
           ) : null}
@@ -375,7 +376,7 @@ function Composer() {
         }
       />
       <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2 text-xs uppercase tracking-[0.24em] text-muted-foreground">
+        <div className={cn('flex items-center gap-2', adminPanelChrome.fieldLabelWide)}>
           <SparklesIcon className="size-4" />
           Staff beta
         </div>

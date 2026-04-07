@@ -74,7 +74,7 @@ export function CopilotMediaWorkbench() {
     setStatus(null)
 
     try {
-      const response = await fetch('/api/internal/dev/page-media', { method: 'GET' })
+      const response = await fetch('/api/internal/page-composer/media', { method: 'GET' })
       const payload = (await response.json().catch(() => null)) as null | {
         error?: string
         items?: MediaLibraryItem[]
@@ -145,7 +145,7 @@ export function CopilotMediaWorkbench() {
         formData.set('sourceMediaId', String(args.sourceMediaId))
       }
 
-      const response = await fetch('/api/internal/dev/page-media', {
+      const response = await fetch('/api/internal/page-composer/media', {
         body: formData,
         method: 'POST',
       })

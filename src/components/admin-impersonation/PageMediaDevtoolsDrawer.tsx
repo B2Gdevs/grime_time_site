@@ -13,10 +13,12 @@ import {
 import { useRouter } from 'next/navigation'
 
 import { usePageMediaDevtoolsOptional } from '@/components/admin-impersonation/PageMediaDevtoolsContext'
+import { adminPanelChrome } from '@/components/admin-impersonation/adminPanelChrome'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
+import { parseResponseJson } from '@/utilities/parseResponseJson'
 import { cn } from '@/utilities/ui'
 
 type DrawerAction =
@@ -108,7 +110,7 @@ function UploadSurface({
   return (
     <div
       className={cn(
-        'rounded-[1.35rem] border border-border/70 bg-card/52 p-4 transition',
+        'rounded-[1.35rem] border border-border/70 bg-card/50 p-4 transition',
         selected && 'border-primary/60 bg-primary/5 shadow-[0_0_0_1px_rgba(34,211,238,0.15)]',
         dragActive && 'border-primary/60 bg-primary/6 ring-2 ring-primary/18',
         onClick && 'cursor-pointer hover:border-primary/40 hover:bg-primary/5',
@@ -235,10 +237,7 @@ export function PageMediaDevtoolsDrawer({ enabled }: { enabled: boolean }) {
 
     try {
       const response = await fetch('/api/internal/dev/page-media', { method: 'GET' })
-      const payload = (await response.json().catch(() => null)) as null | {
-        error?: string
-        items?: MediaLibraryItem[]
-      }
+      const payload = await parseResponseJson<{ error?: string; items?: MediaLibraryItem[] }>(response)
 
       if (!response.ok) {
         throw new Error(payload?.error || 'Unable to load local media records.')
@@ -336,11 +335,11 @@ export function PageMediaDevtoolsDrawer({ enabled }: { enabled: boolean }) {
         body: formData,
         method: 'POST',
       })
-      const payload = (await response.json().catch(() => null)) as null | {
+      const payload = await parseResponseJson<{
         error?: string
         media?: MediaLibraryItem
         mediaId?: number
-      }
+      }>(response)
 
       if (!response.ok) {
         throw new Error(payload?.error || 'Unable to update local media.')
@@ -396,7 +395,7 @@ export function PageMediaDevtoolsDrawer({ enabled }: { enabled: boolean }) {
               exit={{ opacity: 0, x: 64 }}
               transition={{ duration: 0.18, ease: 'easeOut' }}
             >
-              <div className="flex items-start justify-between gap-4 border-b border-border/70 px-5 py-4">
+              <div className={adminPanelChrome.drawerHeaderBetweenStart}>
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge variant="outline">Local media devtools</Badge>
@@ -425,7 +424,7 @@ export function PageMediaDevtoolsDrawer({ enabled }: { enabled: boolean }) {
                     onValueChange={(value) => setActiveTab(value as 'library' | 'page')}
                     value={activeTab}
                   >
-                  <div className="border-b border-border/70 px-5 py-3">
+                  <div className={adminPanelChrome.drawerTabsStrip}>
                     <TabsList className="grid h-auto w-full grid-cols-2 gap-1 rounded-xl p-1">
                       <TabsTrigger value="page">Page media</TabsTrigger>
                       <TabsTrigger value="library">Media library</TabsTrigger>
@@ -542,7 +541,7 @@ export function PageMediaDevtoolsDrawer({ enabled }: { enabled: boolean }) {
                           >
                             {libraryPromptOpen && !selectedLibraryId ? (
                               <div className="grid gap-3 rounded-2xl border border-border/70 bg-background/70 p-3">
-                                <div className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                                <div className={adminPanelChrome.fieldLabelStrong}>
                                   Generate new media record
                                 </div>
                                 <div className="flex gap-2">
@@ -611,7 +610,7 @@ export function PageMediaDevtoolsDrawer({ enabled }: { enabled: boolean }) {
 
                           <div className="grid gap-2">
                             {libraryLoading ? (
-                              <div className="rounded-2xl border border-border/70 bg-card/52 px-4 py-6 text-sm text-muted-foreground">
+                              <div className={adminPanelChrome.panelEmptyMuted}>
                                 Loading local media records...
                               </div>
                             ) : (
@@ -712,7 +711,7 @@ export function PageMediaDevtoolsDrawer({ enabled }: { enabled: boolean }) {
                                   {selectedLibraryId === item.id && libraryPromptOpen ? (
                                     <div className="grid gap-3 rounded-2xl border border-border/70 bg-background/70 p-3">
                                       <div className="flex flex-wrap items-center justify-between gap-3">
-                                        <div className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                                        <div className={adminPanelChrome.fieldLabelStrong}>
                                           Generate into this record
                                         </div>
                                         <div className="flex gap-2">
@@ -832,7 +831,7 @@ export function PageMediaDevtoolsDrawer({ enabled }: { enabled: boolean }) {
                             </Button>
                           </div>
 
-                          <div className="border-b border-border/70 px-5 py-3">
+                          <div className={adminPanelChrome.drawerTabsStrip}>
                             <Tabs
                               onValueChange={(value) => {
                                 setPageEditorTab(value as 'gallery' | 'image' | 'video')
@@ -851,7 +850,7 @@ export function PageMediaDevtoolsDrawer({ enabled }: { enabled: boolean }) {
                             {pageEditorTab === 'gallery' ? (
                               <div className="grid gap-3">
                                 {libraryLoading ? (
-                                  <div className="rounded-2xl border border-border/70 bg-card/52 px-4 py-6 text-sm text-muted-foreground">
+                                  <div className={adminPanelChrome.panelEmptyMuted}>
                                     Loading local media records...
                                   </div>
                                 ) : (
@@ -939,7 +938,7 @@ export function PageMediaDevtoolsDrawer({ enabled }: { enabled: boolean }) {
                                 />
 
                                 <div className="grid gap-3 rounded-2xl border border-border/70 bg-background/70 p-4">
-                                  <div className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                                  <div className={adminPanelChrome.fieldLabelStrong}>
                                     Generate {pageEditorTab}
                                   </div>
                                   <Textarea

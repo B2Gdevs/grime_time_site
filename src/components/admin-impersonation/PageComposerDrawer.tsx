@@ -1,5 +1,4 @@
 'use client'
-/* eslint-disable @next/next/no-img-element */
 
 import {
   useCallback,
@@ -9,7 +8,6 @@ import {
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
-  type ReactNode,
 } from 'react'
 import { DndContext, KeyboardSensor, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
 import type { DragEndEvent } from '@dnd-kit/core'
@@ -22,20 +20,16 @@ import {
   EyeIcon,
   EyeOffIcon,
   FilePenLineIcon,
+  GridIcon,
   GripVerticalIcon,
-  HistoryIcon,
   ImageIcon,
-  Link2Icon,
   LoaderCircleIcon,
   PlusIcon,
   RefreshCwIcon,
   RocketIcon,
-  SparklesIcon,
   SquarePenIcon,
   Trash2Icon,
   TypeIcon,
-  Undo2Icon,
-  UploadIcon,
   XIcon,
 } from 'lucide-react'
 
@@ -49,25 +43,19 @@ import {
 } from '@/components/admin-impersonation/PageComposerContext'
 import { usePortalCopilotOptional } from '@/components/copilot/PortalCopilotContext'
 import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { buildMediaDevtoolsSummary, type MediaDevtoolsSummary } from '@/lib/media/pageMediaDevtools'
 import { isUnknownRecord } from '@/lib/is-unknown-record'
 import {
   buildPageComposerValidationSummary,
-  buildPageComposerNotices,
   buildPageComposerSectionSummaries,
   countPageComposerChangedBlocks,
   duplicatePageLayoutSection,
-  frontendPathToPageSlug,
   insertPageLayoutRegisteredBlock,
-  pageSlugToFrontendPath,
   removePageLayoutSection,
   togglePageLayoutSectionHidden,
   type PageComposerDocument,
-  type PageComposerNotice,
-  type PageComposerPageSummary,
   type PageComposerSectionSummary,
   type PageComposerVersionSummary,
   updatePageLayoutSection,
@@ -97,6 +85,13 @@ import type {
 } from '@/payload-types'
 import { formatComposerTimestamp } from '@/utilities/formatComposerTimestamp'
 import { parseResponseJson } from '@/utilities/parseResponseJson'
+import { PageComposerDrawerBlockLibrary } from '@/components/admin-impersonation/page-composer-drawer/PageComposerDrawerBlockLibrary'
+import { PageComposerDrawerMediaTab } from '@/components/admin-impersonation/page-composer-drawer/PageComposerDrawerMediaTab'
+import { PageComposerDrawerPublishTab } from '@/components/admin-impersonation/page-composer-drawer/PageComposerDrawerPublishTab'
+
+import { adminPanelChrome } from './adminPanelChrome'
+import { Tooltip } from '../ui/tooltip'
+import { TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip'
 
 type MediaAction = 'create-and-swap' | 'generate-and-swap' | 'swap-existing-reference'
 type SavingAction = 'publish-page' | 'save-draft'
@@ -125,7 +120,6 @@ type SectionMediaSlot = {
 type PageComposerResponse = {
   error?: string
   page?: PageComposerDocument
-  pages?: PageComposerPageSummary[]
   versions?: PageComposerVersionSummary[]
 }
 
@@ -135,222 +129,6 @@ function asMedia(value: Media | null | number | undefined): Media | null {
 
 function getFileKind(file: File): 'image' | 'video' {
   return file.type.startsWith('video/') ? 'video' : 'image'
-}
-
-function getMediaKindFromMimeType(mimeType: null | string | undefined): 'image' | 'video' {
-  return mimeType?.startsWith('video/') ? 'video' : 'image'
-}
-
-function ComposerNoticeList({ notices }: { notices: PageComposerNotice[] }) {
-  if (!notices.length) {
-    return null
-  }
-
-  return (
-    <div className="grid gap-3">
-      {notices.map((notice) => (
-        <div
-          key={notice.id}
-          className={`rounded-2xl border p-4 text-sm ${
-            notice.tone === 'warning'
-              ? 'border-amber-500/30 bg-amber-500/10 text-amber-950 dark:text-amber-100'
-              : 'border-border/70 bg-card/50 text-muted-foreground'
-          }`}
-        >
-          <div className="font-semibold text-foreground">{notice.title}</div>
-          <div className="mt-1">{notice.description}</div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-function HeaderField({
-  icon,
-  label,
-  onChange,
-  placeholder,
-  value,
-}: {
-  icon: ReactNode
-  label: string
-  onChange: (value: string) => void
-  placeholder: string
-  value: string
-}) {
-  return (
-    <label className="grid gap-1.5">
-      <span className="text-[11px] font-medium uppercase tracking-[0.22em] text-muted-foreground">{label}</span>
-      <div className="relative">
-        <div className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-muted-foreground">{icon}</div>
-        <Input className="h-10 pl-10" onChange={(event) => onChange(event.target.value)} placeholder={placeholder} value={value} />
-      </div>
-    </label>
-  )
-}
-
-function formatComposerBreadcrumbs(pagePath: string) {
-  if (pagePath === '/') {
-    return ['Home']
-  }
-
-  return pagePath
-    .split('/')
-    .filter(Boolean)
-    .map((segment) => segment.replace(/-/g, ' '))
-    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
-}
-
-function ComposerAdminBar({
-  availablePages,
-  creatingDraftClone,
-  dirty,
-  draftPage,
-  loading,
-  onCreateDraft,
-  onSetSlugDraft,
-  onSetTitleDraft,
-  onSetVisibilityDraft,
-  slugDraft,
-  switchToPage,
-  titleDraft,
-  visibilityDraft,
-}: {
-  availablePages: PageComposerPageSummary[]
-  creatingDraftClone: boolean
-  dirty: boolean
-  draftPage: null | PageComposerDocument
-  loading: boolean
-  onCreateDraft: () => void
-  onSetSlugDraft: (value: string) => void
-  onSetTitleDraft: (value: string) => void
-  onSetVisibilityDraft: (value: 'private' | 'public') => void
-  slugDraft: string
-  switchToPage: (pageId: number) => void
-  titleDraft: string
-  visibilityDraft: 'private' | 'public'
-}) {
-  const breadcrumbs = formatComposerBreadcrumbs(draftPage?.pagePath || '/')
-
-  return (
-    <div className="border-b border-border/70 bg-card/35 px-5 py-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="grid gap-2">
-          <div className="flex flex-wrap items-center gap-2 text-[11px] font-medium uppercase tracking-[0.22em] text-muted-foreground">
-            <span>Composer admin bar</span>
-            {breadcrumbs.map((segment, index) => (
-              <span className="inline-flex items-center gap-2" key={`${segment}-${index}`}>
-                <span>/</span>
-                <span>{segment}</span>
-              </span>
-            ))}
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            {draftPage ? <Badge variant="secondary">{draftPage.pagePath}</Badge> : null}
-            {draftPage ? <Badge variant="outline">{draftPage._status || 'draft'}</Badge> : null}
-            {dirty ? <Badge>Unsaved</Badge> : null}
-          </div>
-        </div>
-        <div className="min-w-[14rem] flex-1 md:max-w-sm">
-          {draftPage ? (
-            <Select
-              disabled={loading || !availablePages.length}
-              onValueChange={(value) => switchToPage(Number(value))}
-              value={String(draftPage.id)}
-            >
-              <SelectTrigger className="h-10 bg-background/90">
-                <SelectValue placeholder="Select a page" />
-              </SelectTrigger>
-              <SelectContent className="z-[130]">
-                {availablePages.map((page) => (
-                  <SelectItem key={page.id} value={String(page.id)}>
-                    {page.title} ({page.visibility || 'public'})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          ) : (
-            <div className="flex h-10 items-center rounded-xl border border-input bg-background px-3 text-sm text-muted-foreground">
-              {loading ? 'Loading current page...' : 'No page loaded yet'}
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className="mt-4 grid gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto_auto_auto]">
-        <HeaderField
-          icon={<TypeIcon className="h-4 w-4" />}
-          label="Page title"
-          onChange={onSetTitleDraft}
-          placeholder="Page title"
-          value={titleDraft}
-        />
-        <HeaderField
-          icon={<Link2Icon className="h-4 w-4" />}
-          label="Slug"
-          onChange={onSetSlugDraft}
-          placeholder="page-slug"
-          value={slugDraft}
-        />
-
-        <Button
-          className="mt-[1.45rem] h-10"
-          disabled={creatingDraftClone || loading || dirty}
-          onClick={onCreateDraft}
-          type="button"
-          variant="outline"
-        >
-          {creatingDraftClone ? (
-            <>
-              <LoaderCircleIcon className="h-4 w-4 animate-spin" />
-              Creating...
-            </>
-          ) : (
-            <>
-              <PlusIcon className="h-4 w-4" />
-              Create draft
-            </>
-          )}
-        </Button>
-
-        <div className="mt-[1.45rem] inline-flex h-10 rounded-xl border border-border/70 bg-card/50 p-1">
-          <button
-            className={`rounded-lg px-3 text-sm transition ${
-              visibilityDraft === 'public'
-                ? 'bg-foreground text-background'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-            onClick={() => onSetVisibilityDraft('public')}
-            type="button"
-          >
-            Public
-          </button>
-          <button
-            className={`rounded-lg px-3 text-sm transition ${
-              visibilityDraft === 'private'
-                ? 'bg-foreground text-background'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-            onClick={() => onSetVisibilityDraft('private')}
-            type="button"
-          >
-            Private
-          </button>
-        </div>
-
-        <Button asChild className="mt-[1.45rem] h-10 w-10" size="icon" type="button" variant="outline">
-          <a
-            aria-label="Open route preview"
-            href={pageSlugToFrontendPath(slugDraft)}
-            rel="noreferrer"
-            target="_blank"
-          >
-            <EyeIcon className="h-4 w-4" />
-          </a>
-        </Button>
-      </div>
-    </div>
-  )
 }
 
 function StructureInsertButton({
@@ -366,7 +144,7 @@ function StructureInsertButton({
       type="button"
     >
       <span className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-border/70 transition group-hover:bg-primary/40" />
-      <span className="relative inline-flex h-7 w-7 items-center justify-center rounded-full border border-border/70 bg-background text-muted-foreground shadow-sm transition group-hover:border-primary/40 group-hover:bg-primary/5 group-hover:text-foreground">
+      <span className={adminPanelChrome.structureAddCircle}>
         <PlusIcon className="h-4 w-4" />
       </span>
     </button>
@@ -507,7 +285,6 @@ export function PageComposerDrawer({
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   )
-  const [availablePages, setAvailablePages] = useState<PageComposerPageSummary[]>([])
   const [blockLibraryQuery, setBlockLibraryQuery] = useState('')
   const [blockLibraryMode, setBlockLibraryMode] = useState<BlockLibraryMode>('insert')
   const [blockLibraryTargetIndex, setBlockLibraryTargetIndex] = useState<null | number>(null)
@@ -519,7 +296,7 @@ export function PageComposerDrawer({
   const [mediaLibrary, setMediaLibrary] = useState<MediaLibraryItem[]>([])
   const [mediaLoading, setMediaLoading] = useState(false)
   const [mediaPrompt, setMediaPrompt] = useState('')
-  const [mediaStatus, setMediaStatus] = useState<null | string>(null)
+  const [, setMediaStatus] = useState<null | string>(null)
   const [pageVersions, setPageVersions] = useState<PageComposerVersionSummary[]>([])
   const [selectedMediaPath, setSelectedMediaPath] = useState<null | string>(null)
   const [restoringVersionId, setRestoringVersionId] = useState<null | string>(null)
@@ -656,7 +433,6 @@ export function PageComposerDrawer({
   }, [selectedIndex, selectedServiceGrid])
   const selectedMediaSlot = mediaSlots.find((slot) => slot.relationPath === selectedMediaPath) || mediaSlots[0] || null
   const mediaActionsLocked = dirty || !draftPage || !selectedMediaSlot
-  const footerStatus = status || mediaStatus || 'Page edits stay local until you save or publish.'
   const heroSummary = sectionSummaries.find((summary) => summary.index === -1) || null
   const layoutSectionSummaries = sectionSummaries.filter((summary) => summary.index >= 0)
   const changedBlockCount = useMemo(
@@ -682,16 +458,7 @@ export function PageComposerDrawer({
         : null,
     [draftPage, sharedSectionsById, slugDraft, titleDraft, visibilityDraft],
   )
-  const composerNotices = useMemo<PageComposerNotice[]>(
-    () =>
-      draftPage
-        ? buildPageComposerNotices({
-            page: draftPage,
-            selectedBlock: resolvedSelectedBlock || undefined,
-          })
-        : [],
-    [draftPage, resolvedSelectedBlock],
-  )
+
 
   useEffect(() => {
     if (!sectionSummaries.length) {
@@ -764,10 +531,9 @@ export function PageComposerDrawer({
       if (!enabled) return
 
       const requestedPath = args?.pagePath || composer?.activePagePath || pathname || '/'
-      const resolvedPath = frontendPathToPageSlug(requestedPath) ? requestedPath : '/'
       const query = args?.pageId
         ? `pageId=${args.pageId}`
-        : `pagePath=${encodeURIComponent(resolvedPath)}`
+        : `pagePath=${encodeURIComponent(requestedPath)}`
 
       setLoading(true)
       setStatus(null)
@@ -780,7 +546,6 @@ export function PageComposerDrawer({
           throw new Error(payload?.error || 'Unable to load the page composer.')
         }
 
-        setAvailablePages(payload.pages || [])
         setDraftPage(payload.page)
         setPageVersions(payload.versions || [])
         setSavedPage(payload.page)
@@ -962,6 +727,7 @@ export function PageComposerDrawer({
           action,
           layout: draftPage.layout,
           pageId: draftPage.id,
+          pagePath: draftPage.pagePath,
           slug: slugDraft.trim(),
           title: titleDraft.trim(),
           visibility: visibilityDraft,
@@ -971,7 +737,6 @@ export function PageComposerDrawer({
       })
       const payload = await parseResponseJson<null | PageComposerResponse>(response)
       if (!response.ok || !payload?.page) throw new Error(payload?.error || 'Unable to save the page.')
-      setAvailablePages(payload.pages || [])
       setDraftPage(payload.page)
       setPageVersions(payload.versions || [])
       setSavedPage(payload.page)
@@ -979,7 +744,18 @@ export function PageComposerDrawer({
       setSlugDraft(payload.page.slug || '')
       setVisibilityDraft(payload.page.visibility === 'private' ? 'private' : 'public')
       setDirty(false)
-      setStatus(action === 'publish-page' ? 'Page published.' : 'Draft saved.')
+      setStatus(
+        action === 'publish-page'
+          ? draftPage.id
+            ? 'Page published.'
+            : 'Page created and published.'
+          : draftPage.id
+            ? 'Draft saved.'
+            : 'Draft created.',
+      )
+      if (payload.page.pagePath !== pathname) {
+        router.push(payload.page.pagePath)
+      }
       router.refresh()
     } catch (error) {
       setStatus(error instanceof Error ? error.message : 'Unable to save the page.')
@@ -989,7 +765,7 @@ export function PageComposerDrawer({
   }
 
   const createDraftClone = useCallback(async () => {
-    if (!draftPage) return
+    if (!draftPage || typeof draftPage.id !== 'number') return
 
     if (dirty) {
       setStatus('Save or publish the current page before creating a new draft from it.')
@@ -1014,7 +790,6 @@ export function PageComposerDrawer({
         throw new Error(payload?.error || 'Unable to create the page draft.')
       }
 
-      setAvailablePages(payload.pages || [])
       setDraftPage(payload.page)
       setPageVersions(payload.versions || [])
       setSavedPage(payload.page)
@@ -1035,7 +810,7 @@ export function PageComposerDrawer({
   }, [dirty, draftPage, router, setActiveTab, setSelectedIndex])
 
   const restorePageVersion = useCallback(async (version: PageComposerVersionSummary) => {
-    if (!draftPage) return
+    if (!draftPage || typeof draftPage.id !== 'number') return
 
     const confirmed =
       typeof window === 'undefined'
@@ -1067,7 +842,6 @@ export function PageComposerDrawer({
         throw new Error(payload?.error || 'Unable to restore the page version.')
       }
 
-      setAvailablePages(payload.pages || [])
       setDraftPage(payload.page)
       setPageVersions(payload.versions || [])
       setSavedPage(payload.page)
@@ -1083,22 +857,6 @@ export function PageComposerDrawer({
       setRestoringVersionId(null)
     }
   }, [draftPage, router])
-
-  const switchToPage = useCallback((pageId: number) => {
-    if (dirty) {
-      setStatus('Save, publish, or reload the current page before switching to another page.')
-      return
-    }
-
-    const nextPage = availablePages.find((page) => Number(page.id) === pageId)
-    setSelectedIndex(0)
-    void loadPage({ pageId })
-
-    if (nextPage) {
-      router.push(nextPage.pagePath)
-      router.refresh()
-    }
-  }, [availablePages, dirty, loadPage, router, setSelectedIndex])
 
   const duplicateBlock = useCallback((index: number) => {
     mutatePage((page) => ({
@@ -1133,9 +891,8 @@ export function PageComposerDrawer({
     }
 
     const detail: null | PageComposerToolbarState =
-      embedded && open && draftPage && composerActivePagePath === pathname
+      open && draftPage && composerActivePagePath === pathname
         ? {
-            availablePages,
             creatingDraftClone,
             dirty,
             draftPage,
@@ -1401,7 +1158,6 @@ export function PageComposerDrawer({
                 }
               : null,
             slugDraft,
-            switchToPage,
             titleDraft,
             visibilityDraft,
           }
@@ -1413,7 +1169,6 @@ export function PageComposerDrawer({
       window.dispatchEvent(new CustomEvent(PAGE_COMPOSER_TOOLBAR_EVENT, { detail: null }))
     }
   }, [
-    availablePages,
     composerActivePagePath,
     creatingDraftClone,
     createDraftClone,
@@ -1438,7 +1193,6 @@ export function PageComposerDrawer({
     selectedContentBlock,
     selectedTestimonialsBlock,
     slugDraft,
-    switchToPage,
     titleDraft,
     toggleBlockHidden,
     visibilityDraft,
@@ -1511,6 +1265,9 @@ export function PageComposerDrawer({
     setSubmittingMediaAction(args.action)
     setMediaStatus(null)
     try {
+      if (!draftPage.id) {
+        throw new Error('Save this route as a page draft before editing media.')
+      }
       const formData = new FormData()
       formData.set('action', args.action)
       formData.set('pageId', String(draftPage.id))
@@ -1556,7 +1313,7 @@ export function PageComposerDrawer({
       role="complementary"
     >
       {!embedded ? (
-        <div className="flex items-center justify-between gap-4 border-b border-border/70 px-5 py-4">
+        <div className={adminPanelChrome.drawerHeaderBetweenCenter}>
           <div className="flex items-center gap-3">
             <button
               aria-label="Move page composer"
@@ -1567,8 +1324,10 @@ export function PageComposerDrawer({
               <GripVerticalIcon className="h-4 w-4" />
             </button>
             <div>
-              <p className="text-[0.68rem] uppercase tracking-[0.3em] text-muted-foreground">Staff beta</p>
+              <p className={adminPanelChrome.chromeKicker}>Staff beta</p>
               <h2 className="mt-1 text-xl font-semibold tracking-tight">Visual composer</h2>
+              {/* editing block section heading: selected block name and type */}
+              <h3 className="mt-1 text-lg font-semibold tracking-tight">{selectedBlock?.blockName || 'Selected block'} {selectedBlock?.blockType || 'Block type'}</h3>
             </div>
           </div>
           <Button
@@ -1584,32 +1343,7 @@ export function PageComposerDrawer({
       ) : null}
 
       <div className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] overflow-hidden">
-        {showInlineAdminBar ? (
-          <ComposerAdminBar
-            availablePages={availablePages}
-            creatingDraftClone={creatingDraftClone}
-            dirty={dirty}
-            draftPage={draftPage}
-            loading={loading}
-            onCreateDraft={() => void createDraftClone()}
-            onSetSlugDraft={(value) => {
-              setDirty(true)
-              setSlugDraft(value)
-            }}
-            onSetTitleDraft={(value) => {
-              setDirty(true)
-              setTitleDraft(value)
-            }}
-            onSetVisibilityDraft={(value) => {
-              setDirty(true)
-              setVisibilityDraft(value)
-            }}
-            slugDraft={slugDraft}
-            switchToPage={switchToPage}
-            titleDraft={titleDraft}
-            visibilityDraft={visibilityDraft}
-          />
-        ) : null}
+
 
         <Tabs
           className="grid min-h-0 grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden"
@@ -1617,7 +1351,7 @@ export function PageComposerDrawer({
           value={activeTab}
         >
           {showInlineAdminBar ? (
-            <div className="border-b border-border/70 px-5 py-3">
+            <div className={adminPanelChrome.drawerTabsStrip}>
               <TabsList className="grid h-auto w-full grid-cols-3 gap-1 rounded-xl p-1">
                 <TabsTrigger value="content">
                   <span className="inline-flex items-center gap-2">
@@ -1643,16 +1377,16 @@ export function PageComposerDrawer({
 
                 <TabsContent className="portal-scroll mt-0 min-h-0 px-5 py-4" value="structure">
                   {loading ? (
-                    <div className="rounded-2xl border border-border/70 bg-card/50 px-4 py-6 text-sm text-muted-foreground">
+                    <div className={adminPanelChrome.panelEmptyMuted}>
                       Loading page structure...
                     </div>
                   ) : !draftPage ? (
-                    <div className="rounded-2xl border border-border/70 bg-card/50 px-4 py-6 text-sm text-muted-foreground">
+                    <div className={adminPanelChrome.panelEmptyMuted}>
                       {status || 'No page is available for this route.'}
                     </div>
                   ) : (
                     <div className="grid gap-4">
-                      <div className="flex items-center justify-between gap-3 rounded-2xl border border-border/70 bg-card/50 px-4 py-3">
+                      <div className={adminPanelChrome.toolbarRow}>
                         <div className="text-sm text-muted-foreground">
                           {sectionSummaries.length} composer region{sectionSummaries.length === 1 ? '' : 's'}
                         </div>
@@ -1701,7 +1435,7 @@ export function PageComposerDrawer({
                         </DndContext>
                       ) : (
                         <div className="grid gap-3">
-                          <div className="rounded-2xl border border-dashed border-border/70 bg-card/40 px-4 py-8 text-sm text-muted-foreground">
+                          <div className={adminPanelChrome.panelDashedEmpty}>
                             This page does not have any layout blocks yet.
                           </div>
                           <StructureInsertButton onClick={() => openBlockLibrary(0)} />
@@ -1713,24 +1447,24 @@ export function PageComposerDrawer({
 
                 <TabsContent className="portal-scroll mt-0 min-h-0 px-5 py-4" value="content">
                   {loading ? (
-                    <div className="rounded-2xl border border-border/70 bg-card/50 px-4 py-6 text-sm text-muted-foreground">
+                    <div className={adminPanelChrome.panelEmptyMuted}>
                       Loading section editor...
                     </div>
                   ) : !draftPage ? (
-                    <div className="rounded-2xl border border-border/70 bg-card/50 px-4 py-6 text-sm text-muted-foreground">
+                    <div className={adminPanelChrome.panelEmptyMuted}>
                       No page is available for this route.
                     </div>
                   ) : selectedIndex < 0 ? (
-                    <div className="rounded-2xl border border-border/70 bg-card/50 px-4 py-6 text-sm text-muted-foreground">
+                    <div className={adminPanelChrome.panelEmptyMuted}>
                       Hero copy and hero media edit directly on the live canvas. Click the hero content on the page to update it inline.
                     </div>
                   ) : !selectedBlock ? (
-                    <div className="rounded-2xl border border-border/70 bg-card/50 px-4 py-6 text-sm text-muted-foreground">
+                    <div className={adminPanelChrome.panelEmptyMuted}>
                       Select a section on the live page to edit its content.
                     </div>
                   ) : selectedBlockIsLinkedSharedSection && selectedSharedSectionId ? (
                     <div className="grid gap-4">
-                      <div className="rounded-2xl border border-primary/30 bg-primary/5 p-4 text-sm text-foreground">
+                      <div className={adminPanelChrome.calloutPrimary}>
                         This block is linked to a shared section source. Edit the source in the dedicated shared-section editor or detach a local copy before changing page-only content.
                         <div className="mt-3 flex flex-wrap gap-2">
                           <Button onClick={() => openSharedSectionSourceEditor(selectedSharedSectionId)} size="sm" type="button">
@@ -1751,14 +1485,13 @@ export function PageComposerDrawer({
                           </Button>
                         </div>
                       </div>
-                      <div className="rounded-2xl border border-border/70 bg-card/50 p-4 text-sm text-muted-foreground">
+                      <div className={adminPanelChrome.cardMuted}>
                         Publishing the shared source updates every linked published page using it. Removing this section here only removes this page instance. The source itself stays intact.
                       </div>
-                      <ComposerNoticeList notices={composerNotices} />
                     </div>
                   ) : (selectedBlock as ReusableAwareLayoutBlock).composerReusable?.mode === 'linked' ? (
                     <div className="grid gap-4">
-                      <div className="rounded-2xl border border-primary/30 bg-primary/5 p-4 text-sm text-foreground">
+                      <div className={adminPanelChrome.calloutPrimary}>
                         This block is using a linked reusable preset. Detach it before editing local copy, or replace it with another reusable source.
                         <div className="mt-3 flex flex-wrap gap-2">
                           <Button onClick={() => detachReusableBlock(selectedIndex)} size="sm" type="button" variant="outline">
@@ -1775,45 +1508,36 @@ export function PageComposerDrawer({
                           </Button>
                         </div>
                       </div>
-                      <ComposerNoticeList notices={composerNotices} />
                     </div>
                   ) : selectedBlock.blockType === 'serviceGrid' ? (
                     <div className="grid gap-4">
-                      <div className="rounded-2xl border border-border/70 bg-card/50 p-4">
-                        <div className="flex flex-wrap items-center justify-between gap-3">
-                          <div>
-                            <div className="flex flex-wrap items-center gap-2">
-                              <div className="text-sm font-semibold text-foreground">{selectedBlock.heading || 'Service section'}</div>
-                              <Badge variant="outline">serviceGrid</Badge>
-                            </div>
-                            <div className="mt-1 text-xs text-muted-foreground">
-                              Edit the visible copy for this reusable section. Section media now lives in the Media tab for staff-safe swaps and generation.
-                            </div>
-                          </div>
-                          {copilot ? (
-                            <Button onClick={copilot.open} size="sm" type="button" variant="outline">
-                              <SparklesIcon className="h-4 w-4" />
-                              Ask copilot
-                            </Button>
-                          ) : null}
-                        </div>
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          <Button onClick={() => openBlockLibrary(selectedIndex, 'replace')} size="sm" type="button" variant="outline">
-                            <RefreshCwIcon className="h-4 w-4" />
-                            Replace section
-                          </Button>
+                      <div className={adminPanelChrome.card}>
+                        {/* Swap blocks compact heading and info with icon and tooltip */}
+                        <div className="flex flex-wrap items-center gap-2">
+                          <TooltipProvider delayDuration={200}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button size="sm" type="button" variant="outline">
+                                  <GridIcon className="h-4 w-4" />
+                                  Find a new block
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Find a new block for the section</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         </div>
                       </div>
 
-                      <ComposerNoticeList notices={composerNotices} />
 
                       <div className="grid gap-2">
-                        <label className="text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground">Block name</label>
+                        <label className={adminPanelChrome.fieldLabel}>Block name</label>
                         <Input onChange={(event) => replaceSelectedBlock({ ...selectedBlock, blockName: event.target.value || undefined })} value={selectedBlock.blockName || ''} />
                       </div>
 
                       <div className="grid gap-2">
-                        <label className="text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground">Display variant</label>
+                        <label className={adminPanelChrome.fieldLabel}>Display variant</label>
                         <select
                           className="h-10 rounded-xl border border-input bg-background px-3 text-sm"
                           onChange={(event) =>
@@ -1832,23 +1556,23 @@ export function PageComposerDrawer({
 
                       <div className="grid gap-4 md:grid-cols-2">
                         <div className="grid gap-2">
-                          <label className="text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground">Eyebrow</label>
+                          <label className={adminPanelChrome.fieldLabel}>Eyebrow</label>
                           <Input onChange={(event) => replaceSelectedBlock({ ...selectedBlock, eyebrow: event.target.value })} value={selectedBlock.eyebrow || ''} />
                         </div>
                         <div className="grid gap-2">
-                          <label className="text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground">Heading</label>
+                          <label className={adminPanelChrome.fieldLabel}>Heading</label>
                           <Input onChange={(event) => replaceSelectedBlock({ ...selectedBlock, heading: event.target.value })} value={selectedBlock.heading || ''} />
                         </div>
                       </div>
 
                       <div className="grid gap-2">
-                        <label className="text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground">Intro</label>
+                        <label className={adminPanelChrome.fieldLabel}>Intro</label>
                         <Textarea className="min-h-24" onChange={(event) => replaceSelectedBlock({ ...selectedBlock, intro: event.target.value })} value={selectedBlock.intro || ''} />
                       </div>
 
                       <div className="grid gap-3">
                         {(selectedBlock.services || []).map((service, serviceIndex) => (
-                          <div key={`${service.name}-${serviceIndex}`} className="rounded-2xl border border-border/70 bg-card/50 p-4">
+                          <div key={`${service.name}-${serviceIndex}`} className={adminPanelChrome.card}>
                             <div className="flex items-center justify-between gap-3">
                               <div className="text-sm font-semibold text-foreground">Row {serviceIndex + 1}</div>
                               <Button
@@ -1924,7 +1648,7 @@ export function PageComposerDrawer({
                     </div>
                   ) : (
                     <div className="grid gap-4">
-                      <div className="rounded-2xl border border-border/70 bg-card/50 p-4">
+                      <div className={adminPanelChrome.card}>
                         <div className="text-sm font-semibold text-foreground">{selectedSummary?.label || 'Selected block'}</div>
                         <div className="mt-1 text-sm text-muted-foreground">
                           {selectedIndex < 0
@@ -1949,453 +1673,50 @@ export function PageComposerDrawer({
                 </TabsContent>
 
                 <TabsContent className="portal-scroll mt-0 min-h-0 px-5 py-4" value="media">
-                  {loading ? (
-                    <div className="rounded-2xl border border-border/70 bg-card/50 px-4 py-6 text-sm text-muted-foreground">
-                      Loading section media...
-                    </div>
-                  ) : !draftPage ? (
-                    <div className="rounded-2xl border border-border/70 bg-card/50 px-4 py-6 text-sm text-muted-foreground">
-                      No page is available for this route.
-                    </div>
-                  ) : selectedIndex < 0 ? (
-                    <div className="rounded-2xl border border-border/70 bg-card/50 px-4 py-6 text-sm text-muted-foreground">
-                      Hero media swaps and generation live directly on the canvas. Hover the hero image on the page to replace or generate media.
-                    </div>
-                  ) : !selectedBlock ? (
-                    <div className="rounded-2xl border border-border/70 bg-card/50 px-4 py-6 text-sm text-muted-foreground">
-                      Select a section on the live page to edit its media.
-                    </div>
-                  ) : !selectedServiceGrid ? (
-                    <div className="rounded-2xl border border-border/70 bg-card/50 px-4 py-6 text-sm text-muted-foreground">
-                      This first media editor is focused on `serviceGrid` rows. Other media relationships still use the existing page media tools while the unified composer expands.
-                    </div>
-                  ) : (
-                    <div className="grid gap-4">
-                      <div className="rounded-2xl border border-border/70 bg-card/50 p-4">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <div className="text-sm font-semibold text-foreground">{selectedServiceGrid.heading || 'Service section'}</div>
-                          <Badge variant="outline">serviceGrid media</Badge>
-                          <Badge variant="secondary">{mediaSlots.length} slots</Badge>
-                        </div>
-                        <div className="mt-1 text-xs text-muted-foreground">
-                          Choose a row, then upload, generate, or swap from recent media without leaving the page.
-                        </div>
-                      </div>
-
-                      {dirty ? (
-                        <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-950 dark:text-amber-100">
-                          Save draft before changing media. Media actions run against the persisted draft layout so relation paths stay aligned with the current section structure.
-                        </div>
-                      ) : null}
-
-                      <div className="grid gap-3">
-                        {mediaSlots.map((slot) => (
-                          <button
-                            key={slot.relationPath}
-                            className={`rounded-2xl border p-3 text-left transition ${
-                              selectedMediaSlot?.relationPath === slot.relationPath
-                                ? 'border-primary/60 bg-primary/5'
-                                : 'border-border/70 bg-card/50 hover:border-primary/30'
-                            }`}
-                            onClick={() => {
-                              setSelectedMediaPath(slot.relationPath)
-                              setMediaKind(getMediaKindFromMimeType(slot.media?.mimeType))
-                            }}
-                            type="button"
-                          >
-                            <div className="flex flex-wrap items-center gap-2">
-                              <span className="text-sm font-semibold text-foreground">{slot.label}</span>
-                              {slot.mediaId ? <Badge variant="secondary">ID {slot.mediaId}</Badge> : null}
-                              <Badge variant="outline">{slot.relationPath}</Badge>
-                            </div>
-                            <div className="mt-1 text-xs text-muted-foreground">{slot.media?.filename || 'No media assigned yet.'}</div>
-                          </button>
-                        ))}
-                      </div>
-
-                      {selectedMediaSlot ? (
-                        <>
-                          <div className="grid gap-4 md:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
-                            <div className="overflow-hidden rounded-3xl border border-border/70 bg-card/50">
-                              {selectedMediaSlot.media?.previewUrl ? (
-                                getMediaKindFromMimeType(selectedMediaSlot.media.mimeType) === 'video' ? (
-                                  <video className="aspect-video h-full w-full bg-black object-cover" controls muted playsInline src={selectedMediaSlot.media.previewUrl} />
-                                ) : (
-                                  <img
-                                    alt={selectedMediaSlot.media.alt || selectedMediaSlot.label}
-                                    className="aspect-video h-full w-full object-cover"
-                                    src={selectedMediaSlot.media.previewUrl}
-                                  />
-                                )
-                              ) : (
-                                <div className="flex aspect-video items-center justify-center bg-muted/40 text-muted-foreground">
-                                  <div className="flex items-center gap-2 text-sm">
-                                    <ImageIcon className="h-4 w-4" />
-                                    No media assigned
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-
-                            <div className="grid gap-3 rounded-3xl border border-border/70 bg-card/50 p-4">
-                              <div>
-                                <div className="text-sm font-semibold text-foreground">{selectedMediaSlot.label}</div>
-                                <div className="mt-1 text-xs text-muted-foreground">
-                                  {selectedMediaSlot.media?.alt || 'Use upload, generate, or recent-library swap to fill this row.'}
-                                </div>
-                              </div>
-                              <div className="grid gap-2 text-xs text-muted-foreground">
-                                <div>
-                                  Current file: <span className="text-foreground">{selectedMediaSlot.media?.filename || 'None'}</span>
-                                </div>
-                                <div>
-                                  Last updated: <span className="text-foreground">{formatComposerTimestamp(selectedMediaSlot.media?.updatedAt)}</span>
-                                </div>
-                              </div>
-                              <div className="flex flex-wrap gap-2">
-                                <Button onClick={() => setMediaKind('image')} size="sm" type="button" variant={mediaKind === 'image' ? 'default' : 'outline'}>
-                                  Image
-                                </Button>
-                                <Button onClick={() => setMediaKind('video')} size="sm" type="button" variant={mediaKind === 'video' ? 'default' : 'outline'}>
-                                  Video
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="rounded-3xl border border-border/70 bg-card/50 p-4">
-                            <div className="flex flex-wrap items-center justify-between gap-3">
-                              <div>
-                                <div className="text-sm font-semibold text-foreground">Upload or generate</div>
-                                <div className="mt-1 text-xs text-muted-foreground">
-                                  Upload a file directly or generate a new {mediaKind} for this selected service row.
-                                </div>
-                              </div>
-                              <div className="flex flex-wrap gap-2">
-                                {copilot ? (
-                                  <Button
-                                    disabled={mediaActionsLocked}
-                                    onClick={() =>
-                                      copilot.openFocusedMediaSession({
-                                        mode: mediaKind,
-                                        promptHint: mediaPrompt,
-                                      })
-                                    }
-                                    size="sm"
-                                    type="button"
-                                    variant="outline"
-                                  >
-                                    <SparklesIcon className="h-4 w-4" />
-                                    Focused copilot
-                                  </Button>
-                                ) : null}
-                                <Button disabled={mediaLoading} onClick={() => void loadMediaLibrary()} size="sm" type="button" variant="ghost">
-                                  <RefreshCwIcon className={`h-4 w-4 ${mediaLoading ? 'animate-spin' : ''}`} />
-                                  Refresh library
-                                </Button>
-                              </div>
-                            </div>
-
-                            <input
-                              accept={mediaKind === 'video' ? 'video/*' : 'image/*'}
-                              className="hidden"
-                              ref={mediaUploadInputRef}
-                              type="file"
-                              onChange={async (event) => {
-                                const file = event.target.files?.[0]
-                                if (!file || !selectedMediaSlot) return
-                                await submitMediaAction({
-                                  action: 'create-and-swap',
-                                  file,
-                                  relationPath: selectedMediaSlot.relationPath,
-                                  success: `Updated ${selectedMediaSlot.label}.`,
-                                })
-                                event.currentTarget.value = ''
-                              }}
-                            />
-
-                            <div className="mt-4 flex flex-wrap gap-2">
-                              <Button disabled={mediaActionsLocked || submittingMediaAction !== null} onClick={() => mediaUploadInputRef.current?.click()} size="sm" type="button" variant="secondary">
-                                {submittingMediaAction === 'create-and-swap' ? (
-                                  <>
-                                    <LoaderCircleIcon className="h-4 w-4 animate-spin" />
-                                    Uploading...
-                                  </>
-                                ) : (
-                                  <>
-                                    <UploadIcon className="h-4 w-4" />
-                                    Upload and swap
-                                  </>
-                                )}
-                              </Button>
-                              <Button
-                                disabled={mediaActionsLocked || submittingMediaAction !== null || !mediaPrompt.trim()}
-                                onClick={() => {
-                                  if (!selectedMediaSlot) return
-                                  void submitMediaAction({
-                                    action: 'generate-and-swap',
-                                    mediaId: selectedMediaSlot.mediaId,
-                                    prompt: mediaPrompt,
-                                    relationPath: selectedMediaSlot.relationPath,
-                                    success: `Generated new ${mediaKind} for ${selectedMediaSlot.label}.`,
-                                  })
-                                }}
-                                size="sm"
-                                type="button"
-                              >
-                                {submittingMediaAction === 'generate-and-swap' ? (
-                                  <>
-                                    <LoaderCircleIcon className="h-4 w-4 animate-spin" />
-                                    Generating...
-                                  </>
-                                ) : (
-                                  <>
-                                    <SparklesIcon className="h-4 w-4" />
-                                    Generate and swap
-                                  </>
-                                )}
-                              </Button>
-                            </div>
-
-                            <div className="mt-4 grid gap-2">
-                              <label className="text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground" htmlFor={mediaPromptId}>
-                                Prompt
-                              </label>
-                              <Textarea
-                                className="min-h-24"
-                                id={mediaPromptId}
-                                onChange={(event) => setMediaPrompt(event.target.value)}
-                                placeholder={`Describe the ${mediaKind} for ${selectedMediaSlot.label.toLowerCase()}...`}
-                                value={mediaPrompt}
-                              />
-                            </div>
-                          </div>
-
-                          <div className="rounded-3xl border border-border/70 bg-card/50 p-4">
-                            <div className="flex flex-wrap items-center justify-between gap-3">
-                              <div>
-                                <div className="text-sm font-semibold text-foreground">Recent media</div>
-                                <div className="mt-1 text-xs text-muted-foreground">
-                                  Reuse a recent media record for this row instead of creating a duplicate asset.
-                                </div>
-                              </div>
-                              <Badge variant="outline">{mediaLibrary.length} records</Badge>
-                            </div>
-
-                            <div className="mt-4 grid gap-3">
-                              {mediaLoading ? (
-                                <div className="rounded-2xl border border-border/70 bg-background px-4 py-6 text-sm text-muted-foreground">
-                                  Loading media library...
-                                </div>
-                              ) : mediaLibrary.length ? (
-                                mediaLibrary.slice(0, 12).map((item) => (
-                                  <div key={item.id} className="grid gap-3 rounded-2xl border border-border/70 bg-background p-3 md:grid-cols-[5rem_minmax(0,1fr)_auto]">
-                                    <div className="overflow-hidden rounded-2xl bg-muted/40">
-                                      {item.previewUrl ? (
-                                        getMediaKindFromMimeType(item.mimeType) === 'video' ? (
-                                          <video className="aspect-square h-full w-full object-cover" muted playsInline src={item.previewUrl} />
-                                        ) : (
-                                          <img alt={item.alt || item.filename || `Media ${item.id}`} className="aspect-square h-full w-full object-cover" src={item.previewUrl} />
-                                        )
-                                      ) : (
-                                        <div className="flex aspect-square items-center justify-center text-muted-foreground">
-                                          <ImageIcon className="h-4 w-4" />
-                                        </div>
-                                      )}
-                                    </div>
-                                    <div className="min-w-0">
-                                      <div className="flex flex-wrap items-center gap-2">
-                                        <div className="truncate text-sm font-semibold text-foreground">{item.alt || item.filename || `Media ${item.id}`}</div>
-                                        <Badge variant="secondary">ID {item.id}</Badge>
-                                      </div>
-                                      <div className="mt-1 text-xs text-muted-foreground">{item.filename || 'Untitled media'} · {formatComposerTimestamp(item.updatedAt)}</div>
-                                    </div>
-                                    <Button
-                                      disabled={mediaActionsLocked || submittingMediaAction !== null}
-                                      onClick={() => {
-                                        if (!selectedMediaSlot) return
-                                        void submitMediaAction({
-                                          action: 'swap-existing-reference',
-                                          mediaId: item.id,
-                                          relationPath: selectedMediaSlot.relationPath,
-                                          success: `Swapped ${selectedMediaSlot.label} to media ${item.id}.`,
-                                        })
-                                      }}
-                                      size="sm"
-                                      type="button"
-                                      variant="outline"
-                                    >
-                                      Use this media
-                                    </Button>
-                                  </div>
-                                ))
-                              ) : (
-                                <div className="rounded-2xl border border-border/70 bg-background px-4 py-6 text-sm text-muted-foreground">
-                                  No media records are available yet.
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </>
-                      ) : null}
-                    </div>
-                  )}
+                  <PageComposerDrawerMediaTab
+                    copilot={copilot ? { openFocusedMediaSession: copilot.openFocusedMediaSession } : null}
+                    dirty={dirty}
+                    draftPage={draftPage ? { pagePath: draftPage.pagePath } : null}
+                    loadMediaLibrary={loadMediaLibrary}
+                    loading={loading}
+                    mediaActionsLocked={mediaActionsLocked}
+                    mediaKind={mediaKind}
+                    mediaLibrary={mediaLibrary}
+                    mediaLoading={mediaLoading}
+                    mediaPrompt={mediaPrompt}
+                    mediaPromptId={mediaPromptId}
+                    mediaSlots={mediaSlots}
+                    selectedIndex={selectedIndex}
+                    selectedMediaSlot={selectedMediaSlot}
+                    selectedServiceGrid={selectedServiceGrid}
+                    setMediaKind={setMediaKind}
+                    setMediaPrompt={setMediaPrompt}
+                    setSelectedMediaPath={setSelectedMediaPath}
+                    submitMediaAction={submitMediaAction}
+                    submittingMediaAction={submittingMediaAction}
+                    mediaUploadInputRef={mediaUploadInputRef}
+                  />
                 </TabsContent>
 
                 <TabsContent className="portal-scroll mt-0 min-h-0 px-5 py-4" value="publish">
-                  {loading ? (
-                    <div className="rounded-2xl border border-border/70 bg-card/50 px-4 py-6 text-sm text-muted-foreground">
-                      Loading publish controls...
-                    </div>
-                  ) : !draftPage ? (
-                    <div className="rounded-2xl border border-border/70 bg-card/50 px-4 py-6 text-sm text-muted-foreground">
-                      No page is available for this route.
-                    </div>
-                  ) : (
-                    <div className="grid gap-4">
-                      <div className="rounded-2xl border border-border/70 bg-card/50 p-4">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <div className="text-sm font-semibold text-foreground">{draftPage.title}</div>
-                          <Badge variant="outline">{draftPage._status || 'draft'}</Badge>
-                          <Badge variant="secondary">{draftPage.visibility || 'public'}</Badge>
-                        </div>
-                        <div className="mt-2 text-xs text-muted-foreground">
-                          Updated {formatComposerTimestamp(draftPage.updatedAt)} · Published {formatComposerTimestamp(draftPage.publishedAt)}
-                        </div>
-                      </div>
-
-                      <ComposerNoticeList notices={composerNotices} />
-
-                      <div className="grid gap-3 md:grid-cols-2">
-                        <div className="rounded-2xl border border-border/70 bg-card/50 p-4">
-                          <div className="text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground">Route</div>
-                          <div className="mt-2 text-sm font-semibold text-foreground">
-                            {pageSlugToFrontendPath(slugDraft)}
-                          </div>
-                          <div className="mt-1 text-xs text-muted-foreground">
-                            {visibilityDraft === 'private'
-                              ? 'Private until you change visibility.'
-                              : 'Public when published.'}
-                          </div>
-                        </div>
-
-                        <div className="rounded-2xl border border-border/70 bg-card/50 p-4">
-                          <div className="text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground">Current draft</div>
-                          <div className="mt-2 text-sm font-semibold text-foreground">
-                            {dirty ? 'Unsaved changes ready to review.' : 'Draft matches the last saved state.'}
-                          </div>
-                          <div className="mt-1 text-xs text-muted-foreground">
-                            {sectionSummaries.length} block{sectionSummaries.length === 1 ? '' : 's'} in this page · {changedBlockCount} changed block{changedBlockCount === 1 ? '' : 's'}.
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="rounded-2xl border border-border/70 bg-card/50 p-4">
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                          <div>
-                            <div className="text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground">Publish review</div>
-                            <div className="mt-2 text-sm font-semibold text-foreground">
-                              {validationSummary?.pageStatus === 'published' ? 'Published page with active draft edits' : 'Draft page'}
-                            </div>
-                          </div>
-                          <Badge variant={validationSummary?.issues.length ? 'outline' : 'secondary'}>
-                            {validationSummary?.issues.length || 0} validation issue{validationSummary?.issues.length === 1 ? '' : 's'}
-                          </Badge>
-                        </div>
-
-                        {validationSummary?.issues.length ? (
-                          <div className="mt-4 grid gap-2">
-                            {validationSummary.issues.map((issue) => (
-                              <div
-                                className={`rounded-2xl border px-3 py-3 text-sm ${
-                                  issue.tone === 'warning'
-                                    ? 'border-amber-500/30 bg-amber-500/10 text-amber-950 dark:text-amber-100'
-                                    : 'border-border/70 bg-background/70 text-muted-foreground'
-                                }`}
-                                key={issue.id}
-                              >
-                                {issue.blockIndex !== null ? `Block ${issue.blockIndex + 1}: ` : ''}
-                                {issue.message}
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="mt-3 text-sm text-muted-foreground">
-                            Validation is clear for the currently supported composer checks.
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="rounded-2xl border border-border/70 bg-card/50 p-4">
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                          <div>
-                            <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground">
-                              <HistoryIcon className="h-3.5 w-3.5" />
-                              Version history
-                            </div>
-                            <div className="mt-2 text-sm font-semibold text-foreground">
-                              Restore an earlier snapshot into draft state
-                            </div>
-                          </div>
-                          <Badge variant="outline">
-                            {pageVersions.length} version{pageVersions.length === 1 ? '' : 's'}
-                          </Badge>
-                        </div>
-
-                        {pageVersions.length ? (
-                          <div className="mt-4 grid gap-3">
-                            {pageVersions.map((version) => (
-                              <div className="rounded-2xl border border-border/70 bg-background/70 p-3" key={version.id}>
-                                <div className="flex flex-wrap items-start justify-between gap-3">
-                                  <div className="grid gap-2">
-                                    <div className="flex flex-wrap items-center gap-2">
-                                      <span className="text-sm font-semibold text-foreground">{version.title}</span>
-                                      <Badge variant={version.status === 'published' ? 'secondary' : 'outline'}>
-                                        {version.status}
-                                      </Badge>
-                                      {version.latest ? <Badge variant="outline">Current draft</Badge> : null}
-                                    </div>
-                                    <div className="text-xs text-muted-foreground">
-                                      {version.pagePath} · Saved {formatComposerTimestamp(version.updatedAt)}
-                                    </div>
-                                  </div>
-
-                                  <Button
-                                    disabled={savingAction !== null || restoringVersionId !== null}
-                                    onClick={() => void restorePageVersion(version)}
-                                    size="sm"
-                                    type="button"
-                                    variant="outline"
-                                  >
-                                    {restoringVersionId === version.id ? (
-                                      <>
-                                        <LoaderCircleIcon className="h-4 w-4 animate-spin" />
-                                        Restoring...
-                                      </>
-                                    ) : (
-                                      <>
-                                        <Undo2Icon className="h-4 w-4" />
-                                        Restore draft
-                                      </>
-                                    )}
-                                  </Button>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="mt-3 text-sm text-muted-foreground">
-                            Save or publish this page to start building version history.
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
+                  <PageComposerDrawerPublishTab
+                    changedBlockCount={changedBlockCount}
+                    dirty={dirty}
+                    draftPage={draftPage}
+                    loading={loading}
+                    pageVersions={pageVersions}
+                    restoringVersionId={restoringVersionId}
+                    savingAction={savingAction}
+                    sectionCount={sectionSummaries.length}
+                    slugDraft={slugDraft}
+                    validationSummary={validationSummary}
+                    visibilityDraft={visibilityDraft}
+                    restorePageVersion={restorePageVersion}
+                  />
                 </TabsContent>
 
-                <div className="border-t border-border/70 px-5 py-4">
+                <div className={adminPanelChrome.drawerFooterStrip}>
                   <div className="flex flex-wrap justify-between gap-3">
-                    <div className="text-sm text-muted-foreground">{footerStatus}</div>
                     <div className="flex flex-wrap gap-2">
                       <Button disabled={!draftPage || savingAction !== null || restoringVersionId !== null} onClick={() => void persistPage('save-draft')} size="sm" type="button" variant="outline">
                         {savingAction === 'save-draft' ? (
@@ -2429,178 +1750,32 @@ export function PageComposerDrawer({
         </Tabs>
 
         {isBlockLibraryOpen ? (
-          <div className="fixed right-4 top-[calc(var(--portal-sticky-top)+4.75rem)] z-[120] h-[min(42rem,calc(100vh-7rem))] w-[min(31rem,calc(100vw-1rem))] overflow-hidden rounded-[1.75rem] border border-border/70 bg-background/98 shadow-2xl backdrop-blur-sm">
-                  <div className="flex items-start justify-between gap-4 border-b border-border/70 px-5 py-4">
-                    <div className="min-w-0 flex-1">
-                      <div className="text-lg font-semibold text-foreground">Block library</div>
-                      <div className="mt-1 text-sm text-muted-foreground">
-                        {blockLibraryMode === 'replace'
-                          ? `Replace block ${Math.max(1, (blockLibraryTargetIndex ?? 0) + 1)} with another layout, preset, or shared source.`
-                          : `Insert a block at position ${(blockLibraryTargetIndex ?? 0) + 1}.`}
-                      </div>
-                    </div>
-                    <Button
-                      aria-label="Close block library"
-                      onClick={() => {
-                        setIsBlockLibraryOpen(false)
-                        setBlockLibraryTargetIndex(null)
-                      }}
-                      size="icon"
-                      type="button"
-                      variant="ghost"
-                    >
-                      <XIcon className="h-4 w-4" />
-                    </Button>
-                  </div>
-
-                  <div className="grid h-[calc(100%-5.5rem)] grid-rows-[auto_minmax(0,1fr)] gap-4 px-5 py-4">
-                    <Input
-                      onChange={(event) => setBlockLibraryQuery(event.target.value)}
-                      placeholder="Search blocks"
-                      value={blockLibraryQuery}
-                    />
-
-                    <div className="overflow-y-auto">
-                      <div className="grid gap-5">
-                        {filteredBlockDefinitions.length ? (
-                          <section className="grid gap-3">
-                            <div className="text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground">
-                              Layouts
-                            </div>
-                            <div className="grid gap-3">
-                              {filteredBlockDefinitions.map((definition) => (
-                                <button
-                                  className={`rounded-2xl border p-4 text-left transition ${
-                                    definition.supportsInsert
-                                      ? 'border-border/70 bg-card/50 hover:border-primary/40 hover:bg-primary/5'
-                                      : 'cursor-not-allowed border-border/50 bg-card/30 opacity-65'
-                                  }`}
-                                  disabled={!definition.supportsInsert}
-                                  key={definition.type}
-                                  onClick={() =>
-                                    definition.supportsInsert
-                                      ? insertRegisteredBlock(definition.type as PageComposerInsertableBlockType)
-                                      : undefined
-                                  }
-                                  type="button"
-                                >
-                                  <div className="flex flex-wrap items-center gap-2">
-                                    <div className="text-sm font-semibold text-foreground">{definition.label}</div>
-                                    <Badge variant="outline">{definition.type}</Badge>
-                                    <Badge variant="outline">{definition.category}</Badge>
-                                    {definition.supportsReusable ? <Badge variant="secondary">reusable-ready</Badge> : null}
-                                    {!definition.supportsInsert ? <Badge variant="outline">planned</Badge> : null}
-                                  </div>
-                                  <div className="mt-2 text-sm text-muted-foreground">{definition.description}</div>
-                                </button>
-                              ))}
-                            </div>
-                          </section>
-                        ) : null}
-
-                        {filteredReusablePresets.length ? (
-                          <section className="grid gap-3">
-                            <div className="text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground">
-                              Sections
-                            </div>
-                            <div className="grid gap-3">
-                              {filteredReusablePresets.map((preset) => (
-                                  <div className="rounded-2xl border border-border/70 bg-card/50 p-4" key={preset.key}>
-                                    <div className="flex flex-wrap items-center gap-2">
-                                      <div className="text-sm font-semibold text-foreground">{preset.label}</div>
-                                      <Badge variant="outline">{preset.blockType}</Badge>
-                                      <Badge variant="secondary">reusable</Badge>
-                                    </div>
-                                    <div className="mt-2 text-sm text-muted-foreground">{preset.description}</div>
-                                    <div className="mt-3 flex flex-wrap gap-2">
-                                      <Button onClick={() => insertReusablePreset({ key: preset.key, mode: 'linked' })} size="sm" type="button" variant="outline">
-                                        {blockLibraryMode === 'replace' ? 'Replace with linked' : 'Insert linked'}
-                                      </Button>
-                                      <Button onClick={() => insertReusablePreset({ key: preset.key, mode: 'detached' })} size="sm" type="button">
-                                        {blockLibraryMode === 'replace' ? 'Replace with detached copy' : 'Insert detached copy'}
-                                      </Button>
-                                    </div>
-                                  </div>
-                                ))}
-                            </div>
-                          </section>
-                        ) : null}
-
-                        <section className="grid gap-3">
-                          <div className="flex items-center justify-between gap-3">
-                            <div className="text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground">
-                              Shared sections
-                            </div>
-                            {sharedSectionsLoading ? <Badge variant="outline">Loading</Badge> : null}
-                          </div>
-
-                          {sharedSectionsStatus ? (
-                            <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-950 dark:text-amber-100">
-                              {sharedSectionsStatus}
-                            </div>
-                          ) : null}
-
-                          {filteredSharedSections.length ? (
-                            <div className="grid gap-3">
-                              {filteredSharedSections.map((item) => (
-                                <div className="rounded-2xl border border-border/70 bg-card/50 p-4" key={`shared-${item.id}`}>
-                                  <div className="flex flex-wrap items-center gap-2">
-                                    <div className="text-sm font-semibold text-foreground">{item.name}</div>
-                                    <Badge variant={item.status === 'published' ? 'secondary' : 'outline'}>{item.status}</Badge>
-                                    <Badge variant="outline">{item.category}</Badge>
-                                    <Badge variant="outline">v{item.currentVersion}</Badge>
-                                  </div>
-                                  <div className="mt-2 text-sm text-muted-foreground">
-                                    {item.description || 'Shared section source ready for linked reuse.'}
-                                  </div>
-                                  <div className="mt-2 flex flex-wrap gap-1.5">
-                                    {item.tags.length ? (
-                                      item.tags.map((tag) => (
-                                        <Badge key={`${item.id}-${tag}`} variant="secondary">
-                                          {tag}
-                                        </Badge>
-                                      ))
-                                    ) : (
-                                      <Badge variant="outline">No tags</Badge>
-                                    )}
-                                    <Badge variant="outline">
-                                      {item.usageCount} {item.usageCount === 1 ? 'page' : 'pages'}
-                                    </Badge>
-                                  </div>
-                                  <div className="mt-3 flex flex-wrap gap-2">
-                                    <Button onClick={() => insertSharedSection({ item, mode: 'linked' })} size="sm" type="button" variant="outline">
-                                      {blockLibraryMode === 'replace' ? 'Replace with linked' : 'Insert linked'}
-                                    </Button>
-                                    <Button onClick={() => insertSharedSection({ item, mode: 'detached' })} size="sm" type="button">
-                                      {blockLibraryMode === 'replace' ? 'Replace with detached copy' : 'Insert detached copy'}
-                                    </Button>
-                                    <Button onClick={() => openSharedSectionSourceEditor(item.id)} size="sm" type="button" variant="ghost">
-                                      Edit source
-                                    </Button>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          ) : sharedSectionsLoading ? (
-                            <div className="rounded-2xl border border-border/70 bg-card/50 px-4 py-6 text-sm text-muted-foreground">
-                              Loading published shared sections...
-                            </div>
-                          ) : (
-                            <div className="rounded-2xl border border-border/70 bg-card/50 px-4 py-6 text-sm text-muted-foreground">
-                              No published shared sections match that search yet.
-                            </div>
-                          )}
-                        </section>
-
-                        {!filteredBlockDefinitions.length && !filteredReusablePresets.length && !filteredSharedSections.length ? (
-                          <div className="rounded-2xl border border-border/70 bg-card/50 px-4 py-6 text-sm text-muted-foreground">
-                            No layouts, presets, or shared sections match that search.
-                          </div>
-                        ) : null}
-                      </div>
-                    </div>
-                  </div>
-          </div>
+          <PageComposerDrawerBlockLibrary
+            blockLibraryMode={blockLibraryMode}
+            blockLibraryQuery={blockLibraryQuery}
+            blockLibraryTargetIndex={blockLibraryTargetIndex}
+            closeBlockLibrary={() => {
+              setIsBlockLibraryOpen(false)
+              setBlockLibraryTargetIndex(null)
+            }}
+            filteredBlockDefinitions={filteredBlockDefinitions as Array<{
+              category: string
+              description: string
+              label: string
+              supportsInsert: boolean
+              supportsReusable: boolean
+              type: string
+            }>}
+            filteredReusablePresets={filteredReusablePresets}
+            filteredSharedSections={filteredSharedSections}
+            insertRegisteredBlock={(type) => insertRegisteredBlock(type as PageComposerInsertableBlockType)}
+            insertReusablePreset={insertReusablePreset}
+            insertSharedSection={insertSharedSection}
+            openSharedSectionSourceEditor={openSharedSectionSourceEditor}
+            sharedSectionsLoading={sharedSectionsLoading}
+            sharedSectionsStatus={sharedSectionsStatus}
+            setBlockLibraryQuery={setBlockLibraryQuery}
+          />
         ) : null}
       </div>
     </aside>
@@ -2628,3 +1803,5 @@ export function PageComposerDrawer({
     </motion.div>
   )
 }
+
+

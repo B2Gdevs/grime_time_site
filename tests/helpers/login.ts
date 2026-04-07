@@ -18,6 +18,11 @@ export async function login({
   serverURL = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3100',
   user,
 }: LoginOptions): Promise<void> {
+  if (process.env.GT_DEV_AUTH_BYPASS === 'true') {
+    await page.goto(serverURL)
+    return
+  }
+
   await page.goto(`${serverURL}/admin/login`)
 
   await page.fill('#field-email', user.email)

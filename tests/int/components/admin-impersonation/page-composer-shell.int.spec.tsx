@@ -10,9 +10,10 @@ import { usePageComposer } from '@/components/admin-impersonation/PageComposerCo
 
 const refresh = vi.fn()
 const push = vi.fn()
+let pathname = '/'
 
 vi.mock('next/navigation', () => ({
-  usePathname: () => '/',
+  usePathname: () => pathname,
   useRouter: () => ({ push, refresh }),
 }))
 
@@ -30,6 +31,7 @@ describe('PageComposer shell integration', () => {
   const originalFetch = global.fetch
 
   beforeEach(() => {
+    pathname = '/'
     push.mockReset()
     refresh.mockReset()
     global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -168,9 +170,8 @@ describe('PageComposer shell integration', () => {
     expect(screen.getByText('Visual composer')).toBeTruthy()
     expect(screen.getByRole('button', { name: /dismiss page composer/i })).toBeTruthy()
     expect(screen.getByRole('button', { name: /move page composer/i })).toBeTruthy()
-    expect(screen.getByText(/composer admin bar/i)).toBeTruthy()
+    expect(screen.getByText(/selected block/i)).toBeTruthy()
     expect(screen.queryByText(/the live page is the canvas/i)).toBeNull()
-    expect(screen.getByDisplayValue('Home')).toBeTruthy()
     expect(screen.queryByText(/^Preview$/i)).toBeNull()
     const composer = screen.getByRole('complementary')
     expect(composer).toBeTruthy()
@@ -217,5 +218,68 @@ describe('PageComposer shell integration', () => {
     expect(restoreRequest).toBeTruthy()
 
     window.confirm = originalConfirm
+  })
+
+  it('keeps the current route as the composer source of truth for a missing page', async () => {
+    pathname = '/fresh-route'
+    global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input)
+      const method = init?.method || 'GET'
+
+      if (url === '/api/internal/page-composer?pagePath=%2Ffresh-route') {
+        return {
+          json: async () => ({
+            ok: true,
+            page: {
+              _status: 'draft',
+              hero: { type: 'lowImpact' },
+              id: null,
+              layout: [],
+              pagePath: '/fresh-route',
+              publishedAt: null,
+              slug: 'fresh-route',
+              title: 'Fresh Route',
+              updatedAt: null,
+              visibility: 'public',
+            },
+            versions: [],
+          }),
+          ok: true,
+        } as Response
+      }
+
+      if (url === '/api/internal/page-composer/media') {
+        return {
+          json: async () => ({ items: [] }),
+          ok: true,
+        } as Response
+      }
+
+      if (url === '/api/internal/shared-sections?status=published') {
+        return {
+          json: async () => ({ items: [] }),
+          ok: true,
+        } as Response
+      }
+
+      throw new Error(`Unexpected fetch: ${url} (${method})`)
+    }) as typeof fetch
+
+    render(
+      <PageComposerProvider>
+        <PageComposerLauncherButton />
+        <PageComposerDrawer enabled />
+      </PageComposerProvider>,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /page composer/i }))
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith('/api/internal/page-composer?pagePath=%2Ffresh-route')
+    })
+
+    expect(screen.getByText('Visual composer')).toBeTruthy()
+    expect(screen.getByText(/selected block/i)).toBeTruthy()
+    expect(screen.queryByText(/select a page/i)).toBeNull()
   })
 })

@@ -64,7 +64,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   const shellContent = (
     <>
-      <PageMediaDevtoolsProvider enabled={canUseLocalPageMediaDevtools}>
+      <PageMediaDevtoolsProvider enabled={pageComposerEnabled}>
         <SiteTourProvider>
           {!aiCopilotEnabled && auth.isRealAdmin ? (
             <AdminImpersonationToolbarShell pageMediaDevtoolsEnabled={canUseLocalPageMediaDevtools} />
@@ -78,7 +78,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             {children}
           </MarketingShell>
           {pageComposerEnabled ? <PageComposerHomeAutoOpen enabled={auth.isRealAdmin} /> : null}
-          {!aiCopilotEnabled ? <PageComposerDrawer enabled={pageComposerEnabled} /> : null}
+          {pageComposerEnabled ? <PageComposerDrawer enabled={pageComposerEnabled} /> : null}
         </SiteTourProvider>
       </PageMediaDevtoolsProvider>
       <VercelAnalytics />

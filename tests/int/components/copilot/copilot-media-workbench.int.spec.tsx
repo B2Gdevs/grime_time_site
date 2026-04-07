@@ -86,7 +86,7 @@ describe('CopilotMediaWorkbench', () => {
     global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input)
 
-      if (url === '/api/internal/dev/page-media' && (!init?.method || init.method === 'GET')) {
+      if (url === '/api/internal/page-composer/media' && (!init?.method || init.method === 'GET')) {
         return {
           json: async () => ({
             items: [
@@ -104,7 +104,7 @@ describe('CopilotMediaWorkbench', () => {
         } as Response
       }
 
-      if (url === '/api/internal/dev/page-media' && init?.method === 'POST') {
+      if (url === '/api/internal/page-composer/media' && init?.method === 'POST') {
         return {
           json: async () => ({ ok: true }),
           ok: true,

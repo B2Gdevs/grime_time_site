@@ -3,6 +3,7 @@ import { createLocalReq, type TypeWithVersion } from 'payload'
 import { getCurrentAuthContext } from '@/lib/auth/getAuthContext'
 import { hasContentAuthoringAccess } from '@/lib/auth/organizationAccess'
 import {
+  createPageComposerDocumentSeed,
   frontendPathToPageSlug,
   normalizePageComposerLayoutForSave,
   type PageComposerDocument,
@@ -34,6 +35,16 @@ function parsePagePath(request: Request): null | string {
 function parsePageId(request: Request): null | number {
   const pageId = Number(new URL(request.url).searchParams.get('pageId'))
   return Number.isInteger(pageId) && pageId > 0 ? pageId : null
+}
+
+function normalizeComposerPagePath(pagePath: null | string): null | string {
+  const trimmed = pagePath?.trim() || ''
+
+  if (!trimmed) {
+    return null
+  }
+
+  return trimmed.startsWith('/') ? trimmed : `/${trimmed}`
 }
 
 function toComposerDocument(page: Page, pagePath: string): PageComposerDocument {
@@ -184,6 +195,54 @@ async function loadPageVersions(args: {
   return (result.docs as TypeWithVersion<Page>[]).map((record) => toPageComposerVersionSummary(record))
 }
 
+async function createComposerPage(args: {
+  action: 'create-page' | 'publish-page' | 'save-draft'
+  layout: Page['layout']
+  payload: Awaited<ReturnType<typeof getCurrentAuthContext>>['payload']
+  req: Awaited<ReturnType<typeof createLocalReq>>
+  slug: string
+  title: string
+  visibility: Page['visibility']
+}): Promise<Page> {
+  const created = (await args.payload.create({
+    collection: 'pages',
+    data: {
+      hero: {
+        type: 'lowImpact',
+      },
+      layout: normalizePageComposerLayoutForSave(args.layout),
+      slug: args.slug,
+      title: args.title,
+      visibility: args.visibility,
+    },
+    depth: 2,
+    draft: true,
+    overrideAccess: false,
+    req: args.req,
+  })) as Page
+
+  if (args.action !== 'publish-page') {
+    return created
+  }
+
+  return (await args.payload.update({
+    autosave: false,
+    collection: 'pages',
+    data: {
+      _status: 'published',
+      layout: normalizePageComposerLayoutForSave(args.layout),
+      slug: args.slug,
+      title: args.title,
+      visibility: args.visibility,
+    },
+    depth: 2,
+    draft: false,
+    id: created.id,
+    overrideAccess: false,
+    req: args.req,
+  })) as Page
+}
+
 async function restorePageVersion(args: {
   pageId: number
   payload: Awaited<ReturnType<typeof getCurrentAuthContext>>['payload']
@@ -227,7 +286,7 @@ export async function GET(request: Request): Promise<Response> {
   }
 
   const pageId = parsePageId(request)
-  const pagePath = parsePagePath(request)
+  const pagePath = normalizeComposerPagePath(parsePagePath(request))
   const slug = pageId ? null : frontendPathToPageSlug(pagePath || '')
 
   if (!pageId && !pagePath) {
@@ -275,7 +334,14 @@ export async function GET(request: Request): Promise<Response> {
   }
 
   if (!page) {
-    return Response.json({ error: 'Page not found.' }, { status: 404 })
+    return Response.json({
+      ok: true,
+      page: createPageComposerDocumentSeed({
+        pagePath: pagePath || pageSlugToFrontendPath(slug),
+      }),
+      pages,
+      versions: [],
+    })
   }
 
   return Response.json({
@@ -303,6 +369,7 @@ export async function POST(request: Request): Promise<Response> {
         action?: string
         layout?: Page['layout']
         pageId?: number
+        pagePath?: string
         sourcePageId?: number
         slug?: string
         title?: string
@@ -311,6 +378,7 @@ export async function POST(request: Request): Promise<Response> {
       }
 
   const pageId = Number(body?.pageId)
+  const pagePath = normalizeComposerPagePath(body?.pagePath?.trim() || null)
   const sourcePageId = Number(body?.sourcePageId)
   const title = body?.title?.trim() || ''
   const slug = body?.slug?.trim() || ''
@@ -337,22 +405,15 @@ export async function POST(request: Request): Promise<Response> {
         return Response.json({ error: 'Title and slug are required.' }, { status: 400 })
       }
 
-      const created = (await auth.payload.create({
-        collection: 'pages',
-        data: {
-          hero: {
-            type: 'lowImpact',
-          },
-          layout: [],
-          slug,
-          title,
-          visibility,
-        },
-        depth: 2,
-        draft: true,
-        overrideAccess: false,
+      const created = await createComposerPage({
+        action,
+        layout: [],
+        payload: auth.payload,
         req: payloadReq,
-      })) as Page
+        slug,
+        title,
+        visibility,
+      })
 
       return Response.json({
         ok: true,
@@ -452,8 +513,34 @@ export async function POST(request: Request): Promise<Response> {
       })
     }
 
-    if (!Number.isInteger(pageId) || pageId <= 0 || !title || !slug || !layout) {
-      return Response.json({ error: 'Page id, title, slug, layout, and visibility are required.' }, { status: 400 })
+    if (!title || !slug || !layout) {
+      return Response.json({ error: 'Title, slug, layout, and visibility are required.' }, { status: 400 })
+    }
+
+    if (!Number.isInteger(pageId) || pageId <= 0) {
+      const created = await createComposerPage({
+        action,
+        layout,
+        payload: auth.payload,
+        req: payloadReq,
+        slug,
+        title,
+        visibility,
+      })
+
+      return Response.json({
+        ok: true,
+        page: toComposerDocument(created, pagePath || pageSlugToFrontendPath(created.slug)),
+        pages: await loadComposerPages({
+          payload: auth.payload,
+          req: payloadReq,
+        }),
+        versions: await loadPageVersions({
+          pageId: created.id,
+          payload: auth.payload,
+          req: payloadReq,
+        }),
+      })
     }
 
     const updated = (await auth.payload.update({

@@ -31,10 +31,12 @@ export type PageComposerSectionSummary = {
 
 export type PageComposerDocument = Pick<
   Page,
-  'hero' | 'id' | 'layout' | 'publishedAt' | 'slug' | 'title' | 'updatedAt' | 'visibility'
+  'hero' | 'layout' | 'publishedAt' | 'slug' | 'title' | 'visibility'
 > & {
   _status?: null | Page['_status']
+  id: null | Page['id']
   pagePath: string
+  updatedAt: null | Page['updatedAt']
 }
 
 export type PageComposerPageSummary = Pick<
@@ -155,6 +157,20 @@ export function frontendPathToPageSlug(pagePath: string): null | string {
   return normalized
 }
 
+export function formatPageComposerTitleFromSlug(slug: string): string {
+  const trimmed = slug.trim()
+
+  if (!trimmed) {
+    return ''
+  }
+
+  return trimmed
+    .split('-')
+    .filter(Boolean)
+    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+    .join(' ')
+}
+
 export function pageSlugToFrontendPath(slug: null | string | undefined): string {
   const trimmed = slug?.trim() || ''
 
@@ -163,6 +179,26 @@ export function pageSlugToFrontendPath(slug: null | string | undefined): string 
   }
 
   return `/${trimmed}`
+}
+
+export function createPageComposerDocumentSeed(args: { pagePath: string }): PageComposerDocument {
+  const normalizedPagePath = args.pagePath.trim() || '/'
+  const slug = frontendPathToPageSlug(normalizedPagePath) || ''
+
+  return {
+    _status: 'draft',
+    hero: {
+      type: 'lowImpact',
+    },
+    id: null,
+    layout: [],
+    pagePath: normalizedPagePath,
+    publishedAt: null,
+    slug,
+    title: formatPageComposerTitleFromSlug(slug),
+    updatedAt: null,
+    visibility: 'public',
+  }
 }
 
 export function buildPageComposerNotices(args: {

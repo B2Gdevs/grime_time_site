@@ -11,6 +11,8 @@ import React from 'react'
 
 import { RenderBlocks } from '@/blocks/RenderBlocks'
 import { RenderHero } from '@/heros/RenderHero'
+import { getCurrentAuthContext } from '@/lib/auth/getAuthContext'
+import { hasContentAuthoringAccess } from '@/lib/auth/organizationAccess'
 import { collectPageMediaReferences } from '@/lib/media/pageMediaDevtools'
 import { generatePublicPageStaticParams, queryPublicPageBySlug } from '@/lib/pages/queryPublicPageBySlug'
 import { getInstantQuoteCatalog } from '@/lib/quotes/getInstantQuoteCatalog'
@@ -41,6 +43,37 @@ export default async function Page({ params: paramsPromise }: Args) {
   })
 
   if (!page) {
+    const auth = await getCurrentAuthContext()
+    const canUseComposer =
+      auth.isRealAdmin || (auth.realUser ? await hasContentAuthoringAccess(auth.payload, auth.realUser) : false)
+
+    if (canUseComposer) {
+      return (
+        <>
+          <PayloadRedirects disableNotFound url={url} />
+          <article className="marketing-page-shell pb-24">
+            <PageClient />
+
+            {draft && <LivePreviewListener />}
+
+            <PageComposerCanvasViewport>
+              <section className="mx-auto flex min-h-[40vh] max-w-4xl flex-col justify-center px-6 py-20">
+                <p className="text-[0.68rem] font-semibold uppercase tracking-[0.28em] text-muted-foreground">
+                  Unpublished route
+                </p>
+                <h1 className="mt-4 max-w-2xl text-4xl font-semibold tracking-tight text-foreground">
+                  Start composing this page in place.
+                </h1>
+                <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground">
+                  This URL does not have a page document yet. Save a draft or publish from the visual composer to create it without leaving the route you are authoring.
+                </p>
+              </section>
+            </PageComposerCanvasViewport>
+          </article>
+        </>
+      )
+    }
+
     return <PayloadRedirects url={url} />
   }
 

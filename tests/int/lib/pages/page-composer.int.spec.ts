@@ -4,6 +4,7 @@ import {
   appendPageLayoutSection,
   buildPageComposerValidationSummary,
   countPageComposerChangedBlocks,
+  createPageComposerDocumentSeed,
   buildPageComposerNotices,
   buildPageComposerSectionSummaries,
   createPageComposerSectionTemplate,
@@ -24,6 +25,19 @@ describe('page composer helpers', () => {
     expect(frontendPathToPageSlug('/nested/path')).toBeNull()
     expect(pageSlugToFrontendPath('home')).toBe('/')
     expect(pageSlugToFrontendPath('about')).toBe('/about')
+  })
+
+  it('creates a draft seed for a missing frontend route', () => {
+    expect(createPageComposerDocumentSeed({ pagePath: '/spring-launch' })).toMatchObject({
+      _status: 'draft',
+      hero: { type: 'lowImpact' },
+      id: null,
+      layout: [],
+      pagePath: '/spring-launch',
+      slug: 'spring-launch',
+      title: 'Spring Launch',
+      visibility: 'public',
+    })
   })
 
   it('creates reusable service-grid templates', () => {

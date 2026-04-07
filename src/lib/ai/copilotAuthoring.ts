@@ -85,11 +85,11 @@ export function sanitizeCopilotAuthoringContext(
           }
         : null,
     page:
-      pageId && pageTitle && pageSlug && pagePath
+      pageTitle && pageSlug && pagePath
         ? {
-            id: pageId,
-            pagePath,
-            slug: pageSlug,
+          id: pageId,
+          pagePath,
+          slug: pageSlug,
             status: pageStatus,
             title: pageTitle,
             visibility: pageVisibility,

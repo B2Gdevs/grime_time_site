@@ -1,7 +1,7 @@
 'use client'
 
 import { createContext, type ReactNode, useCallback, useContext, useMemo, useState } from 'react'
-import type { PageComposerDocument, PageComposerPageSummary, PageComposerSectionSummary } from '@/lib/pages/pageComposer'
+import type { PageComposerDocument, PageComposerSectionSummary } from '@/lib/pages/pageComposer'
 import type {
   CallToActionBlock,
   ContentBlock,
@@ -14,7 +14,6 @@ export type PageComposerCanvasMode = 'desktop' | 'mobile' | 'tablet'
 export type PageComposerTab = 'content' | 'media' | 'publish' | 'structure'
 export type PageComposerVisibilityMode = 'private' | 'public'
 export type PageComposerToolbarState = {
-  availablePages: PageComposerPageSummary[]
   creatingDraftClone: boolean
   dirty: boolean
   draftPage: null | PageComposerDocument
@@ -73,7 +72,7 @@ export type PageComposerToolbarState = {
     block: ServiceGridBlock
     updateBlockField: (field: 'eyebrow' | 'heading' | 'intro', value: string) => void
     updateHighlightText: (highlightIndex: number, rowIndex: number, value: string) => void
-                  updateServiceField: (
+    updateServiceField: (
       field: 'eyebrow' | 'name' | 'pricingHint' | 'summary',
       rowIndex: number,
       value: string,
@@ -95,7 +94,6 @@ export type PageComposerToolbarState = {
     updateIntro: (value: string) => void
   }
   slugDraft: string
-  switchToPage: (pageId: number) => void
   titleDraft: string
   visibilityDraft: PageComposerVisibilityMode
 }

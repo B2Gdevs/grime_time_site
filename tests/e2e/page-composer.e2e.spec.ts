@@ -28,6 +28,12 @@ async function openPageComposer(page: import('@playwright/test').Page) {
   await expect(page.getByRole('button', { name: 'Dismiss page composer' })).toBeVisible()
 }
 
+async function openPageComposerAtPath(page: import('@playwright/test').Page, pathname: string) {
+  await page.goto(pathname)
+  await page.getByRole('button', { name: 'Page composer' }).click()
+  await expect(page.getByRole('button', { name: 'Dismiss page composer' })).toBeVisible()
+}
+
 function composerDrawer(page: import('@playwright/test').Page): Locator {
   return page.getByRole('complementary')
 }
@@ -140,6 +146,24 @@ test.describe('Staff page composer', () => {
 
   test.beforeEach(async ({ page }) => {
     await login({ page, user: testUser })
+  })
+
+  test('can start composing and create a draft directly from a missing route', async ({ page }) => {
+    test.setTimeout(90000)
+    const slug = `playwright-missing-route-${Date.now()}`
+    const pathname = `/${slug}`
+
+    await openPageComposerAtPath(page, pathname)
+
+    await expect(composerDrawer(page).getByDisplayValue('Playwright Missing Route')).toBeVisible()
+    await expect(composerDrawer(page).getByDisplayValue(slug)).toBeVisible()
+    await expect(composerDrawer(page).getByText(/save draft or publish to create it/i)).toBeVisible()
+
+    await clickComposerButton(page, 'Save draft')
+    await expect(composerDrawer(page).getByText('Draft created.')).toBeVisible({ timeout: 60000 })
+
+    createdSlugs.add(slug)
+    await expect(page).toHaveURL(new RegExp(`${pathname}$`))
   })
 
   test('can clone a draft page, insert blocks through the library, reorder them, run media actions, and publish', async ({

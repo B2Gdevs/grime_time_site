@@ -20,6 +20,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { parseResponseJson } from '@/utilities/parseResponseJson'
 
+import { adminPanelChrome } from './adminPanelChrome'
+
 function isSecuredAdminPath(pathname: string): boolean {
   return pathname.startsWith('/admin') || pathname.startsWith('/docs') || pathname.startsWith('/ops')
 }
@@ -161,7 +163,7 @@ export function SiteOperatorToolsPanel({
 
   return (
     <div className="grid gap-5">
-      <div className="grid gap-3 rounded-2xl border border-border/70 bg-card/50 p-4">
+      <div className={adminPanelChrome.panelGrid}>
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="outline">Operator tools</Badge>
           {effectiveUser ? <Badge variant="secondary">{shortLabel(effectiveUser)}</Badge> : null}
@@ -195,7 +197,7 @@ export function SiteOperatorToolsPanel({
           <div className="rounded-xl border bg-background/70 p-3">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">
-                <div className="text-[11px] font-medium uppercase tracking-[0.22em] text-muted-foreground">
+                <div className={adminPanelChrome.fieldLabelTight}>
                   Visual composer
                 </div>
                 <div className="mt-1 text-sm font-medium text-foreground">
@@ -233,14 +235,14 @@ export function SiteOperatorToolsPanel({
             <div className="mt-1 text-sm font-semibold">{shortLabel(effectiveUser)}</div>
             <div className="text-xs text-muted-foreground">{effectiveUser.email}</div>
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
-              <div className="rounded-lg border border-border/70 bg-card/50 p-3">
-                <div className="text-[11px] font-medium uppercase tracking-[0.22em] text-muted-foreground">
+              <div className={adminPanelChrome.cardSm}>
+                <div className={adminPanelChrome.fieldLabelTight}>
                   Signed in as
                 </div>
                 <div className="mt-1 text-sm font-medium text-foreground">{shortLabel(realUser)}</div>
                 <div className="text-xs text-muted-foreground">{realUser.email}</div>
               </div>
-              <div className="rounded-lg border border-border/70 bg-card/50 p-3">
+              <div className={adminPanelChrome.cardSm}>
                 <div className="text-[11px] font-medium uppercase tracking-[0.22em] text-muted-foreground">
                   Role
                 </div>
@@ -267,16 +269,16 @@ export function SiteOperatorToolsPanel({
             ) : null}
           </div>
         ) : (
-          <div className="rounded-xl border border-dashed border-border/70 bg-background/50 p-3 text-sm text-muted-foreground">
+          <div className={adminPanelChrome.panelDashedMuted}>
             Chat stays primary. Use this tools view when you need the visual composer while keeping the live page visible.
           </div>
         )}
       </div>
 
       {canImpersonate ? (
-        <div className="grid gap-3 rounded-2xl border border-border/70 bg-card/50 p-4">
+        <div className={adminPanelChrome.panelGrid}>
           <div className="grid gap-2">
-            <label className="text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
+            <label className={adminPanelChrome.fieldLabelWide}>
               Search users
             </label>
             <div className="relative">
@@ -304,7 +306,7 @@ export function SiteOperatorToolsPanel({
             {loading ? (
               <div className="text-xs text-muted-foreground">Loading users...</div>
             ) : results.length === 0 ? (
-              <div className="rounded-xl border border-dashed p-3 text-xs text-muted-foreground">
+              <div className={adminPanelChrome.panelDashedEmptyXs}>
                 No matching customer users yet.
               </div>
             ) : (

@@ -16,7 +16,7 @@ export type CopilotAuthoringContext = {
     relationPath: string
   } | null
   page?: {
-    id: number
+    id: null | number
     pagePath: string
     slug: string
     status: 'draft' | 'published'

@@ -42,7 +42,7 @@ export function InlinePageMediaEditor({ children, relationPath }: InlinePageMedi
     setStatus(null)
 
     try {
-      const response = await fetch('/api/internal/dev/page-media', {
+      const response = await fetch('/api/internal/page-composer/media', {
         body: formData,
         method: 'POST',
       })

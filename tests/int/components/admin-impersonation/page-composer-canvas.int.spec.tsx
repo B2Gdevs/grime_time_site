@@ -25,18 +25,6 @@ function ComposerHarness() {
         onClick={() => {
           composer.setActivePagePath('/')
           window.dispatchEvent(new CustomEvent(PAGE_COMPOSER_TOOLBAR_EVENT, { detail: {
-            availablePages: [
-              {
-                _status: 'draft',
-                id: 7,
-                pagePath: '/',
-                publishedAt: null,
-                slug: 'home',
-                title: 'Home',
-                updatedAt: '2026-04-06T00:00:00.000Z',
-                visibility: 'public',
-              },
-            ],
             creatingDraftClone: false,
             dirty: false,
             draftPage: {
@@ -83,7 +71,6 @@ function ComposerHarness() {
             ],
             selectedIndex: composer.selectedIndex,
             slugDraft: 'home',
-            switchToPage: vi.fn(),
             titleDraft: 'Home',
             visibilityDraft: 'public',
           }}))
@@ -118,10 +105,10 @@ describe('PageComposer canvas integration', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Open composer' }))
 
-    expect(screen.getByText('Visual composer')).toBeTruthy()
+    expect(screen.getByText('Composer admin bar')).toBeTruthy()
     expect(screen.getByDisplayValue('Home')).toBeTruthy()
     expect(screen.getByDisplayValue('home')).toBeTruthy()
-    expect(screen.getByRole('combobox')).toBeTruthy()
+    expect(screen.getByText(/editing the page document for this route/i)).toBeTruthy()
     expect(screen.getByRole('button', { name: /create draft/i })).toBeTruthy()
     expect(screen.getByRole('button', { name: /^draft$/i })).toBeTruthy()
     expect(screen.getByRole('button', { name: /^public$/i })).toBeTruthy()
