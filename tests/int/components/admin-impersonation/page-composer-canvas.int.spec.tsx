@@ -121,10 +121,12 @@ describe('PageComposer canvas integration', () => {
     expect(screen.getByText('Visual composer')).toBeTruthy()
     expect(screen.getByDisplayValue('Home')).toBeTruthy()
     expect(screen.getByDisplayValue('home')).toBeTruthy()
+    expect(screen.getByRole('combobox')).toBeTruthy()
     expect(screen.getByRole('button', { name: /create draft/i })).toBeTruthy()
+    expect(screen.getByRole('button', { name: /^draft$/i })).toBeTruthy()
+    expect(screen.getByRole('button', { name: /^public$/i })).toBeTruthy()
     expect(screen.getByRole('link', { name: /open route preview/i })).toBeTruthy()
     expect(screen.getByRole('button', { name: /desktop preview/i })).toBeTruthy()
-    expect(screen.getByRole('button', { name: /^draft$/i })).toBeTruthy()
     expect(screen.getByRole('button', { name: /close composer/i })).toBeTruthy()
 
     fireEvent.click(screen.getByRole('button', { name: /create draft/i }))

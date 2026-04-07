@@ -3,12 +3,12 @@
     "payload_local": {
       "command": "node",
       "args": ["scripts/payload-mcp-stdio.mjs"],
-      "enabled": true
+      "enabled": false
     },
     "image_gen_local": {
       "command": "node",
       "args": ["scripts/image-gen-mcp-start.mjs", "--transport", "stdio"],
-      "enabled": true
+      "enabled": false
     }
   }
 }

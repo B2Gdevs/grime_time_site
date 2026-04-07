@@ -40,7 +40,7 @@ async function main() {
   const { env: guardedEnv, forcedOff } = applyDevMcpGuards(process.env)
   Object.assign(process.env, guardedEnv)
   if (forcedOff) {
-    console.log('Grime Time dev: MCP services disabled (set GRIMETIME_DEV_ENABLE_MCP=true to opt in).')
+    console.log('Grime Time dev: MCP services are forced off for this repo right now.')
   }
 
   const children = []
