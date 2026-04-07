@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useMemo, useState } from 'react'
-import { ArrowLeftIcon, LoaderCircleIcon, RocketIcon, SaveIcon } from 'lucide-react'
+import { ArrowLeftIcon, HistoryIcon, LoaderCircleIcon, RocketIcon, SaveIcon, Undo2Icon } from 'lucide-react'
 
 import {
   PageComposerBlockSummary,
@@ -25,6 +25,7 @@ import {
   sharedSectionCategoryValues,
   type SharedSectionCategory,
   type SharedSectionRecord,
+  type SharedSectionVersionSummary,
 } from '@/lib/pages/sharedSections'
 import { requestJson } from '@/lib/query/request'
 
@@ -35,6 +36,7 @@ type SaveAction = 'publish-shared-section' | 'save-draft'
 type SaveResponse = {
   item: SharedSectionRecord
   permissions: SharedSectionPermissions
+  versions?: SharedSectionVersionSummary[]
 }
 
 function formatTokenLabel(value: string): string {
@@ -58,15 +60,19 @@ function parseTags(value: string): string[] {
 
 export function SharedSectionEditor({
   initialItem,
+  initialVersions,
   permissions,
 }: {
   initialItem: SharedSectionRecord
+  initialVersions: SharedSectionVersionSummary[]
   permissions: SharedSectionPermissions
 }) {
   const [item, setItem] = useState(initialItem)
   const [notice, setNotice] = useState<null | string>(null)
+  const [restoringVersionId, setRestoringVersionId] = useState<null | string>(null)
   const [savingAction, setSavingAction] = useState<null | SaveAction>(null)
   const [tagsInput, setTagsInput] = useState(initialItem.tags.join(', '))
+  const [versions, setVersions] = useState(initialVersions)
 
   const editableBlock = useMemo(
     () => unwrapSharedSectionStructureToPageLayoutBlock(item.structure),
@@ -111,6 +117,7 @@ export function SharedSectionEditor({
 
       setItem(result.item)
       setTagsInput(result.item.tags.join(', '))
+      setVersions(result.versions || [])
       setNotice(
         action === 'publish-shared-section'
           ? `Published ${result.item.name}. Linked published pages now resolve version ${result.item.currentVersion}.`
@@ -120,6 +127,45 @@ export function SharedSectionEditor({
       setNotice(error instanceof Error ? error.message : 'Unable to save the shared section.')
     } finally {
       setSavingAction(null)
+    }
+  }
+
+  async function restoreVersion(version: SharedSectionVersionSummary) {
+    const confirmed =
+      typeof window === 'undefined'
+        ? true
+        : window.confirm(
+            `Restore version ${version.versionNumber} as the current draft for ${item.name}? Unsaved edits in this editor will be replaced.`,
+          )
+
+    if (!confirmed) {
+      return
+    }
+
+    setRestoringVersionId(version.id)
+    setNotice(null)
+
+    try {
+      const result = await requestJson<SaveResponse>('/api/internal/shared-sections', {
+        body: JSON.stringify({
+          action: 'restore-shared-section-version',
+          id: item.id,
+          versionId: version.id,
+        }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        method: 'POST',
+      })
+
+      setItem(result.item)
+      setTagsInput(result.item.tags.join(', '))
+      setVersions(result.versions || [])
+      setNotice(`Restored version ${version.versionNumber} into the current shared-section draft.`)
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : 'Unable to restore the shared-section version.')
+    } finally {
+      setRestoringVersionId(null)
     }
   }
 
@@ -308,6 +354,64 @@ export function SharedSectionEditor({
                 <span>Updated at</span>
                 <span className="font-medium text-foreground">{formatDate(item.updatedAt)}</span>
               </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <HistoryIcon className="size-4" />
+                Version history
+              </CardTitle>
+              <CardDescription>
+                Restore an earlier shared-section snapshot into draft state, then publish when the restored source should propagate.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-3">
+              {versions.length ? (
+                versions.map((version) => (
+                  <div className="rounded-2xl border border-border/70 bg-card/50 p-3" key={version.id}>
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="grid gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-sm font-semibold text-foreground">Version {version.versionNumber}</span>
+                          <Badge variant={version.status === 'published' ? 'secondary' : 'outline'}>
+                            {formatTokenLabel(version.status)}
+                          </Badge>
+                          {version.latest ? <Badge variant="outline">Current draft</Badge> : null}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          Saved {formatDate(version.updatedAt)}
+                        </div>
+                      </div>
+
+                      <Button
+                        disabled={restoringVersionId !== null || savingAction !== null || !permissions.canRestoreVersion}
+                        onClick={() => void restoreVersion(version)}
+                        size="sm"
+                        type="button"
+                        variant="outline"
+                      >
+                        {restoringVersionId === version.id ? (
+                          <>
+                            <LoaderCircleIcon className="size-4 animate-spin" />
+                            Restoring...
+                          </>
+                        ) : (
+                          <>
+                            <Undo2Icon className="size-4" />
+                            Restore draft
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="rounded-2xl border border-border/70 bg-card/50 px-4 py-6 text-sm text-muted-foreground">
+                  Version history will appear after the shared section is saved.
+                </div>
+              )}
             </CardContent>
           </Card>
 

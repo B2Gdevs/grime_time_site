@@ -3,7 +3,9 @@ import { resolveSharedSectionPermissions } from '@/lib/auth/sharedSectionPermiss
 import {
   createSharedSectionDraft,
   loadSharedSectionsLibrary,
+  loadSharedSectionVersionSummaries,
   publishSharedSection,
+  restoreSharedSectionVersion,
   saveSharedSectionDraft,
 } from '@/lib/pages/sharedSectionLibrary'
 import {
@@ -59,6 +61,7 @@ export async function GET(request: Request): Promise<Response> {
   const search = url.searchParams.get('search')
   const status = url.searchParams.get('status')
   const tag = url.searchParams.get('tag')
+  const includeVersions = url.searchParams.get('includeVersions') === 'true'
 
   if (category && !isSharedSectionCategory(category)) {
     return Response.json({ error: 'Invalid category.' }, { status: 400 })
@@ -83,6 +86,13 @@ export async function GET(request: Request): Promise<Response> {
     return Response.json({
       items: result.items,
       permissions: result.permissions,
+      versions:
+        includeVersions && id
+          ? await loadSharedSectionVersionSummaries({
+              auth: access.auth,
+              id,
+            })
+          : undefined,
     })
   } catch (error) {
     return Response.json(
@@ -112,6 +122,7 @@ export async function POST(request: Request): Promise<Response> {
         slug?: null | string
         structure?: ComposerSectionNode
         tags?: string[]
+        versionId?: string
       }
 
   const action = body?.action?.trim() || ''
@@ -121,17 +132,23 @@ export async function POST(request: Request): Promise<Response> {
   const description = typeof body?.description === 'string' ? body.description : null
   const tags = Array.isArray(body?.tags) ? body.tags.filter((tag): tag is string => typeof tag === 'string') : []
   const category = body?.category?.trim() || ''
+  const versionId = body?.versionId?.trim() || ''
 
   if (
     action !== 'create-shared-section' &&
     action !== 'save-draft' &&
-    action !== 'publish-shared-section'
+    action !== 'publish-shared-section' &&
+    action !== 'restore-shared-section-version'
   ) {
     return Response.json({ error: 'Unsupported shared-section action.' }, { status: 400 })
   }
 
   if (action === 'publish-shared-section' && !access.permissions.canPublish) {
     return Response.json({ error: 'You do not have permission to publish shared sections.' }, { status: 403 })
+  }
+
+  if (action === 'restore-shared-section-version' && !access.permissions.canRestoreVersion) {
+    return Response.json({ error: 'You do not have permission to restore shared-section versions.' }, { status: 403 })
   }
 
   if (action === 'create-shared-section' && !access.permissions.canCreate) {
@@ -154,8 +171,15 @@ export async function POST(request: Request): Promise<Response> {
     return Response.json({ error: 'Name and category are required.' }, { status: 400 })
   }
 
-  if ((action === 'save-draft' || action === 'publish-shared-section') && !id) {
+  if (
+    (action === 'save-draft' || action === 'publish-shared-section' || action === 'restore-shared-section-version') &&
+    !id
+  ) {
     return Response.json({ error: 'Shared section id is required.' }, { status: 400 })
+  }
+
+  if (action === 'restore-shared-section-version' && !versionId) {
+    return Response.json({ error: 'Version id is required.' }, { status: 400 })
   }
 
   if (body?.structure !== undefined) {
@@ -169,46 +193,65 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   try {
-    const item =
-      action === 'create-shared-section'
-        ? await createSharedSectionDraft({
-            auth: access.auth,
-            data: {
-              category: category as SharedSectionCategory,
-              description,
-              name,
-              slug,
-              structure: body?.structure,
-              tags,
-            },
-          })
-        : action === 'save-draft'
-          ? await saveSharedSectionDraft({
-              auth: access.auth,
-              data: {
-                category: category ? (category as SharedSectionCategory) : undefined,
-                description,
-                id: id as number,
-                name: name || undefined,
-                slug,
-                structure: body?.structure,
-                tags,
-              },
-            })
-          : await publishSharedSection({
-              auth: access.auth,
-              data: {
-                category: category ? (category as SharedSectionCategory) : undefined,
-                description,
-                id: id as number,
-                name: name || undefined,
-                slug,
-                structure: body?.structure,
-                tags,
-              },
-            })
+    let item
 
-    return Response.json({ item, permissions: access.permissions })
+    if (action === 'create-shared-section') {
+      item = await createSharedSectionDraft({
+        auth: access.auth,
+        data: {
+          category: category as SharedSectionCategory,
+          description,
+          name,
+          slug,
+          structure: body?.structure,
+          tags,
+        },
+      })
+    } else if (action === 'save-draft') {
+      item = await saveSharedSectionDraft({
+        auth: access.auth,
+        data: {
+          category: category ? (category as SharedSectionCategory) : undefined,
+          description,
+          id: id as number,
+          name: name || undefined,
+          slug,
+          structure: body?.structure,
+          tags,
+        },
+      })
+    } else if (action === 'publish-shared-section') {
+      item = await publishSharedSection({
+        auth: access.auth,
+        data: {
+          category: category ? (category as SharedSectionCategory) : undefined,
+          description,
+          id: id as number,
+          name: name || undefined,
+          slug,
+          structure: body?.structure,
+          tags,
+        },
+      })
+    } else {
+      item = await restoreSharedSectionVersion({
+        auth: access.auth,
+        sharedSectionId: id as number,
+        versionId,
+      })
+    }
+
+    return Response.json({
+      item,
+      permissions: access.permissions,
+      versions:
+        id || item.id
+          ? await loadSharedSectionVersionSummaries({
+              auth: access.auth,
+              id: id || item.id,
+            })
+          : undefined,
+    })
   } catch (error) {
     return Response.json(
       {

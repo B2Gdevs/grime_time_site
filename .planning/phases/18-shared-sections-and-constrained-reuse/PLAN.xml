@@ -116,5 +116,6 @@
     <task ref="18-04">Codify the constrained shallow layout model for reusable sections so composition stays at section, row, column, and block depth without turning into a freeform drag-anywhere builder.</task>
     <task ref="18-05">Add lightweight restore flows for shared-section versions and page versions, without introducing approvals, scheduling, or full diff tooling.</task>
     <task ref="18-06">Verify shared-section authoring, propagation, detaching, replace flows, constrained layout rules, and lightweight restore behavior with focused integration and browser coverage.</task>
+    <task ref="18-07">Unify the frontend operator surfaces so the site copilot becomes the single floating shell for chat plus impersonation tools, and the page composer opens as a triggered right-side sheet above the live page instead of consuming shell layout width.</task>
   </tasks>
 </phase-plan>

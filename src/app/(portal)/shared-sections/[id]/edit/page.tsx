@@ -4,7 +4,7 @@ import { SharedSectionEditor } from '@/components/portal/shared-sections/SharedS
 import { SiteHeader } from '@/components/site-header'
 import { getCurrentAuthContext } from '@/lib/auth/getAuthContext'
 import { resolveSharedSectionPermissions } from '@/lib/auth/sharedSectionPermissions'
-import { loadSharedSectionsLibrary } from '@/lib/pages/sharedSectionLibrary'
+import { loadSharedSectionsLibrary, loadSharedSectionVersionSummaries } from '@/lib/pages/sharedSectionLibrary'
 
 export default async function SharedSectionEditPage({
   params,
@@ -38,6 +38,10 @@ export default async function SharedSectionEditPage({
     auth,
     id: sharedSectionId,
   })
+  const versions = await loadSharedSectionVersionSummaries({
+    auth,
+    id: sharedSectionId,
+  })
   const item = result.items[0]
 
   if (!item) {
@@ -51,7 +55,7 @@ export default async function SharedSectionEditPage({
         description="Edit the global shared-section source in a dedicated builder surface before publishing updates to linked pages."
       />
       <div className="@container/main flex flex-col py-4 md:py-6">
-        <SharedSectionEditor initialItem={item} permissions={result.permissions} />
+        <SharedSectionEditor initialItem={item} initialVersions={versions} permissions={result.permissions} />
       </div>
     </>
   )

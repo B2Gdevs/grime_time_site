@@ -33,11 +33,23 @@ export type CopilotAuthoringContext = {
   surface: 'page-composer'
 }
 
-export type CopilotFocusedSession = {
+export type CopilotMediaFocusedSession = {
   mode: CopilotFocusedSessionMode | null
   promptHint?: string
   type: 'media-generation'
 }
+
+export type CopilotTextFocusedSession = {
+  currentText?: string
+  fieldLabel: string
+  fieldPath: string
+  instructions?: string
+  type: 'text-generation'
+}
+
+export type CopilotFocusedSession =
+  | CopilotMediaFocusedSession
+  | CopilotTextFocusedSession
 
 export type CopilotRagHit = {
   chunkId: string

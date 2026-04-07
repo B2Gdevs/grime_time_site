@@ -35,6 +35,7 @@ type CopilotRequestBody = {
   authoringContext?: CopilotAuthoringContext
   currentPath?: string
   focusedSession?: CopilotFocusedSession
+  modelContextSystem?: string
   messages?: Array<{ content?: unknown; role?: unknown }>
 }
 
@@ -132,6 +133,7 @@ export async function POST(request: Request) {
   const conversation = normalizeConversation(body?.messages)
   const authoringContext = sanitizeCopilotAuthoringContext(body?.authoringContext)
   const focusedSession = sanitizeCopilotFocusedSession(body?.focusedSession)
+  const modelContextSystem = typeof body?.modelContextSystem === 'string' ? body.modelContextSystem.trim() : ''
   const authoringSystemMessage = buildCopilotAuthoringSystemMessage({
     authoringContext,
     focusedSession,
@@ -223,6 +225,14 @@ export async function POST(request: Request) {
         ? [
             {
               content: authoringSystemMessage,
+              role: 'system' as const,
+            },
+          ]
+        : []),
+      ...(modelContextSystem
+        ? [
+            {
+              content: modelContextSystem,
               role: 'system' as const,
             },
           ]

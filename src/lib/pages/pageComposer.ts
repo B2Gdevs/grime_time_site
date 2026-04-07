@@ -20,7 +20,7 @@ export type PageComposerSectionTemplate =
 
 export type PageComposerSectionSummary = {
   badges: string[]
-  blockType: Page['layout'][number]['blockType']
+  blockType: Page['layout'][number]['blockType'] | 'hero'
   category: PageComposerBlockCategory
   description: string
   hidden: boolean
@@ -43,6 +43,17 @@ export type PageComposerPageSummary = Pick<
 > & {
   _status?: null | Page['_status']
   pagePath: string
+}
+
+export type PageComposerVersionSummary = {
+  createdAt: string
+  id: string
+  latest: boolean
+  pagePath: string
+  slug: string
+  status: 'draft' | 'published'
+  title: string
+  updatedAt: string
 }
 
 export type PageComposerNotice = {

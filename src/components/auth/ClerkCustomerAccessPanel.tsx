@@ -22,7 +22,7 @@ export function ClerkCustomerAccessPanel({
       <Show when="signed-out">
         <div className={compact ? 'grid gap-2' : 'grid gap-3'}>
           <SignInButton fallbackRedirectUrl={signInFallbackHref} mode="modal">
-            <Button className="w-full">Customer sign in</Button>
+            <Button className="w-full">Sign in</Button>
           </SignInButton>
           {showSignUp ? (
             <SignUpButton fallbackRedirectUrl={signUpFallbackHref} mode="modal">
@@ -38,7 +38,7 @@ export function ClerkCustomerAccessPanel({
         <div className={compact ? 'flex items-center gap-3' : 'flex items-center justify-between gap-3'}>
           <div className="min-w-0">
             <p className="text-sm font-medium text-foreground">Signed in</p>
-            <p className="text-xs text-muted-foreground">Open your account, quotes, and schedule.</p>
+            <p className="text-xs text-muted-foreground">Open your account and continue with the same Clerk session.</p>
           </div>
           <UserButton
             appearance={{

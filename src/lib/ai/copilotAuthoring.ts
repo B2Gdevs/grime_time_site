@@ -117,25 +117,46 @@ export function sanitizeCopilotFocusedSession(
   }
 
   const record = value as {
+    currentText?: unknown
+    fieldLabel?: unknown
+    fieldPath?: unknown
+    instructions?: unknown
     mode?: unknown
     promptHint?: unknown
     type?: unknown
   }
 
-  if (record.type !== 'media-generation') {
-    return null
+  if (record.type === 'media-generation') {
+    const mode =
+      record.mode === 'gallery' || record.mode === 'image' || record.mode === 'video'
+        ? record.mode
+        : null
+
+    return {
+      mode,
+      promptHint: sanitizeText(record.promptHint) || undefined,
+      type: 'media-generation',
+    }
   }
 
-  const mode =
-    record.mode === 'gallery' || record.mode === 'image' || record.mode === 'video'
-      ? record.mode
-      : null
+  if (record.type === 'text-generation') {
+    const fieldLabel = sanitizeText(record.fieldLabel)
+    const fieldPath = sanitizeText(record.fieldPath)
 
-  return {
-    mode,
-    promptHint: sanitizeText(record.promptHint) || undefined,
-    type: 'media-generation',
+    if (!fieldLabel || !fieldPath) {
+      return null
+    }
+
+    return {
+      currentText: sanitizeText(record.currentText) || undefined,
+      fieldLabel,
+      fieldPath,
+      instructions: sanitizeText(record.instructions) || undefined,
+      type: 'text-generation',
+    }
   }
+
+  return null
 }
 
 export function buildCopilotAuthoringSystemMessage(args: {
@@ -183,6 +204,17 @@ export function buildCopilotAuthoringSystemMessage(args: {
     )
     if (args.focusedSession.promptHint) {
       lines.push(`Current prompt draft: ${args.focusedSession.promptHint}`)
+    }
+  }
+
+  if (args.focusedSession?.type === 'text-generation') {
+    lines.push('Focused session: text generation')
+    lines.push(`Target field: ${args.focusedSession.fieldLabel} at ${args.focusedSession.fieldPath}`)
+    if (args.focusedSession.instructions) {
+      lines.push(`Rewrite goal: ${args.focusedSession.instructions}`)
+    }
+    if (args.focusedSession.currentText) {
+      lines.push(`Current field text: ${args.focusedSession.currentText}`)
     }
   }
 

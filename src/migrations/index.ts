@@ -31,6 +31,7 @@ import * as migration_20260404_212516_add_page_composer_reusable_and_custom_html
 import * as migration_20260405_002323_add_shared_sections_contract from './20260405_002323_add_shared_sections_contract';
 import * as migration_20260405_003500_shared_sections_archived_status from './20260405_003500_shared_sections_archived_status';
 import * as migration_20260405_040500_fix_page_composer_reusable_metadata_schema from './20260405_040500_fix_page_composer_reusable_metadata_schema';
+import * as migration_20260406_202500_add_page_hero_authoring_fields from './20260406_202500_add_page_hero_authoring_fields';
 
 export const migrations = [
   {
@@ -197,5 +198,10 @@ export const migrations = [
     up: migration_20260405_040500_fix_page_composer_reusable_metadata_schema.up,
     down: migration_20260405_040500_fix_page_composer_reusable_metadata_schema.down,
     name: '20260405_040500_fix_page_composer_reusable_metadata_schema',
+  },
+  {
+    up: migration_20260406_202500_add_page_hero_authoring_fields.up,
+    down: migration_20260406_202500_add_page_hero_authoring_fields.down,
+    name: '20260406_202500_add_page_hero_authoring_fields',
   },
 ];

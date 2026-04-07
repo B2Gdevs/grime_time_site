@@ -1,38 +1,15 @@
 'use client'
 
-import Link from 'next/link'
 import type { PointerEvent as ReactPointerEvent } from 'react'
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { usePathname, useRouter } from 'next/navigation'
+import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion, useDragControls } from 'motion/react'
-import {
-  ArrowDownLeftIcon,
-  ArrowDownRightIcon,
-  ArrowRightLeftIcon,
-  ArrowUpLeftIcon,
-  ArrowUpRightIcon,
-  Building2Icon,
-  ChevronUpIcon,
-  CircleOffIcon,
-  ExternalLinkIcon,
-  EyeIcon,
-  GripIcon,
-  HomeIcon,
-  SearchIcon,
-  UserRoundIcon,
-} from 'lucide-react'
+import { ChevronUpIcon, GripIcon } from 'lucide-react'
 
-import { DemoModeToggle } from '@/components/demo/DemoModeToggle'
-import { PageComposerLauncherButton } from '@/components/admin-impersonation/PageComposerDrawer'
-import { usePageComposerOptional } from '@/components/admin-impersonation/PageComposerContext'
-import { PageMediaDevtoolsDrawer } from '@/components/admin-impersonation/PageMediaDevtoolsDrawer'
+import type { AdminPreviewUser } from '@/components/admin-impersonation/types'
+import { SiteOperatorToolsPanel } from '@/components/admin-impersonation/SiteOperatorToolsPanel'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Separator } from '@/components/ui/separator'
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import type { AdminPreviewSearchUser, AdminPreviewUser } from './types'
 
 type Corner = 'bottom-left' | 'bottom-right' | 'top-left' | 'top-right'
 
@@ -142,14 +119,6 @@ function resolveCornerPosition(args: {
   }
 }
 
-function isSecuredAdminPath(pathname: string): boolean {
-  return pathname.startsWith('/admin') || pathname.startsWith('/docs') || pathname.startsWith('/ops')
-}
-
-function defaultCornerForPath(pathname: string): Corner {
-  return isSecuredAdminPath(pathname) ? 'bottom-right' : 'top-right'
-}
-
 function shortLabel(user: AdminPreviewUser): string {
   return user.name?.trim() || user.email
 }
@@ -174,13 +143,6 @@ function DragHandle({ onPointerDown }: { onPointerDown: (event: ReactPointerEven
   )
 }
 
-const CORNER_ICONS: Record<Corner, typeof ArrowUpLeftIcon> = {
-  'bottom-left': ArrowDownLeftIcon,
-  'bottom-right': ArrowDownRightIcon,
-  'top-left': ArrowUpLeftIcon,
-  'top-right': ArrowUpRightIcon,
-}
-
 export function AdminImpersonationToolbar({
   effectiveUser,
   impersonatedUser,
@@ -192,24 +154,11 @@ export function AdminImpersonationToolbar({
   localPageMediaEnabled?: boolean
   realUser: AdminPreviewUser
 }) {
-  const pathname = usePathname()
-  const router = useRouter()
-  const composer = usePageComposerOptional()
   const dragControls = useDragControls()
   const toolbarRef = useRef<HTMLDivElement | null>(null)
-  const [corner, setCorner] = useState<Corner>('top-right')
-  const [minimized, setMinimized] = useState(false)
+  const [corner, setCorner] = useState<Corner>(() => readStoredCorner('top-right'))
+  const [minimized, setMinimized] = useState(() => readStoredMinimized())
   const [toolbarSize, setToolbarSize] = useState({ height: 0, width: 0 })
-  const [loading, setLoading] = useState(false)
-  const [query, setQuery] = useState('')
-  const [results, setResults] = useState<AdminPreviewSearchUser[]>([])
-  const [status, setStatus] = useState<null | string>(null)
-  const [submitting, setSubmitting] = useState(false)
-
-  useEffect(() => {
-    setCorner(readStoredCorner(defaultCornerForPath(pathname)))
-    setMinimized(readStoredMinimized())
-  }, [pathname])
 
   useEffect(() => {
     window.localStorage.setItem(STORAGE_KEY, corner)
@@ -257,138 +206,11 @@ export function AdminImpersonationToolbar({
     }
   }, [minimized])
 
-  useEffect(() => {
-    if (minimized) {
-      return
-    }
-
-    const controller = new AbortController()
-    const timeout = window.setTimeout(async () => {
-      setLoading(true)
-      setStatus(null)
-
-      try {
-        const response = await fetch(
-          `/api/internal/impersonation/users?q=${encodeURIComponent(query.trim())}`,
-          { signal: controller.signal },
-        )
-        const payload = (await response.json().catch(() => null)) as
-          | { error?: string; users?: AdminPreviewSearchUser[] }
-          | null
-
-        if (!response.ok) {
-          setStatus(payload?.error || 'Unable to load users.')
-          setResults([])
-          return
-        }
-
-        setResults(payload?.users ?? [])
-      } catch {
-        if (!controller.signal.aborted) {
-          setStatus('Unable to load users.')
-          setResults([])
-        }
-      } finally {
-        if (!controller.signal.aborted) {
-          setLoading(false)
-        }
-      }
-    }, 180)
-
-    return () => {
-      controller.abort()
-      window.clearTimeout(timeout)
-    }
-  }, [minimized, query])
-
-  const quickLinks = useMemo(
-    () => [
-      { href: '/', icon: HomeIcon, label: 'Home' },
-      { href: '/dashboard', icon: UserRoundIcon, label: 'Customer portal' },
-      { href: '/ops', icon: Building2Icon, label: 'Ops' },
-      { href: '/ops/workspace?tab=crm', icon: SearchIcon, label: 'CRM workspace' },
-      { href: '/docs', icon: EyeIcon, label: 'Docs' },
-      {
-        href: '/api/internal/admin/payload-session?next=/admin',
-        icon: ExternalLinkIcon,
-        label: 'Payload admin',
-        native: true,
-      },
-    ],
-    [],
-  )
-
-  const targetPosition = useMemo(() => {
-    const next = resolveCornerPosition({
-      corner,
-      height: toolbarSize.height,
-      width: toolbarSize.width,
-    })
-
-    if (
-      typeof window === 'undefined' ||
-      !composer?.isOpen ||
-      corner === 'top-left' ||
-      corner === 'bottom-left'
-    ) {
-      return next
-    }
-
-    const railWidth = readCssPixelVariable('--page-composer-rail-width', 736)
-    return {
-      ...next,
-      x: clampPosition(next.x - railWidth - 16, window.innerWidth - toolbarSize.width),
-    }
-  }, [composer?.isOpen, corner, toolbarSize.height, toolbarSize.width])
-
-  async function startImpersonation(userId: number | string) {
-    setSubmitting(true)
-    setStatus(null)
-
-    try {
-      const response = await fetch('/api/internal/impersonation/start', {
-        body: JSON.stringify({ userId }),
-        headers: {
-          'content-type': 'application/json',
-        },
-        method: 'POST',
-      })
-      const payload = (await response.json().catch(() => null)) as { error?: string } | null
-
-      if (!response.ok) {
-        setStatus(payload?.error || 'Unable to start preview.')
-        return
-      }
-
-      const nextPath = isSecuredAdminPath(pathname) ? '/' : pathname
-      router.push(nextPath)
-      router.refresh()
-      setMinimized(false)
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
-  async function stopImpersonation() {
-    setSubmitting(true)
-    setStatus(null)
-
-    try {
-      const response = await fetch('/api/internal/impersonation/stop', {
-        method: 'POST',
-      })
-      const payload = (await response.json().catch(() => null)) as { error?: string } | null
-
-      if (!response.ok) {
-        setStatus(payload?.error || 'Unable to stop preview.')
-        return
-      }
-
-      router.refresh()
-    } finally {
-      setSubmitting(false)
-    }
-  }
+  const targetPosition = resolveCornerPosition({
+    corner,
+    height: toolbarSize.height,
+    width: toolbarSize.width,
+  })
 
   return (
     <TooltipProvider>
@@ -404,9 +226,9 @@ export function AdminImpersonationToolbar({
 
           setCorner(pickCornerFromRect(rect))
         }}
-        className={`fixed left-0 top-0 z-[70] ${minimized ? 'w-auto max-w-[calc(100vw-2rem)]' : 'w-[min(22rem,calc(100vw-2rem))]'}`}
-        initial={{ opacity: 0, scale: 0.92 }}
         animate={{ opacity: 1, scale: 1, x: targetPosition.x, y: targetPosition.y }}
+        className={`fixed left-0 top-0 z-[70] ${minimized ? 'w-auto max-w-[calc(100vw-2rem)]' : 'w-[min(24rem,calc(100vw-2rem))]'}`}
+        initial={{ opacity: 0, scale: 0.92 }}
         transition={{
           opacity: { duration: 0.18, ease: 'easeOut' },
           scale: { duration: 0.18, ease: 'easeOut' },
@@ -414,7 +236,9 @@ export function AdminImpersonationToolbar({
           y: { type: 'spring', stiffness: 380, damping: 32 },
         }}
       >
-        <div className={`${minimized ? 'rounded-full px-3 py-2' : 'rounded-2xl p-3'} border border-border/70 bg-background/95 shadow-2xl backdrop-blur`}>
+        <div
+          className={`${minimized ? 'rounded-full px-3 py-2' : 'rounded-2xl p-3'} border border-border/70 bg-background/95 shadow-2xl backdrop-blur`}
+        >
           {minimized ? (
             <div className="flex items-center gap-2">
               <DragHandle onPointerDown={(event) => dragControls.start(event)} />
@@ -427,198 +251,47 @@ export function AdminImpersonationToolbar({
                 {impersonatedUser ? <Badge>Impersonating</Badge> : null}
                 <span className="max-w-32 truncate text-xs font-medium">{shortLabel(effectiveUser)}</span>
               </button>
-              <Button
-                aria-label="Open preview toolbar"
-                onClick={() => setMinimized(false)}
-                size="icon"
-                type="button"
-                variant="ghost"
-              >
+              <Button aria-label="Open preview toolbar" onClick={() => setMinimized(false)} size="icon" type="button" variant="ghost">
                 <ChevronUpIcon className="h-4 w-4" />
               </Button>
             </div>
           ) : (
             <>
-          <div className="flex items-start justify-between gap-3">
-              <div className="grid gap-1">
-              <div className="flex items-center gap-2">
-                <Badge variant="outline">Grime Time admin</Badge>
-                {impersonatedUser ? <Badge>Impersonating</Badge> : null}
-              </div>
-              <div className="text-sm font-semibold">{shortLabel(effectiveUser)}</div>
-              <div className="text-xs text-muted-foreground">Signed in through Clerk as {realUser.email}</div>
-            </div>
-            <div className="flex items-center gap-1">
-              <DragHandle onPointerDown={(event) => dragControls.start(event)} />
-              <Button onClick={() => setMinimized(true)} size="sm" type="button" variant="outline">
-                Collapse
-              </Button>
-            </div>
-          </div>
-
-          <div className="mt-3 flex items-center justify-between gap-3">
-            <div className="text-[11px] font-medium uppercase tracking-[0.24em] text-muted-foreground">
-              Snap to corner
-            </div>
-            <ToggleGroup
-              type="single"
-              value={corner}
-              onValueChange={(value) => {
-                if (value === 'top-left' || value === 'top-right' || value === 'bottom-left' || value === 'bottom-right') {
-                  setCorner(value)
-                }
-              }}
-              className="rounded-xl border bg-muted/30 p-1"
-            >
-              {(
-                [
-                  'top-left',
-                  'top-right',
-                  'bottom-left',
-                  'bottom-right',
-                ] as Corner[]
-              ).map((cornerValue) => {
-                const Icon = CORNER_ICONS[cornerValue]
-
-                return (
-                  <ToggleGroupItem
-                    key={cornerValue}
-                    value={cornerValue}
-                    aria-label={`Move toolbar to ${cornerValue}`}
-                    className="h-8 w-8 rounded-lg border-0 px-0 data-[state=on]:bg-background"
-                    size="sm"
-                    variant="outline"
-                  >
-                    <Icon className="h-4 w-4" />
-                  </ToggleGroupItem>
-                )
-              })}
-            </ToggleGroup>
-          </div>
-
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            {quickLinks.map((link) => (
-              <Button asChild key={link.href} size="sm" type="button" variant="ghost">
-                {link.native ? (
-                  <a href={link.href}>
-                    <link.icon className="h-4 w-4" />
-                    {link.label}
-                  </a>
-                ) : (
-                  <Link href={link.href}>
-                    <link.icon className="h-4 w-4" />
-                    {link.label}
-                  </Link>
-                )}
-              </Button>
-            ))}
-            <PageComposerLauncherButton />
-            <PageMediaDevtoolsDrawer enabled={localPageMediaEnabled} />
-            <DemoModeToggle />
-          </div>
-
-          <AnimatePresence initial={false}>
-            {!minimized ? (
-              <motion.div
-                key="panel"
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.16, ease: 'easeOut' }}
-                className="overflow-hidden"
-              >
-                <Separator className="my-3" />
-                <div className="grid gap-3">
-                  <div className="rounded-xl border bg-muted/30 p-3">
-                    <div className="text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
-                      Active view
-                    </div>
-                    <div className="mt-1 text-sm font-semibold">{shortLabel(effectiveUser)}</div>
-                    <div className="text-xs text-muted-foreground">{effectiveUser.email}</div>
-                    {impersonatedUser ? (
-                      <Button
-                        className="mt-3 w-full"
-                        disabled={submitting}
-                        onClick={stopImpersonation}
-                        size="sm"
-                        type="button"
-                        variant="outline"
-                      >
-                        <CircleOffIcon className="h-4 w-4" />
-                        Switch back to admin
-                      </Button>
-                    ) : (
-                      <div className="mt-2 text-xs text-muted-foreground">
-                        Search any non-staff customer to safely preview their portal and billing flow.
-                      </div>
-                    )}
+              <div className="flex items-start justify-between gap-3">
+                <div className="grid gap-1">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline">Grime Time admin</Badge>
+                    {impersonatedUser ? <Badge>Impersonating</Badge> : null}
                   </div>
-
-                  <div className="grid gap-2">
-                    <label className="text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
-                      Search users
-                    </label>
-                    <div className="relative">
-                      <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input
-                        className="pl-9"
-                        onChange={(event) => setQuery(event.target.value)}
-                        placeholder="Search by name, email, or company"
-                        value={query}
-                      />
-                    </div>
-                  </div>
-
-                  {status ? <div className="text-xs text-destructive">{status}</div> : null}
-
-                  <div
-                    className="max-h-72 space-y-2 overflow-x-hidden overflow-y-auto pr-2 [scrollbar-gutter:stable]"
-                    data-portal-scroll=""
-                  >
-                    {loading ? (
-                      <div className="text-xs text-muted-foreground">Loading users…</div>
-                    ) : results.length === 0 ? (
-                      <div className="rounded-xl border border-dashed p-3 text-xs text-muted-foreground">
-                        No matching customer users yet.
-                      </div>
-                    ) : (
-                      results.map((result) => (
-                        <button
-                          key={String(result.id)}
-                          className="flex w-full items-start justify-between gap-3 rounded-xl border p-3 text-left transition-colors hover:bg-muted/40"
-                          disabled={submitting}
-                          onClick={() => startImpersonation(result.id)}
-                          type="button"
-                        >
-                          <div className="min-w-0">
-                            <div className="truncate text-sm font-medium">{result.name}</div>
-                            <div className="truncate text-xs text-muted-foreground">{result.email}</div>
-                            <div className="mt-1 flex flex-wrap gap-2 text-[11px] text-muted-foreground">
-                              {result.accountName ? <span>{result.accountName}</span> : null}
-                              {result.company ? <span>{result.company}</span> : null}
-                            </div>
-                          </div>
-                          <div className="flex shrink-0 items-center gap-1 text-xs text-primary">
-                            <ArrowRightLeftIcon className="h-4 w-4" />
-                            <span>Impersonate</span>
-                          </div>
-                        </button>
-                      ))
-                    )}
-                  </div>
-
-                  {impersonatedUser ? (
-                    <Button asChild size="sm" type="button" variant="ghost">
-                      <Link href="/dashboard">
-                        <ExternalLinkIcon className="h-4 w-4" />
-                        Open customer dashboard
-                      </Link>
-                    </Button>
-                  ) : null}
+                  <div className="text-sm font-semibold">{shortLabel(effectiveUser)}</div>
+                  <div className="text-xs text-muted-foreground">Signed in through Clerk as {realUser.email}</div>
                 </div>
-              </motion.div>
-            ) : null}
-          </AnimatePresence>
+                <div className="flex items-center gap-1">
+                  <DragHandle onPointerDown={(event) => dragControls.start(event)} />
+                  <Button onClick={() => setMinimized(true)} size="sm" type="button" variant="outline">
+                    Collapse
+                  </Button>
+                </div>
+              </div>
+
+              <AnimatePresence initial={false}>
+                <motion.div
+                  key="panel"
+                  animate={{ opacity: 1, height: 'auto' }}
+                  className="overflow-hidden"
+                  initial={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.16, ease: 'easeOut' }}
+                >
+                  <div className="mt-4">
+                    <SiteOperatorToolsPanel
+                      effectiveUser={effectiveUser}
+                      impersonatedUser={impersonatedUser}
+                      localPageMediaEnabled={localPageMediaEnabled}
+                      realUser={realUser}
+                    />
+                  </div>
+                </motion.div>
+              </AnimatePresence>
             </>
           )}
         </div>

@@ -17,8 +17,6 @@ import {
 } from 'lucide-react'
 
 import { ClerkCustomerAccessPanel } from '@/components/auth/ClerkCustomerAccessPanel'
-import { usePageComposerOptional } from '@/components/admin-impersonation/PageComposerContext'
-import { PageComposerDrawer } from '@/components/admin-impersonation/PageComposerDrawer'
 import { Logo } from '@/components/Logo/Logo'
 import {
   Sidebar,
@@ -43,7 +41,6 @@ import type { MarketingNavLink } from '@/lib/marketing/public-shell'
 type MarketingShellProps = {
   children: React.ReactNode
   footerLinks: MarketingNavLink[]
-  pageComposerEnabled?: boolean
   primaryLinks: MarketingNavLink[]
 }
 
@@ -225,10 +222,10 @@ function MarketingSidebar({
         <div className="rounded-2xl border border-sidebar-border/80 bg-sidebar-accent/35 px-3 py-3 group-data-[collapsible=icon]:hidden">
           <div className="flex items-center gap-2 text-sm font-medium text-sidebar-foreground">
             <ShieldCheckIcon className="size-4 text-primary" />
-            Customer access
+            Sign in
           </div>
           <p className="mt-1 text-xs leading-5 text-sidebar-foreground/65">
-            Returning customers can review estimates, invoices, and scheduling from one account.
+            Staff and customers both use the same Grime Time Clerk sign-in flow.
           </p>
           <div className="mt-3">
             <ClerkCustomerAccessPanel compact signInFallbackHref="/dashboard" signUpFallbackHref="/dashboard" />
@@ -276,19 +273,15 @@ function MarketingSidebar({
 export function MarketingShell({
   children,
   footerLinks,
-  pageComposerEnabled = false,
   primaryLinks,
 }: MarketingShellProps) {
   const pathname = usePathname()
-  const composer = usePageComposerOptional()
-  const composerOpen = Boolean(pageComposerEnabled && composer?.isOpen)
 
   return (
     <SidebarProvider
       defaultOpen
       style={
         {
-          '--page-composer-rail-width': '28rem',
           '--sidebar-width': '14.5rem',
           '--sidebar-width-icon': '3.25rem',
         } as CSSProperties
@@ -308,17 +301,11 @@ export function MarketingShell({
         </div>
 
         <div
-          className={cn(
-            'min-h-screen min-w-0 xl:h-full xl:overflow-hidden',
-            composerOpen
-              ? 'xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(24rem,var(--page-composer-rail-width))] xl:items-start'
-              : 'flex',
-          )}
+          className="flex min-h-screen min-w-0 xl:h-full xl:overflow-hidden"
         >
-          <main className="marketing-shell-main marketing-main-scroll min-h-screen min-w-0 xl:h-full xl:min-h-0 xl:overflow-y-auto xl:overscroll-contain bg-[radial-gradient(circle_at_top,rgba(142,219,62,0.08),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.96),rgba(247,250,252,0.92))] dark:bg-[radial-gradient(circle_at_top,rgba(142,219,62,0.14),transparent_26%),linear-gradient(180deg,rgba(3,10,17,0.98),rgba(7,19,33,0.96))]">
+          <main className="marketing-shell-main marketing-main-scroll flex-1 w-full min-h-screen min-w-0 xl:h-full xl:min-h-0 xl:overflow-y-auto xl:overscroll-contain bg-[radial-gradient(circle_at_top,rgba(142,219,62,0.08),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.96),rgba(247,250,252,0.92))] dark:bg-[radial-gradient(circle_at_top,rgba(142,219,62,0.14),transparent_26%),linear-gradient(180deg,rgba(3,10,17,0.98),rgba(7,19,33,0.96))]">
             {children}
           </main>
-          <PageComposerDrawer enabled={pageComposerEnabled} />
         </div>
       </SidebarInset>
     </SidebarProvider>

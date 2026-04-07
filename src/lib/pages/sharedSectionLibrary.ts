@@ -1,4 +1,4 @@
-import { createLocalReq, type Payload, type Where } from 'payload'
+import { createLocalReq, type Payload, type TypeWithVersion, type Where } from 'payload'
 
 import type { getCurrentAuthContext } from '@/lib/auth/getAuthContext'
 import { resolveSharedSectionPermissions } from '@/lib/auth/sharedSectionPermissions'
@@ -12,6 +12,7 @@ import {
   type SharedSectionCategory,
   type SharedSectionRecord,
   type SharedSectionStatus,
+  type SharedSectionVersionSummary,
 } from '@/lib/pages/sharedSections'
 import type { SharedSection } from '@/payload-types'
 
@@ -152,6 +153,55 @@ export async function loadSharedSectionsLibrary(args: {
   }
 }
 
+function toSharedSectionVersionSummary(
+  record: TypeWithVersion<SharedSection>,
+): SharedSectionVersionSummary {
+  const status =
+    typeof record.version.status === 'string'
+      ? record.version.status
+      : record.version._status === 'published'
+        ? 'published'
+        : 'draft'
+
+  return {
+    createdAt: record.createdAt,
+    id: record.id,
+    latest: Boolean(record.latest),
+    status,
+    updatedAt: record.updatedAt,
+    versionNumber:
+      typeof record.version.currentVersion === 'number' && record.version.currentVersion > 0
+        ? record.version.currentVersion
+        : 1,
+  }
+}
+
+export async function loadSharedSectionVersionSummaries(args: {
+  auth: PayloadContext
+  id: number
+  limit?: number
+}): Promise<SharedSectionVersionSummary[]> {
+  const payloadReq = await createLocalReq({ user: args.auth.realUser || undefined }, args.auth.payload)
+  const result = await args.auth.payload.findVersions({
+    collection: 'shared-sections',
+    depth: 0,
+    limit: args.limit || 8,
+    overrideAccess: false,
+    pagination: false,
+    req: payloadReq,
+    sort: '-updatedAt',
+    where: {
+      parent: {
+        equals: args.id,
+      },
+    },
+  })
+
+  return (result.docs as TypeWithVersion<SharedSection>[]).map((record) =>
+    toSharedSectionVersionSummary(record),
+  )
+}
+
 export async function createSharedSectionDraft(args: {
   auth: PayloadContext
   data: {
@@ -276,6 +326,43 @@ export async function publishSharedSection(args: {
   })) as unknown as SharedSection
 
   return toSharedSectionRecord(updated)
+}
+
+export async function restoreSharedSectionVersion(args: {
+  auth: PayloadContext
+  sharedSectionId: number
+  versionId: string
+}) {
+  const payloadReq = await createLocalReq({ user: args.auth.realUser || undefined }, args.auth.payload)
+  const version = (await args.auth.payload.findVersionByID({
+    collection: 'shared-sections',
+    id: args.versionId,
+    overrideAccess: false,
+    req: payloadReq,
+  })) as TypeWithVersion<SharedSection>
+
+  if (Number(version.parent) !== args.sharedSectionId) {
+    throw new Error('The selected version does not belong to this shared section.')
+  }
+
+  await args.auth.payload.restoreVersion({
+    collection: 'shared-sections',
+    draft: true,
+    id: args.versionId,
+    overrideAccess: false,
+    req: payloadReq,
+  })
+
+  const restored = (await args.auth.payload.findByID({
+    collection: 'shared-sections',
+    depth: 1,
+    draft: true,
+    id: args.sharedSectionId,
+    overrideAccess: false,
+    req: payloadReq,
+  })) as SharedSection
+
+  return toSharedSectionRecord(restored)
 }
 
 export async function loadPublishedSharedSectionsByIds(args: {

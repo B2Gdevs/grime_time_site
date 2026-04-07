@@ -1,28 +1,26 @@
 'use client'
 
 import {
-  AssistantRuntimeProvider,
   ComposerPrimitive,
   MessagePrimitive,
   ThreadPrimitive,
-  type ChatModelRunOptions,
   useAuiState,
-  useLocalRuntime,
 } from '@assistant-ui/react'
-import { BotIcon, GripIcon, LifeBuoyIcon, SparklesIcon, XIcon } from 'lucide-react'
+import { BotIcon, GripIcon, LifeBuoyIcon, SparklesIcon } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import { AnimatePresence, motion, useDragControls } from 'motion/react'
 import {
-  type Dispatch,
   type PointerEvent as ReactPointerEvent,
-  type SetStateAction,
   useEffect,
   useMemo,
   useRef,
   useState,
 } from 'react'
 
-import type { CopilotApiResponse, CopilotConversationMessage } from '@/lib/ai'
+import { PageComposerDrawer } from '@/components/admin-impersonation/PageComposerDrawer'
+import { SiteOperatorToolsPanel, type SiteOperatorToolsPanelProps } from '@/components/admin-impersonation/SiteOperatorToolsPanel'
+import { usePageComposerOptional } from '@/components/admin-impersonation/PageComposerContext'
+import { CopilotMediaWorkbench } from '@/components/copilot/CopilotMediaWorkbench'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/utilities/ui'
@@ -31,8 +29,22 @@ import { usePortalCopilot } from './PortalCopilotContext'
 import { RecordList, SourcesList, TourList, type CopilotBundle } from './PortalCopilotPanels'
 
 type Corner = 'bottom-left' | 'bottom-right' | 'top-left' | 'top-right'
+type AssistantUiMessagePart = {
+  text?: string
+  type?: string
+}
 
 const STORAGE_KEY = 'portal-copilot-corner-v1'
+
+function joinMessageText(content: readonly AssistantUiMessagePart[] | string | undefined) {
+  if (typeof content === 'string') return content.trim()
+  if (!Array.isArray(content)) return ''
+
+  return content
+    .map((part) => (part?.type === 'text' && typeof part.text === 'string' ? part.text : ''))
+    .join('')
+    .trim()
+}
 
 function readStoredCorner(fallback: Corner): Corner {
   if (typeof window === 'undefined') {
@@ -148,77 +160,31 @@ function DragHandle({ onPointerDown }: { onPointerDown: (event: ReactPointerEven
   )
 }
 
-type AssistantUiMessagePart = {
-  text?: string
-  type?: string
+function asCopilotBundle(value: unknown): CopilotBundle | null {
+  if (!value || typeof value !== 'object') {
+    return null
+  }
+
+  const bundle = value as Record<string, unknown>
+
+  if (
+    typeof bundle.query !== 'string' ||
+    !('insights' in bundle) ||
+    !Array.isArray(bundle.sources)
+  ) {
+    return null
+  }
+
+  return value as CopilotBundle
 }
 
-type AssistantUiMessageLike = {
-  content?: readonly AssistantUiMessagePart[] | string
-  role?: string
-}
-
-type CopilotMessagePanelsProps = {
-  panelsByMessageId: Record<string, CopilotBundle>
-  pendingBundle: CopilotBundle | null
-  setPanelsByMessageId: Dispatch<SetStateAction<Record<string, CopilotBundle>>>
-  setPendingBundle: Dispatch<SetStateAction<CopilotBundle | null>>
-}
-
-function joinMessageText(content: AssistantUiMessageLike['content']) {
-  if (typeof content === 'string') return content.trim()
-  if (!Array.isArray(content)) return ''
-
-  return content
-    .map((part) => (part?.type === 'text' && typeof part.text === 'string' ? part.text : ''))
-    .join('')
-    .trim()
-}
-
-function normalizeConversation(messages: readonly AssistantUiMessageLike[] | undefined): CopilotConversationMessage[] {
-  return (messages ?? [])
-    .map((message) => {
-      const role = message?.role
-      const content = joinMessageText(message?.content)
-      if (!content) return null
-      if (role !== 'assistant' && role !== 'system' && role !== 'user') return null
-      return {
-        content,
-        role,
-      } satisfies CopilotConversationMessage
-    })
-    .filter((message): message is CopilotConversationMessage => Boolean(message))
-}
-
-function CopilotMessagePanels({
-  panelsByMessageId,
-  pendingBundle,
-  setPanelsByMessageId,
-  setPendingBundle,
-}: CopilotMessagePanelsProps) {
-  const messageId = useAuiState((state) => state.message.id)
+function CopilotMessagePanels() {
   const isAssistant = useAuiState((state) => state.message.role === 'assistant')
-  const isLastMessage = useAuiState((state) => state.message.index === state.thread.messages.length - 1)
-
-  useEffect(() => {
-    if (!isAssistant || !messageId || !pendingBundle) return
-
-    setPanelsByMessageId((current) => {
-      if (current[messageId]) return current
-      return {
-        ...current,
-        [messageId]: pendingBundle,
-      }
-    })
-
-    setPendingBundle((current) => (current === pendingBundle ? null : current))
-  }, [isAssistant, messageId, pendingBundle, setPanelsByMessageId, setPendingBundle])
+  const messageBundle = useAuiState((state) => asCopilotBundle(state.message.metadata?.custom))
 
   if (!isAssistant) return null
 
-  const bundle =
-    (messageId ? panelsByMessageId[messageId] : undefined) ??
-    (isLastMessage ? pendingBundle ?? undefined : undefined)
+  const bundle = messageBundle
   if (!bundle) return null
 
   return (
@@ -237,8 +203,10 @@ function CopilotMessagePanels({
   )
 }
 
-function CopilotMessage(props: CopilotMessagePanelsProps) {
+function CopilotMessage() {
   const isUser = useAuiState((state) => state.message.role === 'user')
+  const messageText = useAuiState((state) => joinMessageText(state.message.content))
+  const { applyFocusedText, canApplyFocusedText, focusedSession } = usePortalCopilot()
 
   return (
     <MessagePrimitive.Root className={cn('mb-4 flex w-full', isUser ? 'justify-end' : 'justify-start')}>
@@ -253,7 +221,19 @@ function CopilotMessage(props: CopilotMessagePanelsProps) {
         >
           <MessagePrimitive.Parts />
         </div>
-        <CopilotMessagePanels {...props} />
+        {!isUser && focusedSession?.type === 'text-generation' && canApplyFocusedText && messageText ? (
+          <div className="mt-2">
+            <Button
+              onClick={() => applyFocusedText(messageText)}
+              size="sm"
+              type="button"
+              variant="outline"
+            >
+              Apply to {focusedSession.fieldLabel}
+            </Button>
+          </div>
+        ) : null}
+        <CopilotMessagePanels />
       </div>
     </MessagePrimitive.Root>
   )
@@ -345,6 +325,23 @@ function AuthoringContextSummary({
           ) : null}
         </div>
       ) : null}
+
+      {focusedSession?.type === 'text-generation' ? (
+        <div className="rounded-2xl border border-primary/20 bg-primary/5 p-3">
+          <div className="text-sm font-medium text-foreground">Focused text rewrite</div>
+          <div className="mt-1 text-xs text-muted-foreground">
+            {focusedSession.fieldLabel} at {focusedSession.fieldPath}
+          </div>
+          {focusedSession.instructions ? (
+            <div className="mt-2 text-xs text-muted-foreground">{focusedSession.instructions}</div>
+          ) : null}
+          {focusedSession.currentText ? (
+            <div className="mt-3 rounded-2xl border border-border/70 bg-background/80 p-3 text-sm text-muted-foreground">
+              Current copy: {focusedSession.currentText}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   )
 }
@@ -359,6 +356,11 @@ function Composer() {
           Choose image, video, or gallery above before asking for prompt or generation help.
         </div>
       ) : null}
+      {focusedSession?.type === 'text-generation' ? (
+        <div className="rounded-2xl border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-foreground">
+          Rewriting {focusedSession.fieldLabel}. Keep replies focused on improved copy for that field.
+        </div>
+      ) : null}
       <ComposerPrimitive.Input
         aria-label="Ask the employee copilot"
         className="min-h-[3.5rem] w-full resize-none bg-transparent px-2 py-1 text-sm outline-none placeholder:text-muted-foreground"
@@ -367,6 +369,8 @@ function Composer() {
         placeholder={
           focusedSession?.type === 'media-generation'
             ? 'Ask for prompt options, shot direction, or generation refinements for the selected slot...'
+            : focusedSession?.type === 'text-generation'
+              ? `Rewrite ${focusedSession.fieldLabel.toLowerCase()} or ask for alternate versions...`
             : 'Ask about follow-up, quote policy, what to do next, or launch a tour...'
         }
       />
@@ -385,72 +389,69 @@ function Composer() {
   )
 }
 
-export function PortalCopilot() {
+export function PortalCopilot({
+  operatorTools = null,
+}: {
+  operatorTools?: null | SiteOperatorToolsPanelProps
+}) {
   const pathname = usePathname()
+  const composer = usePageComposerOptional()
   const { authoringContext, close, focusedSession, isOpen, open } = usePortalCopilot()
   const dragControls = useDragControls()
   const panelRef = useRef<HTMLDivElement | null>(null)
+  const [activeView, setActiveView] = useState<'chat' | 'tools'>('chat')
   const [corner, setCorner] = useState<Corner>('bottom-left')
   const [panelSize, setPanelSize] = useState({ height: 0, width: 0 })
-  const [pendingBundle, setPendingBundle] = useState<CopilotBundle | null>(null)
-  const [panelsByMessageId, setPanelsByMessageId] = useState<Record<string, CopilotBundle>>({})
+  const hasToolsView = Boolean(
+    operatorTools?.effectiveUser || operatorTools?.impersonatedUser || operatorTools?.realUser,
+  )
+  const hasSecondaryViews = hasToolsView
+  const showEmbeddedComposerInTools = Boolean(
+    composer?.isOpen && activeView === 'tools' && composer.activeTab !== 'structure',
+  )
+  const shouldKeepEmbeddedComposerMounted = Boolean(
+    composer?.isOpen && (!isOpen || activeView !== 'tools' || composer.activeTab === 'structure'),
+  )
+  const activeViewMeta = {
+    chat: {
+      description: 'Ask about work, docs, follow-up, and active staff context.',
+      title: 'Copilot chat',
+    },
+    tools: {
+      description: 'Jump between operator actions, impersonation context, and composer controls.',
+      title: 'Operator tools',
+    },
+  }[activeView]
 
   const activeAuthoringContext =
     authoringContext?.surface !== 'page-composer' || authoringContext?.page?.pagePath === pathname
       ? authoringContext
       : null
 
-  const runtime = useLocalRuntime(
-    {
-      run: async ({ abortSignal, messages = [] }: ChatModelRunOptions) => {
-        const conversation = normalizeConversation(messages as readonly AssistantUiMessageLike[])
-        const latestUserMessage = [...conversation].reverse().find((message) => message.role === 'user')
-        if (!latestUserMessage) {
-          return {
-            content: [{ text: 'Ask a question about work, follow-up, or internal docs first.', type: 'text' as const }],
-            status: { reason: 'stop' as const, type: 'complete' as const },
-          }
-        }
-
-        const response = await fetch('/api/internal/ai/copilot', {
-          body: JSON.stringify({
-            authoringContext: activeAuthoringContext,
-            currentPath: pathname,
-            focusedSession,
-            messages: conversation,
-          }),
-          headers: { 'Content-Type': 'application/json' },
-          method: 'POST',
-          signal: abortSignal,
-        })
-
-        const data = (await response.json().catch(() => null)) as CopilotApiResponse | { error?: string } | null
-        if (!response.ok || !data || !('text' in data)) {
-          const message =
-            data && typeof data === 'object' && 'error' in data && typeof data.error === 'string'
-              ? data.error
-              : 'The employee copilot request failed.'
-          throw new Error(message)
-        }
-
-        setPendingBundle({
-          insights: data.insights,
-          query: data.query,
-          sources: data.sources,
-        })
-
-        return {
-          content: [{ text: data.text, type: 'text' as const }],
-          status: { reason: 'stop' as const, type: 'complete' as const },
-        }
-      },
-    },
-    {},
-  )
-
   useEffect(() => {
     setCorner(readStoredCorner(defaultCornerForPath(pathname)))
   }, [pathname])
+
+  useEffect(() => {
+    if (activeView === 'tools' && !hasToolsView) {
+      setActiveView('chat')
+    }
+  }, [activeView, hasToolsView])
+
+  useEffect(() => {
+    if (!isOpen) {
+      return
+    }
+
+    if (composer?.isOpen && composer.activeTab === 'publish' && hasToolsView) {
+      setActiveView('tools')
+      return
+    }
+
+    if (focusedSession?.type === 'media-generation') {
+      setActiveView('chat')
+    }
+  }, [composer?.activeTab, composer?.isOpen, focusedSession?.type, hasToolsView, isOpen])
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -509,8 +510,7 @@ export function PortalCopilot() {
   )
 
   return (
-    <AssistantRuntimeProvider runtime={runtime}>
-      <motion.div
+    <motion.div
         ref={panelRef}
         drag
         dragControls={dragControls}
@@ -542,47 +542,81 @@ export function PortalCopilot() {
               exit={{ opacity: 0, scale: 0.98 }}
               transition={{ duration: 0.16, ease: 'easeOut' }}
             >
-              <header className="flex items-start justify-between gap-3 border-b px-5 py-4">
-                <div className="flex min-w-0 items-start gap-3">
-                  <DragHandle onPointerDown={(event) => dragControls.start(event)} />
-                  <div>
+              <header className="border-b px-5 py-4">
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div className="min-w-0">
                     <p className="text-[0.68rem] uppercase tracking-[0.3em] text-muted-foreground">Staff beta</p>
-                    <h2 className="mt-1 text-xl font-semibold tracking-tight">Grime Time Copilot</h2>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      Internal docs, assigned tasks, stale follow-up, tour launchers, and page-authoring context in one panel.
-                    </p>
+                    <h2 className="mt-1 text-xl font-semibold tracking-tight">{activeViewMeta.title}</h2>
+                    <p className="mt-1 text-xs text-muted-foreground">{activeViewMeta.description}</p>
                   </div>
+                  <button
+                    className="inline-flex h-9 items-center justify-center rounded-full border border-border/70 px-3 text-sm font-medium text-muted-foreground transition hover:bg-accent hover:text-accent-foreground"
+                    onClick={close}
+                    type="button"
+                  >
+                    Hide
+                  </button>
                 </div>
-                <button
-                  aria-label="Close employee copilot"
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border text-muted-foreground transition hover:bg-accent"
-                  onClick={close}
-                  type="button"
-                >
-                  <XIcon className="size-4" />
-                </button>
+                {hasSecondaryViews ? (
+                  <div className="mt-4 inline-flex rounded-full border border-border/70 bg-muted/40 p-1">
+                    <button
+                      className={cn(
+                        'inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium transition',
+                        activeView === 'chat' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground',
+                      )}
+                      onClick={() => setActiveView('chat')}
+                      type="button"
+                    >
+                      <BotIcon className="size-4" />
+                      Chat
+                    </button>
+                    {hasToolsView ? (
+                      <button
+                        className={cn(
+                          'inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium transition',
+                          activeView === 'tools' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground',
+                        )}
+                        onClick={() => setActiveView('tools')}
+                        type="button"
+                      >
+                        <SparklesIcon className="size-4" />
+                        Tools
+                      </button>
+                    ) : null}
+                  </div>
+                ) : null}
               </header>
-              <ThreadPrimitive.Root className="flex min-h-0 flex-1 flex-col px-4 pb-4 pt-5 sm:px-5">
-                <AuthoringContextSummary authoringContext={activeAuthoringContext} focusedSession={focusedSession} />
-                <ThreadPrimitive.Viewport className="min-h-0 flex-1 overflow-y-auto px-1">
-                  <ThreadPrimitive.Empty>
-                    <EmptyState />
-                  </ThreadPrimitive.Empty>
-                  <ThreadPrimitive.Messages>
-                    {() => (
-                      <CopilotMessage
-                        panelsByMessageId={panelsByMessageId}
-                        pendingBundle={pendingBundle}
-                        setPanelsByMessageId={setPanelsByMessageId}
-                        setPendingBundle={setPendingBundle}
-                      />
-                    )}
-                  </ThreadPrimitive.Messages>
-                </ThreadPrimitive.Viewport>
-                <div className="pt-4">
-                  <Composer />
+              {activeView === 'tools' && hasToolsView ? (
+                <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4 pt-5 sm:px-5">
+                  <SiteOperatorToolsPanel
+                    effectiveUser={operatorTools?.effectiveUser}
+                    impersonatedUser={operatorTools?.impersonatedUser}
+                    localPageMediaEnabled={operatorTools?.localPageMediaEnabled}
+                    realUser={operatorTools?.realUser}
+                  />
+                  {showEmbeddedComposerInTools ? (
+                    <div className="mt-5 min-h-0 overflow-hidden">
+                      <PageComposerDrawer embedded enabled />
+                    </div>
+                  ) : null}
                 </div>
-              </ThreadPrimitive.Root>
+              ) : (
+                <ThreadPrimitive.Root className="flex min-h-0 flex-1 flex-col px-4 pb-4 pt-5 sm:px-5">
+                  <AuthoringContextSummary authoringContext={activeAuthoringContext} focusedSession={focusedSession} />
+                  <CopilotMediaWorkbench />
+                  <ThreadPrimitive.Viewport className="min-h-0 flex-1 overflow-y-auto px-1">
+                    <ThreadPrimitive.Empty>
+                      <EmptyState />
+                    </ThreadPrimitive.Empty>
+                    <ThreadPrimitive.Messages>
+                      {() => <CopilotMessage />}
+                    </ThreadPrimitive.Messages>
+                  </ThreadPrimitive.Viewport>
+                  <div className="pt-4">
+                    <Composer />
+                  </div>
+                </ThreadPrimitive.Root>
+              )}
             </motion.div>
           ) : (
             <motion.div
@@ -605,7 +639,11 @@ export function PortalCopilot() {
             </motion.div>
           )}
         </AnimatePresence>
+        {shouldKeepEmbeddedComposerMounted ? (
+          <div hidden>
+            <PageComposerDrawer embedded enabled />
+          </div>
+        ) : null}
       </motion.div>
-    </AssistantRuntimeProvider>
   )
 }

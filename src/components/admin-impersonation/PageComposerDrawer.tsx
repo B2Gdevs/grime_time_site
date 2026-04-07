@@ -1,19 +1,29 @@
 'use client'
 /* eslint-disable @next/next/no-img-element */
 
-import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react'
-import { AnimatePresence, motion } from 'motion/react'
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+  type ReactNode,
+} from 'react'
 import { DndContext, KeyboardSensor, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
 import type { DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { usePathname, useRouter } from 'next/navigation'
+import { motion, useDragControls } from 'motion/react'
 import {
   CopyPlusIcon,
   EyeIcon,
   EyeOffIcon,
   FilePenLineIcon,
   GripVerticalIcon,
+  HistoryIcon,
   ImageIcon,
   Link2Icon,
   LoaderCircleIcon,
@@ -24,13 +34,19 @@ import {
   SquarePenIcon,
   Trash2Icon,
   TypeIcon,
+  Undo2Icon,
   UploadIcon,
   XIcon,
 } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { usePageComposerOptional } from '@/components/admin-impersonation/PageComposerContext'
+import {
+  PAGE_COMPOSER_TOOLBAR_EVENT,
+  usePageComposerOptional,
+  type PageComposerTab,
+  type PageComposerToolbarState,
+} from '@/components/admin-impersonation/PageComposerContext'
 import { usePortalCopilotOptional } from '@/components/copilot/PortalCopilotContext'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -43,6 +59,7 @@ import {
   buildPageComposerSectionSummaries,
   countPageComposerChangedBlocks,
   duplicatePageLayoutSection,
+  frontendPathToPageSlug,
   insertPageLayoutRegisteredBlock,
   pageSlugToFrontendPath,
   removePageLayoutSection,
@@ -51,8 +68,10 @@ import {
   type PageComposerNotice,
   type PageComposerPageSummary,
   type PageComposerSectionSummary,
+  type PageComposerVersionSummary,
   updatePageLayoutSection,
 } from '@/lib/pages/pageComposer'
+import { createLexicalParagraph, lexicalToPlainText } from '@/lib/pages/pageComposerLexical'
 import {
   createPageComposerBlock,
   getPageComposerBlockDefinitions,
@@ -68,12 +87,18 @@ import {
   type ReusableAwareLayoutBlock,
 } from '@/lib/pages/pageComposerReusableBlocks'
 import type { SharedSectionRecord } from '@/lib/pages/sharedSections'
-import type { Media, ServiceGridBlock } from '@/payload-types'
+import type {
+  CallToActionBlock,
+  ContentBlock,
+  Media,
+  ServiceGridBlock,
+  TestimonialsSectionBlock,
+} from '@/payload-types'
 
-type ComposerTab = 'content' | 'media' | 'publish' | 'structure'
 type MediaAction = 'create-and-swap' | 'generate-and-swap' | 'swap-existing-reference'
 type SavingAction = 'publish-page' | 'save-draft'
 type ServiceGridService = NonNullable<ServiceGridBlock['services']>[number]
+type PricingPlan = NonNullable<NonNullable<Extract<ReusableAwareLayoutBlock, { blockType: 'pricingTable' }>['inlinePlans']>>[number]
 
 type MediaLibraryItem = {
   alt: null | string
@@ -92,6 +117,13 @@ type SectionMediaSlot = {
   mediaId: number | null
   mimeType: null | string
   relationPath: string
+}
+
+type PageComposerResponse = {
+  error?: string
+  page?: PageComposerDocument
+  pages?: PageComposerPageSummary[]
+  versions?: PageComposerVersionSummary[]
 }
 
 function formatTimestamp(value: null | string | undefined): string {
@@ -163,6 +195,170 @@ function HeaderField({
   )
 }
 
+function formatComposerBreadcrumbs(pagePath: string) {
+  if (pagePath === '/') {
+    return ['Home']
+  }
+
+  return pagePath
+    .split('/')
+    .filter(Boolean)
+    .map((segment) => segment.replace(/-/g, ' '))
+    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+}
+
+function ComposerAdminBar({
+  availablePages,
+  creatingDraftClone,
+  dirty,
+  draftPage,
+  loading,
+  onCreateDraft,
+  onSetSlugDraft,
+  onSetTitleDraft,
+  onSetVisibilityDraft,
+  slugDraft,
+  switchToPage,
+  titleDraft,
+  visibilityDraft,
+}: {
+  availablePages: PageComposerPageSummary[]
+  creatingDraftClone: boolean
+  dirty: boolean
+  draftPage: null | PageComposerDocument
+  loading: boolean
+  onCreateDraft: () => void
+  onSetSlugDraft: (value: string) => void
+  onSetTitleDraft: (value: string) => void
+  onSetVisibilityDraft: (value: 'private' | 'public') => void
+  slugDraft: string
+  switchToPage: (pageId: number) => void
+  titleDraft: string
+  visibilityDraft: 'private' | 'public'
+}) {
+  const breadcrumbs = formatComposerBreadcrumbs(draftPage?.pagePath || '/')
+
+  return (
+    <div className="border-b border-border/70 bg-card/35 px-5 py-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="grid gap-2">
+          <div className="flex flex-wrap items-center gap-2 text-[11px] font-medium uppercase tracking-[0.22em] text-muted-foreground">
+            <span>Composer admin bar</span>
+            {breadcrumbs.map((segment, index) => (
+              <span className="inline-flex items-center gap-2" key={`${segment}-${index}`}>
+                <span>/</span>
+                <span>{segment}</span>
+              </span>
+            ))}
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {draftPage ? <Badge variant="secondary">{draftPage.pagePath}</Badge> : null}
+            {draftPage ? <Badge variant="outline">{draftPage._status || 'draft'}</Badge> : null}
+            {dirty ? <Badge>Unsaved</Badge> : null}
+          </div>
+        </div>
+        <div className="min-w-[14rem] flex-1 md:max-w-sm">
+          {draftPage ? (
+            <Select
+              disabled={loading || !availablePages.length}
+              onValueChange={(value) => switchToPage(Number(value))}
+              value={String(draftPage.id)}
+            >
+              <SelectTrigger className="h-10 bg-background/90">
+                <SelectValue placeholder="Select a page" />
+              </SelectTrigger>
+              <SelectContent className="z-[130]">
+                {availablePages.map((page) => (
+                  <SelectItem key={page.id} value={String(page.id)}>
+                    {page.title} ({page.visibility || 'public'})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <div className="flex h-10 items-center rounded-xl border border-input bg-background px-3 text-sm text-muted-foreground">
+              {loading ? 'Loading current page...' : 'No page loaded yet'}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="mt-4 grid gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto_auto_auto]">
+        <HeaderField
+          icon={<TypeIcon className="h-4 w-4" />}
+          label="Page title"
+          onChange={onSetTitleDraft}
+          placeholder="Page title"
+          value={titleDraft}
+        />
+        <HeaderField
+          icon={<Link2Icon className="h-4 w-4" />}
+          label="Slug"
+          onChange={onSetSlugDraft}
+          placeholder="page-slug"
+          value={slugDraft}
+        />
+
+        <Button
+          className="mt-[1.45rem] h-10"
+          disabled={creatingDraftClone || loading || dirty}
+          onClick={onCreateDraft}
+          type="button"
+          variant="outline"
+        >
+          {creatingDraftClone ? (
+            <>
+              <LoaderCircleIcon className="h-4 w-4 animate-spin" />
+              Creating...
+            </>
+          ) : (
+            <>
+              <PlusIcon className="h-4 w-4" />
+              Create draft
+            </>
+          )}
+        </Button>
+
+        <div className="mt-[1.45rem] inline-flex h-10 rounded-xl border border-border/70 bg-card/50 p-1">
+          <button
+            className={`rounded-lg px-3 text-sm transition ${
+              visibilityDraft === 'public'
+                ? 'bg-foreground text-background'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+            onClick={() => onSetVisibilityDraft('public')}
+            type="button"
+          >
+            Public
+          </button>
+          <button
+            className={`rounded-lg px-3 text-sm transition ${
+              visibilityDraft === 'private'
+                ? 'bg-foreground text-background'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+            onClick={() => onSetVisibilityDraft('private')}
+            type="button"
+          >
+            Private
+          </button>
+        </div>
+
+        <Button asChild className="mt-[1.45rem] h-10 w-10" size="icon" type="button" variant="outline">
+          <a
+            aria-label="Open route preview"
+            href={pageSlugToFrontendPath(slugDraft)}
+            rel="noreferrer"
+            target="_blank"
+          >
+            <EyeIcon className="h-4 w-4" />
+          </a>
+        </Button>
+      </div>
+    </div>
+  )
+}
+
 function StructureInsertButton({
   onClick,
 }: {
@@ -170,12 +366,15 @@ function StructureInsertButton({
 }) {
   return (
     <button
-      className="flex h-11 w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-border/70 bg-card/40 text-sm text-muted-foreground transition hover:border-primary/40 hover:bg-primary/5 hover:text-foreground"
+      aria-label="Add block"
+      className="group relative flex h-7 w-full items-center justify-center"
       onClick={onClick}
       type="button"
     >
-      <PlusIcon className="h-4 w-4" />
-      Add block
+      <span className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-border/70 transition group-hover:bg-primary/40" />
+      <span className="relative inline-flex h-7 w-7 items-center justify-center rounded-full border border-border/70 bg-background text-muted-foreground shadow-sm transition group-hover:border-primary/40 group-hover:bg-primary/5 group-hover:text-foreground">
+        <PlusIcon className="h-4 w-4" />
+      </span>
     </button>
   )
 }
@@ -197,7 +396,11 @@ function SortableSectionRow({
   onToggleHidden: () => void
   summary: PageComposerSectionSummary
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: String(summary.index) })
+  const isHeroSummary = summary.blockType === 'hero'
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
+    id: String(summary.index),
+    disabled: isHeroSummary,
+  })
 
   return (
     <div
@@ -208,7 +411,13 @@ function SortableSectionRow({
       } ${summary.hidden ? 'opacity-75' : ''}`}
     >
       <div className="flex items-start gap-3">
-        <button className="mt-0.5 rounded-lg border border-border/70 bg-background p-2 text-muted-foreground" type="button" {...attributes} {...listeners}>
+        <button
+          className="mt-0.5 rounded-lg border border-border/70 bg-background p-2 text-muted-foreground disabled:cursor-default disabled:opacity-50"
+          disabled={isHeroSummary}
+          type="button"
+          {...attributes}
+          {...listeners}
+        >
           <GripVerticalIcon className="h-4 w-4" />
         </button>
         <button className="min-w-0 flex-1 text-left" onClick={onClick} type="button">
@@ -227,24 +436,28 @@ function SortableSectionRow({
           <div className="mt-1 text-xs text-muted-foreground">{summary.description}</div>
         </button>
         <div className="flex shrink-0 gap-2">
-          <Button
-            aria-label={`${summary.hidden ? 'Show' : 'Hide'} block ${summary.label}`}
-            onClick={onToggleHidden}
-            size="icon"
-            type="button"
-            variant="ghost"
-          >
-            {summary.hidden ? <EyeIcon className="h-4 w-4" /> : <EyeOffIcon className="h-4 w-4" />}
-          </Button>
           <Button aria-label={`Add block below ${summary.label}`} onClick={onAddBelow} size="icon" type="button" variant="ghost">
             <PlusIcon className="h-4 w-4" />
           </Button>
-          <Button onClick={onDuplicate} size="icon" type="button" variant="ghost">
-            <CopyPlusIcon className="h-4 w-4" />
-          </Button>
-          <Button onClick={onRemove} size="icon" type="button" variant="ghost">
-            <Trash2Icon className="h-4 w-4" />
-          </Button>
+          {!isHeroSummary ? (
+            <>
+              <Button
+                aria-label={`${summary.hidden ? 'Show' : 'Hide'} block ${summary.label}`}
+                onClick={onToggleHidden}
+                size="icon"
+                type="button"
+                variant="ghost"
+              >
+                {summary.hidden ? <EyeIcon className="h-4 w-4" /> : <EyeOffIcon className="h-4 w-4" />}
+              </Button>
+              <Button onClick={onDuplicate} size="icon" type="button" variant="ghost">
+                <CopyPlusIcon className="h-4 w-4" />
+              </Button>
+              <Button onClick={onRemove} size="icon" type="button" variant="ghost">
+                <Trash2Icon className="h-4 w-4" />
+              </Button>
+            </>
+          ) : null}
         </div>
       </div>
     </div>
@@ -280,17 +493,26 @@ export function PageComposerLauncherButton({
   )
 }
 
-export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
+export function PageComposerDrawer({
+  embedded = false,
+  enabled,
+  onRequestClose,
+}: {
+  embedded?: boolean
+  enabled: boolean
+  onRequestClose?: () => void
+}) {
   const pathname = usePathname()
   const router = useRouter()
   const composer = usePageComposerOptional()
   const copilot = usePortalCopilotOptional()
+  const dragControls = useDragControls()
   const setCopilotAuthoringContext = copilot?.setAuthoringContext
+  const composerActivePagePath = composer?.activePagePath
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   )
-  const [activeTab, setActiveTab] = useState<ComposerTab>('structure')
   const [availablePages, setAvailablePages] = useState<PageComposerPageSummary[]>([])
   const [blockLibraryQuery, setBlockLibraryQuery] = useState('')
   const [blockLibraryMode, setBlockLibraryMode] = useState<BlockLibraryMode>('insert')
@@ -304,7 +526,9 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
   const [mediaLoading, setMediaLoading] = useState(false)
   const [mediaPrompt, setMediaPrompt] = useState('')
   const [mediaStatus, setMediaStatus] = useState<null | string>(null)
+  const [pageVersions, setPageVersions] = useState<PageComposerVersionSummary[]>([])
   const [selectedMediaPath, setSelectedMediaPath] = useState<null | string>(null)
+  const [restoringVersionId, setRestoringVersionId] = useState<null | string>(null)
   const [submittingMediaAction, setSubmittingMediaAction] = useState<null | MediaAction>(null)
   const [savingAction, setSavingAction] = useState<null | SavingAction>(null)
   const [savedPage, setSavedPage] = useState<null | PageComposerDocument>(null)
@@ -319,10 +543,18 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
   const mediaUploadInputRef = useRef<HTMLInputElement | null>(null)
   const mediaPromptId = useId()
   const open = composer?.isOpen ?? false
+  const activeTab = composer?.activeTab ?? 'structure'
   const selectedIndex = composer?.selectedIndex ?? 0
+
   const setSelectedIndex = useCallback(
     (value: number) => {
       composer?.setSelectedIndex(value)
+    },
+    [composer],
+  )
+  const setActiveTab = useCallback(
+    (value: PageComposerTab) => {
+      composer?.setActiveTab(value)
     },
     [composer],
   )
@@ -331,10 +563,27 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
     () => new Map(sharedSections.map((item) => [item.id, item])),
     [sharedSections],
   )
-  const sectionSummaries = useMemo(
-    () => buildPageComposerSectionSummaries(draftPage?.layout, sharedSectionsById),
-    [draftPage?.layout, sharedSectionsById],
-  )
+  const sectionSummaries = useMemo(() => {
+    const layoutSummaries = buildPageComposerSectionSummaries(draftPage?.layout, sharedSectionsById)
+
+    if (!draftPage) {
+      return layoutSummaries
+    }
+
+    return [
+      {
+        badges: ['page'],
+        blockType: 'hero' as const,
+        category: 'static' as const,
+        description: draftPage.hero?.media ? 'Hero copy and media' : 'Hero copy with fallback media state',
+        hidden: false,
+        index: -1,
+        label: 'Hero',
+        variant: draftPage.hero?.type || null,
+      },
+      ...layoutSummaries,
+    ]
+  }, [draftPage, sharedSectionsById])
   const blockDefinitions = useMemo(() => getPageComposerBlockDefinitions(), [])
   const reusablePresets = useMemo(() => getPageComposerReusablePresets(), [])
   const filteredBlockDefinitions = useMemo(() => {
@@ -371,6 +620,7 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
     })
   }, [blockLibraryQuery, sharedSections])
   const selectedBlock = draftPage?.layout?.[selectedIndex] || null
+  const selectedSummary = sectionSummaries.find((summary) => summary.index === selectedIndex) || null
   const resolvedSelectedBlock = selectedBlock
     ? resolvePageComposerReusableBlock(selectedBlock, { sharedSectionsById })
     : null
@@ -378,6 +628,23 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
     resolvedSelectedBlock?.blockType === 'serviceGrid'
       ? (resolvedSelectedBlock as ServiceGridBlock)
       : null
+  const selectedPricingTable =
+    resolvedSelectedBlock?.blockType === 'pricingTable'
+      ? resolvedSelectedBlock
+      : null
+  const selectedCallToAction =
+    resolvedSelectedBlock?.blockType === 'cta'
+      ? (resolvedSelectedBlock as CallToActionBlock)
+      : null
+  const selectedContentBlock =
+    resolvedSelectedBlock?.blockType === 'content'
+      ? (resolvedSelectedBlock as ContentBlock)
+      : null
+  const selectedTestimonialsBlock =
+    resolvedSelectedBlock?.blockType === 'testimonialsBlock'
+      ? (resolvedSelectedBlock as TestimonialsSectionBlock)
+      : null
+  const heroCopy = lexicalToPlainText(draftPage?.hero?.richText)
   const selectedSharedSectionId = linkedSharedSectionId(selectedBlock)
   const selectedBlockIsLinkedSharedSection = isLinkedSharedSectionBlock(selectedBlock)
   const mediaSlots = useMemo<SectionMediaSlot[]>(() => {
@@ -396,6 +663,8 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
   const selectedMediaSlot = mediaSlots.find((slot) => slot.relationPath === selectedMediaPath) || mediaSlots[0] || null
   const mediaActionsLocked = dirty || !draftPage || !selectedMediaSlot
   const footerStatus = status || mediaStatus || 'Page edits stay local until you save or publish.'
+  const heroSummary = sectionSummaries.find((summary) => summary.index === -1) || null
+  const layoutSectionSummaries = sectionSummaries.filter((summary) => summary.index >= 0)
   const changedBlockCount = useMemo(
     () =>
       countPageComposerChangedBlocks({
@@ -436,10 +705,10 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
       return
     }
 
-    if (selectedIndex > sectionSummaries.length - 1) {
-      setSelectedIndex(sectionSummaries.length - 1)
+    if (!sectionSummaries.some((summary) => summary.index === selectedIndex)) {
+      setSelectedIndex(sectionSummaries[0]?.index ?? 0)
     }
-  }, [sectionSummaries.length, selectedIndex, setSelectedIndex])
+  }, [sectionSummaries, selectedIndex, setSelectedIndex])
 
   useEffect(() => {
     if (!mediaSlots.length) return setSelectedMediaPath(null)
@@ -483,35 +752,35 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
         title: draftPage.title,
         visibility: draftPage.visibility === 'private' ? 'private' : 'public',
       },
-      section: sectionSummaries[selectedIndex]
+      section: selectedSummary
         ? {
-            blockType: sectionSummaries[selectedIndex].blockType,
-            description: sectionSummaries[selectedIndex].description,
-            index: sectionSummaries[selectedIndex].index,
-            label: sectionSummaries[selectedIndex].label,
-            variant: sectionSummaries[selectedIndex].variant,
+            blockType: selectedSummary.blockType,
+            description: selectedSummary.description,
+            index: selectedSummary.index,
+            label: selectedSummary.label,
+            variant: selectedSummary.variant,
           }
         : null,
       surface: 'page-composer',
     })
-  }, [draftPage, sectionSummaries, selectedIndex, selectedMediaSlot, setCopilotAuthoringContext])
+  }, [draftPage, selectedMediaSlot, selectedSummary, setCopilotAuthoringContext])
 
   const loadPage = useCallback(
     async (args?: { pageId?: number; pagePath?: string }) => {
       if (!enabled) return
 
+      const requestedPath = args?.pagePath || composer?.activePagePath || pathname || '/'
+      const resolvedPath = frontendPathToPageSlug(requestedPath) ? requestedPath : '/'
       const query = args?.pageId
         ? `pageId=${args.pageId}`
-        : `pagePath=${encodeURIComponent(args?.pagePath || pathname)}`
+        : `pagePath=${encodeURIComponent(resolvedPath)}`
 
       setLoading(true)
       setStatus(null)
 
       try {
         const response = await fetch(`/api/internal/page-composer?${query}`)
-        const payload = (await response.json().catch(() => null)) as
-          | null
-          | { error?: string; page?: PageComposerDocument; pages?: PageComposerPageSummary[] }
+        const payload = (await response.json().catch(() => null)) as null | PageComposerResponse
 
         if (!response.ok || !payload?.page) {
           throw new Error(payload?.error || 'Unable to load the page composer.')
@@ -519,6 +788,7 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
 
         setAvailablePages(payload.pages || [])
         setDraftPage(payload.page)
+        setPageVersions(payload.versions || [])
         setSavedPage(payload.page)
         setTitleDraft(payload.page.title || '')
         setSlugDraft(payload.page.slug || '')
@@ -530,7 +800,7 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
         setLoading(false)
       }
     },
-    [enabled, pathname],
+    [composer?.activePagePath, enabled, pathname],
   )
 
   const loadMediaLibrary = useCallback(async () => {
@@ -592,19 +862,19 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
     })
   }
 
-  function replaceSelectedBlock(block: NonNullable<PageComposerDocument['layout']>[number]) {
+  const replaceSelectedBlock = useCallback((block: NonNullable<PageComposerDocument['layout']>[number]) => {
     mutatePage((page) => ({
       ...page,
       layout: updatePageLayoutSection({ block, index: selectedIndex, layout: page.layout || [] }),
     }))
-  }
+  }, [selectedIndex])
 
-  function mutateSelectedServiceGrid(mutator: (block: ServiceGridBlock) => ServiceGridBlock) {
+  const mutateSelectedServiceGrid = useCallback((mutator: (block: ServiceGridBlock) => ServiceGridBlock) => {
     if (!selectedServiceGrid) return
     replaceSelectedBlock(mutator(selectedServiceGrid))
-  }
+  }, [replaceSelectedBlock, selectedServiceGrid])
 
-  function mutateSelectedService(serviceIndex: number, mutator: (service: ServiceGridService) => ServiceGridService) {
+  const mutateSelectedService = useCallback((serviceIndex: number, mutator: (service: ServiceGridService) => ServiceGridService) => {
     mutateSelectedServiceGrid((block) => {
       const services = [...(block.services || [])]
       const current = services[serviceIndex]
@@ -612,7 +882,34 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
       services[serviceIndex] = mutator(current)
       return { ...block, services }
     })
-  }
+  }, [mutateSelectedServiceGrid])
+
+  const mutateSelectedPricingTable = useCallback((mutator: (block: NonNullable<typeof selectedPricingTable>) => NonNullable<typeof selectedPricingTable>) => {
+    if (!selectedPricingTable) return
+    replaceSelectedBlock(mutator(selectedPricingTable))
+  }, [replaceSelectedBlock, selectedPricingTable])
+  const mutateSelectedCallToAction = useCallback((mutator: (block: NonNullable<typeof selectedCallToAction>) => NonNullable<typeof selectedCallToAction>) => {
+    if (!selectedCallToAction) return
+    replaceSelectedBlock(mutator(selectedCallToAction))
+  }, [replaceSelectedBlock, selectedCallToAction])
+  const mutateSelectedContentBlock = useCallback((mutator: (block: NonNullable<typeof selectedContentBlock>) => NonNullable<typeof selectedContentBlock>) => {
+    if (!selectedContentBlock) return
+    replaceSelectedBlock(mutator(selectedContentBlock))
+  }, [replaceSelectedBlock, selectedContentBlock])
+  const mutateSelectedTestimonialsBlock = useCallback((mutator: (block: NonNullable<typeof selectedTestimonialsBlock>) => NonNullable<typeof selectedTestimonialsBlock>) => {
+    if (!selectedTestimonialsBlock) return
+    replaceSelectedBlock(mutator(selectedTestimonialsBlock))
+  }, [replaceSelectedBlock, selectedTestimonialsBlock])
+
+  const mutateSelectedPricingPlan = useCallback((planIndex: number, mutator: (plan: PricingPlan) => PricingPlan) => {
+    mutateSelectedPricingTable((block) => {
+      const plans = [...(block.inlinePlans || [])]
+      const current = plans[planIndex]
+      if (!current) return block
+      plans[planIndex] = mutator(current)
+      return { ...block, inlinePlans: plans }
+    })
+  }, [mutateSelectedPricingTable])
 
   function handleDragEnd(event: DragEndEvent) {
     const activeId = Number(event.active.id)
@@ -624,7 +921,7 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
 
   function openBlockLibrary(index: number, mode: BlockLibraryMode = 'insert') {
     setBlockLibraryMode(mode)
-    setBlockLibraryTargetIndex(index)
+    setBlockLibraryTargetIndex(Math.max(0, index))
     setBlockLibraryQuery('')
     setIsBlockLibraryOpen(true)
   }
@@ -680,12 +977,11 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
         headers: { 'content-type': 'application/json' },
         method: 'POST',
       })
-      const payload = (await response.json().catch(() => null)) as
-        | null
-        | { error?: string; page?: PageComposerDocument; pages?: PageComposerPageSummary[] }
+      const payload = (await response.json().catch(() => null)) as null | PageComposerResponse
       if (!response.ok || !payload?.page) throw new Error(payload?.error || 'Unable to save the page.')
       setAvailablePages(payload.pages || [])
       setDraftPage(payload.page)
+      setPageVersions(payload.versions || [])
       setSavedPage(payload.page)
       setTitleDraft(payload.page.title || '')
       setSlugDraft(payload.page.slug || '')
@@ -700,7 +996,7 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
     }
   }
 
-  async function createDraftClone() {
+  const createDraftClone = useCallback(async () => {
     if (!draftPage) return
 
     if (dirty) {
@@ -720,9 +1016,7 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
         headers: { 'content-type': 'application/json' },
         method: 'POST',
       })
-      const payload = (await response.json().catch(() => null)) as
-        | null
-        | { error?: string; page?: PageComposerDocument; pages?: PageComposerPageSummary[] }
+      const payload = (await response.json().catch(() => null)) as null | PageComposerResponse
 
       if (!response.ok || !payload?.page) {
         throw new Error(payload?.error || 'Unable to create the page draft.')
@@ -730,6 +1024,7 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
 
       setAvailablePages(payload.pages || [])
       setDraftPage(payload.page)
+      setPageVersions(payload.versions || [])
       setSavedPage(payload.page)
       setTitleDraft(payload.page.title || '')
       setSlugDraft(payload.page.slug || '')
@@ -745,9 +1040,59 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
     } finally {
       setCreatingDraftClone(false)
     }
-  }
+  }, [dirty, draftPage, router, setActiveTab, setSelectedIndex])
 
-  function switchToPage(pageId: number) {
+  const restorePageVersion = useCallback(async (version: PageComposerVersionSummary) => {
+    if (!draftPage) return
+
+    const confirmed =
+      typeof window === 'undefined'
+        ? true
+        : window.confirm(
+            `Restore ${version.title} from ${formatTimestamp(version.updatedAt)} as the current draft? Unsaved page edits will be replaced.`,
+          )
+
+    if (!confirmed) {
+      return
+    }
+
+    setRestoringVersionId(version.id)
+    setStatus(null)
+
+    try {
+      const response = await fetch('/api/internal/page-composer', {
+        body: JSON.stringify({
+          action: 'restore-page-version',
+          pageId: draftPage.id,
+          versionId: version.id,
+        }),
+        headers: { 'content-type': 'application/json' },
+        method: 'POST',
+      })
+      const payload = (await response.json().catch(() => null)) as null | PageComposerResponse
+
+      if (!response.ok || !payload?.page) {
+        throw new Error(payload?.error || 'Unable to restore the page version.')
+      }
+
+      setAvailablePages(payload.pages || [])
+      setDraftPage(payload.page)
+      setPageVersions(payload.versions || [])
+      setSavedPage(payload.page)
+      setTitleDraft(payload.page.title || '')
+      setSlugDraft(payload.page.slug || '')
+      setVisibilityDraft(payload.page.visibility === 'private' ? 'private' : 'public')
+      setDirty(false)
+      setStatus(`Restored ${version.title} as the current draft.`)
+      router.refresh()
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : 'Unable to restore the page version.')
+    } finally {
+      setRestoringVersionId(null)
+    }
+  }, [draftPage, router])
+
+  const switchToPage = useCallback((pageId: number) => {
     if (dirty) {
       setStatus('Save, publish, or reload the current page before switching to another page.')
       return
@@ -761,25 +1106,25 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
       router.push(nextPage.pagePath)
       router.refresh()
     }
-  }
+  }, [availablePages, dirty, loadPage, router, setSelectedIndex])
 
-  function duplicateBlock(index: number) {
+  const duplicateBlock = useCallback((index: number) => {
     mutatePage((page) => ({
       ...page,
       layout: duplicatePageLayoutSection({ index, layout: page.layout || [] }),
     }))
     setSelectedIndex(index + 1)
-  }
+  }, [setSelectedIndex])
 
-  function removeBlock(index: number) {
+  const removeBlock = useCallback((index: number) => {
     mutatePage((page) => ({
       ...page,
       layout: removePageLayoutSection({ index, layout: page.layout || [] }),
     }))
     setSelectedIndex(Math.max(0, index - 1))
-  }
+  }, [setSelectedIndex])
 
-  function toggleBlockHidden(index: number) {
+  const toggleBlockHidden = useCallback((index: number) => {
     mutatePage((page) => ({
       ...page,
       layout: togglePageLayoutSectionHidden({
@@ -788,7 +1133,327 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
       }),
     }))
     setSelectedIndex(index)
-  }
+  }, [setSelectedIndex])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    const detail: null | PageComposerToolbarState =
+      embedded && open && draftPage && composerActivePagePath === pathname
+        ? {
+            availablePages,
+            creatingDraftClone,
+            dirty,
+            draftPage,
+            loading,
+            onAddAbove: (index) => openBlockLibrary(index < 0 ? 0 : index),
+            onAddBelow: (index) => openBlockLibrary(index < 0 ? 0 : index + 1),
+            onCreateDraft: () => void createDraftClone(),
+            onDeleteBlock: (index) => {
+              if (index < 0) return
+              removeBlock(index)
+            },
+            onDuplicateBlock: (index) => {
+              if (index < 0) return
+              duplicateBlock(index)
+            },
+            onSetSlugDraft: (value) => {
+              setDirty(true)
+              setSlugDraft(value)
+            },
+            onSetTitleDraft: (value) => {
+              setDirty(true)
+              setTitleDraft(value)
+            },
+            onSetVisibilityDraft: (value) => {
+              setDirty(true)
+              setVisibilityDraft(value)
+            },
+            onToggleHidden: (index) => {
+              if (index < 0) return
+              toggleBlockHidden(index)
+            },
+            sectionSummaries,
+            selectedIndex,
+            heroEditor: draftPage
+              ? draftPage.pagePath === '/'
+                ? {
+                    copy: heroCopy,
+                    kind: 'marketing-home' as const,
+                    eyebrow: draftPage.hero.eyebrow?.trim() || 'Grime Time exterior cleaning',
+                    headlineAccent: draftPage.hero.headlineAccent?.trim() || 'Visible results.',
+                    headlinePrimary: draftPage.hero.headlinePrimary?.trim() || 'Clear scope.',
+                    panelBody:
+                      draftPage.hero.panelBody?.trim() ||
+                      'Strong visuals, clear service lanes, and a quote form that explains what moves the number.',
+                    panelEyebrow: draftPage.hero.panelEyebrow?.trim() || 'Fast lane for homeowners',
+                    panelHeading:
+                      draftPage.hero.panelHeading?.trim() || 'Quotes and scheduling without vague contractor talk.',
+                    updateField: (field, value) => {
+                      mutatePage((page) => ({
+                        ...page,
+                        hero: {
+                          ...page.hero,
+                          [field]: value,
+                        },
+                      }))
+                    },
+                    updateCopy: (value) => {
+                      mutatePage((page) => ({
+                        ...page,
+                        hero: {
+                          ...page.hero,
+                          richText: createLexicalParagraph(value),
+                        },
+                      }))
+                    },
+                  }
+                : {
+                    copy: heroCopy,
+                    kind: 'rich-text' as const,
+                    updateCopy: (value) => {
+                      mutatePage((page) => ({
+                        ...page,
+                        hero: {
+                          ...page.hero,
+                          richText: createLexicalParagraph(value),
+                        },
+                      }))
+                    },
+                  }
+              : null,
+            pricingTableEditor: selectedPricingTable && selectedPricingTable.dataSource === 'inline'
+              ? {
+                  block: selectedPricingTable,
+                  updateBlockField: (field, value) => {
+                    replaceSelectedBlock({
+                      ...selectedPricingTable,
+                      [field]: value,
+                    })
+                  },
+                  updateFeatureText: (featureIndex, planIndex, value) => {
+                    mutateSelectedPricingPlan(planIndex, (current) => {
+                      const features = [...(current.features || [])]
+                      const existing = features[featureIndex]
+
+                      if (!existing) {
+                        features[featureIndex] = { text: value }
+                      }
+                      else {
+                        features[featureIndex] = {
+                          ...existing,
+                          text: value,
+                        }
+                      }
+
+                      return {
+                        ...current,
+                        features,
+                      }
+                    })
+                  },
+                  updatePlanField: (field, planIndex, value) => {
+                    mutateSelectedPricingPlan(planIndex, (current) => ({
+                      ...current,
+                      [field]: value,
+                    }))
+                  },
+                  updatePlanLinkLabel: (planIndex, value) => {
+                    mutateSelectedPricingPlan(planIndex, (current) => ({
+                      ...current,
+                      link: {
+                        ...current.link,
+                        label: value,
+                      },
+                    }))
+                  },
+                }
+              : null,
+            serviceGridEditor: selectedServiceGrid
+              ? {
+                  block: selectedServiceGrid,
+                  updateBlockField: (field, value) => {
+                    replaceSelectedBlock({
+                      ...selectedServiceGrid,
+                      [field]: value,
+                    })
+                  },
+                  updateHighlightText: (highlightIndex, rowIndex, value) => {
+                    mutateSelectedService(rowIndex, (current) => {
+                      const highlights = [...(current.highlights || [])]
+                      const existing = highlights[highlightIndex]
+
+                      if (!existing) {
+                        highlights[highlightIndex] = { text: value }
+                      }
+                      else {
+                        highlights[highlightIndex] = {
+                          ...existing,
+                          text: value,
+                        }
+                      }
+
+                      return {
+                        ...current,
+                        highlights,
+                      }
+                    })
+                  },
+                  updateServiceField: (field, rowIndex, value) => {
+                    mutateSelectedService(rowIndex, (current) => ({
+                      ...current,
+                      [field]: value,
+                    }))
+                  },
+                }
+              : null,
+            ctaEditor: selectedCallToAction
+              ? {
+                  block: selectedCallToAction,
+                  updateCopy: (value) => {
+                    mutateSelectedCallToAction((current) => ({
+                      ...current,
+                      richText: createLexicalParagraph(value),
+                    }))
+                  },
+                  updateLinkLabel: (linkIndex, value) => {
+                    mutateSelectedCallToAction((current) => {
+                      const links = [...(current.links || [])]
+                      const existing = links[linkIndex]
+
+                      if (!existing) {
+                        return current
+                      }
+
+                      links[linkIndex] = {
+                        ...existing,
+                        link: {
+                          ...existing.link,
+                          label: value,
+                        },
+                      }
+
+                      return {
+                        ...current,
+                        links,
+                      }
+                    })
+                  },
+                }
+              : null,
+            contentBlockEditor: selectedContentBlock
+              ? {
+                  block: selectedContentBlock,
+                  updateColumnCopy: (columnIndex, value) => {
+                    mutateSelectedContentBlock((current) => {
+                      const columns = [...(current.columns || [])]
+                      const existing = columns[columnIndex]
+
+                      if (!existing) {
+                        return current
+                      }
+
+                      columns[columnIndex] = {
+                        ...existing,
+                        richText: createLexicalParagraph(value),
+                      }
+
+                      return {
+                        ...current,
+                        columns,
+                      }
+                    })
+                  },
+                  updateColumnLinkLabel: (columnIndex, value) => {
+                    mutateSelectedContentBlock((current) => {
+                      const columns = [...(current.columns || [])]
+                      const existing = columns[columnIndex]
+
+                      if (!existing || !existing.link) {
+                        return current
+                      }
+
+                      columns[columnIndex] = {
+                        ...existing,
+                        link: {
+                          ...existing.link,
+                          label: value,
+                        },
+                      }
+
+                      return {
+                        ...current,
+                        columns,
+                      }
+                    })
+                  },
+                }
+              : null,
+            testimonialsEditor: selectedTestimonialsBlock
+              ? {
+                  block: selectedTestimonialsBlock,
+                  updateHeading: (value) => {
+                    mutateSelectedTestimonialsBlock((current) => ({
+                      ...current,
+                      heading: value,
+                    }))
+                  },
+                  updateIntro: (value) => {
+                    mutateSelectedTestimonialsBlock((current) => ({
+                      ...current,
+                      intro: createLexicalParagraph(value),
+                    }))
+                  },
+                }
+              : null,
+            slugDraft,
+            switchToPage,
+            titleDraft,
+            visibilityDraft,
+          }
+        : null
+
+    window.dispatchEvent(new CustomEvent(PAGE_COMPOSER_TOOLBAR_EVENT, { detail }))
+
+    return () => {
+      window.dispatchEvent(new CustomEvent(PAGE_COMPOSER_TOOLBAR_EVENT, { detail: null }))
+    }
+  }, [
+    availablePages,
+    composerActivePagePath,
+    creatingDraftClone,
+    createDraftClone,
+    duplicateBlock,
+    dirty,
+    draftPage,
+    embedded,
+    heroCopy,
+    loading,
+    mutateSelectedPricingPlan,
+    mutateSelectedService,
+    mutateSelectedPricingTable,
+    open,
+    pathname,
+    removeBlock,
+    replaceSelectedBlock,
+    sectionSummaries,
+    selectedIndex,
+    selectedPricingTable,
+    selectedServiceGrid,
+    selectedCallToAction,
+    selectedContentBlock,
+    selectedTestimonialsBlock,
+    slugDraft,
+    switchToPage,
+    titleDraft,
+    toggleBlockHidden,
+    visibilityDraft,
+    mutateSelectedCallToAction,
+    mutateSelectedContentBlock,
+    mutateSelectedTestimonialsBlock,
+  ])
 
   function updateBlockAtIndex(index: number, block: NonNullable<PageComposerDocument['layout']>[number]) {
     mutatePage((page) => ({
@@ -884,167 +1549,115 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
   }
 
   if (!enabled || !composer) return null
+  if (!open) return null
 
-  return (
-    <AnimatePresence initial={false}>
-      {open ? (
-        <motion.aside
-          className="page-composer-rail relative isolate z-[90] hidden min-h-0 w-full min-w-0 flex-col overflow-hidden border-l border-border/70 bg-background/96 shadow-2xl backdrop-blur xl:sticky xl:top-0 xl:flex xl:h-[100dvh] xl:self-start"
-          initial={{ opacity: 0, x: 40 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: 40 }}
-          transition={{ duration: 0.18, ease: 'easeOut' }}
+  function startDrag(event: ReactPointerEvent<HTMLButtonElement>) {
+    dragControls.start(event)
+  }
+
+  const usesLiveCanvasToolbar =
+    embedded && open && Boolean(draftPage) && composerActivePagePath === pathname
+  const showInlineAdminBar = !usesLiveCanvasToolbar
+
+  const panel = (
+    <aside
+      aria-label="Page composer"
+      className="relative flex h-full min-h-0 flex-col overflow-hidden rounded-[2rem] border bg-background shadow-2xl"
+      role="complementary"
+    >
+      {!embedded ? (
+        <div className="flex items-center justify-between gap-4 border-b border-border/70 px-5 py-4">
+          <div className="flex items-center gap-3">
+            <button
+              aria-label="Move page composer"
+              className="inline-flex h-9 w-9 shrink-0 cursor-grab items-center justify-center rounded-xl border border-border/70 text-muted-foreground transition hover:bg-accent hover:text-accent-foreground active:cursor-grabbing"
+              onPointerDown={startDrag}
+              type="button"
+            >
+              <GripVerticalIcon className="h-4 w-4" />
+            </button>
+            <div>
+              <p className="text-[0.68rem] uppercase tracking-[0.3em] text-muted-foreground">Staff beta</p>
+              <h2 className="mt-1 text-xl font-semibold tracking-tight">Visual composer</h2>
+            </div>
+          </div>
+          <Button
+            aria-label="Dismiss page composer"
+            onClick={onRequestClose || composer.close}
+            size="icon"
+            type="button"
+            variant="ghost"
+          >
+            <XIcon className="h-4 w-4" />
+          </Button>
+        </div>
+      ) : null}
+
+      <div className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] overflow-hidden">
+        {showInlineAdminBar ? (
+          <ComposerAdminBar
+            availablePages={availablePages}
+            creatingDraftClone={creatingDraftClone}
+            dirty={dirty}
+            draftPage={draftPage}
+            loading={loading}
+            onCreateDraft={() => void createDraftClone()}
+            onSetSlugDraft={(value) => {
+              setDirty(true)
+              setSlugDraft(value)
+            }}
+            onSetTitleDraft={(value) => {
+              setDirty(true)
+              setTitleDraft(value)
+            }}
+            onSetVisibilityDraft={(value) => {
+              setDirty(true)
+              setVisibilityDraft(value)
+            }}
+            slugDraft={slugDraft}
+            switchToPage={switchToPage}
+            titleDraft={titleDraft}
+            visibilityDraft={visibilityDraft}
+          />
+        ) : null}
+
+        <Tabs
+          className="grid min-h-0 grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden"
+          onValueChange={(value) => setActiveTab(value as PageComposerTab)}
+          value={activeTab}
         >
-            <div className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] overflow-hidden">
-              <div className="flex items-start justify-between gap-4 border-b border-border/70 px-5 py-4">
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant="outline">Visual composer</Badge>
-                    {draftPage ? <Badge variant="secondary">{draftPage.pagePath}</Badge> : null}
-                    {draftPage ? <Badge variant="outline">{draftPage._status || 'draft'}</Badge> : null}
-                    {dirty ? <Badge>Unsaved</Badge> : null}
-                  </div>
+          {showInlineAdminBar ? (
+            <div className="border-b border-border/70 px-5 py-3">
+              <TabsList className="grid h-auto w-full grid-cols-4 gap-1 rounded-xl p-1">
+                <TabsTrigger value="structure">
+                  <span className="inline-flex items-center gap-2">
+                    <GripVerticalIcon className="h-4 w-4" />
+                    Structure
+                  </span>
+                </TabsTrigger>
+                <TabsTrigger value="content">
+                  <span className="inline-flex items-center gap-2">
+                    <TypeIcon className="h-4 w-4" />
+                    Content
+                  </span>
+                </TabsTrigger>
+                <TabsTrigger value="media">
+                  <span className="inline-flex items-center gap-2">
+                    <ImageIcon className="h-4 w-4" />
+                    Media
+                  </span>
+                </TabsTrigger>
+                <TabsTrigger value="publish">
+                  <span className="inline-flex items-center gap-2">
+                    <RocketIcon className="h-4 w-4" />
+                    Publish
+                  </span>
+                </TabsTrigger>
+              </TabsList>
+            </div>
+          ) : null}
 
-                  <div className="mt-4 grid gap-3">
-                    <div className="grid gap-3 md:grid-cols-2">
-                      <HeaderField
-                        icon={<TypeIcon className="h-4 w-4" />}
-                        label="Page title"
-                        onChange={(value) => {
-                          setDirty(true)
-                          setTitleDraft(value)
-                        }}
-                        placeholder="Page title"
-                        value={titleDraft}
-                      />
-                      <HeaderField
-                        icon={<Link2Icon className="h-4 w-4" />}
-                        label="Slug"
-                        onChange={(value) => {
-                          setDirty(true)
-                          setSlugDraft(value)
-                        }}
-                        placeholder="page-slug"
-                        value={slugDraft}
-                      />
-                    </div>
-
-                    <div className="grid gap-1.5">
-                      <span className="text-[11px] font-medium uppercase tracking-[0.22em] text-muted-foreground">
-                        Working page
-                      </span>
-                      {draftPage ? (
-                        <div className="grid gap-2 md:grid-cols-[minmax(0,1fr)_auto_auto_auto]">
-                          <Select
-                            disabled={loading || !availablePages.length}
-                            onValueChange={(value) => switchToPage(Number(value))}
-                            value={String(draftPage.id)}
-                          >
-                            <SelectTrigger className="h-10">
-                              <SelectValue placeholder="Select a page" />
-                            </SelectTrigger>
-                            <SelectContent className="z-[130]">
-                              {availablePages.map((page) => (
-                                <SelectItem key={page.id} value={String(page.id)}>
-                                  {page.title} ({page.visibility || 'public'})
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-
-                          <Button
-                            disabled={creatingDraftClone || loading || dirty}
-                            onClick={() => void createDraftClone()}
-                            size="sm"
-                            type="button"
-                            variant="outline"
-                          >
-                            {creatingDraftClone ? (
-                              <>
-                                <LoaderCircleIcon className="h-4 w-4 animate-spin" />
-                                Creating...
-                              </>
-                            ) : (
-                              <>
-                                <PlusIcon className="h-4 w-4" />
-                                Create draft
-                              </>
-                            )}
-                          </Button>
-
-                          <div className="inline-flex h-10 rounded-xl border border-border/70 bg-card/50 p-1">
-                            <button
-                              className={`rounded-lg px-3 text-sm transition ${
-                                visibilityDraft === 'public'
-                                  ? 'bg-foreground text-background'
-                                  : 'text-muted-foreground hover:text-foreground'
-                              }`}
-                              onClick={() => {
-                                setDirty(true)
-                                setVisibilityDraft('public')
-                              }}
-                              type="button"
-                            >
-                              Public
-                            </button>
-                            <button
-                              className={`rounded-lg px-3 text-sm transition ${
-                                visibilityDraft === 'private'
-                                  ? 'bg-foreground text-background'
-                                  : 'text-muted-foreground hover:text-foreground'
-                              }`}
-                              onClick={() => {
-                                setDirty(true)
-                                setVisibilityDraft('private')
-                              }}
-                              type="button"
-                            >
-                              Private
-                            </button>
-                          </div>
-
-                          <Button asChild size="icon" type="button" variant="outline">
-                            <a
-                              aria-label="Open route preview"
-                              href={pageSlugToFrontendPath(slugDraft)}
-                              rel="noreferrer"
-                              target="_blank"
-                            >
-                              <EyeIcon className="h-4 w-4" />
-                            </a>
-                          </Button>
-                        </div>
-                      ) : (
-                        <div className="flex h-10 items-center rounded-xl border border-input bg-background px-3 text-sm text-muted-foreground">
-                          {loading ? 'Loading current page...' : 'No page loaded yet'}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <Button aria-label="Dismiss page composer" onClick={composer.close} size="icon" type="button" variant="ghost">
-                  <XIcon className="h-4 w-4" />
-                </Button>
-              </div>
-
-              <div className="grid min-h-0 grid-rows-[auto_minmax(0,1fr)] overflow-hidden">
-                <div className="border-b border-border/70 px-5 py-4">
-                  <div className="rounded-2xl border border-border/70 bg-card/50 px-4 py-3 text-sm text-muted-foreground">
-                    The live page is the canvas. Click a section on the page to select it, then use this rail to edit structure, content, media, and publish state.
-                  </div>
-                </div>
-
-                <Tabs className="grid min-h-0 grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden" onValueChange={(value) => setActiveTab(value as ComposerTab)} value={activeTab}>
-                  <div className="border-b border-border/70 px-5 py-3">
-                  <TabsList className="grid h-auto w-full grid-cols-4 gap-1 rounded-xl p-1">
-                    <TabsTrigger value="structure">Structure</TabsTrigger>
-                    <TabsTrigger value="content">Content</TabsTrigger>
-                    <TabsTrigger value="media">Media</TabsTrigger>
-                    <TabsTrigger value="publish">Publish</TabsTrigger>
-                  </TabsList>
-                  </div>
-
-                  <TabsContent className="portal-scroll mt-0 min-h-0 px-5 py-4" value="structure">
+                <TabsContent className="portal-scroll mt-0 min-h-0 px-5 py-4" value="structure">
                   {loading ? (
                     <div className="rounded-2xl border border-border/70 bg-card/50 px-4 py-6 text-sm text-muted-foreground">
                       Loading page structure...
@@ -1057,9 +1670,9 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
                     <div className="grid gap-4">
                       <div className="flex items-center justify-between gap-3 rounded-2xl border border-border/70 bg-card/50 px-4 py-3">
                         <div className="text-sm text-muted-foreground">
-                          {sectionSummaries.length} block{sectionSummaries.length === 1 ? '' : 's'}
+                          {sectionSummaries.length} composer region{sectionSummaries.length === 1 ? '' : 's'}
                         </div>
-                        <Button onClick={() => openBlockLibrary(sectionSummaries.length)} size="sm" type="button" variant="outline">
+                        <Button onClick={() => openBlockLibrary(layoutSectionSummaries.length)} size="sm" type="button" variant="outline">
                           <PlusIcon className="h-4 w-4" />
                           Add block
                         </Button>
@@ -1067,10 +1680,25 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
 
                       {sectionSummaries.length ? (
                         <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd} sensors={sensors}>
-                          <SortableContext items={sectionSummaries.map((summary) => String(summary.index))} strategy={verticalListSortingStrategy}>
+                          <SortableContext items={layoutSectionSummaries.map((summary) => String(summary.index))} strategy={verticalListSortingStrategy}>
                             <div className="grid gap-3">
-                              <StructureInsertButton onClick={() => openBlockLibrary(0)} />
-                              {sectionSummaries.map((summary) => (
+                              {heroSummary ? (
+                                <div className="grid gap-3">
+                                  <SortableSectionRow
+                                    active={selectedIndex === heroSummary.index}
+                                    onAddBelow={() => openBlockLibrary(0)}
+                                    onClick={() => setSelectedIndex(heroSummary.index)}
+                                    onDuplicate={() => {}}
+                                    onRemove={() => {}}
+                                    onToggleHidden={() => {}}
+                                    summary={heroSummary}
+                                  />
+                                  <StructureInsertButton onClick={() => openBlockLibrary(0)} />
+                                </div>
+                              ) : (
+                                <StructureInsertButton onClick={() => openBlockLibrary(0)} />
+                              )}
+                              {layoutSectionSummaries.map((summary) => (
                                 <div className="grid gap-3" key={`${summary.index}-${summary.label}`}>
                                   <SortableSectionRow
                                     active={selectedIndex === summary.index}
@@ -1090,7 +1718,7 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
                       ) : (
                         <div className="grid gap-3">
                           <div className="rounded-2xl border border-dashed border-border/70 bg-card/40 px-4 py-8 text-sm text-muted-foreground">
-                            This page does not have any blocks yet.
+                            This page does not have any layout blocks yet.
                           </div>
                           <StructureInsertButton onClick={() => openBlockLibrary(0)} />
                         </div>
@@ -1297,12 +1925,20 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
                   ) : (
                     <div className="grid gap-4">
                       <div className="rounded-2xl border border-border/70 bg-card/50 p-4">
-                        <div className="text-sm font-semibold text-foreground">{sectionSummaries[selectedIndex]?.label || 'Selected block'}</div>
+                        <div className="text-sm font-semibold text-foreground">{selectedSummary?.label || 'Selected block'}</div>
                         <div className="mt-1 text-sm text-muted-foreground">
-                          This first content editor is focused on reusable `serviceGrid` sections. Other block types can still be replaced, reordered, duplicated, and removed while the shared-section authoring surface expands.
+                          {selectedIndex < 0
+                            ? 'Hero editing now happens directly on the page. Use the live canvas copy and media affordances instead of this side surface.'
+                            : 'This first content editor is focused on reusable `serviceGrid` sections. Other block types can still be replaced, reordered, duplicated, and removed while the shared-section authoring surface expands.'}
                         </div>
                         <div className="mt-3">
-                          <Button onClick={() => openBlockLibrary(selectedIndex, 'replace')} size="sm" type="button" variant="outline">
+                          <Button
+                            disabled={selectedIndex < 0}
+                            onClick={() => openBlockLibrary(selectedIndex, 'replace')}
+                            size="sm"
+                            type="button"
+                            variant="outline"
+                          >
                             <RefreshCwIcon className="h-4 w-4" />
                             Replace section
                           </Button>
@@ -1681,6 +2317,70 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
                           </div>
                         )}
                       </div>
+
+                      <div className="rounded-2xl border border-border/70 bg-card/50 p-4">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div>
+                            <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground">
+                              <HistoryIcon className="h-3.5 w-3.5" />
+                              Version history
+                            </div>
+                            <div className="mt-2 text-sm font-semibold text-foreground">
+                              Restore an earlier snapshot into draft state
+                            </div>
+                          </div>
+                          <Badge variant="outline">
+                            {pageVersions.length} version{pageVersions.length === 1 ? '' : 's'}
+                          </Badge>
+                        </div>
+
+                        {pageVersions.length ? (
+                          <div className="mt-4 grid gap-3">
+                            {pageVersions.map((version) => (
+                              <div className="rounded-2xl border border-border/70 bg-background/70 p-3" key={version.id}>
+                                <div className="flex flex-wrap items-start justify-between gap-3">
+                                  <div className="grid gap-2">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                      <span className="text-sm font-semibold text-foreground">{version.title}</span>
+                                      <Badge variant={version.status === 'published' ? 'secondary' : 'outline'}>
+                                        {version.status}
+                                      </Badge>
+                                      {version.latest ? <Badge variant="outline">Current draft</Badge> : null}
+                                    </div>
+                                    <div className="text-xs text-muted-foreground">
+                                      {version.pagePath} · Saved {formatTimestamp(version.updatedAt)}
+                                    </div>
+                                  </div>
+
+                                  <Button
+                                    disabled={savingAction !== null || restoringVersionId !== null}
+                                    onClick={() => void restorePageVersion(version)}
+                                    size="sm"
+                                    type="button"
+                                    variant="outline"
+                                  >
+                                    {restoringVersionId === version.id ? (
+                                      <>
+                                        <LoaderCircleIcon className="h-4 w-4 animate-spin" />
+                                        Restoring...
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Undo2Icon className="h-4 w-4" />
+                                        Restore draft
+                                      </>
+                                    )}
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="mt-3 text-sm text-muted-foreground">
+                            Save or publish this page to start building version history.
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
                 </TabsContent>
@@ -1689,7 +2389,7 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
                   <div className="flex flex-wrap justify-between gap-3">
                     <div className="text-sm text-muted-foreground">{footerStatus}</div>
                     <div className="flex flex-wrap gap-2">
-                      <Button disabled={!draftPage || savingAction !== null} onClick={() => void persistPage('save-draft')} size="sm" type="button" variant="outline">
+                      <Button disabled={!draftPage || savingAction !== null || restoringVersionId !== null} onClick={() => void persistPage('save-draft')} size="sm" type="button" variant="outline">
                         {savingAction === 'save-draft' ? (
                           <>
                             <LoaderCircleIcon className="h-4 w-4 animate-spin" />
@@ -1702,7 +2402,7 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
                           </>
                         )}
                       </Button>
-                      <Button disabled={!draftPage || savingAction !== null} onClick={() => void persistPage('publish-page')} size="sm" type="button">
+                      <Button disabled={!draftPage || savingAction !== null || restoringVersionId !== null} onClick={() => void persistPage('publish-page')} size="sm" type="button">
                         {savingAction === 'publish-page' ? (
                           <>
                             <LoaderCircleIcon className="h-4 w-4 animate-spin" />
@@ -1718,12 +2418,10 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
                     </div>
                   </div>
                 </div>
-              </Tabs>
-              </div>
-            </div>
+        </Tabs>
 
-              {isBlockLibraryOpen ? (
-                <div className="absolute inset-0 z-[130] bg-background/98 backdrop-blur-sm">
+        {isBlockLibraryOpen ? (
+          <div className="fixed right-4 top-[calc(var(--portal-sticky-top)+4.75rem)] z-[120] h-[min(42rem,calc(100vh-7rem))] w-[min(31rem,calc(100vw-1rem))] overflow-hidden rounded-[1.75rem] border border-border/70 bg-background/98 shadow-2xl backdrop-blur-sm">
                   <div className="flex items-start justify-between gap-4 border-b border-border/70 px-5 py-4">
                     <div className="min-w-0 flex-1">
                       <div className="text-lg font-semibold text-foreground">Block library</div>
@@ -1894,10 +2592,31 @@ export function PageComposerDrawer({ enabled }: { enabled: boolean }) {
                       </div>
                     </div>
                   </div>
-                </div>
-              ) : null}
-        </motion.aside>
-      ) : null}
-    </AnimatePresence>
+          </div>
+        ) : null}
+      </div>
+    </aside>
+  )
+
+  if (embedded) {
+    return panel
+  }
+
+  return (
+    <motion.div
+      animate={{ opacity: 1, scale: 1 }}
+      aria-label="Page composer"
+      aria-modal="false"
+      className="fixed right-4 top-[5.5rem] z-[96] w-[min(36rem,calc(100vw-1rem))] max-w-[calc(100vw-1rem)]"
+      drag
+      dragControls={dragControls}
+      dragListener={false}
+      dragMomentum={false}
+      initial={{ opacity: 0, scale: 0.98 }}
+      role="dialog"
+      transition={{ duration: 0.16, ease: 'easeOut' }}
+    >
+      <div className="h-[min(44rem,calc(100vh-6rem))]">{panel}</div>
+    </motion.div>
   )
 }

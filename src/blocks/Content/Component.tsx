@@ -1,14 +1,22 @@
+'use client'
+
 import { cn } from '@/utilities/ui'
 import React from 'react'
 import RichText from '@/components/RichText'
 
 import type { ContentBlock as ContentBlockProps } from '@/payload-types'
 
+import { InlineTextarea, InlineTextInput, usePageComposerTextGenerator } from '@/components/admin-impersonation/PageComposerInlineText'
+import { usePageComposerCanvasToolbarState } from '@/components/admin-impersonation/PageComposerCanvas'
 import { CMSLink } from '../../components/Link'
+import { lexicalToPlainText } from '@/lib/pages/pageComposerLexical'
 
 export const ContentBlock: React.FC<ContentBlockProps> = (props) => {
   const { columns } = props
   const isSingleFullColumn = columns?.length === 1 && columns[0]?.size === 'full'
+  const toolbarState = usePageComposerCanvasToolbarState()
+  const openTextGenerator = usePageComposerTextGenerator()
+  const editor = toolbarState?.contentBlockEditor ?? null
 
   const colsSpanClasses = {
     full: '12',
@@ -29,6 +37,7 @@ export const ContentBlock: React.FC<ContentBlockProps> = (props) => {
             columns.length > 0 &&
             columns.map((col, index) => {
               const { enableLink, link, richText, size } = col
+              const bodyCopy = lexicalToPlainText(richText)
 
               return (
                 <div
@@ -37,9 +46,45 @@ export const ContentBlock: React.FC<ContentBlockProps> = (props) => {
                   })}
                   key={index}
                 >
-                  {richText && <RichText data={richText} enableGutter={false} />}
+                  {editor ? (
+                    <InlineTextarea
+                      className="min-h-28 border-primary/30 bg-background/92 text-sm leading-7"
+                      onChange={(value) => editor.updateColumnCopy(index, value)}
+                      onGenerate={() =>
+                        openTextGenerator({
+                          applyText: (value) => editor.updateColumnCopy(index, value),
+                          currentText: bodyCopy,
+                          fieldLabel: `content column ${index + 1}`,
+                          fieldPath: `layout.${toolbarState?.selectedIndex}.columns.${index}.richText`,
+                          instructions: 'Rewrite this content column so it stays specific, readable, and aligned with the surrounding section.',
+                        })}
+                      rows={5}
+                      value={bodyCopy}
+                    />
+                  ) : richText ? <RichText data={richText} enableGutter={false} /> : null}
 
-                  {enableLink && <CMSLink {...link} />}
+                  {enableLink && link ? (
+                    editor ? (
+                      <div className="mt-4">
+                        <InlineTextInput
+                          className="h-10 border-primary/30 bg-background/92 text-sm font-medium"
+                          onChange={(value) => editor.updateColumnLinkLabel(index, value)}
+                          onGenerate={() =>
+                            openTextGenerator({
+                              applyText: (value) => editor.updateColumnLinkLabel(index, value),
+                              currentText: link.label || '',
+                              fieldLabel: `content link ${index + 1}`,
+                              fieldPath: `layout.${toolbarState?.selectedIndex}.columns.${index}.link.label`,
+                              instructions: 'Rewrite this content link label so it stays short and action-oriented.',
+                            })}
+                          placeholder="Link label"
+                          value={link.label || ''}
+                        />
+                      </div>
+                    ) : (
+                      <CMSLink {...link} />
+                    )
+                  ) : null}
                 </div>
               )
             })}

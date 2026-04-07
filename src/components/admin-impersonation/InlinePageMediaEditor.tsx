@@ -1,12 +1,12 @@
 'use client'
 
 import { useMemo, useRef, useState } from 'react'
-import { LoaderCircleIcon, SparklesIcon, UploadIcon } from 'lucide-react'
+import { SparklesIcon, UploadIcon } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
 import { usePageMediaDevtoolsOptional } from '@/components/admin-impersonation/PageMediaDevtoolsContext'
+import { usePortalCopilotOptional } from '@/components/copilot/PortalCopilotContext'
 import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
 
 type InlinePageMediaEditorProps = {
   children: React.ReactNode
@@ -14,11 +14,6 @@ type InlinePageMediaEditorProps = {
 }
 
 type SubmitAction = 'create-and-swap' | 'generate-and-swap' | 'replace-existing'
-
-function buildAltFallback(prompt: string, entryLabel: string) {
-  const trimmed = prompt.trim()
-  return (trimmed || entryLabel).slice(0, 240)
-}
 
 function getFileKind(file: File): 'image' | 'video' {
   return file.type.startsWith('video/') ? 'video' : 'image'
@@ -31,12 +26,10 @@ function getMediaKindFromMimeType(mimeType: null | string | undefined): 'image' 
 export function InlinePageMediaEditor({ children, relationPath }: InlinePageMediaEditorProps) {
   const router = useRouter()
   const context = usePageMediaDevtoolsOptional()
+  const copilot = usePortalCopilotOptional()
   const [dragActive, setDragActive] = useState(false)
-  const [generatorOpen, setGeneratorOpen] = useState(false)
-  const [generateKind, setGenerateKind] = useState<'image' | 'video'>('image')
-  const [prompt, setPrompt] = useState('')
   const [status, setStatus] = useState<null | string>(null)
-  const [submitting, setSubmitting] = useState<null | SubmitAction>(null)
+  const [, setSubmitting] = useState<null | SubmitAction>(null)
   const replaceInputRef = useRef<HTMLInputElement | null>(null)
   const entry = useMemo(
     () => context?.currentPage?.entries.find((item) => item.relationPath === relationPath) || null,
@@ -64,8 +57,6 @@ export function InlinePageMediaEditor({ children, relationPath }: InlinePageMedi
           ? `Updated media record ${entry?.mediaId ?? ''}.`
           : `Created media record ${payload?.mediaId ?? ''} and swapped the page reference.`,
       )
-      setGeneratorOpen(false)
-      setPrompt('')
       router.refresh()
     } catch (error) {
       setStatus(error instanceof Error ? error.message : 'Unable to update page media.')
@@ -97,33 +88,6 @@ export function InlinePageMediaEditor({ children, relationPath }: InlinePageMedi
     }
 
     await submitFormData(formData, action)
-  }
-
-  async function submitGenerated() {
-    if (!entry) {
-      return
-    }
-
-    const trimmedPrompt = prompt.trim()
-    if (!trimmedPrompt) {
-      setStatus(`Enter a ${generateKind} prompt first.`)
-      return
-    }
-
-    const formData = new FormData()
-    formData.set('action', 'generate-and-swap')
-    formData.set('alt', buildAltFallback(trimmedPrompt, entry.label))
-    formData.set('mediaKind', generateKind)
-    formData.set('prompt', trimmedPrompt)
-
-    if (entry.mediaId) {
-      formData.set('sourceMediaId', String(entry.mediaId))
-    }
-
-    formData.set('pageId', String(entry.pageId))
-    formData.set('relationPath', entry.relationPath)
-
-    await submitFormData(formData, 'generate-and-swap')
   }
 
   if (!enabled || !entry) {
@@ -198,8 +162,10 @@ export function InlinePageMediaEditor({ children, relationPath }: InlinePageMedi
           <Button
             className="h-8 rounded-full bg-background/94 px-3 text-xs shadow-lg"
             onClick={() => {
-              setGenerateKind(getMediaKindFromMimeType(entry.media?.mimeType))
-              setGeneratorOpen((current) => !current)
+              copilot?.openFocusedMediaSession({
+                mode: getMediaKindFromMimeType(entry.media?.mimeType),
+                promptHint: entry.media?.alt || entry.label,
+              })
             }}
             size="sm"
             type="button"
@@ -210,56 +176,6 @@ export function InlinePageMediaEditor({ children, relationPath }: InlinePageMedi
           </Button>
         </div>
       </div>
-
-      {generatorOpen ? (
-        <div className="absolute inset-x-3 bottom-3 z-20 rounded-[1.2rem] border border-border/80 bg-background/96 p-3 shadow-2xl backdrop-blur">
-          <div className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">Generate replacement</div>
-          <div className="mt-3 flex gap-2">
-            <Button
-              onClick={() => setGenerateKind('image')}
-              size="sm"
-              type="button"
-              variant={generateKind === 'image' ? 'default' : 'outline'}
-            >
-              Image
-            </Button>
-            <Button
-              onClick={() => setGenerateKind('video')}
-              size="sm"
-              type="button"
-              variant={generateKind === 'video' ? 'default' : 'outline'}
-            >
-              Video
-            </Button>
-          </div>
-          <Textarea
-            className="mt-3 min-h-24"
-            onChange={(event) => setPrompt(event.target.value)}
-            placeholder={`Describe the new ${generateKind} for ${entry.label.toLowerCase()}...`}
-            value={prompt}
-          />
-          <div className="mt-3 flex flex-wrap gap-2">
-            <Button
-              disabled={submitting !== null}
-              onClick={() => submitGenerated()}
-              size="sm"
-              type="button"
-            >
-              {submitting === 'generate-and-swap' ? (
-                <>
-                  <LoaderCircleIcon className="h-4 w-4 animate-spin" />
-                  Generating...
-                </>
-              ) : (
-                `Generate ${generateKind}`
-              )}
-            </Button>
-            <Button onClick={() => setGeneratorOpen(false)} size="sm" type="button" variant="outline">
-              Cancel
-            </Button>
-          </div>
-        </div>
-      ) : null}
 
       {status ? (
         <div className="pointer-events-none absolute inset-x-3 bottom-3 z-10 rounded-full bg-background/94 px-3 py-2 text-xs text-foreground shadow-lg">

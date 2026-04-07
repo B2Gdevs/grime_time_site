@@ -58,6 +58,19 @@ function buildItem(overrides: Partial<SharedSectionRecord> = {}): SharedSectionR
   }
 }
 
+function buildVersions() {
+  return [
+    {
+      createdAt: '2026-04-05T00:00:00.000Z',
+      id: 'version-1',
+      latest: true,
+      status: 'draft' as const,
+      updatedAt: '2026-04-05T00:00:00.000Z',
+      versionNumber: 3,
+    },
+  ]
+}
+
 describe('SharedSectionEditor', () => {
   afterEach(() => {
     cleanup()
@@ -85,6 +98,7 @@ describe('SharedSectionEditor', () => {
     render(
       <SharedSectionEditor
         initialItem={buildItem()}
+        initialVersions={buildVersions()}
         permissions={{
           canCreate: true,
           canEditDraft: true,
@@ -128,6 +142,7 @@ describe('SharedSectionEditor', () => {
     render(
       <SharedSectionEditor
         initialItem={buildItem()}
+        initialVersions={buildVersions()}
         permissions={{
           canCreate: true,
           canEditDraft: true,
@@ -141,5 +156,58 @@ describe('SharedSectionEditor', () => {
 
     const publishButtons = screen.getAllByRole('button', { name: 'Publish' })
     expect(publishButtons.some((button) => (button as HTMLButtonElement).disabled)).toBe(true)
+  })
+
+  it('restores a selected shared-section version into draft state', async () => {
+    const originalFetch = global.fetch
+    const originalConfirm = window.confirm
+    window.confirm = vi.fn().mockReturnValue(true)
+
+    global.fetch = vi.fn().mockResolvedValue({
+      json: async () => ({
+        item: buildItem({ currentVersion: 3, name: 'Homepage embed restored' }),
+        permissions: {
+          canCreate: true,
+          canEditDraft: true,
+          canInsertIntoPage: true,
+          canPublish: true,
+          canRestoreVersion: true,
+          canViewLibrary: true,
+        },
+        versions: buildVersions(),
+      }),
+      ok: true,
+    }) as unknown as typeof fetch
+
+    render(
+      <SharedSectionEditor
+        initialItem={buildItem()}
+        initialVersions={buildVersions()}
+        permissions={{
+          canCreate: true,
+          canEditDraft: true,
+          canInsertIntoPage: true,
+          canPublish: true,
+          canRestoreVersion: true,
+          canViewLibrary: true,
+        }}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Restore draft' }))
+
+    await waitFor(() => {
+      expect(screen.getByText('Restored version 3 into the current shared-section draft.')).toBeTruthy()
+    })
+
+    const request = (global.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0]?.[1]
+    expect(JSON.parse(String(request.body))).toMatchObject({
+      action: 'restore-shared-section-version',
+      id: 9,
+      versionId: 'version-1',
+    })
+
+    window.confirm = originalConfirm
+    global.fetch = originalFetch
   })
 })

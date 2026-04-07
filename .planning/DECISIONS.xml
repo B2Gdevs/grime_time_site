@@ -909,7 +909,7 @@
   <decision id="D-content-020">
     <title>Composer stays as a right-edge drawer and site copilot follows the draggable admin-toolbar interaction model</title>
     <summary>The public-site authoring launcher should stay anchored to the right edge of the page and open the existing right-docked page composer drawer from the live page surface. The site copilot should no longer behave like a bottom-corner modal overlay; it should use the same draggable floating-panel interaction pattern as the admin impersonation toolbar so operators can move it out of the way while authoring.</summary>
-    <impact>Composer access remains visually attached to the page canvas instead of floating as a separate bottom-corner affordance, and copilot no longer blocks the viewport when opened. Local testing also needs a shared localhost-only admin bypass across both server-component auth and request-route auth so the full operator toolchain can be exercised without manual sign-in during development.</impact>
+    <impact>Composer access remains visually attached to the page canvas instead of floating as a separate bottom-corner affordance, and copilot no longer blocks the viewport when opened. If localhost auth bypass is ever needed for debugging, it must be an explicit opt-in across both server-component auth and request-route auth rather than the default behavior.</impact>
     <references>
       <file path="src/components/admin-impersonation/ContentAuthoringToolbar.tsx" />
       <file path="src/components/copilot/PortalCopilot.tsx" />
@@ -964,6 +964,20 @@
       <file path="src/components/frontend/MarketingShell.tsx" />
       <file path="src/app/(frontend)/globals.css" />
       <file path="src/components/ui/sidebar.tsx" />
+    </references>
+  </decision>
+  <decision id="D-content-025">
+    <title>Frontend operator tooling converges into one floating copilot shell, and the composer opens as a triggered sheet</title>
+    <summary>The earlier shell-owned right-rail composer decision no longer matches the authoring reality. On the public site, chat stays the primary floating surface, impersonation and operator actions live in a tools view inside that same copilot shell, and the page composer opens from that workflow as a right-side sheet above the live page instead of mounting as a second layout column.</summary>
+    <impact>This removes the blank shell column and the live-page squeeze, keeps chat first while avoiding a second floating admin surface, and makes the composer explicitly temporary instead of a persistent shell rail. Frontend signed-in affordances should also stay on Clerk-hosted components such as `UserButton` rather than diverging into separate custom logout menus.</impact>
+    <references>
+      <file path="src/components/copilot/PortalCopilot.tsx" />
+      <file path="src/components/admin-impersonation/SiteOperatorToolsPanel.tsx" />
+      <file path="src/components/admin-impersonation/PageComposerDrawer.tsx" />
+      <file path="src/app/(frontend)/layout.tsx" />
+      <file path="src/components/nav-user.tsx" />
+      <file path="src/components/frontend/MarketingShell.tsx" />
+      <file path="src/content/docs/site-copilot-and-page-composer.md" />
     </references>
   </decision>
 </decisions>

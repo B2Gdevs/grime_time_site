@@ -16,6 +16,33 @@ vi.mock('@/lib/auth/organizationAccess', () => ({
   hasContentAuthoringAccess,
 }))
 
+function buildPage(overrides: Record<string, unknown> = {}) {
+  return {
+    _status: 'draft',
+    hero: { type: 'lowImpact' },
+    id: 7,
+    layout: [],
+    publishedAt: null,
+    slug: 'spring-refresh',
+    title: 'Spring Refresh',
+    updatedAt: '2026-04-03T12:00:00.000Z',
+    visibility: 'private',
+    ...overrides,
+  }
+}
+
+function buildVersion(overrides: Record<string, unknown> = {}) {
+  return {
+    createdAt: '2026-04-03T12:00:00.000Z',
+    id: 'version-1',
+    latest: true,
+    parent: 7,
+    updatedAt: '2026-04-03T12:00:00.000Z',
+    version: buildPage(),
+    ...overrides,
+  }
+}
+
 describe('internal page composer route', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -65,6 +92,9 @@ describe('internal page composer route', () => {
         updatedAt: '2026-04-03T12:00:00.000Z',
         visibility: 'private',
       }),
+      findVersions: vi.fn().mockResolvedValue({
+        docs: [buildVersion()],
+      }),
     }
 
     getCurrentAuthContext.mockResolvedValue({
@@ -100,6 +130,7 @@ describe('internal page composer route', () => {
         title: 'Spring Refresh',
         visibility: 'private',
       },
+      versions: [expect.objectContaining({ id: 'version-1', title: 'Spring Refresh' })],
     })
   })
 
@@ -129,6 +160,20 @@ describe('internal page composer route', () => {
         title: 'Home',
         updatedAt: '2026-04-03T12:00:00.000Z',
         visibility: 'public',
+      }),
+      findVersions: vi.fn().mockResolvedValue({
+        docs: [
+          buildVersion({
+            version: buildPage({
+              _status: 'published',
+              pagePath: '/',
+              publishedAt: '2026-04-03T12:00:00.000Z',
+              slug: 'home',
+              title: 'Home',
+              visibility: 'public',
+            }),
+          }),
+        ],
       }),
     }
 
@@ -222,6 +267,9 @@ describe('internal page composer route', () => {
         updatedAt: '2026-04-03T12:00:00.000Z',
         visibility: 'public',
       }),
+      findVersions: vi.fn().mockResolvedValue({
+        docs: [buildVersion({ id: 'version-12', parent: 12, version: buildPage({ id: 12, slug: 'spring-refresh-draft', title: 'Spring Refresh Draft' }) })],
+      }),
     }
 
     getCurrentAuthContext.mockResolvedValue({
@@ -276,6 +324,94 @@ describe('internal page composer route', () => {
         title: 'Spring Refresh Draft',
         visibility: 'private',
       },
+      versions: [expect.objectContaining({ id: 'version-12', title: 'Spring Refresh Draft' })],
+    })
+  })
+
+  it('restores a page version into the current draft', async () => {
+    const restoredPage = buildPage({
+      id: 7,
+      layout: [{ blockType: 'content', blockName: 'Restored block' }],
+      slug: 'spring-refresh',
+      title: 'Spring Refresh',
+      visibility: 'public',
+    })
+    const payload = {
+      find: vi.fn().mockResolvedValue({
+        docs: [
+          {
+            _status: 'draft',
+            id: 7,
+            publishedAt: null,
+            slug: 'spring-refresh',
+            title: 'Spring Refresh',
+            updatedAt: '2026-04-03T12:00:00.000Z',
+            visibility: 'public',
+          },
+        ],
+      }),
+      findByID: vi.fn().mockResolvedValue(restoredPage),
+      findVersionByID: vi.fn().mockResolvedValue(
+        buildVersion({
+          id: 'version-restore',
+          parent: 7,
+          version: restoredPage,
+        }),
+      ),
+      findVersions: vi.fn().mockResolvedValue({
+        docs: [
+          buildVersion({
+            id: 'version-restore',
+            parent: 7,
+            version: restoredPage,
+          }),
+        ],
+      }),
+      restoreVersion: vi.fn().mockResolvedValue(restoredPage),
+    }
+
+    getCurrentAuthContext.mockResolvedValue({
+      isRealAdmin: false,
+      payload,
+      realUser: { email: 'designer@example.com', id: 32, roles: ['customer'] },
+    })
+    hasContentAuthoringAccess.mockResolvedValue(true)
+
+    const { POST } = await import('@/app/api/internal/page-composer/route')
+    const response = await POST(
+      new Request('http://localhost:5465/api/internal/page-composer', {
+        body: JSON.stringify({
+          action: 'restore-page-version',
+          pageId: 7,
+          versionId: 'version-restore',
+        }),
+        headers: { 'content-type': 'application/json' },
+        method: 'POST',
+      }),
+    )
+
+    expect(response.status).toBe(200)
+    expect(payload.findVersionByID).toHaveBeenCalledWith(
+      expect.objectContaining({
+        collection: 'pages',
+        id: 'version-restore',
+      }),
+    )
+    expect(payload.restoreVersion).toHaveBeenCalledWith(
+      expect.objectContaining({
+        collection: 'pages',
+        draft: true,
+        id: 'version-restore',
+      }),
+    )
+    await expect(response.json()).resolves.toMatchObject({
+      ok: true,
+      page: {
+        id: 7,
+        slug: 'spring-refresh',
+        title: 'Spring Refresh',
+      },
+      versions: [expect.objectContaining({ id: 'version-restore' })],
     })
   })
 })

@@ -17,6 +17,10 @@ import {
 } from 'lucide-react'
 
 import { InlinePageMediaEditor } from '@/components/admin-impersonation/InlinePageMediaEditor'
+import { InlineTextarea, InlineTextInput, usePageComposerTextGenerator } from '@/components/admin-impersonation/PageComposerInlineText'
+import { usePageComposerCanvasToolbarState } from '@/components/admin-impersonation/PageComposerCanvas'
+import { usePageComposerOptional } from '@/components/admin-impersonation/PageComposerContext'
+import { useSectionInteractable } from '@/components/copilot/CopilotInteractable'
 import { BubbleBackground } from '@/components/BubbleBackground'
 import { Media } from '@/components/Media'
 import { Button } from '@/components/ui/button'
@@ -77,6 +81,82 @@ function ServiceGridRowIcon({ className, name }: { className?: string; name: str
   return <DropletsIcon className={className} />
 }
 
+function useInlineServiceGridEditor(blockIndex?: number) {
+  const composer = usePageComposerOptional()
+  const toolbarState = usePageComposerCanvasToolbarState()
+  const openFocusedTextSession = usePageComposerTextGenerator()
+
+  const isSelected =
+    typeof blockIndex === 'number' &&
+    Boolean(composer?.isOpen) &&
+    toolbarState?.selectedIndex === blockIndex &&
+    Boolean(toolbarState?.serviceGridEditor)
+
+  return {
+    editor: isSelected ? toolbarState?.serviceGridEditor ?? null : null,
+    openTextGenerator:
+      composer && toolbarState?.sectionSummaries[blockIndex ?? -1]
+        ? (args: {
+            applyText?: (value: string) => void
+            currentText?: string
+            fieldLabel: string
+            fieldPath: string
+            instructions?: string
+          }) => {
+            const section = toolbarState.sectionSummaries[blockIndex ?? 0]
+            openFocusedTextSession({
+              ...args,
+              instructions:
+                args.instructions ||
+                `Rewrite the selected ${args.fieldLabel.toLowerCase()} for section ${section.label} without changing the core service meaning.`,
+            })
+          }
+        : undefined,
+  }
+}
+
+function ServiceGridInteractableRegistrar({
+  blockType,
+  description,
+  heading,
+  id,
+  index,
+  intro,
+  pagePath,
+  rowLabels,
+  selected,
+  variant,
+}: {
+  blockType: string
+  description: string
+  heading: string
+  id: string
+  index: number
+  intro: string
+  pagePath: string
+  rowLabels: string[]
+  selected: boolean
+  variant: string
+}) {
+  useSectionInteractable({
+    description,
+    id,
+    name: 'service_grid',
+    selected,
+    state: {
+      blockType,
+      heading,
+      index,
+      intro,
+      pagePath,
+      rowLabels,
+      variant,
+    },
+  })
+
+  return null
+}
+
 export const ServiceGridBlock: React.FC<ServiceGridBlockProps> = ({
   blockIndex,
   displayVariant,
@@ -86,34 +166,90 @@ export const ServiceGridBlock: React.FC<ServiceGridBlockProps> = ({
   services,
 }) => {
   const variant = resolveServiceGridDisplayVariant({ displayVariant, heading })
+  const composer = usePageComposerOptional()
+  const toolbarState = usePageComposerCanvasToolbarState()
 
   if (variant === 'featureCards') {
     return (
-      <FeatureCardsServiceGrid
-        blockIndex={blockIndex}
-        eyebrow={eyebrow}
-        heading={heading}
-        intro={intro}
-        services={services}
-      />
+      <>
+        {composer?.isOpen && toolbarState ? (
+          <ServiceGridInteractableRegistrar
+            blockType="serviceGrid"
+            description="A structured services or pricing explainer section on the live page canvas."
+            heading={heading || ''}
+            id={`service-grid:${blockIndex ?? heading ?? variant}`}
+            index={blockIndex ?? -1}
+            intro={intro || ''}
+            pagePath={toolbarState.draftPage?.pagePath ?? '/'}
+            rowLabels={(services || []).map((service) => service.name).filter(Boolean).slice(0, 6)}
+            selected={typeof blockIndex === 'number' && toolbarState.selectedIndex === blockIndex}
+            variant={variant}
+          />
+        ) : null}
+        <FeatureCardsServiceGrid
+          blockIndex={blockIndex}
+          eyebrow={eyebrow}
+          heading={heading}
+          intro={intro}
+          services={services}
+        />
+      </>
     )
   }
 
   if (variant === 'pricingSteps') {
-    return <PricingStepsServiceGrid eyebrow={eyebrow} heading={heading} intro={intro} services={services} />
+    return (
+      <>
+        {composer?.isOpen && toolbarState ? (
+          <ServiceGridInteractableRegistrar
+            blockType="serviceGrid"
+            description="A structured services or pricing explainer section on the live page canvas."
+            heading={heading || ''}
+            id={`service-grid:${blockIndex ?? heading ?? variant}`}
+            index={blockIndex ?? -1}
+            intro={intro || ''}
+            pagePath={toolbarState.draftPage?.pagePath ?? '/'}
+            rowLabels={(services || []).map((service) => service.name).filter(Boolean).slice(0, 6)}
+            selected={typeof blockIndex === 'number' && toolbarState.selectedIndex === blockIndex}
+            variant={variant}
+          />
+        ) : null}
+        <PricingStepsServiceGrid blockIndex={blockIndex} eyebrow={eyebrow} heading={heading} intro={intro} services={services} />
+      </>
+    )
   }
 
-  return <InteractiveServiceGrid eyebrow={eyebrow} heading={heading} intro={intro} services={services} />
+  return (
+    <>
+      {composer?.isOpen && toolbarState ? (
+        <ServiceGridInteractableRegistrar
+          blockType="serviceGrid"
+          description="A structured services or pricing explainer section on the live page canvas."
+          heading={heading || ''}
+          id={`service-grid:${blockIndex ?? heading ?? variant}`}
+          index={blockIndex ?? -1}
+          intro={intro || ''}
+          pagePath={toolbarState.draftPage?.pagePath ?? '/'}
+          rowLabels={(services || []).map((service) => service.name).filter(Boolean).slice(0, 6)}
+          selected={typeof blockIndex === 'number' && toolbarState.selectedIndex === blockIndex}
+          variant={variant}
+        />
+      ) : null}
+      <InteractiveServiceGrid blockIndex={blockIndex} eyebrow={eyebrow} heading={heading} intro={intro} services={services} />
+    </>
+  )
 }
 
 const InteractiveServiceGrid: React.FC<
-  Pick<ServiceGridBlockData, 'eyebrow' | 'heading' | 'intro' | 'services'>
+  Pick<ServiceGridBlockProps, 'blockIndex' | 'eyebrow' | 'heading' | 'intro' | 'services'>
 > = ({
+  blockIndex,
   eyebrow,
   heading,
   intro,
   services,
 }) => {
+  const { editor, openTextGenerator } = useInlineServiceGridEditor(blockIndex)
   const sectionId = heading?.trim().toLowerCase() === 'what we do' ? 'services' : undefined
   const headingKey = heading?.trim().toLowerCase() || ''
   const isPricing = headingKey === 'how our pricing works'
@@ -133,13 +269,57 @@ const InteractiveServiceGrid: React.FC<
       <div className="site-section-shell overflow-hidden px-4 py-6 sm:px-6 sm:py-8 md:px-10 md:py-10">
         {isWhatWeDo ? <BubbleBackground className="opacity-15 mix-blend-multiply" density={24} speed={0.75} /> : null}
         <div className="mb-7 max-w-3xl sm:mb-10">
-          {eyebrow ? (
+          {editor ? (
+            <InlineTextInput
+              className="h-9 border-primary/30 bg-background/90 text-xs font-medium uppercase tracking-[0.24em] text-primary"
+              onChange={(value) => editor.updateBlockField('eyebrow', value)}
+              onGenerate={() =>
+                openTextGenerator?.({
+                  applyText: (value) => editor.updateBlockField('eyebrow', value),
+                  currentText: eyebrow || '',
+                  fieldLabel: 'section eyebrow',
+                  fieldPath: `layout.${blockIndex}.eyebrow`,
+                })}
+              placeholder="Section eyebrow"
+              value={eyebrow || ''}
+            />
+          ) : eyebrow ? (
             <p className="mb-2 text-xs font-medium uppercase tracking-[0.24em] text-primary sm:mb-3 sm:text-sm">
               {eyebrow}
             </p>
           ) : null}
-          <h2 className="mb-3 text-2xl font-semibold tracking-tight sm:text-3xl md:text-4xl">{heading}</h2>
-          {intro ? <p className="text-base leading-relaxed text-muted-foreground sm:text-lg">{intro}</p> : null}
+          {editor ? (
+            <InlineTextInput
+              className="mb-3 h-12 border-primary/30 bg-background/90 text-2xl font-semibold tracking-tight sm:text-3xl md:text-4xl"
+              onChange={(value) => editor.updateBlockField('heading', value)}
+              onGenerate={() =>
+                openTextGenerator?.({
+                  applyText: (value) => editor.updateBlockField('heading', value),
+                  currentText: heading || '',
+                  fieldLabel: 'section heading',
+                  fieldPath: `layout.${blockIndex}.heading`,
+                })}
+              placeholder="Section heading"
+              value={heading || ''}
+            />
+          ) : (
+            <h2 className="mb-3 text-2xl font-semibold tracking-tight sm:text-3xl md:text-4xl">{heading}</h2>
+          )}
+          {editor ? (
+            <InlineTextarea
+              className="min-h-24 border-primary/30 bg-background/90 text-base leading-relaxed text-muted-foreground sm:text-lg"
+              onChange={(value) => editor.updateBlockField('intro', value)}
+              onGenerate={() =>
+                openTextGenerator?.({
+                  applyText: (value) => editor.updateBlockField('intro', value),
+                  currentText: intro || '',
+                  fieldLabel: 'section intro',
+                  fieldPath: `layout.${blockIndex}.intro`,
+                })}
+              placeholder="Section intro"
+              value={intro || ''}
+            />
+          ) : intro ? <p className="text-base leading-relaxed text-muted-foreground sm:text-lg">{intro}</p> : null}
         </div>
 
         <div
@@ -160,6 +340,7 @@ const InteractiveServiceGrid: React.FC<
                           ? 'border-primary/50 bg-primary/12 text-foreground'
                           : 'border-border/70 bg-background/50 text-muted-foreground hover:border-border hover:text-foreground'
                       }`}
+                      data-page-composer-interactive="true"
                       onClick={() => setActiveIndex(index)}
                       type="button"
                     >
@@ -200,27 +381,92 @@ const InteractiveServiceGrid: React.FC<
                   <div className="absolute inset-x-0 bottom-0 p-5 text-white">
                     <div className="flex items-center gap-2">
                         <ServiceGridRowIcon className="size-4 shrink-0 text-white/80" name={activeRow.name} />
-                        {activeRow.eyebrow ? (
+                        {editor ? (
+                          <div className="min-w-[14rem]">
+                            <InlineTextInput
+                              className="h-8 border-white/20 bg-black/40 text-[11px] font-semibold uppercase tracking-[0.22em] text-white placeholder:text-white/60"
+                              onChange={(value) => editor.updateServiceField('eyebrow', activeIndex, value)}
+                              onGenerate={() =>
+                                openTextGenerator?.({
+                                  applyText: (value) => editor.updateServiceField('eyebrow', activeIndex, value),
+                                  currentText: activeRow.eyebrow || '',
+                                  fieldLabel: 'row eyebrow',
+                                  fieldPath: `layout.${blockIndex}.services.${activeIndex}.eyebrow`,
+                                })}
+                              placeholder="Row eyebrow"
+                              value={activeRow.eyebrow || ''}
+                            />
+                          </div>
+                        ) : activeRow.eyebrow ? (
                           <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/80">
                             {activeRow.eyebrow}
                           </p>
                         ) : null}
                       </div>
-                      <h3 className="mt-2 text-xl font-semibold tracking-tight text-balance sm:text-2xl">
-                        {activeRow.name}
-                      </h3>
+                      {editor ? (
+                        <InlineTextInput
+                          className="mt-2 h-11 border-white/20 bg-black/40 text-xl font-semibold tracking-tight text-white placeholder:text-white/60 sm:text-2xl"
+                          onChange={(value) => editor.updateServiceField('name', activeIndex, value)}
+                          onGenerate={() =>
+                            openTextGenerator?.({
+                              applyText: (value) => editor.updateServiceField('name', activeIndex, value),
+                              currentText: activeRow.name || '',
+                              fieldLabel: 'row title',
+                              fieldPath: `layout.${blockIndex}.services.${activeIndex}.name`,
+                            })}
+                          placeholder="Row name"
+                          value={activeRow.name || ''}
+                        />
+                      ) : (
+                        <h3 className="mt-2 text-xl font-semibold tracking-tight text-balance sm:text-2xl">
+                          {activeRow.name}
+                        </h3>
+                      )}
                     </div>
                   </div>
 
                   <div className="grid gap-4 p-4 sm:gap-5 sm:p-5">
-                    <p className="text-sm leading-6 text-muted-foreground sm:leading-7">{activeRow.summary}</p>
+                    {editor ? (
+                      <InlineTextarea
+                        className="min-h-24 border-primary/30 bg-background/90 text-sm leading-6 text-muted-foreground sm:leading-7"
+                        onChange={(value) => editor.updateServiceField('summary', activeIndex, value)}
+                        onGenerate={() =>
+                          openTextGenerator?.({
+                            applyText: (value) => editor.updateServiceField('summary', activeIndex, value),
+                            currentText: activeRow.summary || '',
+                            fieldLabel: 'row summary',
+                            fieldPath: `layout.${blockIndex}.services.${activeIndex}.summary`,
+                          })}
+                        placeholder="Row summary"
+                        value={activeRow.summary || ''}
+                      />
+                    ) : (
+                      <p className="text-sm leading-6 text-muted-foreground sm:leading-7">{activeRow.summary}</p>
+                    )}
 
                     {highlights.length > 0 ? (
                       <ul className="grid gap-3">
                         {highlights.map((item, highlightIndex) => (
                           <li key={`${activeRow.name}-highlight-${highlightIndex}`} className="flex gap-3 text-sm">
                             <CheckCircle2Icon className="mt-0.5 size-4 shrink-0 text-primary" />
-                            <span className="leading-6 text-foreground/90">{item.text}</span>
+                            {editor ? (
+                              <InlineTextarea
+                                className="min-h-16 border-primary/30 bg-background/90 text-sm leading-6 text-foreground/90"
+                                onChange={(value) => editor.updateHighlightText(highlightIndex, activeIndex, value)}
+                                onGenerate={() =>
+                                  openTextGenerator?.({
+                                    applyText: (value) => editor.updateHighlightText(highlightIndex, activeIndex, value),
+                                    currentText: item.text || '',
+                                    fieldLabel: 'highlight',
+                                    fieldPath: `layout.${blockIndex}.services.${activeIndex}.highlights.${highlightIndex}.text`,
+                                  })}
+                                placeholder="Highlight"
+                                rows={2}
+                                value={item.text || ''}
+                              />
+                            ) : (
+                              <span className="leading-6 text-foreground/90">{item.text}</span>
+                            )}
                           </li>
                         ))}
                       </ul>
@@ -232,7 +478,25 @@ const InteractiveServiceGrid: React.FC<
                           <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-primary/80">
                             Priced around
                           </p>
-                          <p className="mt-1 text-sm text-foreground/90">{activeRow.pricingHint}</p>
+                          {editor ? (
+                            <div className="mt-1">
+                              <InlineTextInput
+                                className="h-9 border-primary/30 bg-background/90 text-sm text-foreground/90"
+                                onChange={(value) => editor.updateServiceField('pricingHint', activeIndex, value)}
+                                onGenerate={() =>
+                                  openTextGenerator?.({
+                                    applyText: (value) => editor.updateServiceField('pricingHint', activeIndex, value),
+                                    currentText: activeRow.pricingHint || '',
+                                    fieldLabel: 'pricing hint',
+                                    fieldPath: `layout.${blockIndex}.services.${activeIndex}.pricingHint`,
+                                  })}
+                                placeholder="Pricing hint"
+                                value={activeRow.pricingHint || ''}
+                              />
+                            </div>
+                          ) : (
+                            <p className="mt-1 text-sm text-foreground/90">{activeRow.pricingHint}</p>
+                          )}
                         </div>
                         <Button asChild size="sm" variant="outline" className="w-full sm:w-auto">
                           <Link href="/#instant-quote">
@@ -263,6 +527,7 @@ const FeatureCardsServiceGrid: React.FC<
   services,
 }) => {
   const rows = services || []
+  const { editor, openTextGenerator } = useInlineServiceGridEditor(blockIndex)
 
   if (!rows.length) {
     return null
@@ -271,11 +536,57 @@ const FeatureCardsServiceGrid: React.FC<
   return (
     <section className="mx-auto max-w-7xl px-6 py-16 md:py-20" id="services">
       <div className="max-w-3xl">
-        <p className="text-[0.7rem] font-semibold uppercase tracking-[0.34em] text-primary/80">
-          {eyebrow || 'Featured services'}
-        </p>
-        <h2 className="mt-4 text-4xl font-semibold tracking-tight text-foreground md:text-5xl">{heading}</h2>
-        {intro ? <p className="mt-4 max-w-2xl text-lg leading-8 text-muted-foreground">{intro}</p> : null}
+        {editor ? (
+          <InlineTextInput
+            className="h-9 border-primary/30 bg-background/90 text-[0.7rem] font-semibold uppercase tracking-[0.34em] text-primary"
+            onChange={(value) => editor.updateBlockField('eyebrow', value)}
+            onGenerate={() =>
+              openTextGenerator?.({
+                applyText: (value) => editor.updateBlockField('eyebrow', value),
+                currentText: eyebrow || '',
+                fieldLabel: 'section eyebrow',
+                fieldPath: `layout.${blockIndex}.eyebrow`,
+              })}
+            placeholder="Section eyebrow"
+            value={eyebrow || ''}
+          />
+        ) : (
+          <p className="text-[0.7rem] font-semibold uppercase tracking-[0.34em] text-primary/80">
+            {eyebrow || 'Featured services'}
+          </p>
+        )}
+        {editor ? (
+          <InlineTextInput
+            className="mt-4 h-14 border-primary/30 bg-background/90 text-4xl font-semibold tracking-tight text-foreground md:text-5xl"
+            onChange={(value) => editor.updateBlockField('heading', value)}
+            onGenerate={() =>
+              openTextGenerator?.({
+                applyText: (value) => editor.updateBlockField('heading', value),
+                currentText: heading || '',
+                fieldLabel: 'section heading',
+                fieldPath: `layout.${blockIndex}.heading`,
+              })}
+            placeholder="Section heading"
+            value={heading || ''}
+          />
+        ) : (
+          <h2 className="mt-4 text-4xl font-semibold tracking-tight text-foreground md:text-5xl">{heading}</h2>
+        )}
+        {editor ? (
+          <InlineTextarea
+            className="mt-4 min-h-24 max-w-2xl border-primary/30 bg-background/90 text-lg leading-8 text-muted-foreground"
+            onChange={(value) => editor.updateBlockField('intro', value)}
+            onGenerate={() =>
+              openTextGenerator?.({
+                applyText: (value) => editor.updateBlockField('intro', value),
+                currentText: intro || '',
+                fieldLabel: 'section intro',
+                fieldPath: `layout.${blockIndex}.intro`,
+              })}
+            placeholder="Section intro"
+            value={intro || ''}
+          />
+        ) : intro ? <p className="mt-4 max-w-2xl text-lg leading-8 text-muted-foreground">{intro}</p> : null}
       </div>
 
       <div className="mt-10 grid gap-6 lg:grid-cols-3">
@@ -314,13 +625,47 @@ const FeatureCardsServiceGrid: React.FC<
                 )}
                 <div className="absolute inset-x-4 top-4 flex items-center justify-between gap-3">
                   {service.eyebrow ? (
-                    <span className="rounded-full bg-black/55 px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-white backdrop-blur">
-                      {service.eyebrow}
-                    </span>
+                    editor ? (
+                      <div className="w-[12rem]">
+                        <InlineTextInput
+                          className="h-8 rounded-full border-white/20 bg-black/40 text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-white placeholder:text-white/60"
+                          onChange={(value) => editor.updateServiceField('eyebrow', serviceIndex, value)}
+                          onGenerate={() =>
+                            openTextGenerator?.({
+                              applyText: (value) => editor.updateServiceField('eyebrow', serviceIndex, value),
+                              currentText: service.eyebrow || '',
+                              fieldLabel: 'card eyebrow',
+                              fieldPath: `layout.${blockIndex}.services.${serviceIndex}.eyebrow`,
+                            })}
+                          placeholder="Card eyebrow"
+                          value={service.eyebrow || ''}
+                        />
+                      </div>
+                    ) : (
+                      <span className="rounded-full bg-black/55 px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-white backdrop-blur">
+                        {service.eyebrow}
+                      </span>
+                    )
                   ) : (
                     <span />
                   )}
-                  {service.pricingHint ? (
+                  {editor ? (
+                    <div className="w-[10rem]">
+                      <InlineTextInput
+                        className="h-8 rounded-full border-white/20 bg-black/40 text-[0.68rem] font-medium text-white placeholder:text-white/60"
+                        onChange={(value) => editor.updateServiceField('pricingHint', serviceIndex, value)}
+                        onGenerate={() =>
+                          openTextGenerator?.({
+                            applyText: (value) => editor.updateServiceField('pricingHint', serviceIndex, value),
+                            currentText: service.pricingHint || '',
+                            fieldLabel: 'card pricing hint',
+                            fieldPath: `layout.${blockIndex}.services.${serviceIndex}.pricingHint`,
+                          })}
+                        placeholder="Pricing hint"
+                        value={service.pricingHint || ''}
+                      />
+                    </div>
+                  ) : service.pricingHint ? (
                     <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[0.68rem] font-medium text-white backdrop-blur">
                       {service.pricingHint}
                     </span>
@@ -329,18 +674,66 @@ const FeatureCardsServiceGrid: React.FC<
               </div>
 
               <div className="p-6">
-                <h3 className="text-2xl font-semibold tracking-tight text-foreground">{service.name}</h3>
-                <p className="mt-3 text-sm leading-7 text-muted-foreground">{service.summary}</p>
+                {editor ? (
+                  <InlineTextInput
+                    className="h-12 border-primary/30 bg-background/90 text-2xl font-semibold tracking-tight text-foreground"
+                    onChange={(value) => editor.updateServiceField('name', serviceIndex, value)}
+                    onGenerate={() =>
+                      openTextGenerator?.({
+                        applyText: (value) => editor.updateServiceField('name', serviceIndex, value),
+                        currentText: service.name || '',
+                        fieldLabel: 'card title',
+                        fieldPath: `layout.${blockIndex}.services.${serviceIndex}.name`,
+                      })}
+                    placeholder="Card title"
+                    value={service.name || ''}
+                  />
+                ) : (
+                  <h3 className="text-2xl font-semibold tracking-tight text-foreground">{service.name}</h3>
+                )}
+                {editor ? (
+                  <InlineTextarea
+                    className="mt-3 min-h-24 border-primary/30 bg-background/90 text-sm leading-7 text-muted-foreground"
+                    onChange={(value) => editor.updateServiceField('summary', serviceIndex, value)}
+                    onGenerate={() =>
+                      openTextGenerator?.({
+                        applyText: (value) => editor.updateServiceField('summary', serviceIndex, value),
+                        currentText: service.summary || '',
+                        fieldLabel: 'card summary',
+                        fieldPath: `layout.${blockIndex}.services.${serviceIndex}.summary`,
+                      })}
+                    placeholder="Card summary"
+                    value={service.summary || ''}
+                  />
+                ) : (
+                  <p className="mt-3 text-sm leading-7 text-muted-foreground">{service.summary}</p>
+                )}
 
                 {service.highlights?.length ? (
                   <ul className="mt-5 grid gap-3">
-                    {service.highlights.map((highlight) => (
+                    {service.highlights.map((highlight, highlightIndex) => (
                       <li
                         key={highlight.id || highlight.text}
                         className="flex items-start gap-3 text-sm leading-6 text-foreground/86"
                       >
                         <CheckCircle2Icon className="mt-0.5 size-4 shrink-0 text-primary" />
-                        <span>{highlight.text}</span>
+                        {editor ? (
+                          <InlineTextarea
+                            className="min-h-16 border-primary/30 bg-background/90 text-sm leading-6 text-foreground/86"
+                            onChange={(value) => editor.updateHighlightText(highlightIndex, serviceIndex, value)}
+                            onGenerate={() =>
+                              openTextGenerator?.({
+                                applyText: (value) => editor.updateHighlightText(highlightIndex, serviceIndex, value),
+                                currentText: highlight.text || '',
+                                fieldLabel: 'card highlight',
+                                fieldPath: `layout.${blockIndex}.services.${serviceIndex}.highlights.${highlightIndex}.text`,
+                              })}
+                            rows={2}
+                            value={highlight.text || ''}
+                          />
+                        ) : (
+                          <span>{highlight.text}</span>
+                        )}
                       </li>
                     ))}
                   </ul>
@@ -355,14 +748,16 @@ const FeatureCardsServiceGrid: React.FC<
 }
 
 const PricingStepsServiceGrid: React.FC<
-  Pick<ServiceGridBlockData, 'eyebrow' | 'heading' | 'intro' | 'services'>
+  Pick<ServiceGridBlockProps, 'blockIndex' | 'eyebrow' | 'heading' | 'intro' | 'services'>
 > = ({
+  blockIndex,
   eyebrow,
   heading,
   intro,
   services,
 }) => {
   const rows = services?.slice(0, 3) || []
+  const { editor, openTextGenerator } = useInlineServiceGridEditor(blockIndex)
 
   if (!rows.length) {
     return null
@@ -373,27 +768,135 @@ const PricingStepsServiceGrid: React.FC<
       <div className="mx-auto max-w-7xl px-6 py-16 md:py-20">
         <div className="grid gap-10 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:items-start">
           <div>
-            <p className="text-[0.7rem] font-semibold uppercase tracking-[0.34em] text-primary/80">
-              {eyebrow || 'Estimate logic'}
-            </p>
-            <h2 className="mt-4 text-4xl font-semibold tracking-tight text-foreground md:text-5xl">{heading}</h2>
-            {intro ? <p className="mt-4 max-w-2xl text-lg leading-8 text-muted-foreground">{intro}</p> : null}
+            {editor ? (
+              <InlineTextInput
+                className="h-9 border-primary/30 bg-background/90 text-[0.7rem] font-semibold uppercase tracking-[0.34em] text-primary"
+                onChange={(value) => editor.updateBlockField('eyebrow', value)}
+                onGenerate={() =>
+                    openTextGenerator?.({
+                      applyText: (value) => editor.updateBlockField('eyebrow', value),
+                      currentText: eyebrow || '',
+                      fieldLabel: 'section eyebrow',
+                      fieldPath: `layout.${blockIndex}.eyebrow`,
+                  })}
+                placeholder="Section eyebrow"
+                value={eyebrow || ''}
+              />
+            ) : (
+              <p className="text-[0.7rem] font-semibold uppercase tracking-[0.34em] text-primary/80">
+                {eyebrow || 'Estimate logic'}
+              </p>
+            )}
+            {editor ? (
+              <InlineTextInput
+                className="mt-4 h-14 border-primary/30 bg-background/90 text-4xl font-semibold tracking-tight text-foreground md:text-5xl"
+                onChange={(value) => editor.updateBlockField('heading', value)}
+                onGenerate={() =>
+                    openTextGenerator?.({
+                      applyText: (value) => editor.updateBlockField('heading', value),
+                      currentText: heading || '',
+                      fieldLabel: 'section heading',
+                      fieldPath: `layout.${blockIndex}.heading`,
+                  })}
+                placeholder="Section heading"
+                value={heading || ''}
+              />
+            ) : (
+              <h2 className="mt-4 text-4xl font-semibold tracking-tight text-foreground md:text-5xl">{heading}</h2>
+            )}
+            {editor ? (
+              <InlineTextarea
+                className="mt-4 min-h-24 max-w-2xl border-primary/30 bg-background/90 text-lg leading-8 text-muted-foreground"
+                onChange={(value) => editor.updateBlockField('intro', value)}
+                onGenerate={() =>
+                    openTextGenerator?.({
+                      applyText: (value) => editor.updateBlockField('intro', value),
+                      currentText: intro || '',
+                      fieldLabel: 'section intro',
+                      fieldPath: `layout.${blockIndex}.intro`,
+                  })}
+                placeholder="Section intro"
+                value={intro || ''}
+              />
+            ) : intro ? <p className="mt-4 max-w-2xl text-lg leading-8 text-muted-foreground">{intro}</p> : null}
           </div>
 
           <div className="grid gap-4 md:grid-cols-3">
-            {rows.map((step) => (
+            {rows.map((step, stepIndex) => (
               <div
                 key={step.id || step.name}
                 className="rounded-[1.7rem] border border-border/70 bg-background/88 p-5 shadow-[0_18px_70px_-54px_rgba(2,6,23,0.82)]"
               >
-                {step.eyebrow ? (
+                {editor ? (
+                  <InlineTextInput
+                    className="h-8 border-primary/30 bg-background/90 text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-primary"
+                    onChange={(value) => editor.updateServiceField('eyebrow', stepIndex, value)}
+                    onGenerate={() =>
+                      openTextGenerator?.({
+                        applyText: (value) => editor.updateServiceField('eyebrow', stepIndex, value),
+                        currentText: step.eyebrow || '',
+                        fieldLabel: 'step eyebrow',
+                        fieldPath: `layout.${blockIndex}.services.${stepIndex}.eyebrow`,
+                      })}
+                    placeholder="Step label"
+                    value={step.eyebrow || ''}
+                  />
+                ) : step.eyebrow ? (
                   <p className="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-primary/80">
                     {step.eyebrow}
                   </p>
                 ) : null}
-                <h3 className="mt-3 text-xl font-semibold text-foreground">{step.name}</h3>
-                <p className="mt-3 text-sm leading-6 text-muted-foreground">{step.summary}</p>
-                {step.highlights?.[0]?.text ? (
+                {editor ? (
+                  <InlineTextInput
+                    className="mt-3 h-10 border-primary/30 bg-background/90 text-xl font-semibold text-foreground"
+                    onChange={(value) => editor.updateServiceField('name', stepIndex, value)}
+                    onGenerate={() =>
+                      openTextGenerator?.({
+                        applyText: (value) => editor.updateServiceField('name', stepIndex, value),
+                        currentText: step.name || '',
+                        fieldLabel: 'step title',
+                        fieldPath: `layout.${blockIndex}.services.${stepIndex}.name`,
+                      })}
+                    placeholder="Step title"
+                    value={step.name || ''}
+                  />
+                ) : (
+                  <h3 className="mt-3 text-xl font-semibold text-foreground">{step.name}</h3>
+                )}
+                {editor ? (
+                  <InlineTextarea
+                    className="mt-3 min-h-24 border-primary/30 bg-background/90 text-sm leading-6 text-muted-foreground"
+                    onChange={(value) => editor.updateServiceField('summary', stepIndex, value)}
+                    onGenerate={() =>
+                      openTextGenerator?.({
+                        applyText: (value) => editor.updateServiceField('summary', stepIndex, value),
+                        currentText: step.summary || '',
+                        fieldLabel: 'step summary',
+                        fieldPath: `layout.${blockIndex}.services.${stepIndex}.summary`,
+                      })}
+                    placeholder="Step summary"
+                    value={step.summary || ''}
+                  />
+                ) : (
+                  <p className="mt-3 text-sm leading-6 text-muted-foreground">{step.summary}</p>
+                )}
+                {editor ? (
+                  <div className="mt-4">
+                    <InlineTextarea
+                      className="min-h-16 border-primary/30 bg-background/90 text-sm font-medium leading-6 text-foreground/80"
+                      onChange={(value) => editor.updateHighlightText(0, stepIndex, value)}
+                      onGenerate={() =>
+                        openTextGenerator?.({
+                          applyText: (value) => editor.updateHighlightText(0, stepIndex, value),
+                          currentText: step.highlights?.[0]?.text || '',
+                          fieldLabel: 'step highlight',
+                          fieldPath: `layout.${blockIndex}.services.${stepIndex}.highlights.0.text`,
+                        })}
+                      rows={2}
+                      value={step.highlights?.[0]?.text || ''}
+                    />
+                  </div>
+                ) : step.highlights?.[0]?.text ? (
                   <p className="mt-4 text-sm font-medium leading-6 text-foreground/80">{step.highlights[0].text}</p>
                 ) : null}
               </div>

@@ -151,10 +151,12 @@ export function summarizeScheduleRequest(values: {
 export function summarizeCopilotRequest(body: {
   authoringContext?: unknown
   currentPath?: string
-  focusedSession?: { mode?: unknown } | null
+  focusedSession?: unknown
   messages?: Array<{ content?: unknown; role?: unknown }>
 }) {
   const conversation = Array.isArray(body.messages) ? body.messages : []
+  const focusedSession =
+    body.focusedSession && typeof body.focusedSession === 'object' ? body.focusedSession : null
   const latestUserMessage = [...conversation]
     .reverse()
     .find((message) => message?.role === 'user' && typeof message.content === 'string')
@@ -162,7 +164,9 @@ export function summarizeCopilotRequest(body: {
   return {
     currentPath: typeof body.currentPath === 'string' ? normalizePathname(body.currentPath) : null,
     focusedSessionMode:
-      typeof body.focusedSession?.mode === 'string' ? body.focusedSession.mode : null,
+      focusedSession && 'mode' in focusedSession && typeof focusedSession.mode === 'string'
+        ? focusedSession.mode
+        : null,
     hasAuthoringContext: Boolean(body.authoringContext),
     latestUserQueryLength:
       typeof latestUserMessage?.content === 'string' ? latestUserMessage.content.trim().length : 0,

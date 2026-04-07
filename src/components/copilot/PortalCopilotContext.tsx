@@ -1,15 +1,25 @@
 'use client'
 
 import type { CopilotAuthoringContext, CopilotFocusedSession, CopilotFocusedSessionMode } from '@/lib/ai'
-import { createContext, type ReactNode, useCallback, useContext, useMemo, useState } from 'react'
+import { createContext, type ReactNode, useCallback, useContext, useState } from 'react'
 
 type PortalCopilotContextValue = {
+  applyFocusedText: (value: string) => void
   authoringContext: CopilotAuthoringContext | null
+  canApplyFocusedText: boolean
   close: () => void
   focusedSession: CopilotFocusedSession | null
   isOpen: boolean
   open: () => void
+  openTools: () => void
   openFocusedMediaSession: (args?: { mode?: CopilotFocusedSessionMode | null; promptHint?: string }) => void
+  openFocusedTextSession: (args: {
+    applyText?: (value: string) => void
+    currentText?: string
+    fieldLabel: string
+    fieldPath: string
+    instructions?: string
+  }) => void
   setAuthoringContext: (value: CopilotAuthoringContext | null) => void
   setFocusedSessionMode: (mode: CopilotFocusedSessionMode) => void
 }
@@ -51,15 +61,18 @@ function sameAuthoringContext(
 export function PortalCopilotProvider({ children }: { children: ReactNode }) {
   const [authoringContext, setAuthoringContextState] = useState<CopilotAuthoringContext | null>(null)
   const [focusedSession, setFocusedSession] = useState<CopilotFocusedSession | null>(null)
+  const [focusedTextApplier, setFocusedTextApplier] = useState<null | ((value: string) => void)>(null)
   const [isOpen, setIsOpen] = useState(false)
 
   const open = useCallback(() => setIsOpen(true), [])
   const close = useCallback(() => {
     setIsOpen(false)
     setFocusedSession(null)
+    setFocusedTextApplier(null)
   }, [])
   const openFocusedMediaSession = useCallback(
     (args?: { mode?: CopilotFocusedSessionMode | null; promptHint?: string }) => {
+      setFocusedTextApplier(null)
       setFocusedSession({
         mode: args?.mode || null,
         promptHint: args?.promptHint?.trim() || undefined,
@@ -69,6 +82,35 @@ export function PortalCopilotProvider({ children }: { children: ReactNode }) {
     },
     [],
   )
+  const openFocusedTextSession = useCallback(
+    (args: {
+      applyText?: (value: string) => void
+      currentText?: string
+      fieldLabel: string
+      fieldPath: string
+      instructions?: string
+    }) => {
+      setFocusedTextApplier(() => args.applyText || null)
+      setFocusedSession({
+        currentText: args.currentText?.trim() || undefined,
+        fieldLabel: args.fieldLabel.trim(),
+        fieldPath: args.fieldPath.trim(),
+        instructions: args.instructions?.trim() || undefined,
+        type: 'text-generation',
+      })
+      setIsOpen(true)
+    },
+    [],
+  )
+  const applyFocusedText = useCallback((value: string) => {
+    const nextValue = value.trim()
+
+    if (!nextValue || !focusedTextApplier) {
+      return
+    }
+
+    focusedTextApplier(nextValue)
+  }, [focusedTextApplier])
   const setFocusedSessionMode = useCallback((mode: CopilotFocusedSessionMode) => {
     setFocusedSession((current) =>
       current?.type === 'media-generation'
@@ -79,26 +121,28 @@ export function PortalCopilotProvider({ children }: { children: ReactNode }) {
         : {
             mode,
             type: 'media-generation',
-          },
+      },
     )
   }, [])
+  const canApplyFocusedText = Boolean(focusedSession?.type === 'text-generation' && focusedTextApplier)
   const setAuthoringContext = useCallback((value: CopilotAuthoringContext | null) => {
     setAuthoringContextState((current) => (sameAuthoringContext(current, value) ? current : value))
   }, [])
 
-  const value = useMemo(
-    () => ({
-      authoringContext,
-      close,
-      focusedSession,
-      isOpen,
-      open,
-      openFocusedMediaSession,
-      setAuthoringContext,
-      setFocusedSessionMode,
-    }),
-    [authoringContext, close, focusedSession, isOpen, open, openFocusedMediaSession, setAuthoringContext, setFocusedSessionMode],
-  )
+  const value = {
+    applyFocusedText,
+    authoringContext,
+    canApplyFocusedText,
+    close,
+    focusedSession,
+    isOpen,
+    open,
+    openTools: open,
+    openFocusedMediaSession,
+    openFocusedTextSession,
+    setAuthoringContext,
+    setFocusedSessionMode,
+  }
 
   return <PortalCopilotContext.Provider value={value}>{children}</PortalCopilotContext.Provider>
 }

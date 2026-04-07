@@ -118,6 +118,15 @@ export interface SharedSectionRecord {
   usageCount: number
 }
 
+export interface SharedSectionVersionSummary {
+  createdAt: string
+  id: string
+  latest: boolean
+  status: SharedSectionStatus
+  updatedAt: string
+  versionNumber: number
+}
+
 const recordSchema = z.record(z.string(), z.unknown())
 
 const sharedSectionPreviewSchema: z.ZodType<SharedSectionPreview> = z.object({

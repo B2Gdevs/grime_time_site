@@ -3,8 +3,8 @@
   <agent-registry>
   </agent-registry>
   <current-phase>18</current-phase>
-  <current-plan>18-05</current-plan>
+  <current-plan>18-06</current-plan>
   <status>in-progress</status>
-  <next-action>Phase `18` is still in progress on `18-05`. The shared-section authoring work from `18-01` through `18-04` remains complete, the corrective reusable-metadata migration is in place for live and `_pages_v` tables, the live frontend page acts as the authoring canvas, the composer uses a bounded viewport-height shell rail with internal tab scrolling, and the desktop frontend shell now gives vertical scroll ownership to the center content pane so both side rails remain available across long pages. Resume `18-05`: lightweight restore flows for shared-section versions and page versions without expanding into approvals, scheduling, or diff tooling.</next-action>
-  <sink-compiled sink="apps/portfolio/content/docs/grime-time/planning/" at="2026-04-05T21:17:41.562Z" />
+  <next-action>Phase `18` is still in progress on `18-06`. Task `18-05` is complete: the shared-section editor and page-composer publish surface now load native Payload version history, restore selected versions back into draft state, and keep their history lists in sync after save, publish, clone, and restore actions without adding approvals, scheduling, or diff tooling. Focus next on `18-06`: extend verification beyond the new restore route/UI coverage into the broader shared-section authoring matrix, especially propagation, detach/replace behavior, constrained layout rules, and focused browser coverage. Note: targeted lint plus the new restore-flow Vitest suite are green, but full `tsc --noEmit` remains blocked by pre-existing unrelated errors in `src/app/api/internal/ai/copilot/route.ts`, `src/blocks/PricingTable/Component.tsx`, `src/components/copilot/PortalCopilot.tsx`, `src/components/nav-user.tsx`, and `tests/int/components/copilot/portal-copilot-runtime-provider.int.spec.tsx`.</next-action>
+  <sink-compiled sink="apps/portfolio/content/docs/grime-time/planning/" at="2026-04-06T20:35:07.079Z" />
 </state>

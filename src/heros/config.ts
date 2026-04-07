@@ -39,6 +39,18 @@ export const hero: Field = {
       required: true,
     },
     {
+      name: 'eyebrow',
+      type: 'text',
+    },
+    {
+      name: 'headlinePrimary',
+      type: 'text',
+    },
+    {
+      name: 'headlineAccent',
+      type: 'text',
+    },
+    {
       name: 'richText',
       type: 'richText',
       editor: lexicalEditor({
@@ -52,6 +64,18 @@ export const hero: Field = {
         },
       }),
       label: false,
+    },
+    {
+      name: 'panelEyebrow',
+      type: 'text',
+    },
+    {
+      name: 'panelHeading',
+      type: 'text',
+    },
+    {
+      name: 'panelBody',
+      type: 'textarea',
     },
     linkGroup({
       overrides: {

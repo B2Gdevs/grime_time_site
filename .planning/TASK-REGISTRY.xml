@@ -874,7 +874,7 @@
         <command>See .planning/phases/18-shared-sections-and-constrained-reuse/PLAN.xml</command>
       </commands>
     </task>
-    <task id="18-05" agent-id="" status="planned">
+    <task id="18-05" agent-id="" status="done">
       <goal>Add lightweight restore flows for shared-section versions and page versions, without introducing approvals, scheduling, or full diff tooling.</goal>
       <keywords>versions,restore,shared-sections,pages</keywords>
       <commands>
@@ -886,6 +886,13 @@
       <keywords>tests,playwright,vitest,reusable,restore</keywords>
       <commands>
         <command>Run focused composer integration/browser verification after implementation.</command>
+      </commands>
+    </task>
+    <task id="18-07" agent-id="" status="done">
+      <goal>Unify operator surfaces so chat stays first: site copilot owns the impersonation/tools view on both the frontend and portal shells, the standalone admin toolbar is removed from those shared surfaces, the page composer opens as a triggered right-side sheet instead of a shell column, and signed-in account chrome leans on Clerk UI.</goal>
+      <keywords>copilot,impersonation,composer,sheet,clerk,authoring</keywords>
+      <commands>
+        <command>npm.cmd exec vitest run tests/int/components/admin-impersonation/page-composer-shell.int.spec.tsx tests/int/components/admin-impersonation/site-operator-tools-panel.int.spec.tsx</command>
       </commands>
     </task>
   </phase>

@@ -1,8 +1,10 @@
 import type { ReactNode } from 'react'
 
-import { AdminImpersonationToolbarShell } from '@/components/admin-impersonation/AdminImpersonationToolbarShell'
+import { PageComposerProvider } from '@/components/admin-impersonation/PageComposerContext'
+import type { SiteOperatorToolsPanelProps } from '@/components/admin-impersonation/SiteOperatorToolsPanel'
 import { PortalCopilot } from '@/components/copilot/PortalCopilot'
 import { PortalCopilotProvider } from '@/components/copilot/PortalCopilotContext'
+import { PortalCopilotRuntimeProvider } from '@/components/copilot/PortalCopilotRuntimeProvider'
 import { AppSidebar } from '@/components/app-sidebar'
 import { PortalTourGate } from '@/components/tours/PortalTourGate'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
@@ -17,6 +19,8 @@ type Props = {
   }[]
   effectiveUserEmail: string
   isRealAdmin: boolean
+  operatorTools?: null | SiteOperatorToolsPanelProps
+  pageComposerEnabled?: boolean
   quotesEligible: boolean
   user: {
     email: string
@@ -30,12 +34,13 @@ export function PortalAppShell({
   documents,
   effectiveUserEmail,
   isRealAdmin,
+  operatorTools = null,
+  pageComposerEnabled = false,
   quotesEligible,
   user,
 }: Props) {
   const shell = (
     <PortalTourGate effectiveUserEmail={effectiveUserEmail} isRealAdmin={isRealAdmin}>
-      <AdminImpersonationToolbarShell />
       <SidebarProvider
         className="portal-shell flex min-h-screen w-full"
         style={buildPortalShellStyle()}
@@ -52,15 +57,18 @@ export function PortalAppShell({
       </SidebarProvider>
     </PortalTourGate>
   )
-
   if (!aiCopilotEnabled) {
-    return shell
+    return pageComposerEnabled ? <PageComposerProvider>{shell}</PageComposerProvider> : shell
   }
 
-  return (
+  const copilotShell = (
     <PortalCopilotProvider>
-      {shell}
-      <PortalCopilot />
+      <PortalCopilotRuntimeProvider>
+        {shell}
+        <PortalCopilot operatorTools={operatorTools} />
+      </PortalCopilotRuntimeProvider>
     </PortalCopilotProvider>
   )
+
+  return pageComposerEnabled ? <PageComposerProvider>{copilotShell}</PageComposerProvider> : copilotShell
 }

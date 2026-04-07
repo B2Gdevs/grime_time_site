@@ -5,9 +5,11 @@ import { createSharedSectionStructureFromCategory } from '@/lib/pages/sharedSect
 const getCurrentAuthContext = vi.fn()
 const resolveSharedSectionPermissions = vi.fn()
 const loadSharedSectionsLibrary = vi.fn()
+const loadSharedSectionVersionSummaries = vi.fn()
 const createSharedSectionDraft = vi.fn()
 const saveSharedSectionDraft = vi.fn()
 const publishSharedSection = vi.fn()
+const restoreSharedSectionVersion = vi.fn()
 
 vi.mock('@/lib/auth/getAuthContext', () => ({
   getCurrentAuthContext,
@@ -20,13 +22,36 @@ vi.mock('@/lib/auth/sharedSectionPermissions', () => ({
 vi.mock('@/lib/pages/sharedSectionLibrary', () => ({
   createSharedSectionDraft,
   loadSharedSectionsLibrary,
+  loadSharedSectionVersionSummaries,
   publishSharedSection,
+  restoreSharedSectionVersion,
   saveSharedSectionDraft,
 }))
+
+function buildItem(overrides: Record<string, unknown> = {}) {
+  return {
+    category: 'hero',
+    createdAt: '2026-04-05T00:00:00.000Z',
+    currentVersion: 1,
+    description: 'Primary homepage hero',
+    id: 7,
+    name: 'Homepage Hero',
+    preview: { status: 'ready', updatedAt: '2026-04-05T00:00:00.000Z', url: '/hero.png' },
+    publishedAt: null,
+    slug: 'homepage-hero',
+    status: 'draft',
+    structure: { children: [], id: 'section-1', kind: 'section', layout: 'hero', props: {} },
+    tags: ['residential'],
+    updatedAt: '2026-04-05T00:00:00.000Z',
+    usageCount: 0,
+    ...overrides,
+  }
+}
 
 describe('internal shared sections route', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    loadSharedSectionVersionSummaries.mockResolvedValue([])
   })
 
   it('rejects users without shared-section library access', async () => {
@@ -101,6 +126,50 @@ describe('internal shared sections route', () => {
     await expect(response.json()).resolves.toMatchObject({
       items: [expect.objectContaining({ id: 7, name: 'Homepage Hero' })],
       permissions,
+    })
+  })
+
+  it('includes version history when requested for a specific shared section', async () => {
+    const permissions = {
+      canCreate: true,
+      canEditDraft: true,
+      canInsertIntoPage: true,
+      canPublish: true,
+      canRestoreVersion: true,
+      canViewLibrary: true,
+    }
+
+    getCurrentAuthContext.mockResolvedValue({
+      payload: {},
+      realUser: { email: 'admin@example.com', id: 1, roles: ['admin'] },
+    })
+    resolveSharedSectionPermissions.mockResolvedValue(permissions)
+    loadSharedSectionsLibrary.mockResolvedValue({
+      items: [buildItem()],
+      permissions,
+    })
+    loadSharedSectionVersionSummaries.mockResolvedValue([
+      {
+        createdAt: '2026-04-05T00:00:00.000Z',
+        id: 'version-1',
+        latest: true,
+        status: 'draft',
+        updatedAt: '2026-04-05T00:00:00.000Z',
+        versionNumber: 3,
+      },
+    ])
+
+    const { GET } = await import('@/app/api/internal/shared-sections/route')
+    const response = await GET(
+      new Request('http://localhost:5465/api/internal/shared-sections?id=7&includeVersions=true'),
+    )
+
+    expect(response.status).toBe(200)
+    expect(loadSharedSectionVersionSummaries).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 7 }),
+    )
+    await expect(response.json()).resolves.toMatchObject({
+      versions: [expect.objectContaining({ id: 'version-1', versionNumber: 3 })],
     })
   })
 
@@ -263,5 +332,58 @@ describe('internal shared sections route', () => {
 
     expect(response.status).toBe(403)
     expect(publishSharedSection).not.toHaveBeenCalled()
+  })
+
+  it('restores a shared-section version for authorized users', async () => {
+    const permissions = {
+      canCreate: true,
+      canEditDraft: true,
+      canInsertIntoPage: true,
+      canPublish: true,
+      canRestoreVersion: true,
+      canViewLibrary: true,
+    }
+
+    getCurrentAuthContext.mockResolvedValue({
+      payload: {},
+      realUser: { email: 'admin@example.com', id: 1, roles: ['admin'] },
+    })
+    resolveSharedSectionPermissions.mockResolvedValue(permissions)
+    restoreSharedSectionVersion.mockResolvedValue(buildItem({ currentVersion: 3, id: 11, status: 'draft' }))
+    loadSharedSectionVersionSummaries.mockResolvedValue([
+      {
+        createdAt: '2026-04-05T00:00:00.000Z',
+        id: 'version-1',
+        latest: true,
+        status: 'draft',
+        updatedAt: '2026-04-05T00:00:00.000Z',
+        versionNumber: 3,
+      },
+    ])
+
+    const { POST } = await import('@/app/api/internal/shared-sections/route')
+    const response = await POST(
+      new Request('http://localhost:5465/api/internal/shared-sections', {
+        body: JSON.stringify({
+          action: 'restore-shared-section-version',
+          id: 11,
+          versionId: 'version-1',
+        }),
+        headers: { 'content-type': 'application/json' },
+        method: 'POST',
+      }),
+    )
+
+    expect(response.status).toBe(200)
+    expect(restoreSharedSectionVersion).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sharedSectionId: 11,
+        versionId: 'version-1',
+      }),
+    )
+    await expect(response.json()).resolves.toMatchObject({
+      item: expect.objectContaining({ id: 11, currentVersion: 3 }),
+      versions: [expect.objectContaining({ id: 'version-1' })],
+    })
   })
 })

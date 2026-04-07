@@ -1,4 +1,4 @@
-import { createLocalReq } from 'payload'
+import { createLocalReq, type TypeWithVersion } from 'payload'
 
 import { getCurrentAuthContext } from '@/lib/auth/getAuthContext'
 import { hasContentAuthoringAccess } from '@/lib/auth/organizationAccess'
@@ -8,6 +8,7 @@ import {
   type PageComposerDocument,
   pageSlugToFrontendPath,
   type PageComposerPageSummary,
+  type PageComposerVersionSummary,
 } from '@/lib/pages/pageComposer'
 import type { Page } from '@/payload-types'
 
@@ -65,6 +66,24 @@ function toComposerPageSummary(page: Page): PageComposerPageSummary {
 
 function cloneValue<T>(value: T): T {
   return structuredClone(value)
+}
+
+function toPageComposerVersionSummary(
+  record: TypeWithVersion<Page>,
+): PageComposerVersionSummary {
+  const title = record.version.title?.trim() || 'Untitled page'
+  const slug = record.version.slug?.trim() || ''
+
+  return {
+    createdAt: record.createdAt,
+    id: record.id,
+    latest: Boolean(record.latest),
+    pagePath: pageSlugToFrontendPath(slug),
+    slug,
+    status: record.version._status === 'published' ? 'published' : 'draft',
+    title,
+    updatedAt: record.updatedAt,
+  }
 }
 
 function stripNestedIds<T>(value: T): T {
@@ -142,6 +161,64 @@ async function loadComposerPages(args: {
   return (result.docs as Page[]).map((page) => toComposerPageSummary(page))
 }
 
+async function loadPageVersions(args: {
+  pageId: number
+  payload: Awaited<ReturnType<typeof getCurrentAuthContext>>['payload']
+  req: Awaited<ReturnType<typeof createLocalReq>>
+}): Promise<PageComposerVersionSummary[]> {
+  const result = await args.payload.findVersions({
+    collection: 'pages',
+    depth: 0,
+    limit: 8,
+    overrideAccess: false,
+    pagination: false,
+    req: args.req,
+    sort: '-updatedAt',
+    where: {
+      parent: {
+        equals: args.pageId,
+      },
+    },
+  })
+
+  return (result.docs as TypeWithVersion<Page>[]).map((record) => toPageComposerVersionSummary(record))
+}
+
+async function restorePageVersion(args: {
+  pageId: number
+  payload: Awaited<ReturnType<typeof getCurrentAuthContext>>['payload']
+  req: Awaited<ReturnType<typeof createLocalReq>>
+  versionId: string
+}): Promise<Page> {
+  const version = (await args.payload.findVersionByID({
+    collection: 'pages',
+    id: args.versionId,
+    overrideAccess: false,
+    req: args.req,
+  })) as TypeWithVersion<Page>
+
+  if (Number(version.parent) !== args.pageId) {
+    throw new Error('The selected version does not belong to this page.')
+  }
+
+  await args.payload.restoreVersion({
+    collection: 'pages',
+    draft: true,
+    id: args.versionId,
+    overrideAccess: false,
+    req: args.req,
+  })
+
+  return (await args.payload.findByID({
+    collection: 'pages',
+    depth: 2,
+    draft: true,
+    id: args.pageId,
+    overrideAccess: false,
+    req: args.req,
+  })) as Page
+}
+
 export async function GET(request: Request): Promise<Response> {
   const auth = await requireStaffPageComposerAuth()
 
@@ -205,6 +282,11 @@ export async function GET(request: Request): Promise<Response> {
     ok: true,
     page: toComposerDocument(page, pagePath || pageSlugToFrontendPath(page.slug)),
     pages,
+    versions: await loadPageVersions({
+      pageId: page.id,
+      payload: auth.payload,
+      req: payloadReq,
+    }),
   })
 }
 
@@ -224,6 +306,7 @@ export async function POST(request: Request): Promise<Response> {
         sourcePageId?: number
         slug?: string
         title?: string
+        versionId?: string
         visibility?: Page['visibility']
       }
 
@@ -233,13 +316,15 @@ export async function POST(request: Request): Promise<Response> {
   const slug = body?.slug?.trim() || ''
   const layout = Array.isArray(body?.layout) ? body?.layout : null
   const action = body?.action || ''
+  const versionId = body?.versionId?.trim() || ''
   const visibility = body?.visibility === 'private' ? 'private' : 'public'
 
   if (
     action !== 'save-draft' &&
     action !== 'publish-page' &&
     action !== 'create-page' &&
-    action !== 'clone-page'
+    action !== 'clone-page' &&
+    action !== 'restore-page-version'
   ) {
     return Response.json({ error: 'Unsupported composer action.' }, { status: 400 })
   }
@@ -273,6 +358,11 @@ export async function POST(request: Request): Promise<Response> {
         ok: true,
         page: toComposerDocument(created, pageSlugToFrontendPath(created.slug)),
         pages: await loadComposerPages({
+          payload: auth.payload,
+          req: payloadReq,
+        }),
+        versions: await loadPageVersions({
+          pageId: created.id,
           payload: auth.payload,
           req: payloadReq,
         }),
@@ -327,6 +417,38 @@ export async function POST(request: Request): Promise<Response> {
           payload: auth.payload,
           req: payloadReq,
         }),
+        versions: await loadPageVersions({
+          pageId: created.id,
+          payload: auth.payload,
+          req: payloadReq,
+        }),
+      })
+    }
+
+    if (action === 'restore-page-version') {
+      if (!Number.isInteger(pageId) || pageId <= 0 || !versionId) {
+        return Response.json({ error: 'Page id and version id are required.' }, { status: 400 })
+      }
+
+      const restored = await restorePageVersion({
+        pageId,
+        payload: auth.payload,
+        req: payloadReq,
+        versionId,
+      })
+
+      return Response.json({
+        ok: true,
+        page: toComposerDocument(restored, pageSlugToFrontendPath(restored.slug)),
+        pages: await loadComposerPages({
+          payload: auth.payload,
+          req: payloadReq,
+        }),
+        versions: await loadPageVersions({
+          pageId: restored.id,
+          payload: auth.payload,
+          req: payloadReq,
+        }),
       })
     }
 
@@ -355,6 +477,11 @@ export async function POST(request: Request): Promise<Response> {
       ok: true,
       page: toComposerDocument(updated, pageSlugToFrontendPath(updated.slug)),
       pages: await loadComposerPages({
+        payload: auth.payload,
+        req: payloadReq,
+      }),
+      versions: await loadPageVersions({
+        pageId: updated.id,
         payload: auth.payload,
         req: payloadReq,
       }),

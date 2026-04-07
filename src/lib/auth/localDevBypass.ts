@@ -11,7 +11,7 @@ export async function loadLocalDevBypassUser(args: {
     return null
   }
 
-  if (process.env.GT_DEV_AUTH_BYPASS === 'false') {
+  if (process.env.GT_DEV_AUTH_BYPASS !== 'true') {
     return null
   }
 

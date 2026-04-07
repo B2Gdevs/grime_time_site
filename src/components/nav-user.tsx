@@ -1,27 +1,13 @@
 'use client'
 
-import { useClerk } from '@clerk/nextjs'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { LogOutIcon, ShieldIcon, UserCircleIcon } from 'lucide-react'
+import { UserButton } from '@clerk/nextjs'
+import { ShieldIcon, UserCircleIcon } from 'lucide-react'
 
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import {
   SidebarMenu,
-  SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar,
 } from '@/components/ui/sidebar'
-import { isSupabaseCustomerAuthFallbackEnabledClient } from '@/lib/auth/customerAuthMode'
 
 function initialsForName(name: string): string {
   return name
@@ -48,90 +34,40 @@ export function NavUser({
     name: string
   }
 }) {
-  const router = useRouter()
-  const { isMobile } = useSidebar()
-  const clerk = useClerk()
-
-  async function handleLogout() {
-    const clerkSignOut = clerk.signOut({ redirectUrl: '/login' }).catch(() => undefined)
-    const supabaseSignOut = isSupabaseCustomerAuthFallbackEnabledClient()
-      ? import('@/lib/supabase/browser')
-          .then(({ getSupabaseBrowserClient }) => getSupabaseBrowserClient().auth.signOut())
-          .catch(() => undefined)
-      : Promise.resolve(undefined)
-    const legacyLogout = isSupabaseCustomerAuthFallbackEnabledClient()
-      ? fetch('/auth/logout', { method: 'POST' })
-      : Promise.resolve(undefined)
-
-    await Promise.allSettled([
-      legacyLogout,
-      fetch('/api/users/logout', { method: 'POST' }),
-      supabaseSignOut,
-      clerkSignOut,
-    ])
-    router.push('/login')
-    router.refresh()
-  }
-
   return (
     <SidebarMenu>
       <SidebarMenuItem>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <SidebarMenuButton
-              size="lg"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-            >
-              <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarFallback className="rounded-lg">{initialsForName(user.name)}</AvatarFallback>
-              </Avatar>
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{user.name}</span>
-                <span className="truncate text-xs text-muted-foreground">{user.email}</span>
-              </div>
-            </SidebarMenuButton>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
-            side={isMobile ? 'bottom' : 'right'}
-            align="end"
-            sideOffset={4}
+        <div className="flex items-center gap-3 rounded-lg border border-sidebar-border/80 bg-sidebar-accent/35 px-3 py-2.5">
+          <Avatar className="h-8 w-8 rounded-lg">
+            <AvatarFallback className="rounded-lg">{initialsForName(user.name)}</AvatarFallback>
+          </Avatar>
+          <div className="grid min-w-0 flex-1 text-left text-sm leading-tight">
+            <span className="truncate font-medium">{user.name}</span>
+            <span className="truncate text-xs text-muted-foreground">{user.email}</span>
+          </div>
+          <UserButton
+            appearance={{
+              elements: {
+                avatarBox: 'h-8 w-8',
+              },
+            }}
           >
-            <DropdownMenuLabel className="p-0 font-normal">
-              <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarFallback className="rounded-lg">{initialsForName(user.name)}</AvatarFallback>
-                </Avatar>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">{user.name}</span>
-                  <span className="truncate text-xs text-muted-foreground">{user.email}</span>
-                </div>
-              </div>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem asChild>
-                <Link href={dashboardUrl}>
-                  <UserCircleIcon />
-                  {staffShell ? 'Ops dashboard' : 'Dashboard'}
-                </Link>
-              </DropdownMenuItem>
+            <UserButton.MenuItems>
+              <UserButton.Action
+                label={staffShell ? 'Ops dashboard' : 'Dashboard'}
+                labelIcon={<UserCircleIcon />}
+                open={dashboardUrl}
+              />
               {isRealAdmin && staffShell ? (
-                <DropdownMenuItem asChild>
-                  <Link href="/admin">
-                    <ShieldIcon />
-                    Payload admin
-                  </Link>
-                </DropdownMenuItem>
+                <UserButton.Action
+                  label="Payload admin"
+                  labelIcon={<ShieldIcon />}
+                  open="/admin"
+                />
               ) : null}
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={handleLogout}>
-              <LogOutIcon />
-              Log out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+            </UserButton.MenuItems>
+          </UserButton>
+        </div>
       </SidebarMenuItem>
     </SidebarMenu>
   )
