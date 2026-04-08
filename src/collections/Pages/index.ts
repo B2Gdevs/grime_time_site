@@ -1,4 +1,4 @@
-import type { CollectionConfig } from 'payload'
+import type { CollectionConfig, Field } from 'payload'
 
 import { authenticated } from '../../access/authenticated'
 import { authenticatedOrPublished } from '../../access/authenticatedOrPublished'
@@ -68,11 +68,11 @@ export const Pages: CollectionConfig<'pages'> = {
       required: true,
     },
     {
-      ...hero,
+      ...(hero as Field),
       admin: {
         hidden: true,
       },
-    },
+    } as Field,
     {
       type: 'tabs',
       tabs: [

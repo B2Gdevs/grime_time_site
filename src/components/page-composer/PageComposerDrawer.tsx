@@ -1196,7 +1196,7 @@ export function PageComposerDrawer({
             selectedIndex,
             selectedMediaRelationPath: selectedMediaPath,
             heroEditor: selectedHeroBlock
-              ? draftPage.pagePath === '/'
+              ? draftPage.pagePath === '/' && selectedHeroBlock.type === 'lowImpact'
                 ? {
                     blockIndex: selectedIndex,
                     copy: heroCopy,

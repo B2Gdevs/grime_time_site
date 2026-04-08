@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { MarketingHeroLead, MarketingHeroPanel } from '@/components/home/MarketingHeroEditable'
 
 const composerState = {
-  setActiveTab: vi.fn(),
+  isOpen: true,
 }
 
 const copilotState = {
@@ -12,8 +12,11 @@ const copilotState = {
 }
 
 const heroEditor = {
+  blockIndex: 0,
   copy: 'North Texas exterior cleaning with a clearer quote path and visible proof.',
+  fieldPathPrefix: 'layout.0',
   kind: 'marketing-home' as const,
+  mediaRelationPath: 'layout.0.media',
   eyebrow: 'Grime Time exterior cleaning',
   headlineAccent: 'Visible results.',
   headlinePrimary: 'Clear scope.',
@@ -26,7 +29,9 @@ const heroEditor = {
 
 vi.mock('@/components/page-composer/PageComposerCanvas', () => ({
   usePageComposerCanvasToolbarState: () => ({
+    draftPage: { id: 7, pagePath: '/' },
     heroEditor,
+    selectedIndex: 0,
   }),
 }))
 
@@ -80,13 +85,12 @@ describe('MarketingHeroEditable', () => {
     expect(bodyButton).toBeTruthy()
     fireEvent.click(bodyButton as HTMLButtonElement)
 
-    expect(composerState.setActiveTab).toHaveBeenCalledWith('content')
     expect(copilotState.openFocusedTextSession).toHaveBeenCalledWith(
       expect.objectContaining({
         applyText: expect.any(Function),
         currentText: heroEditor.copy,
         fieldLabel: 'hero body',
-        fieldPath: 'hero.richText',
+        fieldPath: 'layout.0.richText',
       }),
     )
   })

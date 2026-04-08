@@ -39,10 +39,10 @@ export function PageComposerDrawerBlockLibrary({
     }
 
     if (activeCategory === 'hero') {
-      return filteredBlockDefinitions.filter((definition) => definition.type === 'heroBlock')
+      return filteredBlockDefinitions.filter((definition) => definition.blockType === 'heroBlock')
     }
 
-    return filteredBlockDefinitions.filter((definition) => resolveBlockLibraryCategory(definition.type) === activeCategory)
+    return filteredBlockDefinitions.filter((definition) => resolveBlockLibraryCategory(definition.blockType) === activeCategory)
   }, [activeCategory, filteredBlockDefinitions])
   const visibleReusablePresets = useMemo(() => {
     if (activeCategory === 'all') {
@@ -89,7 +89,7 @@ export function PageComposerDrawerBlockLibrary({
                     <PageComposerDrawerBlockDefinitionCard
                       definition={definition}
                       insertRegisteredBlock={insertRegisteredBlock}
-                      key={definition.type}
+                      key={definition.id}
                     />
                   ))}
                 </div>

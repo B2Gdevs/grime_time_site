@@ -3,6 +3,7 @@
 **Captured:** 2026-04-07
 **Area:** page architecture / app blocks / composer
 **Urgency:** normal
+**Status:** done (2026-04-08)
 
 ## What
 
@@ -26,3 +27,9 @@ Desired direction:
 ## Suggested next action
 
 Plan this alongside the broader layout-first page model so hero and app/custom surfaces move into the same ordered block architecture instead of adding another one-off special case.
+
+## Resolution
+
+- Shipped the code-owned `serviceEstimator` page block and registered it in the composer block library.
+- Public page rendering now flows through ordered layout blocks instead of route-level instant-quote injection.
+- Focused tests cover the normalized layout path so estimator placement stays part of the unified page model.

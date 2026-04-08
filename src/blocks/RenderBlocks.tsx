@@ -25,7 +25,8 @@ import {
   resolvePageComposerReusableBlock,
 } from '@/lib/pages/pageComposerReusableBlocks'
 import { loadPublishedSharedSectionsByIds } from '@/lib/pages/sharedSectionLibrary'
-import { getInstantQuoteCatalog, type InstantQuoteCatalog } from '@/lib/quotes/getInstantQuoteCatalog'
+import { getInstantQuoteCatalog } from '@/lib/quotes/getInstantQuoteCatalog'
+import type { InstantQuoteCatalog } from '@/lib/quotes/instantQuoteCatalog'
 import { getCachedGlobal } from '@/utilities/getGlobals'
 
 type Props = {

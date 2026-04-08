@@ -58,20 +58,42 @@ describe('page media devtools helpers', () => {
     })
 
     expect(refs.map((ref) => ref.relationPath)).toEqual([
-      'hero.media',
-      'layout.0.services.0.media',
-      'layout.1.media',
+      'layout.0.media',
+      'layout.1.services.0.media',
+      'layout.2.media',
     ])
+    expect(refs[0]?.label).toBe('Hero image')
     expect(refs[1]?.label).toBe('What we do: Driveway cleaning')
     expect(refs[2]?.mediaId).toBe(33)
   })
 
   it('builds partial page update payloads for hero and service-grid references', () => {
-    const page = {
+    const homePage = {
       hero: {
         media: 11,
         type: 'highImpact',
       },
+      slug: 'home',
+      layout: [
+        {
+          blockType: 'serviceGrid',
+          heading: 'What we do',
+          services: [
+            {
+              media: 22,
+              name: 'House wash',
+              summary: 'Exterior cleaning.',
+            },
+          ],
+        },
+      ],
+    } as never
+
+    const aboutPage = {
+      hero: {
+        type: 'none',
+      },
+      slug: 'about',
       layout: [
         {
           blockType: 'serviceGrid',
@@ -90,7 +112,7 @@ describe('page media devtools helpers', () => {
     expect(
       buildPageMediaUpdateData({
         mediaId: 91,
-        page,
+        page: homePage,
         relationPath: 'hero.media',
       }),
     ).toEqual({
@@ -98,12 +120,33 @@ describe('page media devtools helpers', () => {
         media: 91,
         type: 'highImpact',
       },
+      layout: [
+        {
+          blockType: 'heroBlock',
+          media: 91,
+          type: 'highImpact',
+        },
+        {
+          blockType: 'serviceGrid',
+          heading: 'What we do',
+          services: [
+            {
+              media: 22,
+              name: 'House wash',
+              summary: 'Exterior cleaning.',
+            },
+          ],
+        },
+        {
+          blockType: 'serviceEstimator',
+        },
+      ],
     })
 
     expect(
       buildPageMediaUpdateData({
         mediaId: 92,
-        page,
+        page: aboutPage,
         relationPath: 'layout.0.services.0.media',
       }),
     ).toEqual({

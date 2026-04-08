@@ -5,7 +5,6 @@ import { PageHeroRichTextEditable } from '@/components/home/PageHeroRichTextEdit
 
 const composerState = {
   isOpen: true,
-  setActiveTab: vi.fn(),
 }
 
 const copilotState = {
@@ -13,8 +12,12 @@ const copilotState = {
 }
 
 const heroEditor = {
+  blockIndex: 3,
   copy: 'Generic page hero copy.',
+  copyFieldPath: 'layout.3.richText',
+  fieldPathPrefix: 'layout.3',
   kind: 'rich-text' as const,
+  mediaRelationPath: 'layout.3.media',
   updateCopy: vi.fn(),
 }
 
@@ -22,7 +25,7 @@ vi.mock('@/components/page-composer/PageComposerCanvas', () => ({
   usePageComposerCanvasToolbarState: () => ({
     draftPage: { id: 44, pagePath: '/about' },
     heroEditor,
-    selectedIndex: -1,
+    selectedIndex: 3,
   }),
 }))
 
@@ -59,13 +62,12 @@ describe('PageHeroRichTextEditable', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /generate text for this field/i }))
 
-    expect(composerState.setActiveTab).toHaveBeenCalledWith('content')
     expect(copilotState.openFocusedTextSession).toHaveBeenCalledWith(
       expect.objectContaining({
         applyText: expect.any(Function),
         currentText: heroEditor.copy,
         fieldLabel: 'hero body',
-        fieldPath: 'hero.richText',
+        fieldPath: 'layout.3.richText',
       }),
     )
   })

@@ -5,6 +5,6 @@
   <current-phase>18</current-phase>
   <current-plan>18-06</current-plan>
   <status>in-progress</status>
-  <next-action>Shipped draggable floating composer launcher (`PageComposerFloatingLauncher`, quick `quick-2026-04-08-composer-draggable-floating-launcher`) and fixed service-grid media target drift (`.planning/debug/resolved-service-grid-media-target-lane-sync.md`): composer media targeting now syncs the visible service/pricing lane on canvas. Resume `18-06` for shared-sections work. Follow-ups: `.planning/todos/2026-04-07-layout-first-page-model-hero-block.md`, `.planning/todos/2026-04-07-instant-quote-app-block.md`, `.planning/todos/2026-04-07-composer-media-target-model.md`.</next-action>
+  <next-action>Shipped the layout-first page model migration for marketing pages: hero and service estimator now exist as real layout blocks, the missing page-layout block migration has been applied, and composer presets expose both homepage and standard hero inserts. Resume `18-06` for shared-sections work. Follow-ups: `.planning/todos/2026-04-07-layout-first-page-model-hero-block.md`, `.planning/todos/2026-04-07-instant-quote-app-block.md`, `.planning/todos/2026-04-07-composer-media-target-model.md`, `.planning/todos/2026-04-08-composer-canvas-follow-up-defects.md`.</next-action>
   <sink-compiled sink="apps/portfolio/content/docs/grime-time/planning/" at="2026-04-07T20:06:41.163Z" />
 </state>

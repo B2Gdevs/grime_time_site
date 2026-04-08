@@ -164,6 +164,7 @@ describe('internal page media devtools route', () => {
         },
         id: 7,
         layout: [],
+        slug: 'home',
       }),
       update: vi.fn().mockResolvedValue({ id: 7 }),
     }
@@ -202,6 +203,16 @@ describe('internal page media devtools route', () => {
             media: 88,
             type: 'highImpact',
           },
+          layout: [
+            {
+              blockType: 'heroBlock',
+              media: 88,
+              type: 'highImpact',
+            },
+            {
+              blockType: 'serviceEstimator',
+            },
+          ],
         },
         id: 7,
       }),
@@ -267,6 +278,7 @@ describe('internal page media devtools route', () => {
           },
           id: 7,
           layout: [],
+          slug: 'home',
         })
         .mockResolvedValueOnce({
           alt: 'Library replacement',
@@ -305,6 +317,16 @@ describe('internal page media devtools route', () => {
             media: 21,
             type: 'highImpact',
           },
+          layout: [
+            {
+              blockType: 'heroBlock',
+              media: 21,
+              type: 'highImpact',
+            },
+            {
+              blockType: 'serviceEstimator',
+            },
+          ],
         },
         id: 7,
       }),

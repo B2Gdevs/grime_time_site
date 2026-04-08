@@ -32,6 +32,7 @@ import * as migration_20260405_002323_add_shared_sections_contract from './20260
 import * as migration_20260405_003500_shared_sections_archived_status from './20260405_003500_shared_sections_archived_status';
 import * as migration_20260405_040500_fix_page_composer_reusable_metadata_schema from './20260405_040500_fix_page_composer_reusable_metadata_schema';
 import * as migration_20260406_202500_add_page_hero_authoring_fields from './20260406_202500_add_page_hero_authoring_fields';
+import * as migration_20260408_110000_add_page_layout_hero_and_estimator_blocks from './20260408_110000_add_page_layout_hero_and_estimator_blocks';
 
 export const migrations = [
   {
@@ -203,5 +204,10 @@ export const migrations = [
     up: migration_20260406_202500_add_page_hero_authoring_fields.up,
     down: migration_20260406_202500_add_page_hero_authoring_fields.down,
     name: '20260406_202500_add_page_hero_authoring_fields',
+  },
+  {
+    up: migration_20260408_110000_add_page_layout_hero_and_estimator_blocks.up,
+    down: migration_20260408_110000_add_page_layout_hero_and_estimator_blocks.down,
+    name: '20260408_110000_add_page_layout_hero_and_estimator_blocks',
   },
 ];

@@ -1,18 +1,20 @@
 import type { Page } from '@/payload-types'
+import { createLexicalParagraph } from '@/lib/pages/pageComposerLexical'
 
 export type PageComposerBlockCategory = 'container' | 'dynamic' | 'static'
 export type PageComposerRegisteredBlockType = Page['layout'][number]['blockType'] | 'customHtml'
-export type PageComposerInsertableBlockType = PageComposerRegisteredBlockType
+export type PageComposerInsertableBlockType = PageComposerRegisteredBlockType | 'homepageHero'
 
 export type PageComposerBlockDefinition = {
+  blockType: PageComposerRegisteredBlockType
   category: PageComposerBlockCategory
   description: string
+  id: PageComposerInsertableBlockType
   keywords: string[]
   label: string
   supportsInsert: boolean
   supportsNesting: boolean
   supportsReusable: boolean
-  type: PageComposerRegisteredBlockType
 }
 
 type LayoutBlock = Page['layout'][number]
@@ -47,129 +49,152 @@ function cloneValue<T>(value: T): T {
 
 const pageComposerBlockDefinitions: PageComposerBlockDefinition[] = [
   {
+    blockType: 'heroBlock',
     category: 'static',
-    description: 'Primary page-opening hero section with copy, media, and route-level emphasis.',
+    description: 'Standard page-opening hero for interior marketing pages and general route intros.',
+    id: 'heroBlock',
     keywords: ['hero', 'headline', 'intro', 'page opening'],
     label: 'Hero',
     supportsInsert: true,
     supportsNesting: false,
     supportsReusable: false,
-    type: 'heroBlock',
   },
   {
+    blockType: 'heroBlock',
     category: 'static',
+    description: 'Homepage-specific marketing hero with split headline, panel copy, and estimator-first emphasis.',
+    id: 'homepageHero',
+    keywords: ['hero', 'homepage', 'marketing hero', 'landing hero'],
+    label: 'Homepage Hero',
+    supportsInsert: true,
+    supportsNesting: false,
+    supportsReusable: false,
+  },
+  {
+    blockType: 'serviceGrid',
+    category: 'static',
+    id: 'serviceGrid',
     description: 'Branded service cards or pricing-step style sections authored directly on the page.',
     keywords: ['service', 'services', 'cards', 'pricing steps', 'homepage'],
     label: 'Service grid',
     supportsInsert: true,
     supportsNesting: false,
     supportsReusable: true,
-    type: 'serviceGrid',
   },
   {
+    blockType: 'pricingTable',
     category: 'dynamic',
+    id: 'pricingTable',
     description: 'Pricing lanes powered by the shared pricing global or inline plans on the page.',
     keywords: ['pricing', 'plans', 'packages', 'quote'],
     label: 'Pricing table',
     supportsInsert: true,
     supportsNesting: false,
     supportsReusable: false,
-    type: 'pricingTable',
   },
   {
+    blockType: 'cta',
     category: 'static',
+    id: 'cta',
     description: 'Rich marketing copy plus CTA links.',
     keywords: ['cta', 'call to action', 'buttons', 'links'],
     label: 'Call to action',
     supportsInsert: true,
     supportsNesting: false,
     supportsReusable: true,
-    type: 'cta',
   },
   {
+    blockType: 'content',
     category: 'container',
+    id: 'content',
     description: 'Multi-column content layout with rich text and optional links.',
     keywords: ['content', 'columns', 'rich text', 'layout'],
     label: 'Content columns',
     supportsInsert: true,
     supportsNesting: true,
     supportsReusable: true,
-    type: 'content',
   },
   {
+    blockType: 'mediaBlock',
     category: 'static',
+    id: 'mediaBlock',
     description: 'Single media section for a strong image or video asset.',
     keywords: ['media', 'image', 'video', 'photo'],
     label: 'Media block',
     supportsInsert: true,
     supportsNesting: false,
     supportsReusable: true,
-    type: 'mediaBlock',
   },
   {
+    blockType: 'archive',
     category: 'dynamic',
+    id: 'archive',
     description: 'Collection-driven archive or selected-post section.',
     keywords: ['archive', 'posts', 'blog', 'news'],
     label: 'Archive',
     supportsInsert: true,
     supportsNesting: false,
     supportsReusable: false,
-    type: 'archive',
   },
   {
+    blockType: 'formBlock',
     category: 'dynamic',
+    id: 'formBlock',
     description: 'Generic Payload form block bound to a selected form record.',
     keywords: ['form', 'lead', 'capture', 'signup'],
     label: 'Form block',
     supportsInsert: true,
     supportsNesting: false,
     supportsReusable: false,
-    type: 'formBlock',
   },
   {
+    blockType: 'contactRequest',
     category: 'dynamic',
+    id: 'contactRequest',
     description: 'First-party contact request block wired to the lead flow.',
     keywords: ['contact', 'lead', 'request', 'crm'],
     label: 'Contact request',
     supportsInsert: true,
     supportsNesting: false,
     supportsReusable: false,
-    type: 'contactRequest',
   },
   {
+    blockType: 'testimonialsBlock',
     category: 'dynamic',
+    id: 'testimonialsBlock',
     description: 'Testimonials section powered by selected or latest testimonial records.',
     keywords: ['testimonials', 'reviews', 'social proof'],
     label: 'Testimonials',
     supportsInsert: true,
     supportsNesting: false,
     supportsReusable: true,
-    type: 'testimonialsBlock',
   },
   {
+    blockType: 'serviceEstimator',
     category: 'dynamic',
+    id: 'serviceEstimator',
     description: 'Code-owned service estimator and instant quote experience for marketing pages.',
     keywords: ['instant quote', 'estimator', 'quote tool', 'app block'],
     label: 'Service estimator',
     supportsInsert: true,
     supportsNesting: false,
     supportsReusable: false,
-    type: 'serviceEstimator',
   },
   {
+    blockType: 'customHtml',
     category: 'static',
+    id: 'customHtml',
     description: 'Trusted embed or markup block with sanitized rendering for approved HTML snippets.',
     keywords: ['html', 'embed', 'widget', 'custom code'],
     label: 'Custom HTML',
     supportsInsert: true,
     supportsNesting: false,
     supportsReusable: false,
-    type: 'customHtml',
   },
 ]
 
 const pageComposerBlockDefinitionMap = new Map(
-  pageComposerBlockDefinitions.map((definition) => [definition.type, definition]),
+  pageComposerBlockDefinitions.map((definition) => [definition.id, definition]),
 )
 
 export function getPageComposerBlockDefinitions(): PageComposerBlockDefinition[] {
@@ -189,11 +214,15 @@ export function findPageComposerBlockDefinition(
     return null
   }
 
-  return pageComposerBlockDefinitionMap.get(type as PageComposerRegisteredBlockType) || null
+  return (
+    pageComposerBlockDefinitionMap.get(type as PageComposerInsertableBlockType) ||
+    pageComposerBlockDefinitions.find((definition) => definition.blockType === type) ||
+    null
+  )
 }
 
 export function createPageComposerBlock(type: PageComposerInsertableBlockType): LayoutBlock {
-  if (type === 'heroBlock') {
+  if (type === 'homepageHero') {
     return {
       blockType: 'heroBlock',
       eyebrow: 'Grime Time exterior cleaning',
@@ -203,6 +232,14 @@ export function createPageComposerBlock(type: PageComposerInsertableBlockType): 
       panelEyebrow: 'Fast lane for homeowners',
       panelHeading: 'Quotes and scheduling without vague contractor talk.',
       type: 'lowImpact',
+    }
+  }
+
+  if (type === 'heroBlock') {
+    return {
+      blockType: 'heroBlock',
+      richText: createLexicalParagraph('Use this hero to introduce the page with a clearer route-specific promise.'),
+      type: 'mediumImpact',
     }
   }
 

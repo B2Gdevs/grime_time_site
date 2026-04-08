@@ -141,7 +141,10 @@ Some fields may later be reused outside one page or feed business logic. When th
 
 - [`src/collections/Pages/index.ts`](../../src/collections/Pages/index.ts)
 - [`src/app/(frontend)/page.tsx`](../../src/app/(frontend)/page.tsx)
-- [`src/components/home/GrimeTimeMarketingHome.tsx`](../../src/components/home/GrimeTimeMarketingHome.tsx)
+- [`src/blocks/Hero/Component.tsx`](../../src/blocks/Hero/Component.tsx)
+- [`src/blocks/ServiceEstimator/Component.tsx`](../../src/blocks/ServiceEstimator/Component.tsx)
+- [`src/blocks/RenderBlocks.tsx`](../../src/blocks/RenderBlocks.tsx)
+- [`src/lib/pages/pageLayoutBlocks.ts`](../../src/lib/pages/pageLayoutBlocks.ts)
 - [`src/components/admin-impersonation/PageMediaDevtoolsDrawer.tsx`](../../src/components/admin-impersonation/PageMediaDevtoolsDrawer.tsx)
 - [`src/components/admin-impersonation/PageMediaDevtoolsContext.tsx`](../../src/components/admin-impersonation/PageMediaDevtoolsContext.tsx)
 - [`src/components/copilot/PortalCopilot.tsx`](../../src/components/copilot/PortalCopilot.tsx)

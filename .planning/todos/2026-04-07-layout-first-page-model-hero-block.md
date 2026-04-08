@@ -3,6 +3,7 @@
 **Captured:** 2026-04-07
 **Area:** ui / cms / composer architecture
 **Urgency:** normal
+**Status:** done (2026-04-08)
 
 ## What
 
@@ -27,3 +28,9 @@ User intent:
 ## Suggested next action
 
 Plan a dedicated refactor covering Payload schema changes, migration strategy for existing pages, composer state updates, and frontend renderer changes before implementation.
+
+## Resolution
+
+- Added first-class `heroBlock` support to page layout rendering and composer registry paths.
+- Normalized frontend page rendering around `layout` blocks with legacy page-hero compatibility for existing documents.
+- Removed the leftover home-only renderer reference so the repo points at the block-based model instead of a split shell.

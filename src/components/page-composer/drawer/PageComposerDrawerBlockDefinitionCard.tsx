@@ -11,7 +11,7 @@ export function PageComposerDrawerBlockDefinitionCard({
   insertRegisteredBlock,
 }: {
   definition: PageComposerBlockDefinition
-  insertRegisteredBlock: (type: PageComposerBlockDefinition['type']) => void
+  insertRegisteredBlock: (type: PageComposerBlockDefinition['id']) => void
 }) {
   return (
     <button
@@ -21,13 +21,13 @@ export function PageComposerDrawerBlockDefinitionCard({
           : 'cursor-not-allowed border-border/50 bg-card/30 opacity-65'
       }`}
       disabled={!definition.supportsInsert}
-      onClick={() => (definition.supportsInsert ? insertRegisteredBlock(definition.type) : undefined)}
+      onClick={() => (definition.supportsInsert ? insertRegisteredBlock(definition.id) : undefined)}
       type="button"
     >
       <div className="flex flex-wrap items-center gap-2">
         <div className="text-sm font-semibold text-foreground">{definition.label}</div>
-        <Badge variant="outline">{definition.type}</Badge>
-        <Badge variant="outline">{resolveBlockLibraryCategory(definition.type)}</Badge>
+        <Badge variant="outline">{definition.blockType}</Badge>
+        <Badge variant="outline">{resolveBlockLibraryCategory(definition.blockType)}</Badge>
         {definition.supportsReusable ? <Badge variant="secondary">reusable-ready</Badge> : null}
         {!definition.supportsInsert ? <Badge variant="outline">planned</Badge> : null}
       </div>
