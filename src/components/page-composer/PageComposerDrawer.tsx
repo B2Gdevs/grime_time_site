@@ -36,8 +36,9 @@ import {
   type PageComposerSectionSummary,
   type PageComposerVersionSummary,
   updatePageLayoutSection,
+  isMarketingComposerPagePath,
 } from '@/lib/pages/pageComposer'
-import { composerPagePathForPathname } from '@/lib/pages/pageComposerLiveRoute'
+import { resolveComposerPagePathForPathname } from '@/lib/pages/pageComposerLiveRoute'
 import { createLexicalParagraph, lexicalToPlainText } from '@/lib/pages/pageComposerLexical'
 import {
   createPageComposerBlock,
@@ -280,13 +281,14 @@ export function PageComposerDrawer({
   const activeTab = composer?.activeTab ?? 'content'
   const selectedIndex = composer?.selectedIndex ?? 0
 
-  const composerPagePath = useMemo(() => composerPagePathForPathname(pathname), [pathname])
+  const composerPagePath = useMemo(() => resolveComposerPagePathForPathname(pathname), [pathname])
+  const routeSupportsPageComposer = Boolean(composerPagePath && isMarketingComposerPagePath(composerPagePath))
   const livePageEditingActive = Boolean(
-    composer && composer.isOpen && composer.activePagePath === composerPagePath,
+    routeSupportsPageComposer && composer && composer.isOpen && composer.activePagePath === composerPagePath,
   )
   const toggleLivePageEditing = useCallback(
     (next: boolean) => {
-      if (!composer) {
+      if (!composer || !composerPagePath || !routeSupportsPageComposer) {
         return
       }
       if (!next) {
@@ -297,7 +299,7 @@ export function PageComposerDrawer({
       composer.setActiveTab('content')
       composer.open()
     },
-    [composer, composerPagePath],
+    [composer, composerPagePath, routeSupportsPageComposer],
   )
 
   const setSelectedIndex = useCallback(
@@ -493,6 +495,14 @@ export function PageComposerDrawer({
       setSelectedIndex(sectionSummaries[0]?.index ?? 0)
     }
   }, [sectionSummaries, selectedIndex, setSelectedIndex])
+
+  useEffect(() => {
+    if (routeSupportsPageComposer || !composer) {
+      return
+    }
+
+    composer.close()
+  }, [composer, routeSupportsPageComposer])
 
   useEffect(() => {
     if (!composer) {
@@ -1674,7 +1684,7 @@ export function PageComposerDrawer({
     }
   }
 
-  if (!enabled || !composer) return null
+    if (!enabled || !composer || !routeSupportsPageComposer) return null
 
   const blockLibrary = {
     blockLibraryMode,

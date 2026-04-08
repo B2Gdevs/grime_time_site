@@ -6,7 +6,7 @@ import { FilePenLineIcon, Settings2Icon } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 
 import { usePageComposerOptional } from '@/components/page-composer/PageComposerContext'
-import { composerPagePathForPathname } from '@/lib/pages/pageComposerLiveRoute'
+import { resolveComposerPagePathForPathname } from '@/lib/pages/pageComposerLiveRoute'
 import { cn } from '@/utilities/ui'
 
 const LAUNCHER_POSITION_KEY = 'page-composer-floating-launcher-position'
@@ -24,7 +24,7 @@ export function PageComposerFloatingLauncher() {
   const launcherDragMovedRef = useRef(false)
   const launcherX = useMotionValue(0)
   const launcherY = useMotionValue(0)
-  const composerPagePath = composerPagePathForPathname(pathname)
+  const composerPagePath = resolveComposerPagePathForPathname(pathname)
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -46,6 +46,10 @@ export function PageComposerFloatingLauncher() {
   }, [launcherX, launcherY])
 
   if (!composer) {
+    return null
+  }
+
+  if (!composerPagePath) {
     return null
   }
 

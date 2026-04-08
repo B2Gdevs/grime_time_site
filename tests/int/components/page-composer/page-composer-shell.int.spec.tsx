@@ -341,6 +341,18 @@ describe('PageComposer shell integration', () => {
     expect(screen.getByTestId('active-page-path').textContent).toBe('/contact')
   })
 
+  it('does not show the composer launcher on non-CMS frontend routes', () => {
+    pathname = '/search'
+
+    render(
+      <PageComposerProvider>
+        <PageComposerDrawer enabled />
+      </PageComposerProvider>,
+    )
+
+    expect(screen.queryByRole('button', { name: /page composer/i })).toBeNull()
+  })
+
   it('keeps published-page draft saves on the current route instead of cloning or pushing a new route', async () => {
     global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input)

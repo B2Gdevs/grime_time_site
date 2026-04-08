@@ -78,6 +78,21 @@ export type PageComposerValidationSummary = {
   pageStatus: 'draft' | 'published'
 }
 
+const RESERVED_FRONTEND_PAGE_SLUGS = new Set([
+  '_contact',
+  'admin',
+  'claim-account',
+  'docs',
+  'forgot-password',
+  'login',
+  'next',
+  'ops',
+  'posts',
+  'reset-password',
+  'schedule',
+  'search',
+])
+
 type SharedSectionMap = Map<number, Pick<SharedSectionRecord, 'currentVersion' | 'id' | 'name' | 'structure'>>
 
 type ServiceGridLike = Extract<Page['layout'][number], { blockType: 'serviceGrid' }>
@@ -152,6 +167,10 @@ export function frontendPathToPageSlug(pagePath: string): null | string {
   const normalized = trimmed.startsWith('/') ? trimmed.slice(1) : trimmed
 
   if (!normalized || normalized.includes('/')) {
+    return null
+  }
+
+  if (RESERVED_FRONTEND_PAGE_SLUGS.has(normalized)) {
     return null
   }
 

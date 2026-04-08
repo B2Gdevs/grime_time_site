@@ -21,12 +21,14 @@ function blockPanelDescription(blockType: null | string): string {
 
 export function PageComposerDrawerSelectedBlockPanel({
   children,
+  onRemoveBlock,
   openBlockLibrary,
   selectedBlockType,
   selectedIndex,
   selectedSummary,
 }: {
   children?: ReactNode
+  onRemoveBlock?: (index: number) => void
   openBlockLibrary: (index: number, mode?: 'insert' | 'replace') => void
   selectedBlockType?: null | string
   selectedIndex: number
@@ -39,10 +41,18 @@ export function PageComposerDrawerSelectedBlockPanel({
         <div className="mt-1 text-sm text-muted-foreground">
           {blockPanelDescription(selectedBlockType || selectedSummary?.blockType || null)}
         </div>
-        <div className="mt-3">
+        <div className="mt-3 flex flex-wrap gap-2">
           <Button onClick={() => openBlockLibrary(selectedIndex, 'replace')} size="sm" type="button" variant="outline">
             Find blocks
           </Button>
+          <Button onClick={() => openBlockLibrary(selectedIndex + 1, 'insert')} size="sm" type="button" variant="secondary">
+            Add below
+          </Button>
+          {onRemoveBlock ? (
+            <Button onClick={() => onRemoveBlock(selectedIndex)} size="sm" type="button" variant="ghost">
+              Remove block
+            </Button>
+          ) : null}
         </div>
       </div>
       {children}

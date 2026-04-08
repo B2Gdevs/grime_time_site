@@ -79,6 +79,8 @@ describe('PageComposerDrawerContentTab', () => {
     )
 
     expect(screen.getAllByRole('button', { name: 'Find blocks' })).toHaveLength(1)
+    expect(screen.getByRole('button', { name: 'Add below' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Remove block' })).toBeTruthy()
     expect(screen.getByDisplayValue('Clear scope.')).toBeTruthy()
     expect(screen.getByDisplayValue('Quotes and scheduling without vague contractor talk.')).toBeTruthy()
 
@@ -93,6 +95,12 @@ describe('PageComposerDrawerContentTab', () => {
     })
 
     expect(props.updateHeroCopy).toHaveBeenCalledWith('Updated hero body copy.')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add below' }))
+    expect(props.openBlockLibrary).toHaveBeenCalledWith(1, 'insert')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Remove block' }))
+    expect(props.removeBlock).toHaveBeenCalledWith(0)
   })
 
   it('uses app-block copy instead of pretending app blocks have generic field editing', () => {

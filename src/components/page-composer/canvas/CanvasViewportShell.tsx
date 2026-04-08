@@ -8,7 +8,7 @@ import {
   type PageComposerToolbarState,
 } from '@/components/page-composer/PageComposerContext'
 import { usePortalCopilotOptional } from '@/components/copilot/PortalCopilotContext'
-import { composerPagePathForPathname } from '@/lib/pages/pageComposerLiveRoute'
+import { resolveComposerPagePathForPathname } from '@/lib/pages/pageComposerLiveRoute'
 
 import { CanvasViewportChrome } from './CanvasViewportChrome'
 import { resolveCanvasViewportBreadcrumbs } from './CanvasViewportUtils'
@@ -23,10 +23,10 @@ export function PageComposerCanvasViewportShell({
   const composer = usePageComposerOptional()
   const pathname = usePathname()
   const copilot = usePortalCopilotOptional()
-  const composerPagePath = composerPagePathForPathname(pathname)
+  const composerPagePath = resolveComposerPagePathForPathname(pathname)
 
   const isActive = Boolean(
-    composer?.isOpen && composer.activePagePath && composer.activePagePath === composerPagePath,
+    composerPagePath && composer?.isOpen && composer.activePagePath && composer.activePagePath === composerPagePath,
   )
 
   if (!composer || !isActive) {
@@ -34,9 +34,10 @@ export function PageComposerCanvasViewportShell({
   }
 
   const selectedSummary = toolbarState?.sectionSummaries.find((summary) => summary.index === composer.selectedIndex) ?? null
-  const breadcrumbs = resolveCanvasViewportBreadcrumbs(toolbarState?.draftPage?.pagePath ?? composerPagePath)
+  const resolvedPagePath = toolbarState?.draftPage?.pagePath ?? composerPagePath ?? pathname
+  const breadcrumbs = resolveCanvasViewportBreadcrumbs(resolvedPagePath)
   const dirty = toolbarState?.dirty ?? false
-  const pagePath = toolbarState?.draftPage?.pagePath ?? composerPagePath
+  const pagePath = resolvedPagePath
   return (
     <CanvasViewportChrome
       active={isActive}

@@ -106,6 +106,7 @@ export function PageComposerDrawerContentTab({
   if (resolvedSelectedBlock?.blockType === 'serviceGrid') {
     return (
       <PageComposerDrawerSelectedBlockPanel
+        onRemoveBlock={removeBlock}
         openBlockLibrary={openBlockLibrary}
         selectedBlockType={resolvedSelectedBlock.blockType}
         selectedIndex={selectedIndex}
@@ -125,6 +126,7 @@ export function PageComposerDrawerContentTab({
   if (resolvedSelectedBlock?.blockType === 'heroBlock' && selectedHeroBlock) {
     return (
       <PageComposerDrawerSelectedBlockPanel
+        onRemoveBlock={removeBlock}
         openBlockLibrary={openBlockLibrary}
         selectedBlockType={resolvedSelectedBlock.blockType}
         selectedIndex={selectedIndex}
@@ -144,6 +146,7 @@ export function PageComposerDrawerContentTab({
 
   return (
     <PageComposerDrawerSelectedBlockPanel
+      onRemoveBlock={removeBlock}
       openBlockLibrary={openBlockLibrary}
       selectedBlockType={resolvedSelectedBlock?.blockType || selectedBlock.blockType}
       selectedIndex={selectedIndex}
