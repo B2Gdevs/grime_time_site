@@ -21,7 +21,7 @@ import type {
   PageComposerSectionSummary,
   PageComposerVersionSummary,
 } from '@/lib/pages/pageComposer'
-import type { ServiceGridBlock } from '@/payload-types'
+import type { Media, ServiceGridBlock } from '@/payload-types'
 import type { MediaAction, SectionMediaSlot } from '@/components/admin-impersonation/page-composer-drawer/PageComposerDrawerMediaTypes'
 import type {
   PageComposerBlockDefinition,
@@ -56,9 +56,13 @@ export type PageComposerDrawerChromeProps = {
     setBlockLibraryQuery: (value: string) => void
   }
   embedded: boolean
+  /** When true, the composer session is bound to the live marketing route for this URL (see `composerPagePathForPathname`). */
+  livePageEditingActive?: boolean
   onDismiss: () => void
   /** Collapse the floating drawer while keeping the compose session active (launcher returns). */
   onMinimizePanel?: () => void
+  /** Turn live page editing on/off for the current route (close session vs open and bind to route). */
+  onToggleLivePageEditing?: (enabled: boolean) => void
   onStartDrag: (event: ReactPointerEvent<HTMLElement>) => void
   page: {
     draftPage: null | PageComposerDocument
@@ -162,9 +166,11 @@ export function PageComposerDrawerChrome({
   activeTab,
   blockLibrary,
   embedded,
+  livePageEditingActive = false,
   media,
   onDismiss,
   onMinimizePanel,
+  onToggleLivePageEditing,
   onStartDrag,
   page,
   history,
@@ -284,6 +290,38 @@ export function PageComposerDrawerChrome({
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-1">
+            {onToggleLivePageEditing ? (
+              <TooltipProvider delayDuration={200}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      aria-checked={livePageEditingActive}
+                      aria-label={`${livePageEditingActive ? 'Disable' : 'Enable'} live page editing for this route`}
+                      className={`relative inline-flex h-8 w-11 shrink-0 items-center rounded-full border transition ${
+                        livePageEditingActive
+                          ? 'border-primary bg-primary'
+                          : 'border-border/70 bg-muted/60'
+                      }`}
+                      data-page-composer-no-drag="true"
+                      onClick={() => onToggleLivePageEditing(!livePageEditingActive)}
+                      role="switch"
+                      type="button"
+                    >
+                      <span
+                        className={`inline-flex h-5 w-5 rounded-full bg-background shadow-sm transition-transform ${
+                          livePageEditingActive ? 'translate-x-5' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-[240px] text-xs" side="bottom">
+                    {livePageEditingActive
+                      ? 'Live page editing is on for this URL. Turn off to close the composer for this route.'
+                      : 'Turn on to bind the composer to this page and edit blocks, text, and media on the live route.'}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            ) : null}
             {onMinimizePanel ? (
               <TooltipProvider delayDuration={200}>
                 <Tooltip>

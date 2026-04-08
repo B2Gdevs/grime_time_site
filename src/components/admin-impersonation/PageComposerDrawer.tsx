@@ -37,6 +37,7 @@ import {
   type PageComposerVersionSummary,
   updatePageLayoutSection,
 } from '@/lib/pages/pageComposer'
+import { composerPagePathForPathname } from '@/lib/pages/pageComposerLiveRoute'
 import { createLexicalParagraph, lexicalToPlainText } from '@/lib/pages/pageComposerLexical'
 import {
   createPageComposerBlock,
@@ -287,6 +288,26 @@ export function PageComposerDrawer({
   const open = composer?.isOpen ?? false
   const activeTab = composer?.activeTab ?? 'content'
   const selectedIndex = composer?.selectedIndex ?? 0
+
+  const composerPagePath = useMemo(() => composerPagePathForPathname(pathname), [pathname])
+  const livePageEditingActive = Boolean(
+    composer && composer.isOpen && composer.activePagePath === composerPagePath,
+  )
+  const toggleLivePageEditing = useCallback(
+    (next: boolean) => {
+      if (!composer) {
+        return
+      }
+      if (!next) {
+        composer.close()
+        return
+      }
+      composer.setActivePagePath(composerPagePath)
+      composer.setActiveTab('content')
+      composer.open()
+    },
+    [composer, composerPagePath],
+  )
 
   const setSelectedIndex = useCallback(
     (value: number) => {
@@ -1764,9 +1785,11 @@ export function PageComposerDrawer({
         enabled={enabled}
         isOpen={open}
         isPanelMinimized={composer.isPanelMinimized}
+        livePageEditingActive={livePageEditingActive}
         media={media}
         onDismiss={onRequestClose || composer.close}
         onMinimizePanel={() => composer.setPanelMinimized(true)}
+        onToggleLivePageEditing={embedded ? undefined : toggleLivePageEditing}
         page={page}
         history={history}
         sections={sections}

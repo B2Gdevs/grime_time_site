@@ -23,9 +23,11 @@ export function PageComposerDrawerShell({
   enabled,
   isOpen,
   isPanelMinimized,
+  livePageEditingActive,
   media,
   onDismiss,
   onMinimizePanel,
+  onToggleLivePageEditing,
   page,
   history,
   sections,
@@ -100,9 +102,11 @@ export function PageComposerDrawerShell({
       activeTab={activeTab}
       blockLibrary={blockLibrary}
       embedded={embedded}
+      livePageEditingActive={livePageEditingActive}
       media={media}
       onDismiss={onDismiss}
       onMinimizePanel={embedded ? undefined : onMinimizePanel}
+      onToggleLivePageEditing={embedded ? undefined : onToggleLivePageEditing}
       onStartDrag={startDrag}
       page={page}
       history={history}

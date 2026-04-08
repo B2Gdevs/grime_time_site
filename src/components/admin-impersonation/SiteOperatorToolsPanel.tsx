@@ -13,7 +13,6 @@ import {
   ShieldIcon,
 } from 'lucide-react'
 
-import { usePageComposerOptional } from '@/components/admin-impersonation/PageComposerContext'
 import type { AdminPreviewSearchUser, AdminPreviewUser } from '@/components/admin-impersonation/types'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -42,7 +41,6 @@ export function SiteOperatorToolsPanel({
   impersonatedUser = null,
   realUser = null,
 }: SiteOperatorToolsPanelProps) {
-  const composer = usePageComposerOptional()
   const pathname = usePathname()
   const router = useRouter()
   const [loading, setLoading] = useState(false)
@@ -52,25 +50,6 @@ export function SiteOperatorToolsPanel({
   const [submitting, setSubmitting] = useState(false)
 
   const canImpersonate = Boolean(effectiveUser && realUser)
-  const composerPagePath = isSecuredAdminPath(pathname) ? '/' : pathname
-  const composerVisibleOnPage = Boolean(
-    composer?.isOpen && composer.activePagePath === composerPagePath,
-  )
-
-  function toggleComposer(enabled: boolean) {
-    if (!composer) {
-      return
-    }
-
-    if (!enabled) {
-      composer.close()
-      return
-    }
-
-    composer.setActivePagePath(composerPagePath)
-    composer.setActiveTab('content')
-    composer.open()
-  }
 
   useEffect(() => {
     if (!canImpersonate) {
@@ -193,42 +172,6 @@ export function SiteOperatorToolsPanel({
           </div>
         ) : null}
 
-        {composer ? (
-          <div className="rounded-xl border bg-background/70 p-3">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div className="min-w-0">
-                <div className={adminPanelChrome.fieldLabelTight}>
-                  Visual composer
-                </div>
-                <div className="mt-1 text-sm font-medium text-foreground">
-                  {composerVisibleOnPage
-                    ? 'Live page editing is enabled here.'
-                    : 'Turn this on to edit blocks, text, and media on the live page.'}
-                </div>
-              </div>
-
-              <button
-                aria-checked={composerVisibleOnPage}
-                aria-label={`${composerVisibleOnPage ? 'Disable' : 'Enable'} visual composer`}
-                className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition ${
-                  composerVisibleOnPage
-                    ? 'border-primary bg-primary'
-                    : 'border-border/70 bg-muted/60'
-                }`}
-                onClick={() => toggleComposer(!composerVisibleOnPage)}
-                role="switch"
-                type="button"
-              >
-                <span
-                  className={`inline-flex h-5 w-5 rounded-full bg-background shadow-sm transition-transform ${
-                    composerVisibleOnPage ? 'translate-x-6' : 'translate-x-1'
-                  }`}
-                  />
-                </button>
-              </div>
-          </div>
-        ) : null}
-
         {effectiveUser && realUser ? (
           <div className="rounded-xl border bg-background/70 p-3">
             <div className="text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">Active view</div>
@@ -270,7 +213,8 @@ export function SiteOperatorToolsPanel({
           </div>
         ) : (
           <div className={adminPanelChrome.panelDashedMuted}>
-            Chat stays primary. Use this tools view when you need the visual composer while keeping the live page visible.
+            Chat stays primary. Open the visual composer from the floating launcher to edit the live page; use the
+            composer header to turn live editing on or off for this route.
           </div>
         )}
       </div>
