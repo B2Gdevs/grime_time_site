@@ -24,6 +24,9 @@ public/sitemap*.xml
 # Local one-off dev server logs
 .tmp-*.log
 
+# RepoPlanner legacy telemetry (GAD uses monorepo `.planning/.gad-log/` instead)
+.planning/reports/usage.jsonl
+
 # Playwright
 node_modules/
 /test-results/

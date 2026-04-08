@@ -8,7 +8,8 @@
     "grimetime": "./bin/grimetime.mjs"
   },
   "scripts": {
-    "planning": "node vendor/repo-planner/scripts/loop-cli.mjs",
+    "gad": "node ../get-anything-done/bin/gad.cjs",
+    "planning": "node ../get-anything-done/bin/gad.cjs",
     "build": "cross-env NODE_OPTIONS=--no-deprecation next build --webpack",
     "admin:ensure": "cross-env NODE_OPTIONS=--no-deprecation tsx scripts/ensure-admin.ts",
     "bootstrap:admin": "cross-env NODE_OPTIONS=--no-deprecation tsx scripts/bootstrap-admin.ts",

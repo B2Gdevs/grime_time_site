@@ -36,10 +36,22 @@ gad snapshot --projectid grime-time
 
 ## Docs sink
 
+Run from the **monorepo root** (`custom_portfolio`), where `gad-config.toml` lives:
+
 ```sh
 gad sink sync                             # compile all projects
 gad sink status --projectid grime-time    # check sync state
 ```
+
+From **this package** (sibling to `vendor/get-anything-done` in the monorepo), you can invoke the same CLI:
+
+```sh
+npm run gad -- snapshot --projectid grime-time
+npm run gad -- state --projectid grime-time
+npm run gad -- tasks --projectid grime-time
+```
+
+Do **not** use RepoPlanner `loop-cli` here — it only wrote `{ at, command }` lines to `.planning/reports/usage.jsonl` and is not part of the GAD loop. GAD call metadata goes to the **monorepo** `.planning/.gad-log/` when you run `gad` from anywhere under the tree (see get-anything-done `AGENTS.md` — snapshot text is stdout only).
 
 ---
 
@@ -51,7 +63,7 @@ gad sink status --projectid grime-time    # check sync state
 2. Work must stay phase-aware. If the change belongs to an existing phase, update that phase plan/summary and the related task status. If it does not fit, add the new task or phase explicitly before treating it as active work.
 3. Close work properly. When a task meaningfully changes state, update `TASK-REGISTRY.xml`. When a phase-level outcome changes, update that phase `SUMMARY.xml`. Add or revise `DECISIONS.xml` entries when the repo now depends on a new architectural or process decision.
 4. Keep references real. New workflow or integration docs must point at the files, routes, collections, globals, scripts, or env vars they govern.
-5. Run `npm run planning -- snapshot` after every meaningful change set, not as an optional cleanup step.
+5. After meaningful planning edits, refresh agent context with `gad snapshot --projectid grime-time` (from monorepo root) or `npm run gad -- snapshot --projectid grime-time` here — not RepoPlanner.
 6. Do not invent parallel planning systems in random markdown files. If it is execution state, put it in the planning contract. If it is a runbook visible in the portal, put it in `src/content/docs/` and list it in `src/lib/docs/catalog.ts`.
 
 ## Payload MCP Workflow
