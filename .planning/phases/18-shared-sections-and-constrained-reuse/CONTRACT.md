@@ -1,5 +1,7 @@
 # Phase 18 Shared Sections Contract
 
+Superseded on 2026-04-08 by the page-local block direction. Shared sections are no longer the target authoring model for the active composer work. Keep this file only as historical context for what phase 18 originally explored; active execution should follow the simplified model in `.planning/ROADMAP.xml`, `.planning/TASK-REGISTRY.xml`, and the updated phase plan direction note.
+
 Date: 2026-04-04
 Phase: 18 - Shared sections and constrained reuse authoring
 

@@ -137,8 +137,8 @@
     <plans>.planning/phases/17-visual-composer-reuse-dynamic-and-containers/</plans>
   </phase>
   <phase id="18">
-    <title>Shared sections and constrained reuse authoring</title>
-    <goal>Turn reusable authoring into a CMS-managed shared-section system with explicit source editing, promote/detach/replace flows, lightweight version restore, and a constrained shallow layout contract that avoids a freeform builder.</goal>
+    <title>Page-local blocks and dynamic block editing</title>
+    <goal>Simplify the composer around page-local blocks, code-owned app blocks, and future dynamic data blocks; remove shared-section authoring, and finish the page-local copy and media editing model so each page owns its content while still pulling approved media and system data from first-party sources.</goal>
     <requirements>REQ-03</requirements>
     <depends>15,16,17</depends>
     <status>in-progress</status>

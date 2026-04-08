@@ -882,10 +882,10 @@
       </commands>
     </task>
     <task id="18-06" agent-id="" status="planned">
-      <goal>Verify shared-section authoring, propagation, detaching, replace flows, constrained layout rules, and lightweight restore behavior with focused integration and browser coverage.</goal>
-      <keywords>tests,playwright,vitest,reusable,restore</keywords>
+      <goal>Remove shared-section authoring from the active product model and verify the simplified page-local block workflow: block insertion/replacement/removal, page-local copy editing, media selection and replacement from first-party media records, and clear boundaries for code-owned app blocks versus future dynamic data blocks.</goal>
+      <keywords>tests,playwright,vitest,blocks,media,copy,composer</keywords>
       <commands>
-        <command>Run focused composer integration/browser verification after implementation.</command>
+        <command>Run focused composer integration/browser verification after removing shared-section paths and tightening page-local block editing.</command>
       </commands>
     </task>
     <task id="18-07" agent-id="" status="done">

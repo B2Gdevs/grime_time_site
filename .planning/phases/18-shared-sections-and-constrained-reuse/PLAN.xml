@@ -2,10 +2,16 @@
 <phase-plan>
   <meta>
     <phase-id>18</phase-id>
-    <phase-name>Shared sections and constrained reuse authoring</phase-name>
+    <phase-name>Page-local blocks and dynamic block editing</phase-name>
     <date>2026-04-04</date>
   </meta>
   <status>in-progress</status>
+  <direction-update date="2026-04-08">
+    <item>The earlier shared-section target is no longer the intended product direction.</item>
+    <item>Composer authoring should center on page-local blocks whose copy and media belong to the current page.</item>
+    <item>Code-owned integrations such as `contactRequest` and `serviceEstimator` remain app blocks, while future first-party database-backed surfaces should arrive as explicit dynamic blocks instead of linked shared-copy sources.</item>
+    <item>The remaining execution focus is to remove shared-section paths and tighten block-local copy and media editing.</item>
+  </direction-update>
 
   <intent>
     <item>Build a repeatable revenue-page system for a service business, not a generic page builder.</item>
@@ -115,7 +121,7 @@
     <task ref="18-03">Ship a CMS-backed shared-section library and insertion flow grouped into Layouts, Sections, and Shared, with linked badges, instance-impact messaging, and the minimal taxonomy model.</task>
     <task ref="18-04">Codify the constrained shallow layout model for reusable sections so composition stays at section, row, column, and block depth without turning into a freeform drag-anywhere builder.</task>
     <task ref="18-05">Add lightweight restore flows for shared-section versions and page versions, without introducing approvals, scheduling, or full diff tooling.</task>
-    <task ref="18-06">Verify shared-section authoring, propagation, detaching, replace flows, constrained layout rules, and lightweight restore behavior with focused integration and browser coverage.</task>
+    <task ref="18-06">Remove shared-section paths from the active composer model, then verify page-local block insertion, replacement, removal, copy editing, media replacement, constrained layout rules, and app-block boundaries with focused integration and browser coverage.</task>
     <task ref="18-07">Unify the frontend operator surfaces so the site copilot becomes the single floating shell for chat plus impersonation tools, and the page composer opens as a triggered right-side sheet above the live page instead of consuming shell layout width.</task>
   </tasks>
 </phase-plan>

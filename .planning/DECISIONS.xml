@@ -980,4 +980,16 @@
       <file path="src/content/docs/site-copilot-and-page-composer.md" />
     </references>
   </decision>
+  <decision id="D-content-026">
+    <title>Composer removes shared sections and centers on page-local blocks plus explicit app or dynamic blocks</title>
+    <summary>The shared-section abstraction adds more mental overhead than value for Grime Time's current authoring model. The page composer should treat a page as an ordered list of page-local blocks, where each block owns its own schema and media relationships. Integrated experiences such as contact and estimator flows stay as code-owned app blocks, and any future first-party database-backed sections should arrive as explicit dynamic blocks instead of linked shared-copy sources.</summary>
+    <impact>This removes the separate shared-section library and source-edit workflow, keeps copy and media editing attached to the page being authored, and makes the block taxonomy easier to reason about: page-local content blocks, app blocks, and later dynamic data blocks. It also sharpens the current priority: reliable block media replacement and page-local copy editing matter more than global linked-content propagation.</impact>
+    <references>
+      <file path=".planning/ROADMAP.xml" />
+      <file path=".planning/TASK-REGISTRY.xml" />
+      <file path=".planning/phases/18-shared-sections-and-constrained-reuse/PLAN.xml" />
+      <file path="src/lib/pages/pageComposerBlockRegistry.ts" />
+      <file path="src/components/page-composer/drawer/PageComposerDrawerSelectedBlockPanel.tsx" />
+    </references>
+  </decision>
 </decisions>
