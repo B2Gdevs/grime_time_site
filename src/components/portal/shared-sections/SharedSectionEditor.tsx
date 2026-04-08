@@ -8,7 +8,7 @@ import {
   PageComposerBlockSummary,
   PageComposerInlineEditor,
   type PageComposerLayoutBlock,
-} from '@/components/admin-impersonation/PageComposerPreview'
+} from '@/components/page-composer/PageComposerPreview'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'

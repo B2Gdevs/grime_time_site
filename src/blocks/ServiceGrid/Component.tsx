@@ -16,9 +16,9 @@ import {
 } from 'lucide-react'
 
 import { InlinePageMediaEditor } from '@/components/admin-impersonation/InlinePageMediaEditor'
-import { InlineTextarea, InlineTextInput, usePageComposerTextGenerator } from '@/components/admin-impersonation/PageComposerInlineText'
-import { usePageComposerCanvasToolbarState } from '@/components/admin-impersonation/PageComposerCanvas'
-import { usePageComposerOptional } from '@/components/admin-impersonation/PageComposerContext'
+import { InlineTextarea, InlineTextInput, usePageComposerTextGenerator } from '@/components/page-composer/PageComposerInlineText'
+import { usePageComposerCanvasToolbarState } from '@/components/page-composer/PageComposerCanvas'
+import { usePageComposerOptional } from '@/components/page-composer/PageComposerContext'
 import { useSectionInteractable } from '@/components/copilot/CopilotInteractable'
 import { BubbleBackground } from '@/components/BubbleBackground'
 import { Media } from '@/components/Media'

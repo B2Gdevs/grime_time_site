@@ -6,8 +6,8 @@ import type { CallToActionBlock as CTABlockProps } from '@/payload-types'
 
 import RichText from '@/components/RichText'
 import { CMSLink } from '@/components/Link'
-import { InlineTextarea, InlineTextInput, usePageComposerTextGenerator } from '@/components/admin-impersonation/PageComposerInlineText'
-import { usePageComposerCanvasToolbarState } from '@/components/admin-impersonation/PageComposerCanvas'
+import { InlineTextarea, InlineTextInput, usePageComposerTextGenerator } from '@/components/page-composer/PageComposerInlineText'
+import { usePageComposerCanvasToolbarState } from '@/components/page-composer/PageComposerCanvas'
 import { lexicalToPlainText } from '@/lib/pages/pageComposerLexical'
 
 export const CallToActionBlock: React.FC<CTABlockProps> = ({ links, richText }) => {

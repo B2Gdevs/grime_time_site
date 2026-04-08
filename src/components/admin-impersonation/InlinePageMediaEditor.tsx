@@ -5,7 +5,7 @@ import { SparklesIcon, UploadIcon } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
 import { usePageMediaDevtoolsOptional } from '@/components/admin-impersonation/PageMediaDevtoolsContext'
-import { usePageComposerCanvasToolbarState } from '@/components/admin-impersonation/PageComposerCanvas'
+import { usePageComposerCanvasToolbarState } from '@/components/page-composer/PageComposerCanvas'
 import { usePortalCopilotOptional } from '@/components/copilot/PortalCopilotContext'
 import { buildMediaDevtoolsSummary, type PageMediaReference } from '@/lib/media/pageMediaDevtools'
 import { readPageComposerMediaDragId, readPageComposerMediaDragPayload } from '@/lib/pages/pageComposerMediaDrag'

@@ -20,14 +20,14 @@ const contentBlockEditor = {
   updateColumnLinkLabel: vi.fn(),
 }
 
-vi.mock('@/components/admin-impersonation/PageComposerCanvas', () => ({
+vi.mock('@/components/page-composer/PageComposerCanvas', () => ({
   usePageComposerCanvasToolbarState: () => ({
     contentBlockEditor,
     selectedIndex: 4,
   }),
 }))
 
-vi.mock('@/components/admin-impersonation/PageComposerContext', () => ({
+vi.mock('@/components/page-composer/PageComposerContext', () => ({
   usePageComposerOptional: () => composerState,
 }))
 

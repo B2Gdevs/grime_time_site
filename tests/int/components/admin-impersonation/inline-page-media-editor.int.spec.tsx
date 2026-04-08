@@ -67,7 +67,7 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ refresh }),
 }))
 
-vi.mock('@/components/admin-impersonation/PageComposerCanvas', () => ({
+vi.mock('@/components/page-composer/PageComposerCanvas', () => ({
   usePageComposerCanvasToolbarState: () => toolbarState,
 }))
 

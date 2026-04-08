@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 
 import configPromise from '@payload-config'
 import { PayloadRedirects } from '@/components/PayloadRedirects'
-import { PageComposerCanvasViewport } from '@/components/admin-impersonation/PageComposerCanvas'
+import { PageComposerCanvasViewport } from '@/components/page-composer/PageComposerCanvas'
 import { PageMediaRegistryBridge } from '@/components/admin-impersonation/PageMediaDevtoolsContext'
 import { GrimeTimeMarketingHome } from '@/components/home/GrimeTimeMarketingHome'
 import { collectPageMediaReferences } from '@/lib/media/pageMediaDevtools'

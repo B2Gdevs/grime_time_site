@@ -24,14 +24,14 @@ const pricingEditor = {
   updatePlanLinkLabel: vi.fn(),
 }
 
-vi.mock('@/components/admin-impersonation/PageComposerCanvas', () => ({
+vi.mock('@/components/page-composer/PageComposerCanvas', () => ({
   usePageComposerCanvasToolbarState: () => ({
     pricingTableEditor: pricingEditor,
     selectedIndex: 2,
   }),
 }))
 
-vi.mock('@/components/admin-impersonation/PageComposerContext', () => ({
+vi.mock('@/components/page-composer/PageComposerContext', () => ({
   usePageComposerOptional: () => composerState,
 }))
 

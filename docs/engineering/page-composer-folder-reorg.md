@@ -1,7 +1,11 @@
-# Page composer folder layout (follow-up)
+# Page composer layout
 
-Visual page composer code (drawer, canvas, launcher, `PageComposerContext`, related UI) currently lives under `src/components/admin-impersonation/`. That mixes two concerns: **customer impersonation / operator tools** versus **marketing page authoring**.
+Visual page composer UI lives under **`src/components/page-composer/`**:
 
-**Planned cleanup (no behavior change):** move composer modules into a dedicated folder (for example `src/components/page-composer/` or `src/components/visual-page-composer/`), update imports site-wide, and keep admin-impersonation limited to impersonation and shared chrome tokens.
+| Path | Contents |
+| --- | --- |
+| `page-composer/PageComposer*.tsx` | Context, drawer shell, canvas entry, launcher, inline text, preview |
+| `page-composer/canvas/` | On-page canvas chrome (sections, viewport, toolbar) |
+| `page-composer/drawer/` | Floating drawer tabs, media, publish, block library |
 
-Tracked as deferred work after shipping the live-editing toggle move and build fixes; do it in one focused PR with grep-based verification and tests.
+**Admin impersonation** (`src/components/admin-impersonation/`) keeps operator tools, shared `adminPanelChrome`, and dialogs (`PhraseConfirmDialog`, etc.) that the composer imports but that are not composer-specific.

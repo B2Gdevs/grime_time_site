@@ -7,7 +7,7 @@ import { generateOpenAIImage } from '@/lib/media/openaiImageGeneration'
 import { generateOpenAIVideo } from '@/lib/media/openaiVideoGeneration'
 import { getServerSideURL } from '@/utilities/getURL'
 import type { Media, Page } from '@/payload-types'
-import type { MediaLibraryItem } from '@/components/admin-impersonation/page-composer-drawer/PageComposerDrawerMediaTypes'
+import type { MediaLibraryItem } from '@/components/page-composer/drawer/PageComposerDrawerMediaTypes'
 
 async function requireStaffPageComposerAuth() {
   const auth = await getCurrentAuthContext()

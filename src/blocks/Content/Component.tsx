@@ -6,8 +6,8 @@ import RichText from '@/components/RichText'
 
 import type { ContentBlock as ContentBlockProps } from '@/payload-types'
 
-import { InlineTextarea, InlineTextInput, usePageComposerTextGenerator } from '@/components/admin-impersonation/PageComposerInlineText'
-import { usePageComposerCanvasToolbarState } from '@/components/admin-impersonation/PageComposerCanvas'
+import { InlineTextarea, InlineTextInput, usePageComposerTextGenerator } from '@/components/page-composer/PageComposerInlineText'
+import { usePageComposerCanvasToolbarState } from '@/components/page-composer/PageComposerCanvas'
 import { CMSLink } from '../../components/Link'
 import { lexicalToPlainText } from '@/lib/pages/pageComposerLexical'
 

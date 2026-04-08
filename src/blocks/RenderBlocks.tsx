@@ -4,7 +4,7 @@ import { getPayload } from 'payload'
 
 import type { Page, Pricing } from '@/payload-types'
 
-import { PageComposerCanvasSection } from '@/components/admin-impersonation/PageComposerCanvas'
+import { PageComposerCanvasSection } from '@/components/page-composer/PageComposerCanvas'
 import { ArchiveBlock } from '@/blocks/ArchiveBlock/Component'
 import { CallToActionBlock } from '@/blocks/CallToAction/Component'
 import { ContactRequestBlock } from '@/blocks/ContactRequest/Component'

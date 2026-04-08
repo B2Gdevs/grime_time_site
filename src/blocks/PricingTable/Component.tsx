@@ -3,11 +3,11 @@
 import React from 'react'
 
 import type { Pricing, PricingTableBlock as PricingTableBlockData } from '@/payload-types'
-import type { PageComposerToolbarState } from '@/components/admin-impersonation/PageComposerContext'
+import type { PageComposerToolbarState } from '@/components/page-composer/PageComposerContext'
 
-import { InlineTextarea, InlineTextInput, usePageComposerTextGenerator } from '@/components/admin-impersonation/PageComposerInlineText'
-import { usePageComposerCanvasToolbarState } from '@/components/admin-impersonation/PageComposerCanvas'
-import { usePageComposerOptional } from '@/components/admin-impersonation/PageComposerContext'
+import { InlineTextarea, InlineTextInput, usePageComposerTextGenerator } from '@/components/page-composer/PageComposerInlineText'
+import { usePageComposerCanvasToolbarState } from '@/components/page-composer/PageComposerCanvas'
+import { usePageComposerOptional } from '@/components/page-composer/PageComposerContext'
 import { useSectionInteractable } from '@/components/copilot/CopilotInteractable'
 import { CMSLink } from '@/components/Link'
 

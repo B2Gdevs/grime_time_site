@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 
-import { PageComposerProvider } from '@/components/admin-impersonation/PageComposerContext'
+import { PageComposerProvider } from '@/components/page-composer/PageComposerContext'
 import type { SiteOperatorToolsPanelProps } from '@/components/admin-impersonation/SiteOperatorToolsPanel'
 import { PortalCopilot } from '@/components/copilot/PortalCopilot'
 import { PortalCopilotProvider } from '@/components/copilot/PortalCopilotContext'

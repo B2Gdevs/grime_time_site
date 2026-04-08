@@ -8,8 +8,8 @@ import {
   InlineTextarea,
   InlineTextInput,
   usePageComposerTextGenerator,
-} from '@/components/admin-impersonation/PageComposerInlineText'
-import { usePageComposerCanvasToolbarState } from '@/components/admin-impersonation/PageComposerCanvas'
+} from '@/components/page-composer/PageComposerInlineText'
+import { usePageComposerCanvasToolbarState } from '@/components/page-composer/PageComposerCanvas'
 import { lexicalToPlainText } from '@/lib/pages/pageComposerLexical'
 
 function TestimonialAvatar({

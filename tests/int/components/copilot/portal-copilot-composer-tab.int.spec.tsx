@@ -30,11 +30,11 @@ vi.mock('next/navigation', () => ({
   }),
 }))
 
-vi.mock('@/components/admin-impersonation/PageComposerContext', () => ({
+vi.mock('@/components/page-composer/PageComposerContext', () => ({
   usePageComposerOptional: () => composerState,
 }))
 
-vi.mock('@/components/admin-impersonation/PageComposerDrawer', () => ({
+vi.mock('@/components/page-composer/PageComposerDrawer', () => ({
   PageComposerDrawer: () => null,
 }))
 

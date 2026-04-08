@@ -3,7 +3,7 @@ import { ArrowRightIcon, DropletsIcon, WavesIcon } from 'lucide-react'
 import type { RequiredDataFromCollectionSlug } from 'payload'
 
 import { RenderBlocks } from '@/blocks/RenderBlocks'
-import { PageComposerCanvasSection } from '@/components/admin-impersonation/PageComposerCanvas'
+import { PageComposerCanvasSection } from '@/components/page-composer/PageComposerCanvas'
 import { PageHeroMediaEditable } from '@/components/home/PageHeroRichTextEditable'
 import { resolveServiceGridDisplayVariant } from '@/blocks/ServiceGrid/variants'
 import { InstantQuoteSection } from '@/components/InstantQuoteSection'

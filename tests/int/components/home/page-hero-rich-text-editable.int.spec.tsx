@@ -18,7 +18,7 @@ const heroEditor = {
   updateCopy: vi.fn(),
 }
 
-vi.mock('@/components/admin-impersonation/PageComposerCanvas', () => ({
+vi.mock('@/components/page-composer/PageComposerCanvas', () => ({
   usePageComposerCanvasToolbarState: () => ({
     draftPage: { id: 44, pagePath: '/about' },
     heroEditor,
@@ -26,7 +26,7 @@ vi.mock('@/components/admin-impersonation/PageComposerCanvas', () => ({
   }),
 }))
 
-vi.mock('@/components/admin-impersonation/PageComposerContext', () => ({
+vi.mock('@/components/page-composer/PageComposerContext', () => ({
   usePageComposerOptional: () => composerState,
 }))
 

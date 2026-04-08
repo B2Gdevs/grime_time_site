@@ -19,7 +19,7 @@ import {
 
 import { adminPanelChrome } from '@/components/admin-impersonation/adminPanelChrome'
 import { SiteOperatorToolsPanel, type SiteOperatorToolsPanelProps } from '@/components/admin-impersonation/SiteOperatorToolsPanel'
-import { usePageComposerOptional } from '@/components/admin-impersonation/PageComposerContext'
+import { usePageComposerOptional } from '@/components/page-composer/PageComposerContext'
 import { CopilotMediaWorkbench } from '@/components/copilot/CopilotMediaWorkbench'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'

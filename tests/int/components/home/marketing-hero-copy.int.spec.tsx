@@ -24,13 +24,13 @@ const heroEditor = {
   updateCopy: vi.fn(),
 }
 
-vi.mock('@/components/admin-impersonation/PageComposerCanvas', () => ({
+vi.mock('@/components/page-composer/PageComposerCanvas', () => ({
   usePageComposerCanvasToolbarState: () => ({
     heroEditor,
   }),
 }))
 
-vi.mock('@/components/admin-impersonation/PageComposerContext', () => ({
+vi.mock('@/components/page-composer/PageComposerContext', () => ({
   usePageComposerOptional: () => composerState,
 }))
 

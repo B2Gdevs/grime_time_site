@@ -2,9 +2,9 @@
 
 import { ShieldCheckIcon } from 'lucide-react'
 
-import { InlineTextInput, InlineTextarea, usePageComposerTextGenerator } from '@/components/admin-impersonation/PageComposerInlineText'
-import { usePageComposerCanvasToolbarState } from '@/components/admin-impersonation/PageComposerCanvas'
-import { usePageComposerOptional } from '@/components/admin-impersonation/PageComposerContext'
+import { InlineTextInput, InlineTextarea, usePageComposerTextGenerator } from '@/components/page-composer/PageComposerInlineText'
+import { usePageComposerCanvasToolbarState } from '@/components/page-composer/PageComposerCanvas'
+import { usePageComposerOptional } from '@/components/page-composer/PageComposerContext'
 import { useHeroInteractable } from '@/components/copilot/CopilotInteractable'
 
 type MarketingHeroEditableProps = {
