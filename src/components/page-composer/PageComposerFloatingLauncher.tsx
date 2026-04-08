@@ -3,8 +3,10 @@
 import { useEffect, useRef } from 'react'
 import { AnimatePresence, motion, useMotionValue } from 'motion/react'
 import { FilePenLineIcon, Settings2Icon } from 'lucide-react'
+import { usePathname } from 'next/navigation'
 
 import { usePageComposerOptional } from '@/components/page-composer/PageComposerContext'
+import { composerPagePathForPathname } from '@/lib/pages/pageComposerLiveRoute'
 import { cn } from '@/utilities/ui'
 
 const LAUNCHER_POSITION_KEY = 'page-composer-floating-launcher-position'
@@ -17,10 +19,12 @@ const DRAG_CLICK_SUPPRESS_PX = 8
  */
 export function PageComposerFloatingLauncher() {
   const composer = usePageComposerOptional()
+  const pathname = usePathname()
   const launcherConstraintsRef = useRef<HTMLDivElement>(null)
   const launcherDragMovedRef = useRef(false)
   const launcherX = useMotionValue(0)
   const launcherY = useMotionValue(0)
+  const composerPagePath = composerPagePathForPathname(pathname)
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -56,9 +60,11 @@ export function PageComposerFloatingLauncher() {
       launcherDragMovedRef.current = false
       return
     }
+    composer.setActivePagePath(composerPagePath)
     if (isMinimized) {
       composer.setPanelMinimized(false)
     } else {
+      composer.setActiveTab('content')
       composer.open()
     }
   }

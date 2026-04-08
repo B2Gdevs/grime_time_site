@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation'
 import { useEffect, useRef, type ReactNode } from 'react'
 
 import { usePageComposerOptional, type PageComposerToolbarState } from '@/components/page-composer/PageComposerContext'
+import { composerPagePathForPathname } from '@/lib/pages/pageComposerLiveRoute'
 
 import { CanvasSectionChrome } from './CanvasSectionChrome'
 
@@ -22,10 +23,11 @@ export function PageComposerCanvasSectionShell({
 }) {
   const composer = usePageComposerOptional()
   const pathname = usePathname()
+  const composerPagePath = composerPagePathForPathname(pathname)
   const sectionRef = useRef<HTMLDivElement | null>(null)
 
   const isActive = Boolean(
-    composer?.isOpen && composer.activePagePath && composer.activePagePath === pathname,
+    composer?.isOpen && composer.activePagePath && composer.activePagePath === composerPagePath,
   )
   const isSelected = Boolean(isActive && composer?.selectedIndex === index)
   const sectionSummary = toolbarState ? toolbarState.sectionSummaries.find((summary) => summary.index === index) ?? null : null

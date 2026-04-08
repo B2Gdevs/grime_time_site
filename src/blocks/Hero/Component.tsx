@@ -1,9 +1,12 @@
+'use client'
+
 import Link from 'next/link'
 import { ArrowRightIcon, DropletsIcon, WavesIcon } from 'lucide-react'
 
 import { resolveServiceGridDisplayVariant } from '@/blocks/ServiceGrid/variants'
 import { MarketingHeroLead, MarketingHeroPanel } from '@/components/home/MarketingHeroEditable'
 import { PageHeroMediaEditable } from '@/components/home/PageHeroRichTextEditable'
+import { usePageComposerCanvasToolbarState } from '@/components/page-composer/PageComposerCanvas'
 import { Media } from '@/components/Media'
 import { RenderHero } from '@/heros/RenderHero'
 import { extractLexicalPlainText } from '@/lib/marketing/public-shell'
@@ -52,6 +55,25 @@ function toHeroRenderable(block: HeroBlockData): HeroRenderable {
   }
 }
 
+function resolveDraftHeroBlock(args: {
+  block: HeroBlockData
+  blockIndex?: number
+  pagePath?: string
+  toolbarState: ReturnType<typeof usePageComposerCanvasToolbarState>
+}): HeroBlockData {
+  if (typeof args.blockIndex !== 'number' || !args.pagePath) {
+    return args.block
+  }
+
+  if (args.toolbarState?.draftPage?.pagePath !== args.pagePath) {
+    return args.block
+  }
+
+  const draftBlock = args.toolbarState.draftPage.layout?.[args.blockIndex]
+
+  return draftBlock?.blockType === 'heroBlock' ? draftBlock : args.block
+}
+
 export function HeroBlock({
   blockIndex,
   instantQuoteCatalog,
@@ -64,19 +86,27 @@ export function HeroBlock({
   layoutBlocks?: Page['layout']
   pagePath?: string
 }) {
-  if (pagePath === '/' && block.type === 'lowImpact') {
+  const toolbarState = usePageComposerCanvasToolbarState()
+  const draftBlock = resolveDraftHeroBlock({
+    block,
+    blockIndex,
+    pagePath,
+    toolbarState,
+  })
+
+  if (pagePath === '/' && draftBlock.type === 'lowImpact') {
     const heroCopy =
-      extractLexicalPlainText(block.richText) ||
+      extractLexicalPlainText(draftBlock.richText) ||
       'North Texas exterior cleaning with a clearer quote path and visible proof.'
-    const heroEyebrow = block.eyebrow?.trim() || 'Grime Time exterior cleaning'
-    const heroHeadlinePrimary = block.headlinePrimary?.trim() || 'Clear scope.'
-    const heroHeadlineAccent = block.headlineAccent?.trim() || 'Visible results.'
-    const heroPanelEyebrow = block.panelEyebrow?.trim() || 'Fast lane for homeowners'
-    const heroPanelHeading = block.panelHeading?.trim() || 'Quotes and scheduling without vague contractor talk.'
+    const heroEyebrow = draftBlock.eyebrow?.trim() || 'Grime Time exterior cleaning'
+    const heroHeadlinePrimary = draftBlock.headlinePrimary?.trim() || 'Clear scope.'
+    const heroHeadlineAccent = draftBlock.headlineAccent?.trim() || 'Visible results.'
+    const heroPanelEyebrow = draftBlock.panelEyebrow?.trim() || 'Fast lane for homeowners'
+    const heroPanelHeading = draftBlock.panelHeading?.trim() || 'Quotes and scheduling without vague contractor talk.'
     const heroPanelBody =
-      block.panelBody?.trim() ||
+      draftBlock.panelBody?.trim() ||
       'Strong visuals, clear service lanes, and a quote form that explains what moves the number.'
-    const heroMedia = asMedia(block.media)
+    const heroMedia = asMedia(draftBlock.media)
     const featureCardsBlock = (layoutBlocks || []).find(
       (item): item is ServiceGridBlock =>
         item.blockType === 'serviceGrid' && resolveServiceGridDisplayVariant(item) === 'featureCards',
@@ -180,5 +210,5 @@ export function HeroBlock({
     )
   }
 
-  return <RenderHero {...(toHeroRenderable(block) as Page['hero'])} />
+  return <RenderHero {...(toHeroRenderable(draftBlock) as Page['hero'])} />
 }

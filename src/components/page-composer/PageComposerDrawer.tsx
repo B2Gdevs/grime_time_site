@@ -830,6 +830,29 @@ export function PageComposerDrawer({
       layout: updatePageLayoutSection({ block, index: selectedIndex, layout: page.layout || [] }),
     }))
   }, [selectedIndex])
+  const updateHeroCopy = useCallback((value: string) => {
+    if (!selectedHeroBlock) return
+    replaceSelectedBlock({
+      ...selectedHeroBlock,
+      richText: createLexicalParagraph(value),
+    })
+  }, [replaceSelectedBlock, selectedHeroBlock])
+  const updateHeroField = useCallback((
+    field:
+      | 'eyebrow'
+      | 'headlineAccent'
+      | 'headlinePrimary'
+      | 'panelBody'
+      | 'panelEyebrow'
+      | 'panelHeading',
+    value: string,
+  ) => {
+    if (!selectedHeroBlock) return
+    replaceSelectedBlock({
+      ...selectedHeroBlock,
+      [field]: value,
+    })
+  }, [replaceSelectedBlock, selectedHeroBlock])
 
   const mutateSelectedServiceGrid = useCallback((mutator: (block: ServiceGridBlock) => ServiceGridBlock) => {
     if (!selectedServiceGrid) return
@@ -1681,6 +1704,7 @@ export function PageComposerDrawer({
     detachReusableBlock,
     duplicateBlock,
     handleDragEnd,
+    heroCopy,
     heroSummary,
     layoutSectionSummaries,
     mutateSelectedService,
@@ -1691,6 +1715,7 @@ export function PageComposerDrawer({
     selectedBlock,
     resolvedSelectedBlock,
     selectedBlockIsLinkedSharedSection,
+    selectedHeroBlock,
     selectedIndex,
     selectedServiceGrid,
     selectedSharedSectionId,
@@ -1699,6 +1724,8 @@ export function PageComposerDrawer({
     setSelectedIndex,
     toggleBlockHidden,
     onOpenMediaSlot: openMediaSlotForRelationPath,
+    updateHeroCopy,
+    updateHeroField,
   }
 
   const media = {

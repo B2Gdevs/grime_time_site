@@ -18,9 +18,12 @@ function PagesTabHarness() {
   const composer = usePageComposer()
 
   return (
-    <button onClick={() => composer.setActiveTab('pages')} type="button">
-      Open pages tab
-    </button>
+    <>
+      <button onClick={() => composer.setActiveTab('pages')} type="button">
+        Open pages tab
+      </button>
+      <div data-testid="active-page-path">{composer.activePagePath || ''}</div>
+    </>
   )
 }
 
@@ -163,6 +166,7 @@ describe('PageComposer shell integration', () => {
       expect(global.fetch).toHaveBeenCalledWith('/api/internal/page-composer?pagePath=%2F')
     })
 
+    expect(screen.getByTestId('active-page-path').textContent).toBe('/')
     expect(screen.getByText('Visual composer')).toBeTruthy()
     expect(screen.getByRole('button', { name: /dismiss page composer/i })).toBeTruthy()
     expect(screen.getByRole('button', { name: /move page composer/i })).toBeTruthy()
@@ -275,6 +279,66 @@ describe('PageComposer shell integration', () => {
     expect(screen.getByText('Visual composer')).toBeTruthy()
     expect(screen.getByText(/selected block/i)).toBeTruthy()
     expect(screen.queryByText(/select a page/i)).toBeNull()
+  })
+
+  it('binds the floating launcher to non-home marketing routes so live canvas chrome can attach', async () => {
+    pathname = '/contact'
+    global.fetch = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input)
+
+      if (url === '/api/internal/page-composer?pagePath=%2Fcontact') {
+        return {
+          json: async () => ({
+            ok: true,
+            page: {
+              _status: 'draft',
+              hero: { type: 'mediumImpact' },
+              id: 12,
+              layout: [],
+              pagePath: '/contact',
+              publishedAt: null,
+              slug: 'contact',
+              title: 'Contact',
+              updatedAt: '2026-04-08T00:00:00.000Z',
+              visibility: 'public',
+            },
+            versions: [],
+          }),
+          ok: true,
+        } as Response
+      }
+
+      if (url === '/api/internal/page-composer/media') {
+        return {
+          json: async () => ({ items: [] }),
+          ok: true,
+        } as Response
+      }
+
+      if (url === '/api/internal/shared-sections?status=published') {
+        return {
+          json: async () => ({ items: [] }),
+          ok: true,
+        } as Response
+      }
+
+      throw new Error(`Unexpected fetch: ${url}`)
+    }) as typeof fetch
+
+    render(
+      <PageComposerProvider>
+        <PagesTabHarness />
+        <PageComposerDrawer enabled />
+      </PageComposerProvider>,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /page composer/i }))
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith('/api/internal/page-composer?pagePath=%2Fcontact')
+    })
+
+    expect(screen.getByTestId('active-page-path').textContent).toBe('/contact')
   })
 
   it('keeps published-page draft saves on the current route instead of cloning or pushing a new route', async () => {

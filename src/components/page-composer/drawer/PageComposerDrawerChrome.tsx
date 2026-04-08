@@ -72,6 +72,7 @@ export type PageComposerDrawerChromeProps = {
   sections: {
     duplicateBlock: (index: number) => void
     handleDragEnd: (event: DragEndEvent) => void
+    heroCopy: string
     heroSummary: null | PageComposerSectionSummary
     layoutSectionSummaries: PageComposerSectionSummary[]
     openBlockLibrary: (index: number, mode?: 'insert' | 'replace') => void
@@ -80,6 +81,7 @@ export type PageComposerDrawerChromeProps = {
     selectedBlock: ReusableAwareLayoutBlock | null
     resolvedSelectedBlock: ReusableAwareLayoutBlock | null
     selectedBlockIsLinkedSharedSection: boolean
+    selectedHeroBlock: Extract<ReusableAwareLayoutBlock, { blockType: 'heroBlock' }> | null
     selectedIndex: number
     selectedSharedSectionId: null | number
     selectedSummary: null | PageComposerSectionSummary
@@ -94,6 +96,17 @@ export type PageComposerDrawerChromeProps = {
     mutateSelectedServiceGrid: (mutator: (block: ServiceGridBlock) => ServiceGridBlock) => void
     onOpenMediaSlot: (relationPath: string) => void
     selectedServiceGrid: ServiceGridBlock | null
+    updateHeroCopy: (value: string) => void
+    updateHeroField: (
+      field:
+        | 'eyebrow'
+        | 'headlineAccent'
+        | 'headlinePrimary'
+        | 'panelBody'
+        | 'panelEyebrow'
+        | 'panelHeading',
+      value: string,
+    ) => void
   }
   media: {
     copilot: null | {
@@ -199,6 +212,7 @@ export function PageComposerDrawerChrome({
   const {
     duplicateBlock,
     handleDragEnd,
+    heroCopy,
     heroSummary,
     layoutSectionSummaries,
     openBlockLibrary,
@@ -207,6 +221,7 @@ export function PageComposerDrawerChrome({
     selectedBlock,
     resolvedSelectedBlock,
     selectedBlockIsLinkedSharedSection,
+    selectedHeroBlock,
     selectedIndex,
     selectedSharedSectionId,
     selectedSummary,
@@ -218,6 +233,8 @@ export function PageComposerDrawerChrome({
     mutateSelectedServiceGrid,
     onOpenMediaSlot,
     selectedServiceGrid: _selectedServiceGrid,
+    updateHeroCopy,
+    updateHeroField,
   } = sections
   const {
     copilot,
@@ -481,6 +498,7 @@ export function PageComposerDrawerChrome({
             <PageComposerDrawerContentTab
               detachReusableBlock={detachReusableBlock}
               draftPage={draftPage}
+              heroCopy={heroCopy}
               loading={loading}
               mutateSelectedService={mutateSelectedService}
               mutateSelectedServiceGrid={mutateSelectedServiceGrid}
@@ -491,10 +509,13 @@ export function PageComposerDrawerChrome({
               resolvedSelectedBlock={resolvedSelectedBlock}
               selectedBlock={selectedBlock}
               selectedBlockIsLinkedSharedSection={selectedBlockIsLinkedSharedSection}
+              selectedHeroBlock={selectedHeroBlock}
               selectedIndex={selectedIndex}
               selectedSharedSectionId={selectedSharedSectionId}
               selectedSummary={selectedSummary}
               status={status}
+              updateHeroCopy={updateHeroCopy}
+              updateHeroField={updateHeroField}
             />
           </TabsContent>
 
