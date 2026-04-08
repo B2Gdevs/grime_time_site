@@ -1,7 +1,8 @@
 'use client'
 
+import { COPILOT_MEDIA_GENERATION_ENABLED } from '@/constants/copilotFeatures'
 import type { CopilotAuthoringContext, CopilotFocusedSession, CopilotFocusedSessionMode } from '@/lib/ai'
-import { createContext, type ReactNode, useCallback, useContext, useState } from 'react'
+import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from 'react'
 
 type PortalCopilotContextValue = {
   applyFocusedText: (value: string) => void
@@ -75,6 +76,9 @@ export function PortalCopilotProvider({ children }: { children: ReactNode }) {
   }, [])
   const openFocusedMediaSession = useCallback(
     (args?: { mode?: CopilotFocusedSessionMode | null; promptHint?: string }) => {
+      if (!COPILOT_MEDIA_GENERATION_ENABLED) {
+        return
+      }
       setFocusedTextApplier(null)
       setFocusedSession({
         mode: args?.mode || null,
@@ -115,6 +119,9 @@ export function PortalCopilotProvider({ children }: { children: ReactNode }) {
     focusedTextApplier(nextValue)
   }, [focusedTextApplier])
   const setFocusedSessionMode = useCallback((mode: CopilotFocusedSessionMode) => {
+    if (!COPILOT_MEDIA_GENERATION_ENABLED) {
+      return
+    }
     setFocusedSession((current) =>
       current?.type === 'media-generation'
         ? {
@@ -128,6 +135,13 @@ export function PortalCopilotProvider({ children }: { children: ReactNode }) {
     )
   }, [])
   const canApplyFocusedText = Boolean(focusedSession?.type === 'text-generation' && focusedTextApplier)
+
+  useEffect(() => {
+    if (!COPILOT_MEDIA_GENERATION_ENABLED) {
+      setFocusedSession((current) => (current?.type === 'media-generation' ? null : current))
+    }
+  }, [])
+
   const setAuthoringContext = useCallback((value: CopilotAuthoringContext | null) => {
     setAuthoringContextState((current) => (sameAuthoringContext(current, value) ? current : value))
   }, [])

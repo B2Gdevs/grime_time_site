@@ -31,7 +31,8 @@ export function PageComposerDrawerMediaLibraryCard({
   item: MediaLibraryItem
   mediaActionsLocked: boolean
   onDelete: () => void
-  onGenerate: () => void
+  /** When omitted, the “generate with copilot” control is hidden (feature-flagged). */
+  onGenerate?: () => void
   onReplaceFilePick: () => void
   onUseThisMedia?: () => void
   selectedMediaSlot: SectionMediaSlot | null
@@ -105,20 +106,22 @@ export function PageComposerDrawerMediaLibraryCard({
           >
             <UploadIcon className="h-3.5 w-3.5" />
           </Button>
-          <Button
-            aria-label={`Generate with copilot for ${label}`}
-            className={cn(adminPanelChrome.canvasToolbarIconButton, 'h-8 w-8 bg-background/94 shadow-lg')}
-            disabled={busy || mediaActionsLocked}
-            onClick={(event) => {
-              event.stopPropagation()
-              onGenerate()
-            }}
-            size="icon"
-            type="button"
-            variant="secondary"
-          >
-            <SparklesIcon className="h-3.5 w-3.5" />
-          </Button>
+          {onGenerate ? (
+            <Button
+              aria-label={`Generate with copilot for ${label}`}
+              className={cn(adminPanelChrome.canvasToolbarIconButton, 'h-8 w-8 bg-background/94 shadow-lg')}
+              disabled={busy || mediaActionsLocked}
+              onClick={(event) => {
+                event.stopPropagation()
+                onGenerate()
+              }}
+              size="icon"
+              type="button"
+              variant="secondary"
+            >
+              <SparklesIcon className="h-3.5 w-3.5" />
+            </Button>
+          ) : null}
           <Button
             aria-label={`Delete ${label}`}
             className={cn(adminPanelChrome.canvasToolbarIconButton, 'h-8 w-8 bg-background/94 text-destructive shadow-lg')}

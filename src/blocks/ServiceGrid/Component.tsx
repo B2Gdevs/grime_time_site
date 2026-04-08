@@ -39,6 +39,28 @@ function hasMedia(
   return Boolean(media && typeof media === 'object')
 }
 
+function getTargetedServiceIndexForRelationPath(args: {
+  blockIndex?: number
+  relationPath: null | string | undefined
+  rowCount: number
+}): null | number {
+  if (typeof args.blockIndex !== 'number' || !args.relationPath) {
+    return null
+  }
+
+  const match = new RegExp(`^layout\\.${args.blockIndex}\\.services\\.(\\d+)\\.media$`).exec(args.relationPath)
+  if (!match) {
+    return null
+  }
+
+  const serviceIndex = Number(match[1])
+  if (!Number.isInteger(serviceIndex) || serviceIndex < 0 || serviceIndex >= args.rowCount) {
+    return null
+  }
+
+  return serviceIndex
+}
+
 function getRowIconKey(name: string) {
   const key = name.toLowerCase()
   if (key.includes('square footage')) return 'ruler'
@@ -294,6 +316,7 @@ const InteractiveServiceGrid: React.FC<
   services,
 }) => {
   const { editor, openTextGenerator } = useInlineServiceGridEditor(blockIndex)
+  const toolbarState = usePageComposerCanvasToolbarState()
   const currentBlock = editor?.block
   const currentEyebrow = currentBlock?.eyebrow ?? eyebrow
   const currentHeading = currentBlock?.heading ?? heading
@@ -304,11 +327,27 @@ const InteractiveServiceGrid: React.FC<
   const isPricing = headingKey === 'how our pricing works'
   const isWhatWeDo = headingKey === 'what we do'
   const [activeIndex, setActiveIndex] = React.useState(0)
+  const targetedServiceIndex = getTargetedServiceIndexForRelationPath({
+    blockIndex,
+    relationPath: toolbarState?.selectedMediaRelationPath,
+    rowCount: rows.length,
+  })
   const activeRow = rows[activeIndex] || rows[0]
 
   React.useEffect(() => {
-    setActiveIndex(0)
-  }, [currentHeading, rows.length])
+    if (targetedServiceIndex !== null) {
+      setActiveIndex(targetedServiceIndex)
+      return
+    }
+
+    setActiveIndex((current) => {
+      if (rows.length === 0) {
+        return 0
+      }
+
+      return current >= rows.length ? 0 : current
+    })
+  }, [rows.length, targetedServiceIndex])
 
   if (!activeRow) return null
 

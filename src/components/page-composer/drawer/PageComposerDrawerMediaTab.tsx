@@ -4,6 +4,7 @@ import { type MutableRefObject, useRef, useMemo, useState } from 'react'
 import { InfoIcon, RefreshCwIcon, SearchIcon, UploadIcon, Wand2Icon } from 'lucide-react'
 
 import { adminPanelChrome } from '@/components/admin-impersonation/adminPanelChrome'
+import { COPILOT_MEDIA_GENERATION_ENABLED } from '@/constants/copilotFeatures'
 import { PageComposerDrawerMediaLibraryCard } from '@/components/page-composer/drawer/PageComposerDrawerMediaLibraryCard'
 import type {
   MediaAction,
@@ -81,7 +82,7 @@ export function PageComposerDrawerMediaTab({
   }, [mediaLibrary, query])
 
   function openGenerateInCopilot(item: MediaLibraryItem) {
-    if (!portalCopilot) {
+    if (!portalCopilot || !COPILOT_MEDIA_GENERATION_ENABLED) {
       return
     }
 
@@ -299,7 +300,9 @@ export function PageComposerDrawerMediaTab({
                     success: 'Media deleted.',
                   })
                 }}
-                onGenerate={() => openGenerateInCopilot(item)}
+                onGenerate={
+                  COPILOT_MEDIA_GENERATION_ENABLED ? () => openGenerateInCopilot(item) : undefined
+                }
                 onReplaceFilePick={() => requestReplaceFile(item.id)}
                 onUseThisMedia={
                   selectedMediaSlot

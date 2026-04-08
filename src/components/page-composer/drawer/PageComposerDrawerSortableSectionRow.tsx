@@ -25,10 +25,9 @@ export function PageComposerDrawerSortableSectionRow({
   onToggleHidden: () => void
   summary: PageComposerSectionSummary
 }) {
-  const isHeroSummary = summary.blockType === 'hero'
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
     id: String(summary.index),
-    disabled: isHeroSummary,
+    disabled: false,
   })
 
   return (
@@ -42,7 +41,6 @@ export function PageComposerDrawerSortableSectionRow({
       <div className="flex items-start gap-3">
         <button
           className="mt-0.5 rounded-lg border border-border/70 bg-background p-2 text-muted-foreground disabled:cursor-default disabled:opacity-50"
-          disabled={isHeroSummary}
           type="button"
           {...attributes}
           {...listeners}
@@ -68,25 +66,21 @@ export function PageComposerDrawerSortableSectionRow({
           <Button aria-label={`Add block below ${summary.label}`} onClick={onAddBelow} size="icon" type="button" variant="ghost">
             <PlusIcon className="h-4 w-4" />
           </Button>
-          {!isHeroSummary ? (
-            <>
-              <Button
-                aria-label={`${summary.hidden ? 'Show' : 'Hide'} block ${summary.label}`}
-                onClick={onToggleHidden}
-                size="icon"
-                type="button"
-                variant="ghost"
-              >
-                {summary.hidden ? <EyeIcon className="h-4 w-4" /> : <EyeOffIcon className="h-4 w-4" />}
-              </Button>
-              <Button onClick={onDuplicate} size="icon" type="button" variant="ghost">
-                <CopyPlusIcon className="h-4 w-4" />
-              </Button>
-              <Button onClick={onRemove} size="icon" type="button" variant="ghost">
-                <Trash2Icon className="h-4 w-4" />
-              </Button>
-            </>
-          ) : null}
+          <Button
+            aria-label={`${summary.hidden ? 'Show' : 'Hide'} block ${summary.label}`}
+            onClick={onToggleHidden}
+            size="icon"
+            type="button"
+            variant="ghost"
+          >
+            {summary.hidden ? <EyeIcon className="h-4 w-4" /> : <EyeOffIcon className="h-4 w-4" />}
+          </Button>
+          <Button onClick={onDuplicate} size="icon" type="button" variant="ghost">
+            <CopyPlusIcon className="h-4 w-4" />
+          </Button>
+          <Button onClick={onRemove} size="icon" type="button" variant="ghost">
+            <Trash2Icon className="h-4 w-4" />
+          </Button>
         </div>
       </div>
     </div>

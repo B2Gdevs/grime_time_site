@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
 
-import { InstantQuoteSection } from '@/components/InstantQuoteSection'
 import { PayloadRedirects } from '@/components/PayloadRedirects'
 import { PageComposerCanvasViewport } from '@/components/page-composer/PageComposerCanvas'
 import { PageMediaRegistryBridge } from '@/components/admin-impersonation/PageMediaDevtoolsContext'
@@ -10,12 +9,11 @@ import { draftMode } from 'next/headers'
 import React from 'react'
 
 import { RenderBlocks } from '@/blocks/RenderBlocks'
-import { RenderHero } from '@/heros/RenderHero'
 import { getCurrentAuthContext } from '@/lib/auth/getAuthContext'
 import { hasContentAuthoringAccess } from '@/lib/auth/organizationAccess'
 import { collectPageMediaReferences } from '@/lib/media/pageMediaDevtools'
+import { normalizePageLayoutBlocks } from '@/lib/pages/pageLayoutBlocks'
 import { generatePublicPageStaticParams, queryPublicPageBySlug } from '@/lib/pages/queryPublicPageBySlug'
-import { getInstantQuoteCatalog } from '@/lib/quotes/getInstantQuoteCatalog'
 import { generateMeta } from '@/utilities/generateMeta'
 import PageClient from './page.client'
 import { LivePreviewListener } from '@/components/LivePreviewListener'
@@ -77,10 +75,9 @@ export default async function Page({ params: paramsPromise }: Args) {
     return <PayloadRedirects url={url} />
   }
 
-  const { hero, layout } = page
-  const instantQuoteCatalog =
-    slug === 'home' ? await getInstantQuoteCatalog({ draft, payload: await getPayload({ config: configPromise }) }) : null
-  const pageMediaEntries = collectPageMediaReferences({ page, pagePath: url })
+  await getPayload({ config: configPromise })
+  const layout = normalizePageLayoutBlocks({ page, pagePath: url })
+  const pageMediaEntries = collectPageMediaReferences({ page: { ...page, layout }, pagePath: url })
 
   return (
     <article className="marketing-page-shell pb-24">
@@ -98,11 +95,7 @@ export default async function Page({ params: paramsPromise }: Args) {
       {draft && <LivePreviewListener />}
 
       <PageComposerCanvasViewport>
-        <RenderHero {...hero} />
-        <div className="marketing-page-body">
-          {slug === 'home' && instantQuoteCatalog ? <InstantQuoteSection catalog={instantQuoteCatalog} /> : null}
-          {await RenderBlocks({ blocks: layout })}
-        </div>
+        <div className="marketing-page-body">{await RenderBlocks({ blocks: layout, pagePath: url })}</div>
       </PageComposerCanvasViewport>
     </article>
   )

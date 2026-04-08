@@ -6,7 +6,7 @@ import type { MediaSectionSummary } from '@/components/page-composer/drawer/Page
 export function PageComposerDrawerMediaStateMessage({
   draftPage,
   loading,
-  selectedIndex,
+  selectedIndex: _selectedIndex,
   selectedServiceGrid,
 }: {
   draftPage: null | { pagePath: string }
@@ -20,14 +20,6 @@ export function PageComposerDrawerMediaStateMessage({
 
   if (!draftPage) {
     return <div className={adminPanelChrome.panelEmptyMuted}>No page is available for this route.</div>
-  }
-
-  if (selectedIndex < 0) {
-    return (
-      <div className={adminPanelChrome.panelEmptyMuted}>
-        Hero media swaps and generation live directly on the canvas. Hover the hero image on the page to replace or generate media.
-      </div>
-    )
   }
 
   if (!selectedServiceGrid) {

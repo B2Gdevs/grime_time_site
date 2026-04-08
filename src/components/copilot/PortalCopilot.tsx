@@ -19,10 +19,11 @@ import {
 
 import { adminPanelChrome } from '@/components/admin-impersonation/adminPanelChrome'
 import { SiteOperatorToolsPanel, type SiteOperatorToolsPanelProps } from '@/components/admin-impersonation/SiteOperatorToolsPanel'
+import { COPILOT_MEDIA_GENERATION_ENABLED } from '@/constants/copilotFeatures'
 import { usePageComposerOptional } from '@/components/page-composer/PageComposerContext'
 import { CopilotMediaWorkbench } from '@/components/copilot/CopilotMediaWorkbench'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import type { CopilotAuthoringContext, CopilotFocusedSession } from '@/lib/ai'
 import { isUnknownRecord } from '@/lib/is-unknown-record'
 import { cn } from '@/utilities/ui'
 
@@ -252,111 +253,103 @@ function EmptyState() {
   )
 }
 
-function AuthoringContextSummary({
+function buildCopilotContextBreadcrumbParts(
+  authoringContext: CopilotAuthoringContext | null,
+  focusedSession: CopilotFocusedSession | null,
+): string[] {
+  const parts: string[] = []
+
+  if (authoringContext?.surface === 'media-library') {
+    parts.push('Media library')
+    if (authoringContext.libraryMedia) {
+      parts.push(authoringContext.libraryMedia.label)
+    }
+    if (authoringContext.page) {
+      parts.push(authoringContext.page.title || authoringContext.page.slug || authoringContext.page.pagePath)
+    }
+  } else if (authoringContext?.surface === 'page-composer') {
+    if (authoringContext.page) {
+      parts.push(authoringContext.page.title || authoringContext.page.slug || authoringContext.page.pagePath)
+    }
+    if (authoringContext.section) {
+      parts.push(`Section ${authoringContext.section.index + 1}: ${authoringContext.section.label}`)
+    }
+    if (authoringContext.mediaSlot) {
+      parts.push(authoringContext.mediaSlot.label)
+    }
+  }
+
+  if (focusedSession?.type === 'media-generation' && COPILOT_MEDIA_GENERATION_ENABLED) {
+    const mode = focusedSession.mode
+    parts.push(
+      mode === 'gallery' || mode === 'image' || mode === 'video' ? `Media · ${mode}` : 'Media session',
+    )
+  }
+
+  if (focusedSession?.type === 'text-generation') {
+    parts.push(`Rewrite · ${focusedSession.fieldLabel}`)
+  }
+
+  return parts
+}
+
+function CopilotContextBreadcrumb({
   authoringContext,
   focusedSession,
 }: {
-  authoringContext: ReturnType<typeof usePortalCopilot>['authoringContext']
-  focusedSession: ReturnType<typeof usePortalCopilot>['focusedSession']
+  authoringContext: CopilotAuthoringContext | null
+  focusedSession: CopilotFocusedSession | null
 }) {
-  const { setFocusedSessionMode } = usePortalCopilot()
+  const parts = buildCopilotContextBreadcrumbParts(authoringContext, focusedSession)
+  if (parts.length === 0) {
+    return null
+  }
 
-  if (!authoringContext && !focusedSession) {
+  const line = parts.join(' / ')
+
+  return (
+    <p
+      className="mx-auto w-full max-w-3xl truncate px-1 text-[0.7rem] leading-snug text-muted-foreground"
+      title={line}
+    >
+      <span className="text-muted-foreground/70">context:</span>{' '}
+      <span>{line}</span>
+    </p>
+  )
+}
+
+function MediaSessionFooterControls() {
+  const { focusedSession, setFocusedSessionMode } = usePortalCopilot()
+  const mediaSessionActive =
+    COPILOT_MEDIA_GENERATION_ENABLED && focusedSession?.type === 'media-generation'
+
+  if (!mediaSessionActive || focusedSession?.type !== 'media-generation') {
     return null
   }
 
   return (
-    <div className="mx-auto mb-4 flex w-full max-w-3xl flex-col gap-3 rounded-[1.75rem] border bg-card/80 p-4 shadow-sm">
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-1.5 px-1">
       <div className="flex flex-wrap items-center gap-2">
-        <Badge variant="outline">Authoring context</Badge>
-        {authoringContext?.surface === 'media-library' ? (
-          <Badge variant="secondary">Media library</Badge>
-        ) : null}
-        {authoringContext?.page ? <Badge variant="secondary">{authoringContext.page.pagePath}</Badge> : null}
-        {authoringContext?.section ? <Badge variant="secondary">{authoringContext.section.label}</Badge> : null}
-        {authoringContext?.mediaSlot ? <Badge variant="secondary">{authoringContext.mediaSlot.label}</Badge> : null}
-        {authoringContext?.libraryMedia ? (
-          <Badge variant="secondary">Library #{authoringContext.libraryMedia.id}</Badge>
-        ) : null}
+        <span className="text-[0.65rem] text-muted-foreground">Mode</span>
+        <div className="flex flex-wrap gap-1.5">
+          {(['image', 'video', 'gallery'] as const).map((mode) => (
+            <Button
+              key={mode}
+              className="h-7 px-2.5 text-[0.65rem] capitalize"
+              onClick={() => setFocusedSessionMode(mode)}
+              size="sm"
+              type="button"
+              variant={focusedSession.mode === mode ? 'default' : 'outline'}
+            >
+              {mode}
+            </Button>
+          ))}
+        </div>
       </div>
-
-      {authoringContext?.surface === 'media-library' && authoringContext.libraryMedia ? (
-        <div className="grid gap-1 text-sm text-muted-foreground">
-          <div className="font-medium text-foreground">{authoringContext.libraryMedia.label}</div>
-          <div>
-            {authoringContext.libraryMedia.mimeType ? `${authoringContext.libraryMedia.mimeType} • ` : ''}ID {authoringContext.libraryMedia.id}
-          </div>
-        </div>
-      ) : null}
-
-      {authoringContext?.page ? (
-        <div className="grid gap-1 text-sm text-muted-foreground">
-          <div className="font-medium text-foreground">{authoringContext.page.title}</div>
-          <div>
-            {authoringContext.page.status} • {authoringContext.page.visibility} • {authoringContext.page.slug}
-          </div>
-        </div>
-      ) : null}
-
-      {authoringContext?.section ? (
-        <div className={adminPanelChrome.authoringSectionSummary}>
-          <div className="font-medium text-foreground">
-            Section {authoringContext.section.index + 1}: {authoringContext.section.label}
-          </div>
-          <div className="mt-1 text-muted-foreground">
-            {authoringContext.section.blockType}
-            {authoringContext.section.variant ? ` • ${authoringContext.section.variant}` : ''}
-            {authoringContext.section.description ? ` • ${authoringContext.section.description}` : ''}
-          </div>
-        </div>
-      ) : null}
-
-      {focusedSession?.type === 'media-generation' ? (
-        <div className={adminPanelChrome.copilotPrimarySoftPanel}>
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <div className="text-sm font-medium text-foreground">Focused media session</div>
-              <div className="mt-1 text-xs text-muted-foreground">
-                Pick a mode before asking for generation help so the copilot stays scoped to the selected slot.
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {(['image', 'video', 'gallery'] as const).map((mode) => (
-                <Button
-                  key={mode}
-                  onClick={() => setFocusedSessionMode(mode)}
-                  size="sm"
-                  type="button"
-                  variant={focusedSession.mode === mode ? 'default' : 'outline'}
-                >
-                  {mode}
-                </Button>
-              ))}
-            </div>
-          </div>
-          {focusedSession.promptHint ? (
-            <div className="mt-3 rounded-2xl border border-border/70 bg-background/80 p-3 text-sm text-muted-foreground">
-              Draft prompt: {focusedSession.promptHint}
-            </div>
-          ) : null}
-        </div>
-      ) : null}
-
-      {focusedSession?.type === 'text-generation' ? (
-        <div className={adminPanelChrome.copilotPrimarySoftPanel}>
-          <div className="text-sm font-medium text-foreground">Focused text rewrite</div>
-          <div className="mt-1 text-xs text-muted-foreground">
-            {focusedSession.fieldLabel} at {focusedSession.fieldPath}
-          </div>
-          {focusedSession.instructions ? (
-            <div className="mt-2 text-xs text-muted-foreground">{focusedSession.instructions}</div>
-          ) : null}
-          {focusedSession.currentText ? (
-            <div className={cn('mt-3', adminPanelChrome.copilotMutedDraftPanel)}>
-              Current copy: {focusedSession.currentText}
-            </div>
-          ) : null}
-        </div>
+      {focusedSession.promptHint ? (
+        <p className="truncate text-[0.65rem] text-muted-foreground" title={focusedSession.promptHint}>
+          Draft: {focusedSession.promptHint}
+        </p>
       ) : null}
     </div>
   )
@@ -364,10 +357,12 @@ function AuthoringContextSummary({
 
 function Composer() {
   const { focusedSession } = usePortalCopilot()
+  const mediaSessionActive =
+    COPILOT_MEDIA_GENERATION_ENABLED && focusedSession?.type === 'media-generation'
 
   return (
     <ComposerPrimitive.Root className="mx-auto flex w-full max-w-3xl flex-col gap-3 rounded-[1.75rem] border bg-card/95 p-3 shadow-lg">
-      {focusedSession?.type === 'media-generation' && !focusedSession.mode ? (
+      {mediaSessionActive && focusedSession?.type === 'media-generation' && !focusedSession.mode ? (
         <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-950 dark:text-amber-100">
           Choose image, video, or gallery above before asking for prompt or generation help.
         </div>
@@ -383,7 +378,7 @@ function Composer() {
         maxRows={8}
         minRows={2}
         placeholder={
-          focusedSession?.type === 'media-generation'
+          mediaSessionActive && focusedSession?.type === 'media-generation'
             ? 'Ask for prompt options, shot direction, or generation refinements for the selected slot...'
             : focusedSession?.type === 'text-generation'
               ? `Rewrite ${focusedSession.fieldLabel.toLowerCase()} or ask for alternate versions...`
@@ -458,7 +453,7 @@ export function PortalCopilot({
       return
     }
 
-    if (focusedSession?.type === 'media-generation') {
+    if (COPILOT_MEDIA_GENERATION_ENABLED && focusedSession?.type === 'media-generation') {
       setActiveView('chat')
     }
   }, [composer?.activeTab, composer?.isOpen, focusedSession?.type, hasToolsView, isOpen])
@@ -608,8 +603,7 @@ export function PortalCopilot({
                 </div>
               ) : (
                 <ThreadPrimitive.Root className="flex min-h-0 flex-1 flex-col px-4 pb-4 pt-5 sm:px-5">
-                  <AuthoringContextSummary authoringContext={activeAuthoringContext} focusedSession={focusedSession} />
-                  <CopilotMediaWorkbench />
+                  {COPILOT_MEDIA_GENERATION_ENABLED ? <CopilotMediaWorkbench /> : null}
                   <ThreadPrimitive.Viewport className="min-h-0 flex-1 overflow-y-auto px-1">
                     <ThreadPrimitive.Empty>
                       <EmptyState />
@@ -618,7 +612,9 @@ export function PortalCopilot({
                       {() => <CopilotMessage />}
                     </ThreadPrimitive.Messages>
                   </ThreadPrimitive.Viewport>
-                  <div className="pt-4">
+                  <div className="flex flex-col gap-2 pt-4">
+                    <CopilotContextBreadcrumb authoringContext={activeAuthoringContext} focusedSession={focusedSession} />
+                    <MediaSessionFooterControls />
                     <Composer />
                   </div>
                 </ThreadPrimitive.Root>

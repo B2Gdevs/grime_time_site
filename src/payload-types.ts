@@ -266,6 +266,8 @@ export interface Page {
     media?: (number | null) | Media;
   };
   layout: (
+    | HeroBlock
+    | ServiceEstimatorBlock
     | ServiceGridBlock
     | PricingTableBlock
     | CallToActionBlock
@@ -1069,6 +1071,79 @@ export interface ServicePlan {
   notes?: string | null;
   updatedAt: string;
   createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "HeroBlock".
+ */
+export interface HeroBlock {
+  type: 'none' | 'highImpact' | 'mediumImpact' | 'lowImpact';
+  eyebrow?: string | null;
+  headlinePrimary?: string | null;
+  headlineAccent?: string | null;
+  richText?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  panelEyebrow?: string | null;
+  panelHeading?: string | null;
+  panelBody?: string | null;
+  links?:
+    | {
+        link: {
+          type?: ('reference' | 'custom') | null;
+          newTab?: boolean | null;
+          reference?:
+            | ({
+                relationTo: 'pages';
+                value: number | Page;
+              } | null)
+            | ({
+                relationTo: 'posts';
+                value: number | Post;
+              } | null);
+          url?: string | null;
+          label: string;
+          /**
+           * Choose how the link should be rendered.
+           */
+          appearance?: ('default' | 'outline') | null;
+        };
+        id?: string | null;
+      }[]
+    | null;
+  media?: (number | null) | Media;
+  /**
+   * Keep this block in the page draft and composer, but omit it from the rendered page until it is shown again.
+   */
+  isHidden?: boolean | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'heroBlock';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ServiceEstimatorBlock".
+ */
+export interface ServiceEstimatorBlock {
+  /**
+   * Keep this block in the page draft and composer, but omit it from the rendered page until it is shown again.
+   */
+  isHidden?: boolean | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'serviceEstimator';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2552,6 +2627,8 @@ export interface PagesSelect<T extends boolean = true> {
   layout?:
     | T
     | {
+        heroBlock?: T | HeroBlockSelect<T>;
+        serviceEstimator?: T | ServiceEstimatorBlockSelect<T>;
         serviceGrid?: T | ServiceGridBlockSelect<T>;
         pricingTable?: T | PricingTableBlockSelect<T>;
         cta?: T | CallToActionBlockSelect<T>;
@@ -2577,6 +2654,48 @@ export interface PagesSelect<T extends boolean = true> {
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "HeroBlock_select".
+ */
+export interface HeroBlockSelect<T extends boolean = true> {
+  type?: T;
+  eyebrow?: T;
+  headlinePrimary?: T;
+  headlineAccent?: T;
+  richText?: T;
+  panelEyebrow?: T;
+  panelHeading?: T;
+  panelBody?: T;
+  links?:
+    | T
+    | {
+        link?:
+          | T
+          | {
+              type?: T;
+              newTab?: T;
+              reference?: T;
+              url?: T;
+              label?: T;
+              appearance?: T;
+            };
+        id?: T;
+      };
+  media?: T;
+  isHidden?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ServiceEstimatorBlock_select".
+ */
+export interface ServiceEstimatorBlockSelect<T extends boolean = true> {
+  isHidden?: T;
+  id?: T;
+  blockName?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

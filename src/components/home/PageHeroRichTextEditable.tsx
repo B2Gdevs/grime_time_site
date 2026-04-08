@@ -50,7 +50,7 @@ export function PageHeroRichTextEditable({
   const toolbarState = usePageComposerCanvasToolbarState()
   const openTextGenerator = usePageComposerTextGenerator()
   const heroEditor = toolbarState?.heroEditor?.kind === 'rich-text' ? toolbarState.heroEditor : null
-  const isSelected = Boolean(composer?.isOpen && toolbarState?.selectedIndex === -1)
+  const isSelected = Boolean(composer?.isOpen && heroEditor && toolbarState?.selectedIndex === heroEditor.blockIndex)
 
   if (!heroEditor || !isSelected) {
     return (
@@ -86,7 +86,7 @@ export function PageHeroRichTextEditable({
             applyText: heroEditor.updateCopy,
             currentText: heroEditor.copy,
             fieldLabel: 'hero body',
-            fieldPath: 'hero.richText',
+            fieldPath: heroEditor.copyFieldPath,
             instructions: 'Rewrite this page hero copy so it stays clear, page-specific, and aligned with the current route intent.',
           })}
         placeholder="Hero body copy"
@@ -99,18 +99,20 @@ export function PageHeroRichTextEditable({
 
 export function PageHeroMediaEditable({
   children,
-  relationPath = 'hero.media',
+  relationPath,
 }: {
   children: ReactNode
   relationPath?: string
 }) {
   const composer = usePageComposerOptional()
   const toolbarState = usePageComposerCanvasToolbarState()
-  const isSelected = Boolean(composer?.isOpen && toolbarState?.selectedIndex === -1)
+  const heroEditor = toolbarState?.heroEditor ?? null
+  const resolvedRelationPath = relationPath || heroEditor?.mediaRelationPath || 'hero.media'
+  const isSelected = Boolean(composer?.isOpen && heroEditor && toolbarState?.selectedIndex === heroEditor.blockIndex)
 
   if (!isSelected) {
     return <>{children}</>
   }
 
-  return <InlinePageMediaEditor relationPath={relationPath}>{children}</InlinePageMediaEditor>
+  return <InlinePageMediaEditor relationPath={resolvedRelationPath}>{children}</InlinePageMediaEditor>
 }

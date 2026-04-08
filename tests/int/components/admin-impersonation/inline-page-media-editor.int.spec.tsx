@@ -1,6 +1,10 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+vi.mock('@/constants/copilotFeatures', () => ({
+  COPILOT_MEDIA_GENERATION_ENABLED: true,
+}))
+
 import { InlinePageMediaEditor } from '@/components/admin-impersonation/InlinePageMediaEditor'
 import {
   PAGE_COMPOSER_MEDIA_DRAG_MIME,

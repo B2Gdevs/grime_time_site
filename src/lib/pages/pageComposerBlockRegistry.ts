@@ -48,6 +48,16 @@ function cloneValue<T>(value: T): T {
 const pageComposerBlockDefinitions: PageComposerBlockDefinition[] = [
   {
     category: 'static',
+    description: 'Primary page-opening hero section with copy, media, and route-level emphasis.',
+    keywords: ['hero', 'headline', 'intro', 'page opening'],
+    label: 'Hero',
+    supportsInsert: true,
+    supportsNesting: false,
+    supportsReusable: false,
+    type: 'heroBlock',
+  },
+  {
+    category: 'static',
     description: 'Branded service cards or pricing-step style sections authored directly on the page.',
     keywords: ['service', 'services', 'cards', 'pricing steps', 'homepage'],
     label: 'Service grid',
@@ -137,6 +147,16 @@ const pageComposerBlockDefinitions: PageComposerBlockDefinition[] = [
     type: 'testimonialsBlock',
   },
   {
+    category: 'dynamic',
+    description: 'Code-owned service estimator and instant quote experience for marketing pages.',
+    keywords: ['instant quote', 'estimator', 'quote tool', 'app block'],
+    label: 'Service estimator',
+    supportsInsert: true,
+    supportsNesting: false,
+    supportsReusable: false,
+    type: 'serviceEstimator',
+  },
+  {
     category: 'static',
     description: 'Trusted embed or markup block with sanitized rendering for approved HTML snippets.',
     keywords: ['html', 'embed', 'widget', 'custom code'],
@@ -173,6 +193,19 @@ export function findPageComposerBlockDefinition(
 }
 
 export function createPageComposerBlock(type: PageComposerInsertableBlockType): LayoutBlock {
+  if (type === 'heroBlock') {
+    return {
+      blockType: 'heroBlock',
+      eyebrow: 'Grime Time exterior cleaning',
+      headlineAccent: 'Visible results.',
+      headlinePrimary: 'Clear scope.',
+      panelBody: 'Strong visuals, clear service lanes, and a quote form that explains what moves the number.',
+      panelEyebrow: 'Fast lane for homeowners',
+      panelHeading: 'Quotes and scheduling without vague contractor talk.',
+      type: 'lowImpact',
+    }
+  }
+
   if (type === 'serviceGrid') {
     return {
       blockType: 'serviceGrid',
@@ -241,6 +274,12 @@ export function createPageComposerBlock(type: PageComposerInsertableBlockType): 
     return {
       blockType: 'contactRequest',
       layoutVariant: 'default',
+    }
+  }
+
+  if (type === 'serviceEstimator') {
+    return {
+      blockType: 'serviceEstimator',
     }
   }
 

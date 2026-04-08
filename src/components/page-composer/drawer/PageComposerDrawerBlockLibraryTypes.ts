@@ -33,6 +33,10 @@ export const blockLibraryCategoryOptions: Array<{ label: string; value: BlockLib
 ]
 
 export function resolveBlockLibraryCategory(type: string): Exclude<BlockLibraryCategory, 'all' | 'hero' | 'shared'> {
+  if (type === 'heroBlock') {
+    return 'content'
+  }
+
   if (type === 'serviceGrid' || type === 'pricingTable') {
     return 'services'
   }
@@ -45,7 +49,7 @@ export function resolveBlockLibraryCategory(type: string): Exclude<BlockLibraryC
     return 'testimonials'
   }
 
-  if (type === 'archive' || type === 'formBlock' || type === 'contactRequest' || type === 'customHtml') {
+  if (type === 'archive' || type === 'formBlock' || type === 'contactRequest' || type === 'customHtml' || type === 'serviceEstimator') {
     return 'apps'
   }
 

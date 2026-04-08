@@ -38,11 +38,15 @@ export type PageComposerToolbarState = {
   onToggleHidden: (index: number) => void
   sectionSummaries: PageComposerSectionSummary[]
   selectedIndex: number
+  selectedMediaRelationPath: null | string
   heroEditor:
     | null
-    | {
+    | ({
+        blockIndex: number
         copy: string
+        fieldPathPrefix: string
         kind: 'marketing-home'
+        mediaRelationPath: string
         eyebrow: string
         headlineAccent: string
         headlinePrimary: string
@@ -60,12 +64,16 @@ export type PageComposerToolbarState = {
           value: string,
         ) => void
         updateCopy: (value: string) => void
-      }
-    | {
+      })
+    | ({
+        blockIndex: number
         copy: string
+        copyFieldPath: string
+        fieldPathPrefix: string
         kind: 'rich-text'
+        mediaRelationPath: string
         updateCopy: (value: string) => void
-      }
+      })
   pricingTableEditor: null | {
     block: PricingTableBlock
     updateBlockField: (field: 'heading', value: string) => void

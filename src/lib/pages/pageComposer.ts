@@ -4,6 +4,7 @@ import {
   type PageComposerBlockCategory,
   type PageComposerInsertableBlockType,
 } from '@/lib/pages/pageComposerBlockRegistry'
+import { createDefaultHeroBlock, createServiceEstimatorBlock } from '@/lib/pages/pageLayoutBlocks'
 import { lexicalToPlainText } from '@/lib/pages/pageComposerLexical'
 import {
   linkedSharedSectionId,
@@ -20,7 +21,7 @@ export type PageComposerSectionTemplate =
 
 export type PageComposerSectionSummary = {
   badges: string[]
-  blockType: Page['layout'][number]['blockType'] | 'hero'
+  blockType: Page['layout'][number]['blockType']
   category: PageComposerBlockCategory
   description: string
   hidden: boolean
@@ -224,10 +225,13 @@ export function createPageComposerDocumentSeed(args: { pagePath: string }): Page
   return {
     _status: 'draft',
     hero: {
-      type: 'lowImpact',
+      type: 'none',
     },
     id: null,
-    layout: [],
+    layout:
+      normalizedPagePath === '/'
+        ? [createDefaultHeroBlock(), createServiceEstimatorBlock()]
+        : [createDefaultHeroBlock()],
     pagePath: normalizedPagePath,
     publishedAt: null,
     slug,
@@ -337,6 +341,37 @@ export function buildPageComposerSectionSummaries(
         hidden,
         index,
         label: block.blockName?.trim() || `Media block ${index + 1}`,
+        variant: null,
+      }
+    }
+
+    if (block.blockType === 'heroBlock') {
+      return {
+        badges,
+        blockType: block.blockType,
+        category: summaryMeta.category,
+        description:
+          block.type === 'none'
+            ? 'Hero disabled'
+            : block.media
+              ? `${block.type} hero with media`
+              : `${block.type} hero`,
+        hidden,
+        index,
+        label: 'Hero',
+        variant: block.type || null,
+      }
+    }
+
+    if (block.blockType === 'serviceEstimator') {
+      return {
+        badges,
+        blockType: block.blockType,
+        category: summaryMeta.category,
+        description: 'Code-owned quote and estimator experience',
+        hidden,
+        index,
+        label: 'Service estimator',
         variant: null,
       }
     }
@@ -476,6 +511,15 @@ export function buildPageComposerValidationSummary(args: {
         blockIndex: index,
         id: `pricing-inline-${index}`,
         message: `Pricing block ${index + 1} is set to inline plans but does not have any plans yet.`,
+        tone: 'warning',
+      })
+    }
+
+    if (block.blockType === 'heroBlock' && block.type !== 'none' && !block.richText && !block.headlinePrimary?.trim()) {
+      issues.push({
+        blockIndex: index,
+        id: `hero-content-${index}`,
+        message: `Hero block ${index + 1} needs headline or body copy.`,
         tone: 'warning',
       })
     }
@@ -696,6 +740,15 @@ export function createPageComposerSectionTemplate(
 
 export function normalizePageComposerLayoutForSave(layout: Page['layout']): Page['layout'] {
   return cloneValue(layout || []).map((block) => {
+    if (block.blockType === 'heroBlock') {
+      const media = relationId(block.media)
+
+      return {
+        ...block,
+        ...(media !== null ? { media } : {}),
+      }
+    }
+
     if (block.blockType === 'serviceGrid') {
       return {
         ...block,

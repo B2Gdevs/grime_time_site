@@ -53,14 +53,6 @@ export function PageComposerDrawerContentTab({
     return <PageComposerDrawerContentEmptyState>{status || 'No page is available for this route.'}</PageComposerDrawerContentEmptyState>
   }
 
-  if (selectedIndex < 0) {
-    return (
-      <PageComposerDrawerContentEmptyState>
-        Hero editing stays on the live canvas. Use the page itself to edit copy and media, and use this surface to find blocks for the sections around it.
-      </PageComposerDrawerContentEmptyState>
-    )
-  }
-
   if (!selectedBlock) {
     return (
       <PageComposerDrawerContentEmptyState>

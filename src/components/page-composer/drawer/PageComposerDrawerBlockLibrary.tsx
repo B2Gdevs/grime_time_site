@@ -34,8 +34,12 @@ export function PageComposerDrawerBlockLibrary({
 }: PageComposerDrawerBlockLibraryProps) {
   const [activeCategory, setActiveCategory] = useState<BlockLibraryCategory>('all')
   const visibleBlockDefinitions = useMemo(() => {
-    if (activeCategory === 'all' || activeCategory === 'hero' || activeCategory === 'shared') {
-      return activeCategory === 'hero' ? [] : filteredBlockDefinitions
+    if (activeCategory === 'all' || activeCategory === 'shared') {
+      return filteredBlockDefinitions
+    }
+
+    if (activeCategory === 'hero') {
+      return filteredBlockDefinitions.filter((definition) => definition.type === 'heroBlock')
     }
 
     return filteredBlockDefinitions.filter((definition) => resolveBlockLibraryCategory(definition.type) === activeCategory)
@@ -77,12 +81,6 @@ export function PageComposerDrawerBlockLibrary({
 
         <div className="overflow-y-auto">
           <div className="grid gap-5">
-            {activeCategory === 'hero' ? (
-              <PageComposerDrawerBlockLibraryEmptyState>
-                Hero content is page-owned. Edit the hero directly on the live canvas instead of inserting it from the block launcher.
-              </PageComposerDrawerBlockLibraryEmptyState>
-            ) : null}
-
             {visibleBlockDefinitions.length ? (
               <section className="grid gap-3">
                 <div className={adminPanelChrome.fieldLabel}>Layouts</div>
@@ -145,7 +143,7 @@ export function PageComposerDrawerBlockLibrary({
               ) : null}
             </section>
 
-            {!visibleBlockDefinitions.length && !visibleReusablePresets.length && !visibleSharedSections.length && activeCategory !== 'hero' ? (
+            {!visibleBlockDefinitions.length && !visibleReusablePresets.length && !visibleSharedSections.length ? (
               <PageComposerDrawerBlockLibraryEmptyState>
                 No blocks match that search and category yet.
               </PageComposerDrawerBlockLibraryEmptyState>

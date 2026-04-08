@@ -4,6 +4,7 @@ import { useCallback, useMemo, useState } from 'react'
 import { SparklesIcon, UploadIcon } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
+import { COPILOT_MEDIA_GENERATION_ENABLED } from '@/constants/copilotFeatures'
 import { usePageMediaDevtoolsOptional } from '@/components/admin-impersonation/PageMediaDevtoolsContext'
 import { usePageComposerCanvasToolbarState } from '@/components/page-composer/PageComposerCanvas'
 import { usePortalCopilotOptional } from '@/components/copilot/PortalCopilotContext'
@@ -115,12 +116,15 @@ export function InlinePageMediaEditor({ children, relationPath }: InlinePageMedi
       const blockIndex = Number(layoutMediaMatch[1])
       const block = draftPage.layout?.[blockIndex]
 
-      if (!block || block.blockType !== 'mediaBlock') {
+      if (!block || (block.blockType !== 'mediaBlock' && block.blockType !== 'heroBlock')) {
         return null
       }
 
       return {
-        label: sectionSummary?.label || block.blockName?.trim() || `Media block ${blockIndex + 1}`,
+        label:
+          block.blockType === 'heroBlock'
+            ? 'Hero image'
+            : sectionSummary?.label || block.blockName?.trim() || `Media block ${blockIndex + 1}`,
         media: getMediaSummary(block.media),
         mediaId: getMediaId(block.media),
         pageId,
@@ -413,16 +417,18 @@ export function InlinePageMediaEditor({ children, relationPath }: InlinePageMedi
             <UploadIcon className="h-3.5 w-3.5" />
             Replace
           </Button>
-          <Button
-            className="h-8 rounded-full bg-background/94 px-3 text-xs shadow-lg"
-            onClick={() => openMediaWorkflow(getMediaKindFromMimeType(resolvedEntry.media?.mimeType))}
-            size="sm"
-            type="button"
-            variant="secondary"
-          >
-            <SparklesIcon className="h-3.5 w-3.5" />
-            Generate
-          </Button>
+          {COPILOT_MEDIA_GENERATION_ENABLED ? (
+            <Button
+              className="h-8 rounded-full bg-background/94 px-3 text-xs shadow-lg"
+              onClick={() => openMediaWorkflow(getMediaKindFromMimeType(resolvedEntry.media?.mimeType))}
+              size="sm"
+              type="button"
+              variant="secondary"
+            >
+              <SparklesIcon className="h-3.5 w-3.5" />
+              Generate
+            </Button>
+          ) : null}
         </div>
       </div>
 

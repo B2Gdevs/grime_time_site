@@ -499,6 +499,7 @@ describe('PageComposer shell integration', () => {
     })
 
     await waitFor(() => {
+      expect(toolbarDetail?.selectedMediaRelationPath).toBe('layout.1.services.1.media')
       expect(screen.getByRole('button', { name: 'Use media 901 for Driveway lane' })).toBeTruthy()
     })
 

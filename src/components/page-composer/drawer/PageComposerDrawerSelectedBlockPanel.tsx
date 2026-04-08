@@ -18,12 +18,10 @@ export function PageComposerDrawerSelectedBlockPanel({
       <div className={adminPanelChrome.card}>
         <div className="text-sm font-semibold text-foreground">{selectedSummary?.label || 'Selected block'}</div>
         <div className="mt-1 text-sm text-muted-foreground">
-          {selectedIndex < 0
-            ? 'Hero editing happens directly on the page. This drawer stays focused on finding, replacing, and arranging sections.'
-            : 'Edit copy directly on the live canvas. Use this block surface to replace the current section with a different layout, preset, or shared source.'}
+          Edit copy directly on the live canvas. Use this block surface to replace the current section with a different layout, preset, or shared source.
         </div>
         <div className="mt-3">
-          <Button disabled={selectedIndex < 0} onClick={() => openBlockLibrary(selectedIndex, 'replace')} size="sm" type="button" variant="outline">
+          <Button onClick={() => openBlockLibrary(selectedIndex, 'replace')} size="sm" type="button" variant="outline">
             Find blocks
           </Button>
         </div>

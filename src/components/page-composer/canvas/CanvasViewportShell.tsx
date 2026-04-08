@@ -52,7 +52,7 @@ export function PageComposerCanvasViewportShell({
       previewMode={composer.previewMode}
       selectedBlockType={selectedSummary?.blockType ?? ''}
       selectedIndex={composer.selectedIndex}
-      selectedLabel={selectedSummary?.label ?? (composer.selectedIndex === -1 ? 'Hero' : '')}
+      selectedLabel={selectedSummary?.label ?? ''}
       selectedSummaryLabel={selectedSummary?.label ?? ''}
       toolbarState={toolbarState}
     >

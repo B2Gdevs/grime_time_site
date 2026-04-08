@@ -1,3 +1,4 @@
+import { createLegacyHeroGroupFromBlock, normalizePageLayoutBlocks } from '@/lib/pages/pageLayoutBlocks'
 import type { Media, Page } from '@/payload-types'
 
 export type MediaDevtoolsSummary = {
@@ -22,6 +23,15 @@ export type PageMediaReference = {
 
 type PageLike = Pick<Page, 'hero' | 'layout'> &
   Partial<Pick<Page, 'id' | 'slug' | 'title'>>
+
+function pagePathFromSlug(slug: null | string | undefined): string {
+  const trimmed = slug?.trim() || ''
+  if (!trimmed || trimmed === 'home') {
+    return '/'
+  }
+
+  return `/${trimmed}`
+}
 
 function asMedia(value: Media | null | number | undefined): Media | null {
   return value && typeof value === 'object' ? value : null
@@ -51,6 +61,14 @@ export function buildMediaDevtoolsSummary(media: Media | null): null | MediaDevt
 }
 
 function getBlockLabel(block: Page['layout'][number], blockIndex: number): string {
+  if (block.blockType === 'heroBlock') {
+    return 'Hero'
+  }
+
+  if (block.blockType === 'serviceEstimator') {
+    return 'Service estimator'
+  }
+
   if (block.blockType === 'serviceGrid') {
     return block.heading || `Service section ${blockIndex + 1}`
   }
@@ -67,25 +85,14 @@ export function collectPageMediaReferences(args: {
   const pageId = Number(page.id || 0)
   const pageSlug = page.slug || ''
   const pageTitle = page.title || page.slug || 'Untitled page'
-  const heroMedia = asMedia(page.hero?.media)
+  const layout = normalizePageLayoutBlocks({ page, pagePath })
 
-  refs.push({
-    label: 'Hero image',
-    media: heroMedia ? buildMediaDevtoolsSummary(heroMedia) : null,
-    mediaId: heroMedia ? Number(heroMedia.id) : null,
-    pageId,
-    pagePath,
-    pageSlug,
-    pageTitle,
-    relationPath: 'hero.media',
-  })
-
-  for (const [blockIndex, block] of (page.layout || []).entries()) {
-    if (block.blockType === 'mediaBlock') {
+  for (const [blockIndex, block] of layout.entries()) {
+    if (block.blockType === 'mediaBlock' || block.blockType === 'heroBlock') {
       const blockMedia = asMedia(block.media)
 
       refs.push({
-        label: getBlockLabel(block, blockIndex),
+        label: block.blockType === 'heroBlock' ? 'Hero image' : getBlockLabel(block, blockIndex),
         media: blockMedia ? buildMediaDevtoolsSummary(blockMedia) : null,
         mediaId: blockMedia ? Number(blockMedia.id) : null,
         pageId,
@@ -122,18 +129,43 @@ export function collectPageMediaReferences(args: {
   return refs
 }
 
-function cloneLayout(page: Pick<Page, 'layout'>): Page['layout'] {
-  return [...(page.layout || [])]
+function cloneLayout(page: Pick<Page, 'hero' | 'layout'> & Partial<Pick<Page, 'slug'>>): Page['layout'] {
+  return normalizePageLayoutBlocks({
+    page,
+    pagePath: pagePathFromSlug(page.slug),
+  })
 }
 
 export function buildPageMediaUpdateData(args: {
   mediaId: number
-  page: Pick<Page, 'hero' | 'layout'>
+  page: Pick<Page, 'hero' | 'layout'> & Partial<Pick<Page, 'slug'>>
   relationPath: string
 }): Partial<Pick<Page, 'hero' | 'layout'>> {
   const { mediaId, page, relationPath } = args
 
   if (relationPath === 'hero.media') {
+    const layout = normalizePageLayoutBlocks({ page, pagePath: pagePathFromSlug(page.slug) })
+    const heroIndex = layout.findIndex((block) => block.blockType === 'heroBlock')
+
+    if (heroIndex >= 0) {
+      const target = layout[heroIndex]
+
+      if (target?.blockType === 'heroBlock') {
+        layout[heroIndex] = {
+          ...target,
+          media: mediaId,
+        }
+      }
+
+      return {
+        hero: createLegacyHeroGroupFromBlock({
+          block: layout[heroIndex]?.blockType === 'heroBlock' ? layout[heroIndex] : null,
+          fallback: page.hero,
+        }),
+        layout,
+      }
+    }
+
     return {
       hero: {
         ...page.hero,
@@ -148,7 +180,7 @@ export function buildPageMediaUpdateData(args: {
     const layout = cloneLayout(page)
     const target = layout[blockIndex]
 
-    if (!target || target.blockType !== 'mediaBlock') {
+    if (!target || (target.blockType !== 'mediaBlock' && target.blockType !== 'heroBlock')) {
       throw new Error(`Unsupported page media path: ${relationPath}`)
     }
 
@@ -157,7 +189,15 @@ export function buildPageMediaUpdateData(args: {
       media: mediaId,
     }
 
-    return { layout }
+    return target.blockType === 'heroBlock'
+      ? {
+          hero: createLegacyHeroGroupFromBlock({
+            block: layout[blockIndex]?.blockType === 'heroBlock' ? layout[blockIndex] : null,
+            fallback: page.hero,
+          }),
+          layout,
+        }
+      : { layout }
   }
 
   const serviceMediaMatch = /^layout\.(\d+)\.services\.(\d+)\.media$/.exec(relationPath)

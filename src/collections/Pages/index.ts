@@ -8,8 +8,10 @@ import { Content } from '../../blocks/Content/config'
 import { ContactRequest } from '../../blocks/ContactRequest/config'
 import { CustomHtml } from '../../blocks/CustomHtml/config'
 import { FormBlock } from '../../blocks/Form/config'
+import { HeroBlock } from '../../blocks/Hero/config'
 import { MediaBlock } from '../../blocks/MediaBlock/config'
 import { PricingTable } from '../../blocks/PricingTable/config'
+import { ServiceEstimator } from '../../blocks/ServiceEstimator/config'
 import { ServiceGrid } from '../../blocks/ServiceGrid/config'
 import { TestimonialsBlock } from '../../blocks/Testimonials/config'
 import { hero } from '@/heros/config'
@@ -66,18 +68,22 @@ export const Pages: CollectionConfig<'pages'> = {
       required: true,
     },
     {
+      ...hero,
+      admin: {
+        hidden: true,
+      },
+    },
+    {
       type: 'tabs',
       tabs: [
-        {
-          fields: [hero],
-          label: 'Hero',
-        },
         {
           fields: [
             {
               name: 'layout',
               type: 'blocks',
               blocks: [
+                HeroBlock,
+                ServiceEstimator,
                 ServiceGrid,
                 PricingTable,
                 CallToAction,

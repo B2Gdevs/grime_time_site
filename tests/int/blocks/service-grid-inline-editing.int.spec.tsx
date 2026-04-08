@@ -32,6 +32,7 @@ const mediaResource = {
 
 const toolbarState = {
   selectedIndex: 0,
+  selectedMediaRelationPath: null as null | string,
   sectionSummaries: [
     {
       badges: [],
@@ -99,6 +100,7 @@ describe('ServiceGridBlock inline editing', () => {
     updateServiceField.mockReset()
 
     toolbarState.selectedIndex = 0
+    toolbarState.selectedMediaRelationPath = null
     toolbarState.serviceGridEditor.block = {
       blockType: 'serviceGrid' as const,
       displayVariant: 'featureCards' as const,
@@ -200,5 +202,65 @@ describe('ServiceGridBlock inline editing', () => {
 
     expect(screen.getByDisplayValue('Draft lane')).toBeTruthy()
     expect(screen.getByTestId('service-grid-media').textContent).toContain('55:Freshly cleaned exterior')
+  })
+
+  it('syncs the visible lane to the selected media relation path while targeting service media', () => {
+    toolbarState.serviceGridEditor.block = {
+      blockType: 'serviceGrid' as const,
+      displayVariant: 'interactive' as const,
+      heading: 'How our pricing works',
+      intro: 'Draft intro copy.',
+      services: [
+        {
+          eyebrow: 'Soft wash',
+          highlights: [{ text: 'Highlight proof point.' }],
+          media: null,
+          name: 'House washing',
+          pricingHint: 'Home size and buildup',
+          summary: 'First lane summary.',
+        },
+        {
+          eyebrow: 'Flatwork',
+          highlights: [{ text: 'Driveway proof point.' }],
+          media: mediaResource as never,
+          name: 'Driveway lane',
+          pricingHint: 'Soil and square footage',
+          summary: 'Second lane summary.',
+        },
+      ],
+    }
+    toolbarState.selectedMediaRelationPath = 'layout.0.services.1.media'
+
+    render(
+      <ServiceGridBlock
+        blockIndex={0}
+        blockType="serviceGrid"
+        displayVariant="interactive"
+        heading="How our pricing works"
+        intro="Prop intro copy."
+        services={[
+          {
+            eyebrow: 'Soft wash',
+            highlights: [{ text: 'Highlight proof point.' }],
+            media: null,
+            name: 'House washing',
+            pricingHint: 'Home size and buildup',
+            summary: 'First lane summary.',
+          },
+          {
+            eyebrow: 'Flatwork',
+            highlights: [{ text: 'Driveway proof point.' }],
+            media: null,
+            name: 'Driveway lane',
+            pricingHint: 'Soil and square footage',
+            summary: 'Second lane summary.',
+          },
+        ]}
+      />,
+    )
+
+    expect(screen.getByDisplayValue('Driveway lane')).toBeTruthy()
+    expect(screen.getByDisplayValue('Second lane summary.')).toBeTruthy()
+    expect(screen.getAllByTestId('service-grid-media').some((node) => node.textContent?.includes('55:Freshly cleaned exterior'))).toBe(true)
   })
 })

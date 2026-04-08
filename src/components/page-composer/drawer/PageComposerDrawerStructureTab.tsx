@@ -13,7 +13,7 @@ import type { PageComposerDocument, PageComposerSectionSummary } from '@/lib/pag
 export function PageComposerDrawerStructureTab({
   draftPage,
   handleDragEnd,
-  heroSummary,
+  heroSummary: _heroSummary,
   layoutSectionSummaries,
   loading,
   openBlockLibrary,
@@ -65,22 +65,7 @@ export function PageComposerDrawerStructureTab({
         <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd} sensors={sensors}>
           <SortableContext items={layoutSectionSummaries.map((summary) => String(summary.index))} strategy={verticalListSortingStrategy}>
             <div className="grid gap-3">
-              {heroSummary ? (
-                <div className="grid gap-3">
-                  <PageComposerDrawerSortableSectionRow
-                    active={selectedIndex === heroSummary.index}
-                    onAddBelow={() => openBlockLibrary(0)}
-                    onClick={() => setSelectedIndex(heroSummary.index)}
-                    onDuplicate={() => {}}
-                    onRemove={() => {}}
-                    onToggleHidden={() => {}}
-                    summary={heroSummary}
-                  />
-                  <PageComposerDrawerStructureInsertButton onClick={() => openBlockLibrary(0)} />
-                </div>
-              ) : (
-                <PageComposerDrawerStructureInsertButton onClick={() => openBlockLibrary(0)} />
-              )}
+              <PageComposerDrawerStructureInsertButton onClick={() => openBlockLibrary(0)} />
               {layoutSectionSummaries.map((summary) => (
                 <div className="grid gap-3" key={`${summary.index}-${summary.label}`}>
                   <PageComposerDrawerSortableSectionRow

@@ -57,6 +57,7 @@ import type { SharedSectionRecord } from '@/lib/pages/sharedSections'
 import type {
   CallToActionBlock,
   ContentBlock,
+  HeroBlock,
   Media,
   ServiceGridBlock,
   TestimonialsSectionBlock,
@@ -92,13 +93,7 @@ function stagePageComposerMediaSlot(args: {
   const { media, page, relationPath } = args
 
   if (relationPath === 'hero.media') {
-    return {
-      ...page,
-      hero: {
-        ...page.hero,
-        media,
-      },
-    }
+    return page
   }
 
   const layoutMediaMatch = /^layout\.(\d+)\.media$/.exec(relationPath)
@@ -107,7 +102,7 @@ function stagePageComposerMediaSlot(args: {
     const layout = [...(page.layout || [])]
     const target = layout[blockIndex]
 
-    if (!target || target.blockType !== 'mediaBlock') {
+    if (!target || (target.blockType !== 'mediaBlock' && target.blockType !== 'heroBlock')) {
       return page
     }
 
@@ -155,7 +150,7 @@ function stagePageComposerMediaSlot(args: {
 
 function resolveSelectedIndexFromMediaRelationPath(relationPath: string): null | number {
   if (relationPath === 'hero.media') {
-    return -1
+    return 0
   }
 
   const layoutMediaMatch = /^layout\.(\d+)\./.exec(relationPath)
@@ -173,27 +168,23 @@ function resolveMediaSlotFromRelationPath(
   sectionSummaries: PageComposerSectionSummary[],
 ): SectionMediaSlot | null {
   if (relationPath === 'hero.media') {
-    const media = buildMediaDevtoolsSummary(asMedia(draftPage.hero?.media))
-    return {
-      label: 'Hero image',
-      media,
-      mediaId: media?.id || null,
-      mimeType: media?.mimeType || null,
-      relationPath: 'hero.media',
-    }
+    return null
   }
 
   const layoutOnly = /^layout\.(\d+)\.media$/.exec(relationPath)
   if (layoutOnly) {
     const blockIndex = Number(layoutOnly[1])
     const block = draftPage.layout?.[blockIndex]
-    if (!block || block.blockType !== 'mediaBlock') {
+    if (!block || (block.blockType !== 'mediaBlock' && block.blockType !== 'heroBlock')) {
       return null
     }
     const sectionSummary = sectionSummaries.find((summary) => summary.index === blockIndex)
     const media = buildMediaDevtoolsSummary(asMedia(block.media))
     return {
-      label: sectionSummary?.label || block.blockName || 'Section media',
+      label:
+        block.blockType === 'heroBlock'
+          ? 'Hero image'
+          : sectionSummary?.label || block.blockName || 'Section media',
       media,
       mediaId: media?.id || null,
       mimeType: media?.mimeType || null,
@@ -326,27 +317,10 @@ export function PageComposerDrawer({
     () => new Map(sharedSections.map((item) => [item.id, item])),
     [sharedSections],
   )
-  const sectionSummaries = useMemo(() => {
-    const layoutSummaries = buildPageComposerSectionSummaries(draftPage?.layout, sharedSectionsById)
-
-    if (!draftPage) {
-      return layoutSummaries
-    }
-
-    return [
-      {
-        badges: ['page'],
-        blockType: 'hero' as const,
-        category: 'static' as const,
-        description: draftPage.hero?.media ? 'Hero copy and media' : 'Hero copy with fallback media state',
-        hidden: false,
-        index: -1,
-        label: 'Hero',
-        variant: draftPage.hero?.type || null,
-      },
-      ...layoutSummaries,
-    ]
-  }, [draftPage, sharedSectionsById])
+  const sectionSummaries = useMemo(
+    () => buildPageComposerSectionSummaries(draftPage?.layout, sharedSectionsById),
+    [draftPage?.layout, sharedSectionsById],
+  )
   const blockDefinitions = useMemo(() => getPageComposerBlockDefinitions(), [])
   const reusablePresets = useMemo(() => getPageComposerReusablePresets(), [])
   const filteredBlockDefinitions = useMemo(() => {
@@ -407,7 +381,11 @@ export function PageComposerDrawer({
     resolvedSelectedBlock?.blockType === 'testimonialsBlock'
       ? (resolvedSelectedBlock as TestimonialsSectionBlock)
       : null
-  const heroCopy = lexicalToPlainText(draftPage?.hero?.richText)
+  const selectedHeroBlock =
+    resolvedSelectedBlock?.blockType === 'heroBlock'
+      ? (resolvedSelectedBlock as HeroBlock)
+      : null
+  const heroCopy = lexicalToPlainText(selectedHeroBlock?.richText)
   const selectedSharedSectionId = linkedSharedSectionId(selectedBlock)
   const selectedBlockIsLinkedSharedSection = isLinkedSharedSectionBlock(selectedBlock)
   const mediaSlots = useMemo<SectionMediaSlot[]>(() => {
@@ -415,15 +393,15 @@ export function PageComposerDrawer({
       return []
     }
 
-    if (selectedIndex === -1) {
-      const media = buildMediaDevtoolsSummary(asMedia(draftPage.hero?.media))
+    if (resolvedSelectedBlock?.blockType === 'heroBlock') {
+      const media = buildMediaDevtoolsSummary(asMedia(resolvedSelectedBlock.media))
       return [
         {
           label: 'Hero image',
           media,
           mediaId: media?.id || null,
           mimeType: media?.mimeType || null,
-          relationPath: 'hero.media',
+          relationPath: `layout.${selectedIndex}.media`,
         },
       ]
     }
@@ -467,8 +445,8 @@ export function PageComposerDrawer({
     return resolveMediaSlotFromRelationPath(draftPage, selectedMediaPath, sectionSummaries)
   }, [draftPage, mediaSlots, sectionSummaries, selectedMediaPath])
   const mediaActionsLocked = dirty || !draftPage || typeof draftPage.id !== 'number'
-  const heroSummary = sectionSummaries.find((summary) => summary.index === -1) || null
-  const layoutSectionSummaries = sectionSummaries.filter((summary) => summary.index >= 0)
+  const heroSummary = sectionSummaries.find((summary) => summary.blockType === 'heroBlock') || null
+  const layoutSectionSummaries = sectionSummaries
   const _changedBlockCount = useMemo(
     () =>
       countPageComposerChangedBlocks({
@@ -1216,50 +1194,49 @@ export function PageComposerDrawer({
             onResetDraft: resetDraftFromSaved,
             sectionSummaries,
             selectedIndex,
-            heroEditor: draftPage
+            selectedMediaRelationPath: selectedMediaPath,
+            heroEditor: selectedHeroBlock
               ? draftPage.pagePath === '/'
                 ? {
+                    blockIndex: selectedIndex,
                     copy: heroCopy,
+                    fieldPathPrefix: `layout.${selectedIndex}`,
                     kind: 'marketing-home' as const,
-                    eyebrow: draftPage.hero.eyebrow?.trim() || 'Grime Time exterior cleaning',
-                    headlineAccent: draftPage.hero.headlineAccent?.trim() || 'Visible results.',
-                    headlinePrimary: draftPage.hero.headlinePrimary?.trim() || 'Clear scope.',
+                    mediaRelationPath: `layout.${selectedIndex}.media`,
+                    eyebrow: selectedHeroBlock.eyebrow?.trim() || 'Grime Time exterior cleaning',
+                    headlineAccent: selectedHeroBlock.headlineAccent?.trim() || 'Visible results.',
+                    headlinePrimary: selectedHeroBlock.headlinePrimary?.trim() || 'Clear scope.',
                     panelBody:
-                      draftPage.hero.panelBody?.trim() ||
+                      selectedHeroBlock.panelBody?.trim() ||
                       'Strong visuals, clear service lanes, and a quote form that explains what moves the number.',
-                    panelEyebrow: draftPage.hero.panelEyebrow?.trim() || 'Fast lane for homeowners',
+                    panelEyebrow: selectedHeroBlock.panelEyebrow?.trim() || 'Fast lane for homeowners',
                     panelHeading:
-                      draftPage.hero.panelHeading?.trim() || 'Quotes and scheduling without vague contractor talk.',
+                      selectedHeroBlock.panelHeading?.trim() || 'Quotes and scheduling without vague contractor talk.',
                     updateField: (field, value) => {
-                      mutatePage((page) => ({
-                        ...page,
-                        hero: {
-                          ...page.hero,
-                          [field]: value,
-                        },
-                      }))
+                      replaceSelectedBlock({
+                        ...selectedHeroBlock,
+                        [field]: value,
+                      })
                     },
                     updateCopy: (value) => {
-                      mutatePage((page) => ({
-                        ...page,
-                        hero: {
-                          ...page.hero,
-                          richText: createLexicalParagraph(value),
-                        },
-                      }))
+                      replaceSelectedBlock({
+                        ...selectedHeroBlock,
+                        richText: createLexicalParagraph(value),
+                      })
                     },
                   }
                 : {
                     copy: heroCopy,
+                    blockIndex: selectedIndex,
+                    copyFieldPath: `layout.${selectedIndex}.richText`,
+                    fieldPathPrefix: `layout.${selectedIndex}`,
                     kind: 'rich-text' as const,
+                    mediaRelationPath: `layout.${selectedIndex}.media`,
                     updateCopy: (value) => {
-                      mutatePage((page) => ({
-                        ...page,
-                        hero: {
-                          ...page.hero,
-                          richText: createLexicalParagraph(value),
-                        },
-                      }))
+                      replaceSelectedBlock({
+                        ...selectedHeroBlock,
+                        richText: createLexicalParagraph(value),
+                      })
                     },
                   }
               : null,

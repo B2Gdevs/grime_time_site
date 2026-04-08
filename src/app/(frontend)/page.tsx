@@ -1,28 +1,25 @@
 import type { Metadata } from 'next'
 
-import configPromise from '@payload-config'
 import { PayloadRedirects } from '@/components/PayloadRedirects'
 import { PageComposerCanvasViewport } from '@/components/page-composer/PageComposerCanvas'
 import { PageMediaRegistryBridge } from '@/components/admin-impersonation/PageMediaDevtoolsContext'
-import { GrimeTimeMarketingHome } from '@/components/home/GrimeTimeMarketingHome'
+import { RenderBlocks } from '@/blocks/RenderBlocks'
 import { collectPageMediaReferences } from '@/lib/media/pageMediaDevtools'
+import { normalizePageLayoutBlocks } from '@/lib/pages/pageLayoutBlocks'
 import { queryPublicPageBySlug } from '@/lib/pages/queryPublicPageBySlug'
-import { getInstantQuoteCatalog } from '@/lib/quotes/getInstantQuoteCatalog'
 import { generateMeta } from '@/utilities/generateMeta'
 import { draftMode } from 'next/headers'
-import { getPayload } from 'payload'
 
 export default async function HomePage() {
-  const { isEnabled: draft } = await draftMode()
+  await draftMode()
   const page = await queryPublicPageBySlug({ slug: 'home' })
 
   if (!page) {
     return <PayloadRedirects url="/" />
   }
 
-  const payload = await getPayload({ config: configPromise })
-  const instantQuoteCatalog = await getInstantQuoteCatalog({ draft, payload })
-  const pageMediaEntries = collectPageMediaReferences({ page, pagePath: '/' })
+  const layout = normalizePageLayoutBlocks({ page, pagePath: '/' })
+  const pageMediaEntries = collectPageMediaReferences({ page: { ...page, layout }, pagePath: '/' })
 
   return (
     <>
@@ -34,7 +31,7 @@ export default async function HomePage() {
         pageTitle={page.title}
       />
       <PageComposerCanvasViewport>
-        <GrimeTimeMarketingHome instantQuoteCatalog={instantQuoteCatalog} page={page} />
+        {await RenderBlocks({ blocks: layout, pagePath: '/' })}
       </PageComposerCanvasViewport>
     </>
   )

@@ -9,10 +9,7 @@ import {
 
 import { linkGroup } from '@/fields/linkGroup'
 
-export const hero: Field = {
-  name: 'hero',
-  type: 'group',
-  fields: [
+export const heroFields: Field[] = [
     {
       name: 'type',
       type: 'select',
@@ -91,6 +88,11 @@ export const hero: Field = {
       relationTo: 'media',
       required: true,
     },
-  ],
+]
+
+export const hero: Field = {
+  name: 'hero',
+  type: 'group',
+  fields: heroFields,
   label: false,
 }

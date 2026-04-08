@@ -1,9 +1,10 @@
-﻿'use client'
+'use client'
 
 import type { MutableRefObject } from 'react'
 import { LoaderCircleIcon, RefreshCwIcon, SparklesIcon, UploadIcon } from 'lucide-react'
 
 import { adminPanelChrome } from '@/components/admin-impersonation/adminPanelChrome'
+import { COPILOT_MEDIA_GENERATION_ENABLED } from '@/constants/copilotFeatures'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import type {
@@ -58,7 +59,7 @@ export function PageComposerDrawerMediaUploadGenerateCard({
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          {copilot ? (
+          {copilot && COPILOT_MEDIA_GENERATION_ENABLED ? (
             <Button
               disabled={mediaActionsLocked}
               onClick={() =>

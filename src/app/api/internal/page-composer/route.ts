@@ -11,6 +11,11 @@ import {
   type PageComposerPageSummary,
   type PageComposerVersionSummary,
 } from '@/lib/pages/pageComposer'
+import {
+  buildPageDocumentBlocksForSave,
+  createLegacyHeroGroupFromBlock,
+  normalizePageLayoutBlocks,
+} from '@/lib/pages/pageLayoutBlocks'
 import type { Page } from '@/payload-types'
 
 async function requireStaffPageComposerAuth() {
@@ -48,11 +53,15 @@ function normalizeComposerPagePath(pagePath: null | string): null | string {
 }
 
 function toComposerDocument(page: Page, pagePath: string): PageComposerDocument {
+  const layout = normalizePageLayoutBlocks({ page, pagePath })
   return {
     _status: page._status,
-    hero: page.hero,
+    hero: createLegacyHeroGroupFromBlock({
+      block: layout.find((block) => block.blockType === 'heroBlock'),
+      fallback: page.hero,
+    }),
     id: page.id,
-    layout: page.layout || [],
+    layout,
     pagePath,
     publishedAt: page.publishedAt,
     slug: page.slug,
@@ -204,13 +213,16 @@ async function createComposerPage(args: {
   title: string
   visibility: Page['visibility']
 }): Promise<Page> {
+  const normalizedLayout = normalizePageComposerLayoutForSave(args.layout)
+  const documentBlocks = buildPageDocumentBlocksForSave({
+    layout: normalizedLayout,
+  })
+
   const created = (await args.payload.create({
     collection: 'pages',
     data: {
-      hero: {
-        type: 'lowImpact',
-      },
-      layout: normalizePageComposerLayoutForSave(args.layout),
+      hero: documentBlocks.hero,
+      layout: documentBlocks.layout,
       slug: args.slug,
       title: args.title,
       visibility: args.visibility,
@@ -230,7 +242,8 @@ async function createComposerPage(args: {
     collection: 'pages',
     data: {
       _status: 'published',
-      layout: normalizePageComposerLayoutForSave(args.layout),
+      hero: documentBlocks.hero,
+      layout: documentBlocks.layout,
       slug: args.slug,
       title: args.title,
       visibility: args.visibility,
@@ -647,7 +660,19 @@ export async function POST(request: Request): Promise<Response> {
         req: payloadReq,
         slug: `${sourcePage.slug}-draft`,
       })
-      const hero = cloneValue(sourcePage.hero)
+      const normalizedLayout = normalizePageComposerLayoutForSave(
+        cloneValue(
+          normalizePageLayoutBlocks({
+            page: sourcePage,
+            pagePath: pageSlugToFrontendPath(sourcePage.slug),
+          }),
+        ),
+      )
+      const documentBlocks = buildPageDocumentBlocksForSave({
+        fallbackHero: sourcePage.hero,
+        layout: normalizedLayout,
+      })
+      const hero = cloneValue(documentBlocks.hero)
       const normalizedHero = stripNestedIds({
         ...hero,
         ...(relationId(hero.media) !== null ? { media: relationId(hero.media) } : {}),
@@ -657,7 +682,7 @@ export async function POST(request: Request): Promise<Response> {
         collection: 'pages',
         data: {
           hero: normalizedHero,
-          layout: stripNestedIds(normalizePageComposerLayoutForSave(cloneValue(sourcePage.layout || []))),
+          layout: stripNestedIds(documentBlocks.layout),
           slug: nextSlug,
           title: nextTitle,
           visibility: 'private',
@@ -740,12 +765,18 @@ export async function POST(request: Request): Promise<Response> {
       })
     }
 
+    const normalizedLayout = normalizePageComposerLayoutForSave(layout)
+    const documentBlocks = buildPageDocumentBlocksForSave({
+      layout: normalizedLayout,
+    })
+
     const updated = (await auth.payload.update({
       autosave: false,
       collection: 'pages',
       data: {
         _status: action === 'publish-page' ? 'published' : undefined,
-        layout: normalizePageComposerLayoutForSave(layout),
+        hero: documentBlocks.hero,
+        layout: documentBlocks.layout,
         slug,
         title,
         visibility,

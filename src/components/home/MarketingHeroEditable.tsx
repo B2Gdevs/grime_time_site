@@ -114,6 +114,7 @@ export function MarketingHeroLead({
   const toolbarState = usePageComposerCanvasToolbarState()
   const openTextGenerator = usePageComposerTextGenerator()
   const heroEditor = toolbarState?.heroEditor?.kind === 'marketing-home' ? toolbarState.heroEditor : null
+  const heroBlockIndex = heroEditor?.blockIndex ?? null
 
   if (!heroEditor) {
     return (
@@ -129,7 +130,7 @@ export function MarketingHeroLead({
             panelBody={panelBody}
             panelEyebrow={panelEyebrow}
             panelHeading={panelHeading}
-            selected={toolbarState.selectedIndex === -1}
+            selected={heroBlockIndex !== null ? toolbarState.selectedIndex === heroBlockIndex : false}
           />
         ) : null}
         <p className="text-[0.7rem] font-semibold uppercase tracking-[0.34em] text-primary/80">{eyebrow}</p>
@@ -155,13 +156,13 @@ export function MarketingHeroLead({
           panelBody={heroEditor.panelBody}
           panelEyebrow={heroEditor.panelEyebrow}
           panelHeading={heroEditor.panelHeading}
-          selected={toolbarState.selectedIndex === -1}
+          selected={toolbarState.selectedIndex === heroEditor.blockIndex}
         />
       ) : null}
       <HeroTextInput
         className="h-10 max-w-md border-primary/30 bg-background/92 text-[0.7rem] font-semibold uppercase tracking-[0.34em] text-primary/90"
         fieldLabel="hero eyebrow"
-        fieldPath="hero.eyebrow"
+        fieldPath={`${heroEditor.fieldPathPrefix}.eyebrow`}
         instructions="Rewrite the small homepage hero eyebrow so it stays short, brand-specific, and service-oriented."
         onChange={(value) => heroEditor.updateField('eyebrow', value)}
         placeholder="Hero eyebrow"
@@ -171,7 +172,7 @@ export function MarketingHeroLead({
         <HeroTextInput
           className="h-16 border-primary/30 bg-background/92 text-3xl font-semibold tracking-[-0.04em] md:h-20 md:text-5xl xl:h-24 xl:text-6xl"
           fieldLabel="hero headline"
-          fieldPath="hero.headlinePrimary"
+          fieldPath={`${heroEditor.fieldPathPrefix}.headlinePrimary`}
           instructions="Rewrite the main homepage hero headline so it stays sharp, direct, and easy to scan."
           onChange={(value) => heroEditor.updateField('headlinePrimary', value)}
           placeholder="Hero headline"
@@ -180,7 +181,7 @@ export function MarketingHeroLead({
         <HeroTextInput
           className="h-16 border-primary/30 bg-background/92 text-3xl font-semibold tracking-[-0.04em] text-primary md:h-20 md:text-5xl xl:h-24 xl:text-6xl"
           fieldLabel="hero accent headline"
-          fieldPath="hero.headlineAccent"
+          fieldPath={`${heroEditor.fieldPathPrefix}.headlineAccent`}
           instructions="Rewrite the accent line of the homepage hero headline so it complements the first line without repeating it."
           onChange={(value) => heroEditor.updateField('headlineAccent', value)}
           placeholder="Hero accent line"
@@ -196,7 +197,7 @@ export function MarketingHeroLead({
               applyText: heroEditor.updateCopy,
               currentText: heroEditor.copy,
               fieldLabel: 'hero body',
-              fieldPath: 'hero.richText',
+              fieldPath: `${heroEditor.fieldPathPrefix}.richText`,
               instructions: 'Rewrite the homepage hero body copy so it stays clear, direct, and grounded in exterior cleaning results.',
             })}
           placeholder="Hero body copy"
@@ -241,7 +242,7 @@ export function MarketingHeroPanel({
           <HeroTextInput
             className="h-10 border-white/20 bg-white/10 text-[0.68rem] font-semibold uppercase tracking-[0.28em] text-[#8EDB3E] placeholder:text-[#8EDB3E]/70"
             fieldLabel="hero panel eyebrow"
-            fieldPath="hero.panelEyebrow"
+            fieldPath={`${heroEditor.fieldPathPrefix}.panelEyebrow`}
             instructions="Rewrite the hero overlay eyebrow so it feels like a strong, short service signal."
             onChange={(value) => heroEditor.updateField('panelEyebrow', value)}
             placeholder="Panel eyebrow"
@@ -253,7 +254,7 @@ export function MarketingHeroPanel({
         <HeroTextInput
           className="h-14 border-white/20 bg-white/10 text-xl font-semibold tracking-tight text-white placeholder:text-white/70"
           fieldLabel="hero panel heading"
-          fieldPath="hero.panelHeading"
+          fieldPath={`${heroEditor.fieldPathPrefix}.panelHeading`}
           instructions="Rewrite the hero overlay heading so it sells the quote and scheduling experience in one direct thought."
           onChange={(value) => heroEditor.updateField('panelHeading', value)}
           placeholder="Panel heading"
@@ -269,7 +270,7 @@ export function MarketingHeroPanel({
               applyText: (value) => heroEditor.updateField('panelBody', value),
               currentText: heroEditor.panelBody,
               fieldLabel: 'hero panel body',
-              fieldPath: 'hero.panelBody',
+              fieldPath: `${heroEditor.fieldPathPrefix}.panelBody`,
               instructions: 'Rewrite the hero overlay body so it stays concise, specific, and sales-ready.',
             })}
           placeholder="Panel body"

@@ -1,6 +1,7 @@
 import React, { Fragment } from 'react'
 import config from '@payload-config'
 import { getPayload } from 'payload'
+import { draftMode } from 'next/headers'
 
 import type { Page, Pricing } from '@/payload-types'
 
@@ -11,9 +12,11 @@ import { ContactRequestBlock } from '@/blocks/ContactRequest/Component'
 import { ContentBlock } from '@/blocks/Content/Component'
 import { CustomHtmlBlock } from '@/blocks/CustomHtml/Component'
 import { FormBlock } from '@/blocks/Form/Component'
+import { HeroBlock } from '@/blocks/Hero/Component'
 import { MediaBlock } from '@/blocks/MediaBlock/Component'
 import { PricingTableBlock } from '@/blocks/PricingTable/Component'
 import { ServiceGridBlock } from '@/blocks/ServiceGrid/Component'
+import { ServiceEstimatorBlock } from '@/blocks/ServiceEstimator/Component'
 import { TestimonialsBlock } from '@/blocks/Testimonials/Component'
 import { getVisiblePageLayoutBlocks } from '@/lib/pages/pageLayoutVisibility'
 import { buildPageComposerSectionSummaries } from '@/lib/pages/pageComposer'
@@ -22,15 +25,18 @@ import {
   resolvePageComposerReusableBlock,
 } from '@/lib/pages/pageComposerReusableBlocks'
 import { loadPublishedSharedSectionsByIds } from '@/lib/pages/sharedSectionLibrary'
+import { getInstantQuoteCatalog, type InstantQuoteCatalog } from '@/lib/quotes/getInstantQuoteCatalog'
 import { getCachedGlobal } from '@/utilities/getGlobals'
 
 type Props = {
   blocks: Page['layout'][0][]
+  instantQuoteCatalog?: InstantQuoteCatalog | null
+  pagePath?: string
   /** Avoids a second query when the parent already loaded pricing. */
   pricingGlobal?: Pricing | null
 }
 
-export async function RenderBlocks({ blocks, pricingGlobal: pricingProp }: Props) {
+export async function RenderBlocks({ blocks, instantQuoteCatalog: quoteCatalogProp, pagePath, pricingGlobal: pricingProp }: Props) {
   const layoutBlocks = blocks || []
   const visibleBlocks = getVisiblePageLayoutBlocks(layoutBlocks).map((block) => ({
     block,
@@ -45,11 +51,21 @@ export async function RenderBlocks({ blocks, pricingGlobal: pricingProp }: Props
     ),
   )
   const needsPricingGlobal = hasBlocks && visibleBlocks.some(({ block }) => block.blockType === 'pricingTable')
+  const needsInstantQuoteCatalog =
+    hasBlocks &&
+    visibleBlocks.some(({ block }) => block.blockType === 'serviceEstimator' || block.blockType === 'heroBlock')
   const pricingGlobal =
     pricingProp !== undefined
       ? pricingProp
       : needsPricingGlobal
         ? await getCachedGlobal('pricing', 2)()
+        : null
+  const { isEnabled: draft } = needsInstantQuoteCatalog ? await draftMode() : { isEnabled: false }
+  const instantQuoteCatalog =
+    quoteCatalogProp !== undefined
+      ? quoteCatalogProp
+      : needsInstantQuoteCatalog
+        ? await getInstantQuoteCatalog({ draft, payload: await getPayload({ config }) })
         : null
   const sharedSectionsById =
     sharedSectionIds.length > 0
@@ -71,7 +87,18 @@ export async function RenderBlocks({ blocks, pricingGlobal: pricingProp }: Props
 
         let blockNode: React.ReactNode = null
 
-        if (blockType === 'pricingTable') {
+        if (blockType === 'heroBlock') {
+          blockNode = (
+            <HeroBlock
+              {...(resolvedBlock as React.ComponentProps<typeof HeroBlock>)}
+              blockIndex={index}
+              instantQuoteCatalog={instantQuoteCatalog}
+              layoutBlocks={layoutBlocks}
+              pagePath={pagePath}
+            />
+          )
+        }
+        else if (blockType === 'pricingTable') {
           blockNode = (
             <div className="my-16">
               <PricingTableBlock {...resolvedBlock} globalPricing={pricingGlobal} />
@@ -144,6 +171,17 @@ export async function RenderBlocks({ blocks, pricingGlobal: pricingProp }: Props
           blockNode = (
             <div className="my-16">
               <CustomHtmlBlock {...(resolvedBlock as React.ComponentProps<typeof CustomHtmlBlock>)} />
+            </div>
+          )
+        }
+        else if (blockType === 'serviceEstimator') {
+          if (!instantQuoteCatalog) {
+            return null
+          }
+
+          blockNode = (
+            <div className="my-16">
+              <ServiceEstimatorBlock catalog={instantQuoteCatalog} />
             </div>
           )
         }
