@@ -342,6 +342,21 @@ export function buildPageComposerSectionSummaries(layout: null | Page['layout'] 
       }
     }
 
+    if (block.blockType === 'features') {
+      const count = block.features?.length || 0
+
+      return {
+        badges,
+        blockType: block.blockType,
+        category: summaryMeta.category,
+        description: `${count} feature card${count === 1 ? '' : 's'}`,
+        hidden,
+        index,
+        label: block.heading || `Features ${index + 1}`,
+        variant: null,
+      }
+    }
+
     if (block.blockType === 'mediaBlock') {
       return {
         badges,
@@ -484,6 +499,26 @@ export function buildPageComposerValidationSummary(args: {
           blockIndex: index,
           id: `service-grid-rows-${index}`,
           message: `Block ${index + 1} needs at least one service row.`,
+          tone: 'warning',
+        })
+      }
+    }
+
+    if (block.blockType === 'features') {
+      if (!block.heading?.trim()) {
+        issues.push({
+          blockIndex: index,
+          id: `features-heading-${index}`,
+          message: `Feature block ${index + 1} needs a heading.`,
+          tone: 'warning',
+        })
+      }
+
+      if (!(block.features || []).length) {
+        issues.push({
+          blockIndex: index,
+          id: `features-cards-${index}`,
+          message: `Feature block ${index + 1} needs at least one feature card.`,
           tone: 'warning',
         })
       }

@@ -13,6 +13,12 @@ import { buildMediaDevtoolsSummary } from '@/lib/media/pageMediaDevtools'
 import { cn } from '@/utilities/ui'
 import type { ServiceGridBlock } from '@/payload-types'
 
+const serviceGridVariantHelpText = {
+  featureCards: 'Card grid view for page-local service rows or proof-style summaries.',
+  interactive: 'Selectable detail view that shows one active row at a time with a larger media panel.',
+  pricingSteps: 'Step-by-step explainer treatment using the same service-row data in a pricing-style layout.',
+} as const
+
 export function PageComposerDrawerServiceGridEditor({
   mutateSelectedService,
   mutateSelectedServiceGrid,
@@ -51,10 +57,16 @@ export function PageComposerDrawerServiceGridEditor({
           }
           value={selectedBlock.displayVariant || 'interactive'}
         >
-          <option value="featureCards">Feature cards</option>
-          <option value="pricingSteps">Pricing steps</option>
-          <option value="interactive">Interactive detail</option>
+          <option value="featureCards">Card grid view</option>
+          <option value="pricingSteps">Pricing step view</option>
+          <option value="interactive">Interactive detail view</option>
         </select>
+        <p className="text-xs leading-5 text-muted-foreground">
+          Variant changes presentation only. Your row copy, media, pricing hints, and highlights stay attached to this block.
+        </p>
+        <p className="text-xs leading-5 text-muted-foreground">
+          {serviceGridVariantHelpText[selectedBlock.displayVariant || 'interactive']}
+        </p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">

@@ -7,6 +7,7 @@ import { CallToAction } from '../../blocks/CallToAction/config'
 import { Content } from '../../blocks/Content/config'
 import { ContactRequest } from '../../blocks/ContactRequest/config'
 import { CustomHtml } from '../../blocks/CustomHtml/config'
+import { Features } from '../../blocks/Features/config'
 import { FormBlock } from '../../blocks/Form/config'
 import { HeroBlock } from '../../blocks/Hero/config'
 import { MediaBlock } from '../../blocks/MediaBlock/config'
@@ -85,6 +86,7 @@ export const Pages: CollectionConfig<'pages'> = {
                 HeroBlock,
                 ServiceEstimator,
                 ServiceGrid,
+                Features,
                 PricingTable,
                 CallToAction,
                 Content,

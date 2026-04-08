@@ -11,6 +11,7 @@ import { CallToActionBlock } from '@/blocks/CallToAction/Component'
 import { ContactRequestBlock } from '@/blocks/ContactRequest/Component'
 import { ContentBlock } from '@/blocks/Content/Component'
 import { CustomHtmlBlock } from '@/blocks/CustomHtml/Component'
+import { FeaturesBlock } from '@/blocks/Features/Component'
 import { FormBlock } from '@/blocks/Form/Component'
 import { HeroBlock } from '@/blocks/Hero/Component'
 import { MediaBlock } from '@/blocks/MediaBlock/Component'
@@ -92,6 +93,13 @@ export async function RenderBlocks({ blocks, instantQuoteCatalog: quoteCatalogPr
           blockNode = (
             <div className="my-16">
               <ServiceGridBlock {...resolvedBlock} blockIndex={index} />
+            </div>
+          )
+        }
+        else if (blockType === 'features') {
+          blockNode = (
+            <div className="my-16">
+              <FeaturesBlock {...resolvedBlock} />
             </div>
           )
         }

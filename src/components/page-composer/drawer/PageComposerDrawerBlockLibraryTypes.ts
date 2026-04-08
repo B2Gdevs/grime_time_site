@@ -14,6 +14,7 @@ export type BlockLibraryCategory =
   | 'all'
   | 'apps'
   | 'content'
+  | 'features'
   | 'hero'
   | 'media'
   | 'services'
@@ -23,6 +24,7 @@ export const blockLibraryCategoryOptions: Array<{ label: string; value: BlockLib
   { label: 'All', value: 'all' },
   { label: 'Hero', value: 'hero' },
   { label: 'Services', value: 'services' },
+  { label: 'Features', value: 'features' },
   { label: 'Content', value: 'content' },
   { label: 'Media', value: 'media' },
   { label: 'Testimonials', value: 'testimonials' },
@@ -36,6 +38,10 @@ export function resolveBlockLibraryCategory(type: string): Exclude<BlockLibraryC
 
   if (type === 'serviceGrid' || type === 'pricingTable') {
     return 'services'
+  }
+
+  if (type === 'features') {
+    return 'features'
   }
 
   if (type === 'mediaBlock') {

@@ -402,8 +402,10 @@ export function PageComposerDrawer({
 
     return (selectedServiceGrid.services || []).map((service, serviceIndex) => {
       const media = buildMediaDevtoolsSummary(asMedia(service.media))
+      const blockLabel = selectedSummary?.label || selectedServiceGrid.heading || `Service section ${selectedIndex + 1}`
+      const rowLabel = service.name || `Row ${serviceIndex + 1}`
       return {
-        label: service.name || `Row ${serviceIndex + 1}`,
+        label: `${blockLabel}: ${rowLabel}`,
         media,
         mediaId: media?.id || null,
         mimeType: media?.mimeType || null,
@@ -1573,15 +1575,6 @@ export function PageComposerDrawer({
         const relationPath = args.relationPath?.trim()
         if (!relationPath) {
           throw new Error('A media slot path is required.')
-        }
-        if (args.action === 'swap-existing-reference' && args.mediaId) {
-          const libraryItem = mediaLibrary.find((item) => item.id === args.mediaId)
-          if (libraryItem?.media) {
-            stageMediaSlot(libraryItem.media, relationPath)
-            setMediaPrompt('')
-            setMediaStatus(args.success)
-            return
-          }
         }
         formData.set('pageId', String(draftPage.id))
         formData.set('relationPath', relationPath)

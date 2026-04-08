@@ -288,6 +288,7 @@ export interface Page {
     | HeroBlock
     | ServiceEstimatorBlock
     | ServiceGridBlock
+    | FeaturesBlock
     | PricingTableBlock
     | CallToActionBlock
     | ContentBlock
@@ -1207,6 +1208,30 @@ export interface ServiceGridBlock {
   id?: string | null;
   blockName?: string | null;
   blockType: 'serviceGrid';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "FeaturesBlock".
+ */
+export interface FeaturesBlock {
+  eyebrow?: string | null;
+  heading: string;
+  intro?: string | null;
+  features?:
+    | {
+        eyebrow?: string | null;
+        title: string;
+        summary: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Keep this block in the page draft and composer, but omit it from the rendered page until it is shown again.
+   */
+  isHidden?: boolean | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'features';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2734,6 +2759,7 @@ export interface PagesSelect<T extends boolean = true> {
         heroBlock?: T | HeroBlockSelect<T>;
         serviceEstimator?: T | ServiceEstimatorBlockSelect<T>;
         serviceGrid?: T | ServiceGridBlockSelect<T>;
+        features?: T | FeaturesBlockSelect<T>;
         pricingTable?: T | PricingTableBlockSelect<T>;
         cta?: T | CallToActionBlockSelect<T>;
         content?: T | ContentBlockSelect<T>;
@@ -2835,6 +2861,26 @@ export interface ServiceGridBlockSelect<T extends boolean = true> {
         label?: T;
         sharedSectionId?: T;
         syncedVersion?: T;
+      };
+  isHidden?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "FeaturesBlock_select".
+ */
+export interface FeaturesBlockSelect<T extends boolean = true> {
+  eyebrow?: T;
+  heading?: T;
+  intro?: T;
+  features?:
+    | T
+    | {
+        eyebrow?: T;
+        title?: T;
+        summary?: T;
+        id?: T;
       };
   isHidden?: T;
   id?: T;

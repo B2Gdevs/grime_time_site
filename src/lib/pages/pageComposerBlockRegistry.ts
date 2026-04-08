@@ -74,12 +74,23 @@ const pageComposerBlockDefinitions: PageComposerBlockDefinition[] = [
     blockType: 'serviceGrid',
     category: 'static',
     id: 'serviceGrid',
-    description: 'Branded service cards or pricing-step style sections authored directly on the page.',
+    description: 'Service content block with interchangeable display treatments such as interactive lanes, feature cards, or pricing steps.',
     keywords: ['service', 'services', 'cards', 'pricing steps', 'homepage'],
     label: 'Service grid',
     supportsInsert: true,
     supportsNesting: false,
     supportsReusable: true,
+  },
+  {
+    blockType: 'features',
+    category: 'static',
+    id: 'features',
+    description: 'Standalone feature cards for proof points, differentiators, or standout capabilities.',
+    keywords: ['features', 'highlights', 'proof points', 'cards'],
+    label: 'Features',
+    supportsInsert: true,
+    supportsNesting: false,
+    supportsReusable: false,
   },
   {
     blockType: 'pricingTable',
@@ -252,6 +263,32 @@ export function createPageComposerBlock(type: PageComposerInsertableBlockType): 
       intro: 'Use this reusable service section anywhere on the page.',
       services: cloneValue(DEFAULT_SERVICE_ROWS),
     }
+  }
+
+  if (type === 'features') {
+    return {
+      blockType: 'features',
+      eyebrow: 'Features',
+      heading: 'Why customers choose us',
+      intro: 'Use this block for feature cards that deserve their own treatment instead of the service grid.',
+      features: [
+        {
+          eyebrow: 'Proof point',
+          summary: 'Use this card to call out a standout capability, result, or customer benefit.',
+          title: 'Clear value',
+        },
+        {
+          eyebrow: 'System',
+          summary: 'Use this card to explain a workflow or differentiator that matters on the page.',
+          title: 'Simple process',
+        },
+        {
+          eyebrow: 'Outcome',
+          summary: 'Use this card to reinforce the result the customer gets after the work is done.',
+          title: 'Visible result',
+        },
+      ],
+    } as LayoutBlock
   }
 
   if (type === 'pricingTable') {

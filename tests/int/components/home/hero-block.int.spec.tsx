@@ -58,4 +58,47 @@ describe('HeroBlock draft override', () => {
     expect(screen.getByText(/Draft medium-impact hero copy\./)).toBeTruthy()
     expect(screen.queryByText(/Published homepage hero copy\./)).toBeNull()
   })
+
+  it('prefers the new features block for homepage feature cards', () => {
+    render(
+      <HeroBlock
+        blockType="heroBlock"
+        layoutBlocks={[
+          {
+            blockType: 'heroBlock',
+            richText: createLexicalParagraph('Published homepage hero copy.'),
+            type: 'lowImpact',
+          },
+          {
+            blockType: 'features',
+            eyebrow: 'Features',
+            features: [
+              {
+                eyebrow: 'Proof point',
+                summary: 'Useful proof point copy.',
+                title: 'Clear value',
+              },
+              {
+                eyebrow: 'System',
+                summary: 'Workflow copy.',
+                title: 'Simple process',
+              },
+              {
+                eyebrow: 'Outcome',
+                summary: 'Result copy.',
+                title: 'Visible result',
+              },
+            ],
+            heading: 'Why customers choose us',
+          },
+        ] as never}
+        pagePath="/"
+        richText={createLexicalParagraph('Published homepage hero copy.')}
+        type="lowImpact"
+      />,
+    )
+
+    expect(screen.getByText('Visible result')).toBeTruthy()
+    expect(screen.getByText('Result copy.')).toBeTruthy()
+  })
 })

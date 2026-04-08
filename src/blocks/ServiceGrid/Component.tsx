@@ -332,14 +332,10 @@ const InteractiveServiceGrid: React.FC<
     relationPath: toolbarState?.selectedMediaRelationPath,
     rowCount: rows.length,
   })
-  const activeRow = rows[activeIndex] || rows[0]
+  const displayIndex = targetedServiceIndex ?? activeIndex
+  const activeRow = rows[displayIndex] || rows[0]
 
   React.useEffect(() => {
-    if (targetedServiceIndex !== null) {
-      setActiveIndex(targetedServiceIndex)
-      return
-    }
-
     setActiveIndex((current) => {
       if (rows.length === 0) {
         return 0
@@ -347,7 +343,7 @@ const InteractiveServiceGrid: React.FC<
 
       return current >= rows.length ? 0 : current
     })
-  }, [rows.length, targetedServiceIndex])
+  }, [rows.length])
 
   if (!activeRow) return null
 
@@ -421,7 +417,7 @@ const InteractiveServiceGrid: React.FC<
             </div>
             <ul className="flex snap-x gap-2 overflow-x-auto px-1 pb-1 lg:grid lg:gap-2 lg:overflow-visible lg:px-0 lg:pb-0">
               {rows.map((row, index) => {
-                const active = index === activeIndex
+                const active = index === displayIndex
                 return (
                   <li key={`${row.name}-${index}`} className="min-w-[12.5rem] snap-start lg:min-w-0">
                     <button
@@ -455,12 +451,16 @@ const InteractiveServiceGrid: React.FC<
               const rowMedia = hasMedia(activeRow.media) ? activeRow.media : null
               const highlights = activeRow.highlights?.filter((item) => item?.text?.trim()) ?? []
               const hasFooter = Boolean(activeRow.pricingHint)
+              const mediaPanelKey = `${displayIndex}:${rowMedia?.id ?? rowMedia?.updatedAt ?? 'empty'}`
 
               return (
                 <>
-                  <div className="relative aspect-[4/3] overflow-hidden border-b border-border/80 bg-muted sm:aspect-[18/8]">
+                  <div
+                    className="relative aspect-[4/3] overflow-hidden border-b border-border/80 bg-muted sm:aspect-[18/8]"
+                    key={mediaPanelKey}
+                  >
                     {typeof blockIndex === 'number' ? (
-                      <InlinePageMediaEditor relationPath={`layout.${blockIndex}.services.${activeIndex}.media`}>
+                      <InlinePageMediaEditor relationPath={`layout.${blockIndex}.services.${displayIndex}.media`}>
                         {rowMedia ? (
                           <>
                             <Media fill imgClassName="object-cover" priority resource={rowMedia} />
@@ -486,13 +486,13 @@ const InteractiveServiceGrid: React.FC<
                           <div className="min-w-[14rem]">
                             <InlineTextInput
                               className="h-8 border-white/20 bg-black/40 text-[11px] font-semibold uppercase tracking-[0.22em] text-white placeholder:text-white/60"
-                              onChange={(value) => editor.updateServiceField('eyebrow', activeIndex, value)}
+                              onChange={(value) => editor.updateServiceField('eyebrow', displayIndex, value)}
                               onGenerate={() =>
                                 openTextGenerator?.({
-                                  applyText: (value) => editor.updateServiceField('eyebrow', activeIndex, value),
+                                  applyText: (value) => editor.updateServiceField('eyebrow', displayIndex, value),
                                   currentText: activeRow.eyebrow || '',
                                   fieldLabel: 'row eyebrow',
-                                  fieldPath: `layout.${blockIndex}.services.${activeIndex}.eyebrow`,
+                                  fieldPath: `layout.${blockIndex}.services.${displayIndex}.eyebrow`,
                                 })}
                               placeholder="Row eyebrow"
                               value={activeRow.eyebrow || ''}
@@ -507,13 +507,13 @@ const InteractiveServiceGrid: React.FC<
                       {editor ? (
                         <InlineTextInput
                           className="mt-2 h-11 border-white/20 bg-black/40 text-xl font-semibold tracking-tight text-white placeholder:text-white/60 sm:text-2xl"
-                          onChange={(value) => editor.updateServiceField('name', activeIndex, value)}
+                          onChange={(value) => editor.updateServiceField('name', displayIndex, value)}
                           onGenerate={() =>
                             openTextGenerator?.({
-                              applyText: (value) => editor.updateServiceField('name', activeIndex, value),
+                              applyText: (value) => editor.updateServiceField('name', displayIndex, value),
                               currentText: activeRow.name || '',
                               fieldLabel: 'row title',
-                              fieldPath: `layout.${blockIndex}.services.${activeIndex}.name`,
+                              fieldPath: `layout.${blockIndex}.services.${displayIndex}.name`,
                             })}
                           placeholder="Row name"
                           value={activeRow.name || ''}
@@ -530,13 +530,13 @@ const InteractiveServiceGrid: React.FC<
                     {editor ? (
                       <InlineTextarea
                         className="min-h-24 border-primary/30 bg-background/90 text-sm leading-6 text-muted-foreground sm:leading-7"
-                        onChange={(value) => editor.updateServiceField('summary', activeIndex, value)}
+                        onChange={(value) => editor.updateServiceField('summary', displayIndex, value)}
                         onGenerate={() =>
                           openTextGenerator?.({
-                            applyText: (value) => editor.updateServiceField('summary', activeIndex, value),
+                            applyText: (value) => editor.updateServiceField('summary', displayIndex, value),
                             currentText: activeRow.summary || '',
                             fieldLabel: 'row summary',
-                            fieldPath: `layout.${blockIndex}.services.${activeIndex}.summary`,
+                            fieldPath: `layout.${blockIndex}.services.${displayIndex}.summary`,
                           })}
                         placeholder="Row summary"
                         value={activeRow.summary || ''}
@@ -553,13 +553,13 @@ const InteractiveServiceGrid: React.FC<
                             {editor ? (
                               <InlineTextarea
                                 className="min-h-16 border-primary/30 bg-background/90 text-sm leading-6 text-foreground/90"
-                                onChange={(value) => editor.updateHighlightText(highlightIndex, activeIndex, value)}
+                                onChange={(value) => editor.updateHighlightText(highlightIndex, displayIndex, value)}
                                 onGenerate={() =>
                                   openTextGenerator?.({
-                                    applyText: (value) => editor.updateHighlightText(highlightIndex, activeIndex, value),
+                                    applyText: (value) => editor.updateHighlightText(highlightIndex, displayIndex, value),
                                     currentText: item.text || '',
                                     fieldLabel: 'highlight',
-                                    fieldPath: `layout.${blockIndex}.services.${activeIndex}.highlights.${highlightIndex}.text`,
+                                    fieldPath: `layout.${blockIndex}.services.${displayIndex}.highlights.${highlightIndex}.text`,
                                   })}
                                 placeholder="Highlight"
                                 rows={2}
@@ -583,13 +583,13 @@ const InteractiveServiceGrid: React.FC<
                             <div className="mt-1">
                               <InlineTextInput
                                 className="h-9 border-primary/30 bg-background/90 text-sm text-foreground/90"
-                                onChange={(value) => editor.updateServiceField('pricingHint', activeIndex, value)}
+                                onChange={(value) => editor.updateServiceField('pricingHint', displayIndex, value)}
                                 onGenerate={() =>
                                   openTextGenerator?.({
-                                    applyText: (value) => editor.updateServiceField('pricingHint', activeIndex, value),
+                                    applyText: (value) => editor.updateServiceField('pricingHint', displayIndex, value),
                                     currentText: activeRow.pricingHint || '',
                                     fieldLabel: 'pricing hint',
-                                    fieldPath: `layout.${blockIndex}.services.${activeIndex}.pricingHint`,
+                                    fieldPath: `layout.${blockIndex}.services.${displayIndex}.pricingHint`,
                                   })}
                                 placeholder="Pricing hint"
                                 value={activeRow.pricingHint || ''}

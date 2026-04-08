@@ -11,7 +11,9 @@ import { Media } from '@/components/Media'
 import { RenderHero } from '@/heros/RenderHero'
 import { extractLexicalPlainText } from '@/lib/marketing/public-shell'
 import { formatCurrency, type InstantQuoteCatalog } from '@/lib/quotes/instantQuoteCatalog'
-import type { HeroBlock as HeroBlockData, Media as PayloadMediaType, Page, ServiceGridBlock } from '@/payload-types'
+import type { FeaturesBlock as FeaturesBlockData, HeroBlock as HeroBlockData, Media as PayloadMediaType, Page, ServiceGridBlock } from '@/payload-types'
+
+type FeatureCardsBlock = FeaturesBlockData
 
 type HeroRenderable = Pick<
   Page['hero'],
@@ -108,11 +110,24 @@ export function HeroBlock({
       'Strong visuals, clear service lanes, and a quote form that explains what moves the number.'
     const heroMedia = asMedia(draftBlock.media)
     const featureCardsBlock = (layoutBlocks || []).find(
+      (item): item is FeatureCardsBlock => item.blockType === 'features',
+    )
+    const legacyFeatureCardsBlock = (layoutBlocks || []).find(
       (item): item is ServiceGridBlock =>
         item.blockType === 'serviceGrid' && resolveServiceGridDisplayVariant(item) === 'featureCards',
     )
-    const featuredServices = featureCardsBlock?.services?.slice(0, 3) || []
-    const serviceLaneCount = featureCardsBlock?.services?.length || instantQuoteCatalog?.services.length || 0
+    const featuredCards =
+      featureCardsBlock?.features?.slice(0, 3).map((feature) => ({
+        summary: feature.summary,
+        title: feature.title,
+      })) ||
+      legacyFeatureCardsBlock?.services?.slice(0, 3).map((service) => ({
+        summary: service.summary,
+        title: service.name,
+      })) ||
+      []
+    const serviceLaneCount =
+      featureCardsBlock?.features?.length || legacyFeatureCardsBlock?.services?.length || instantQuoteCatalog?.services.length || 0
     const startingPrice = instantQuoteCatalog
       ? Math.min(...instantQuoteCatalog.services.map((service) => service.minimum))
       : 0
@@ -194,14 +209,14 @@ export function HeroBlock({
               />
             </div>
 
-            {featuredServices[2] ? (
+            {featuredCards[2] ? (
               <div className="absolute -left-8 top-12 hidden w-44 rounded-[1.5rem] border border-border/70 bg-card/92 p-4 shadow-[0_22px_70px_-45px_rgba(2,6,23,0.95)] backdrop-blur xl:block">
                 <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.22em] text-primary/80">
                   <WavesIcon className="size-4" />
                   Docks and rails
                 </div>
-                <p className="mt-3 text-sm font-semibold text-foreground">{featuredServices[2].name}</p>
-                <p className="mt-2 text-xs leading-5 text-muted-foreground">{featuredServices[2].summary}</p>
+                <p className="mt-3 text-sm font-semibold text-foreground">{featuredCards[2].title}</p>
+                <p className="mt-2 text-xs leading-5 text-muted-foreground">{featuredCards[2].summary}</p>
               </div>
             ) : null}
           </div>

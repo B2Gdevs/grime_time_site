@@ -72,12 +72,20 @@ export function PageComposerDrawerMediaLibraryCard({
       >
         {item.previewUrl ? (
           getMediaKindFromMimeType(item.mimeType) === 'video' ? (
-            <video className="h-full w-full object-cover" muted playsInline src={item.previewUrl} />
+            <video
+              className="h-full w-full object-cover"
+              draggable={!dragDisabled}
+              muted
+              onDragStart={handleDragStart}
+              playsInline
+              src={item.previewUrl}
+            />
           ) : (
             <img
               alt={label}
               className="h-full w-full object-cover"
               draggable={!dragDisabled}
+              onDragStart={handleDragStart}
               src={item.previewUrl}
             />
           )

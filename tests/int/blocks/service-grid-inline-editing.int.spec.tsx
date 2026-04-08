@@ -262,5 +262,11 @@ describe('ServiceGridBlock inline editing', () => {
     expect(screen.getByDisplayValue('Driveway lane')).toBeTruthy()
     expect(screen.getByDisplayValue('Second lane summary.')).toBeTruthy()
     expect(screen.getAllByTestId('service-grid-media').some((node) => node.textContent?.includes('55:Freshly cleaned exterior'))).toBe(true)
+
+    fireEvent.click(screen.getByRole('button', { name: /house washing/i }))
+
+    expect(screen.getByDisplayValue('Driveway lane')).toBeTruthy()
+    expect(screen.getByDisplayValue('Second lane summary.')).toBeTruthy()
+    expect(screen.getAllByTestId('service-grid-media').some((node) => node.textContent?.includes('55:Freshly cleaned exterior'))).toBe(true)
   })
 })

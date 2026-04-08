@@ -7,6 +7,10 @@ import { Button } from '@/components/ui/button'
 import type { PageComposerSectionSummary } from '@/lib/pages/pageComposer'
 
 function blockPanelDescription(blockType: null | string): string {
+  if (blockType === 'serviceGrid') {
+    return 'Edit this page-local service block here. The display variant changes the look of the same row data, not the underlying copy, media, or highlights.'
+  }
+
   if (
     blockType === 'archive' ||
     blockType === 'contactRequest' ||
@@ -16,7 +20,7 @@ function blockPanelDescription(blockType: null | string): string {
     return 'This block is code-owned app functionality. Replace it here, but use the live surface or app-specific settings for the experience itself.'
   }
 
-  return 'Edit the selected block data here, or replace the current section with a different layout, preset, or shared source.'
+  return 'Edit the selected block data here, or replace the current section with a different block or preset.'
 }
 
 export function PageComposerDrawerSelectedBlockPanel({

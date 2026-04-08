@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { PageComposerDrawerContentTab } from '@/components/page-composer/drawer/PageComposerDrawerContentTab'
 import { createLexicalParagraph } from '@/lib/pages/pageComposerLexical'
 import type { PageComposerSectionSummary } from '@/lib/pages/pageComposer'
-import type { HeroBlock, ServiceEstimatorBlock } from '@/payload-types'
+import type { HeroBlock, ServiceEstimatorBlock, ServiceGridBlock } from '@/payload-types'
 
 function createBaseProps() {
   const selectedSummary: PageComposerSectionSummary = {
@@ -126,5 +126,47 @@ describe('PageComposerDrawerContentTab', () => {
     expect(screen.getByText(/code-owned app functionality/i)).toBeTruthy()
     expect(screen.getAllByRole('button', { name: 'Find blocks' })).toHaveLength(1)
     expect(screen.queryByDisplayValue(props.heroCopy)).toBeNull()
+  })
+
+  it('explains that service-grid variants change presentation without discarding row data', () => {
+    const props = createBaseProps()
+    const serviceGrid: ServiceGridBlock = {
+      blockType: 'serviceGrid',
+      displayVariant: 'interactive',
+      heading: 'What we do',
+      intro: 'Exterior cleaning lanes.',
+      services: [
+        {
+          highlights: [{ text: 'Proof point' }],
+          media: null,
+          name: 'House washing',
+          pricingHint: 'Home size and buildup',
+          summary: 'Soft wash service lane.',
+        },
+      ],
+    }
+
+    render(
+      <PageComposerDrawerContentTab
+        {...props}
+        resolvedSelectedBlock={serviceGrid}
+        selectedBlock={serviceGrid}
+        selectedHeroBlock={null}
+        selectedSummary={{
+          badges: [],
+          blockType: 'serviceGrid',
+          category: 'static',
+          description: 'interactive - 1 row',
+          hidden: false,
+          index: 0,
+          label: 'What we do',
+          variant: 'interactive',
+        }}
+      />,
+    )
+
+    expect(screen.getByText(/display variant changes the look of the same row data/i)).toBeTruthy()
+    expect(screen.getByText(/variant changes presentation only/i)).toBeTruthy()
+    expect(screen.getByRole('option', { name: 'Interactive detail view' })).toBeTruthy()
   })
 })

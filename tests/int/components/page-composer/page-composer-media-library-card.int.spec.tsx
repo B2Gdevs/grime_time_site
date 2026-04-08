@@ -70,4 +70,52 @@ describe('PageComposerDrawerMediaLibraryCard', () => {
 
     expect(onUseThisMedia).toHaveBeenCalledTimes(1)
   })
+
+  it('starts the custom drag payload from the preview image itself', () => {
+    const setData = vi.fn()
+
+    render(
+      <PageComposerDrawerMediaLibraryCard
+        busy={false}
+        dragDisabled={false}
+        item={{
+          alt: 'Driveway proof',
+          filename: 'driveway-proof.jpg',
+          id: 44,
+          media: {
+            alt: 'Driveway proof',
+            createdAt: '2026-04-07T00:00:00.000Z',
+            filename: 'driveway-proof.jpg',
+            height: 900,
+            id: 44,
+            mimeType: 'image/jpeg',
+            updatedAt: '2026-04-07T00:00:00.000Z',
+            url: '/media/driveway-proof.jpg',
+            width: 1600,
+          } as never,
+          mimeType: 'image/jpeg',
+          previewUrl: '/media/driveway-proof.jpg',
+          updatedAt: '2026-04-07T00:00:00.000Z',
+        }}
+        mediaActionsLocked={false}
+        onDelete={() => undefined}
+        onGenerate={() => undefined}
+        onReplaceFilePick={() => undefined}
+        selectedMediaSlot={null}
+      />,
+    )
+
+    fireEvent.dragStart(screen.getAllByAltText('Driveway proof')[0]!, {
+      dataTransfer: {
+        effectAllowed: 'uninitialized',
+        setData,
+      },
+    })
+
+    expect(setData).toHaveBeenCalledWith(PAGE_COMPOSER_MEDIA_DRAG_MIME, '44')
+    expect(setData).toHaveBeenCalledWith(
+      PAGE_COMPOSER_MEDIA_DRAG_PAYLOAD_MIME,
+      expect.stringContaining('"id":44'),
+    )
+  })
 })

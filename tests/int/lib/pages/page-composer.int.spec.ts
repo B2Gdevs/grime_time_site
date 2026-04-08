@@ -17,6 +17,7 @@ import {
   togglePageLayoutSectionHidden,
 } from '@/lib/pages/pageComposer'
 import { createReusablePresetBlock, resolvePageComposerReusableBlock } from '@/lib/pages/pageComposerReusableBlocks'
+import { resolveBlockLibraryCategory } from '@/components/page-composer/drawer/PageComposerDrawerBlockLibraryTypes'
 
 describe('page composer helpers', () => {
   it('maps frontend paths back to page slugs', () => {
@@ -30,9 +31,14 @@ describe('page composer helpers', () => {
   it('creates a draft seed for a missing frontend route', () => {
     expect(createPageComposerDocumentSeed({ pagePath: '/spring-launch' })).toMatchObject({
       _status: 'draft',
-      hero: { type: 'lowImpact' },
+      hero: { type: 'none' },
       id: null,
-      layout: [],
+      layout: [
+        {
+          blockType: 'heroBlock',
+          type: 'lowImpact',
+        },
+      ],
       pagePath: '/spring-launch',
       slug: 'spring-launch',
       title: 'Spring Launch',
@@ -41,7 +47,7 @@ describe('page composer helpers', () => {
   })
 
   it('creates reusable service-grid templates', () => {
-    const block = createPageComposerSectionTemplate('service-feature-cards')
+  const block = createPageComposerSectionTemplate('service-feature-cards')
 
     expect(block.blockType).toBe('serviceGrid')
     if (block.blockType !== 'serviceGrid') {
@@ -50,6 +56,23 @@ describe('page composer helpers', () => {
 
     expect(block.displayVariant).toBe('featureCards')
     expect(block.services).toHaveLength(3)
+  })
+
+  it('creates a features block with page-local feature cards', () => {
+    const block = insertPageLayoutRegisteredBlock({
+      index: 0,
+      layout: [],
+      type: 'features',
+    })[0]
+
+    expect(block).toMatchObject({
+      blockType: 'features',
+      heading: 'Why customers choose us',
+    })
+  })
+
+  it('classifies features as their own composer category', () => {
+    expect(resolveBlockLibraryCategory('features')).toBe('features')
   })
 
   it('appends, duplicates, and removes page sections', () => {
@@ -87,6 +110,31 @@ describe('page composer helpers', () => {
       hidden: false,
       label: 'How our pricing works',
       variant: 'pricingSteps',
+    })
+  })
+
+  it('summarizes features blocks for the composer list', () => {
+    const summaries = buildPageComposerSectionSummaries([
+      {
+        blockType: 'features',
+        features: [
+          {
+            summary: 'Useful proof point copy.',
+            title: 'Clear value',
+          },
+        ],
+        heading: 'Why customers choose us',
+      },
+    ] as never)
+
+    expect(summaries[0]).toMatchObject({
+      badges: ['static'],
+      blockType: 'features',
+      category: 'static',
+      description: '1 feature card',
+      hidden: false,
+      label: 'Why customers choose us',
+      variant: null,
     })
   })
 
@@ -276,6 +324,28 @@ describe('page composer helpers', () => {
 
     expect(summary.issues.map((issue) => issue.id)).toEqual(
       expect.arrayContaining(['missing-title', 'missing-slug', 'pricing-inline-0', 'custom-html-empty-1']),
+    )
+  })
+
+  it('builds a validation issue for empty feature blocks', () => {
+    const summary = buildPageComposerValidationSummary({
+      page: {
+        _status: 'draft',
+        layout: [
+          {
+            blockType: 'features',
+            features: [],
+            heading: '',
+          },
+        ] as never,
+        slug: 'home',
+        title: 'Home',
+        visibility: 'public',
+      },
+    })
+
+    expect(summary.issues.map((issue) => issue.id)).toEqual(
+      expect.arrayContaining(['features-heading-0', 'features-cards-0']),
     )
   })
 })

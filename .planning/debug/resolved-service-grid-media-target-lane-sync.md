@@ -28,7 +28,14 @@ Hero did not show the same bug because it has a single stable slot (`hero.media`
 - Added `selectedMediaRelationPath` to the shared page-composer toolbar state.
 - Published that relation path from `PageComposerDrawer` whenever the media tab targets a slot.
 - Updated `ServiceGrid` to derive the visible lane from the targeted media relation path when the composer is selecting service-row media.
+- Removed the last dependency on local `activeIndex` as the source of truth for the interactive renderer. The visible lane, media relation path, inline field paths, and media-panel remount key now all use the targeted relation path first.
 - Added focused integration coverage for both the drawer-side targeting flow and the service-grid canvas-side lane sync.
+
+## Evidence
+
+- The internal composer payload for `/` showed the saved change at `layout.1.services.2.media`, including the updated media document (`id: 7`).
+- The remaining failure was therefore render-only: saved service-grid media could still look stale on canvas because the interactive view was rendering whichever lane local state last held instead of the currently targeted media slot.
+- Regression coverage now asserts that even if a user clicks another service button while a row media slot is targeted, the targeted lane remains the visible lane on canvas.
 
 ## Follow-up
 

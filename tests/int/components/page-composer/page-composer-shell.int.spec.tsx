@@ -490,7 +490,7 @@ describe('PageComposer shell integration', () => {
         } as Response
       }
 
-      if (url === '/api/internal/page-composer/media') {
+      if (url === '/api/internal/page-composer/media' && method === 'GET') {
         return {
           json: async () => ({
             items: [
@@ -519,6 +519,20 @@ describe('PageComposer shell integration', () => {
         } as Response
       }
 
+      if (url === '/api/internal/page-composer/media' && method === 'POST') {
+        return {
+          json: async () => ({
+            media: {
+              alt: 'Fresh exterior shot',
+              id: 901,
+            },
+            mediaId: 901,
+            ok: true,
+            pageId: 7,
+          }),
+          ok: true,
+        } as Response
+      }
       throw new Error(`Unexpected fetch: ${url} (${method})`)
     }) as typeof fetch
 
@@ -541,7 +555,12 @@ describe('PageComposer shell integration', () => {
 
     await waitFor(() => {
       expect(toolbarDetail?.selectedMediaRelationPath).toBe('layout.1.services.1.media')
-      expect(screen.getByRole('button', { name: 'Use media 901 for Driveway lane' })).toBeTruthy()
+    })
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Media' }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Use media 901 for What we do: Driveway lane' })).toBeTruthy()
     })
 
     expect(screen.queryByText('Recent media')).toBeNull()
@@ -549,12 +568,15 @@ describe('PageComposer shell integration', () => {
     expect(screen.getByText(/Targeting/)).toBeTruthy()
     expect(screen.getByText(/Driveway lane/)).toBeTruthy()
 
-    const fetchCallsBeforeSwap = (global.fetch as ReturnType<typeof vi.fn>).mock.calls.length
-
-    fireEvent.click(screen.getByRole('button', { name: 'Use media 901 for Driveway lane' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Use media 901 for What we do: Driveway lane' }))
 
     await waitFor(() => {
-      expect((global.fetch as ReturnType<typeof vi.fn>).mock.calls.length).toBe(fetchCallsBeforeSwap)
+      expect(global.fetch).toHaveBeenCalledWith(
+        '/api/internal/page-composer/media',
+        expect.objectContaining({
+          method: 'POST',
+        }),
+      )
     })
 
     expect(screen.getByText(/Targeting/)).toBeTruthy()

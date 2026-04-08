@@ -95,6 +95,8 @@ describe('InlinePageMediaEditor', () => {
     onStageMediaSlot.mockReset()
     openFocusedMediaSession.mockReset()
     setAuthoringContext.mockReset()
+    mediaContextState.currentPage.entries = []
+    toolbarState.draftPage.layout[0]!.services[0]!.media = null
 
     global.fetch = vi.fn().mockResolvedValue({
       json: async () => ({ ok: true }),
@@ -192,6 +194,58 @@ describe('InlinePageMediaEditor', () => {
     expect(openFocusedMediaSession).toHaveBeenCalledWith({
       mode: 'image',
       promptHint: 'What we do: House washing',
+    })
+  })
+
+  it('prefers draft media state over stale page-media registry entries while composing', () => {
+    mediaContextState.currentPage.entries = [
+      {
+        label: 'Stale registry label',
+        media: {
+          alt: 'Stale registry alt',
+          filename: 'stale.jpg',
+          id: 12,
+          mimeType: 'image/jpeg',
+          previewUrl: '/media/stale.jpg',
+          updatedAt: '2026-04-07T00:00:00.000Z',
+        },
+        mediaId: 12,
+        pageId: 7,
+        pagePath: '/',
+        pageSlug: 'home',
+        pageTitle: 'Home',
+        relationPath: 'layout.0.services.0.media',
+      },
+    ]
+    toolbarState.draftPage.layout[0]!.services[0]!.media = {
+      alt: 'Draft media alt',
+      createdAt: '2026-04-07T00:00:00.000Z',
+      filename: 'draft.jpg',
+      height: 900,
+      id: 44,
+      mimeType: 'image/jpeg',
+      updatedAt: '2026-04-07T00:00:00.000Z',
+      url: '/media/draft.jpg',
+      width: 1600,
+    } as never
+
+    render(
+      <InlinePageMediaEditor relationPath="layout.0.services.0.media">
+        <div>Drop zone</div>
+      </InlinePageMediaEditor>,
+    )
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Generate' })[0]!)
+
+    expect(setAuthoringContext).toHaveBeenCalledWith(expect.objectContaining({
+      mediaSlot: expect.objectContaining({
+        label: 'What we do: House washing',
+        mediaId: 44,
+      }),
+    }))
+    expect(openFocusedMediaSession).toHaveBeenCalledWith({
+      mode: 'image',
+      promptHint: 'Draft media alt',
     })
   })
 

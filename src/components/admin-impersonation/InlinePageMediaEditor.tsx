@@ -83,11 +83,7 @@ export function InlinePageMediaEditor({ children, relationPath }: InlinePageMedi
     () => toolbarState?.sectionSummaries.find((summary) => summary.index === sectionIndex) ?? null,
     [sectionIndex, toolbarState?.sectionSummaries],
   )
-  const resolvedEntry = useMemo<null | PageMediaReference>(() => {
-    if (entry) {
-      return entry
-    }
-
+  const draftResolvedEntry = useMemo<null | PageMediaReference>(() => {
     if (!context?.enabled || !toolbarState?.draftPage) {
       return null
     }
@@ -166,7 +162,10 @@ export function InlinePageMediaEditor({ children, relationPath }: InlinePageMedi
     }
 
     return null
-  }, [context?.currentPage?.pageId, context?.currentPage?.pagePath, context?.currentPage?.pageSlug, context?.currentPage?.pageTitle, context?.enabled, entry, relationPath, sectionSummary?.label, toolbarState?.draftPage])
+  }, [context?.currentPage?.pageId, context?.currentPage?.pagePath, context?.currentPage?.pageSlug, context?.currentPage?.pageTitle, context?.enabled, relationPath, sectionSummary?.label, toolbarState?.draftPage])
+  const resolvedEntry = useMemo<null | PageMediaReference>(() => {
+    return draftResolvedEntry ?? entry ?? null
+  }, [draftResolvedEntry, entry])
   const enabled = Boolean(context?.enabled && resolvedEntry)
 
   const handleCanvasSelection = useCallback((target: EventTarget | null) => {
