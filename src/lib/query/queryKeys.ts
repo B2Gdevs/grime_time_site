@@ -7,6 +7,4 @@ export const queryKeys = {
     ['crm-workspace', args.searchQuery, args.ownerScope, args.commercialOnly ? 'commercial' : 'all'] as const,
   customerPortalBilling: ['customer-portal-billing'] as const,
   opsAssets: ['ops-assets'] as const,
-  sharedSectionsLibrary: (args: { category: string; search: string }) =>
-    ['shared-sections-library', args.category || 'all', args.search || ''] as const,
 } as const

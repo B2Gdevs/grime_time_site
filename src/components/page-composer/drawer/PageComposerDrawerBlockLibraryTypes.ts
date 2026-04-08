@@ -2,7 +2,6 @@ import type {
   PageComposerBlockDefinition,
   PageComposerInsertableBlockType,
 } from '@/lib/pages/pageComposerBlockRegistry'
-import type { SharedSectionRecord } from '@/lib/pages/sharedSections'
 
 export type ReusablePreset = {
   blockType: string
@@ -18,7 +17,6 @@ export type BlockLibraryCategory =
   | 'hero'
   | 'media'
   | 'services'
-  | 'shared'
   | 'testimonials'
 
 export const blockLibraryCategoryOptions: Array<{ label: string; value: BlockLibraryCategory }> = [
@@ -29,10 +27,9 @@ export const blockLibraryCategoryOptions: Array<{ label: string; value: BlockLib
   { label: 'Media', value: 'media' },
   { label: 'Testimonials', value: 'testimonials' },
   { label: 'Apps', value: 'apps' },
-  { label: 'Shared', value: 'shared' },
 ]
 
-export function resolveBlockLibraryCategory(type: string): Exclude<BlockLibraryCategory, 'all' | 'hero' | 'shared'> {
+export function resolveBlockLibraryCategory(type: string): Exclude<BlockLibraryCategory, 'all' | 'hero'> {
   if (type === 'heroBlock') {
     return 'content'
   }
@@ -63,12 +60,7 @@ export type PageComposerDrawerBlockLibraryProps = {
   closeBlockLibrary: () => void
   filteredBlockDefinitions: PageComposerBlockDefinition[]
   filteredReusablePresets: ReusablePreset[]
-  filteredSharedSections: SharedSectionRecord[]
   insertRegisteredBlock: (type: PageComposerInsertableBlockType) => void
   insertReusablePreset: (args: { key: string; mode: 'detached' | 'linked' }) => void
-  insertSharedSection: (args: { item: SharedSectionRecord; mode: 'detached' | 'linked' }) => void
-  openSharedSectionSourceEditor: (id: number) => void
-  sharedSectionsLoading: boolean
-  sharedSectionsStatus: null | string
   setBlockLibraryQuery: (value: string) => void
 }

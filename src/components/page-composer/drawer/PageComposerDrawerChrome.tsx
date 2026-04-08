@@ -28,7 +28,6 @@ import type {
   PageComposerInsertableBlockType,
 } from '@/lib/pages/pageComposerBlockRegistry'
 import type { ReusableAwareLayoutBlock } from '@/lib/pages/pageComposerReusableBlocks'
-import type { SharedSectionRecord } from '@/lib/pages/sharedSections'
 type ReusablePreset = {
   blockType: string
   description: string
@@ -45,14 +44,9 @@ export type PageComposerDrawerChromeProps = {
     closeBlockLibrary: () => void
     filteredBlockDefinitions: PageComposerBlockDefinition[]
     filteredReusablePresets: ReusablePreset[]
-    filteredSharedSections: SharedSectionRecord[]
     insertRegisteredBlock: (type: PageComposerInsertableBlockType) => void
     insertReusablePreset: (args: { key: string; mode: 'detached' | 'linked' }) => void
-    insertSharedSection: (args: { item: SharedSectionRecord; mode: 'detached' | 'linked' }) => void
     isBlockLibraryOpen: boolean
-    openSharedSectionSourceEditor: (id: number) => void
-    sharedSectionsLoading: boolean
-    sharedSectionsStatus: null | string
     setBlockLibraryQuery: (value: string) => void
   }
   embedded: boolean
@@ -80,10 +74,8 @@ export type PageComposerDrawerChromeProps = {
     removeBlock: (index: number) => void
     selectedBlock: ReusableAwareLayoutBlock | null
     resolvedSelectedBlock: ReusableAwareLayoutBlock | null
-    selectedBlockIsLinkedSharedSection: boolean
     selectedHeroBlock: Extract<ReusableAwareLayoutBlock, { blockType: 'heroBlock' }> | null
     selectedIndex: number
-    selectedSharedSectionId: null | number
     selectedSummary: null | PageComposerSectionSummary
     sectionSummaries: PageComposerSectionSummary[]
     setSelectedIndex: (value: number) => void
@@ -199,14 +191,9 @@ export function PageComposerDrawerChrome({
     closeBlockLibrary,
     filteredBlockDefinitions,
     filteredReusablePresets,
-    filteredSharedSections,
     insertRegisteredBlock,
     insertReusablePreset,
-    insertSharedSection,
     isBlockLibraryOpen,
-    openSharedSectionSourceEditor,
-    sharedSectionsLoading,
-    sharedSectionsStatus,
     setBlockLibraryQuery,
   } = blockLibrary
   const {
@@ -220,10 +207,8 @@ export function PageComposerDrawerChrome({
     removeBlock,
     selectedBlock,
     resolvedSelectedBlock,
-    selectedBlockIsLinkedSharedSection,
     selectedHeroBlock,
     selectedIndex,
-    selectedSharedSectionId,
     selectedSummary,
     sectionSummaries,
     setSelectedIndex,
@@ -408,8 +393,7 @@ export function PageComposerDrawerChrome({
                         </TooltipTrigger>
                         <TooltipContent className="max-w-[280px] text-xs leading-snug" side="bottom">
                           Edit fields for the block selected on the canvas (same data as the inline editor). Open the
-                          block library to insert blocks, reusable presets, and shared sections from the structure
-                          tab or canvas.
+                          block library to insert blocks and reusable presets from the structure tab or canvas.
                         </TooltipContent>
                       </Tooltip>
                     </div>
@@ -504,14 +488,11 @@ export function PageComposerDrawerChrome({
               mutateSelectedServiceGrid={mutateSelectedServiceGrid}
               onOpenMediaSlot={onOpenMediaSlot}
               openBlockLibrary={openBlockLibrary}
-              openSharedSectionSourceEditor={openSharedSectionSourceEditor}
               removeBlock={removeBlock}
               resolvedSelectedBlock={resolvedSelectedBlock}
               selectedBlock={selectedBlock}
-              selectedBlockIsLinkedSharedSection={selectedBlockIsLinkedSharedSection}
               selectedHeroBlock={selectedHeroBlock}
               selectedIndex={selectedIndex}
-              selectedSharedSectionId={selectedSharedSectionId}
               selectedSummary={selectedSummary}
               status={status}
               updateHeroCopy={updateHeroCopy}
@@ -576,13 +557,8 @@ export function PageComposerDrawerChrome({
             closeBlockLibrary={closeBlockLibrary}
             filteredBlockDefinitions={filteredBlockDefinitions}
             filteredReusablePresets={filteredReusablePresets}
-            filteredSharedSections={filteredSharedSections}
             insertRegisteredBlock={insertRegisteredBlock}
             insertReusablePreset={insertReusablePreset}
-            insertSharedSection={insertSharedSection}
-            openSharedSectionSourceEditor={openSharedSectionSourceEditor}
-            sharedSectionsLoading={sharedSectionsLoading}
-            sharedSectionsStatus={sharedSectionsStatus}
             setBlockLibraryQuery={setBlockLibraryQuery}
           />
         ) : null}

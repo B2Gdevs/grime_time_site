@@ -988,6 +988,10 @@
       <file path=".planning/ROADMAP.xml" />
       <file path=".planning/TASK-REGISTRY.xml" />
       <file path=".planning/phases/18-shared-sections-and-constrained-reuse/PLAN.xml" />
+      <file path="src/payload.config.ts" />
+      <file path="src/blocks/RenderBlocks.tsx" />
+      <file path="src/components/page-composer/PageComposerDrawer.tsx" />
+      <file path="src/lib/pages/pageComposer.ts" />
       <file path="src/lib/pages/pageComposerBlockRegistry.ts" />
       <file path="src/components/page-composer/drawer/PageComposerDrawerSelectedBlockPanel.tsx" />
     </references>

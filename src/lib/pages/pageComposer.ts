@@ -7,11 +7,9 @@ import {
 import { createDefaultHeroBlock, createServiceEstimatorBlock } from '@/lib/pages/pageLayoutBlocks'
 import { lexicalToPlainText } from '@/lib/pages/pageComposerLexical'
 import {
-  linkedSharedSectionId,
   resolvePageComposerReusableBlock,
   type ReusableAwareLayoutBlock,
 } from '@/lib/pages/pageComposerReusableBlocks'
-import type { SharedSectionRecord } from '@/lib/pages/sharedSections'
 import type { Page } from '@/payload-types'
 
 export type PageComposerSectionTemplate =
@@ -92,8 +90,6 @@ const RESERVED_FRONTEND_PAGE_SLUGS = new Set([
   'schedule',
   'search',
 ])
-
-type SharedSectionMap = Map<number, Pick<SharedSectionRecord, 'currentVersion' | 'id' | 'name' | 'structure'>>
 
 type ServiceGridLike = Extract<Page['layout'][number], { blockType: 'serviceGrid' }>
 
@@ -317,21 +313,16 @@ export function buildPageComposerNotices(args: {
   return notices
 }
 
-export function buildPageComposerSectionSummaries(
-  layout: null | Page['layout'] | undefined,
-  sharedSectionsById?: SharedSectionMap,
-): PageComposerSectionSummary[] {
+export function buildPageComposerSectionSummaries(layout: null | Page['layout'] | undefined): PageComposerSectionSummary[] {
   return (layout || []).map((rawBlock, index) => {
-    const block = resolvePageComposerReusableBlock(rawBlock, { sharedSectionsById })
+    const block = resolvePageComposerReusableBlock(rawBlock)
     const summaryMeta = buildSummaryBadges(block.blockType)
     const hidden = Boolean(block.isHidden)
     const reusableMeta = (rawBlock as ReusableAwareLayoutBlock).composerReusable
     const reusableMode = reusableMeta?.mode
-    const sharedSectionId = linkedSharedSectionId(rawBlock)
     const badges = [
       ...summaryMeta.badges,
       ...(reusableMode === 'linked' ? ['linked'] : reusableMode === 'detached' ? ['detached'] : []),
-      ...(sharedSectionId ? ['shared'] : []),
       ...(hidden ? ['hidden'] : []),
     ]
 
@@ -445,7 +436,6 @@ export function countPageComposerChangedBlocks(args: {
 
 export function buildPageComposerValidationSummary(args: {
   page: Pick<PageComposerDocument, '_status' | 'layout' | 'slug' | 'title' | 'visibility'>
-  sharedSectionsById?: SharedSectionMap
 }): PageComposerValidationSummary {
   const issues: PageComposerValidationIssue[] = []
 
@@ -477,24 +467,7 @@ export function buildPageComposerValidationSummary(args: {
   }
 
   ;(args.page.layout || []).forEach((rawBlock, index) => {
-    const sharedSectionId = linkedSharedSectionId(rawBlock)
-
-    if (
-      sharedSectionId &&
-      args.sharedSectionsById &&
-      !args.sharedSectionsById.has(sharedSectionId)
-    ) {
-      issues.push({
-        blockIndex: index,
-        id: `shared-section-missing-${index}`,
-        message: `Linked shared section ${sharedSectionId} is not available for block ${index + 1}.`,
-        tone: 'warning',
-      })
-    }
-
-    const block = resolvePageComposerReusableBlock(rawBlock, {
-      sharedSectionsById: args.sharedSectionsById,
-    })
+    const block = resolvePageComposerReusableBlock(rawBlock)
 
     if (block.blockType === 'serviceGrid') {
       if (!block.heading?.trim()) {

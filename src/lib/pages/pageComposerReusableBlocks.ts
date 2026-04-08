@@ -1,6 +1,4 @@
 import { createLexicalParagraph } from '@/lib/pages/pageComposerLexical'
-import { unwrapSharedSectionStructureToPageLayoutBlock } from '@/lib/pages/sharedSectionPageBridge'
-import type { SharedSectionRecord } from '@/lib/pages/sharedSections'
 import type { Page } from '@/payload-types'
 
 export type PageComposerReusableMode = 'detached' | 'linked'
@@ -11,7 +9,6 @@ type SupportedReusableBlock = Extract<
   LayoutBlock,
   { blockType: 'content' | 'cta' | 'mediaBlock' | 'serviceGrid' | 'testimonialsBlock' }
 >
-type SharedSectionRecordLike = Pick<SharedSectionRecord, 'currentVersion' | 'id' | 'name' | 'structure'>
 export type ReusableAwareLayoutBlock = LayoutBlock & {
   composerReusable?: {
     key?: null | string
@@ -21,9 +18,6 @@ export type ReusableAwareLayoutBlock = LayoutBlock & {
     sourceType?: null | PageComposerReusableSourceType
     syncedVersion?: null | number
   } | null
-}
-type ResolveReusableBlockOptions = {
-  sharedSectionsById?: Map<number, SharedSectionRecordLike>
 }
 
 export type PageComposerReusablePreset = {
@@ -209,78 +203,10 @@ export function createReusablePresetBlock(args: {
   return nextBlock as LayoutBlock
 }
 
-export function createSharedSectionLinkedBlock(args: {
-  mode?: PageComposerReusableMode
-  sharedSection: SharedSectionRecordLike
-}): LayoutBlock | null {
-  const resolved = unwrapSharedSectionStructureToPageLayoutBlock(args.sharedSection.structure)
-
-  if (!resolved) {
-    return null
-  }
-
-  const nextBlock = cloneValue(resolved) as ReusableAwareLayoutBlock
-  nextBlock.composerReusable = {
-    label: args.sharedSection.name,
-    mode: args.mode || 'linked',
-    sharedSectionId: args.sharedSection.id,
-    sourceType: 'shared-section',
-    syncedVersion: args.sharedSection.currentVersion,
-  }
-
-  return nextBlock as LayoutBlock
-}
-
-function resolveSharedSectionReusableBlock<T extends LayoutBlock>(args: {
-  block: T
-  sharedSection: SharedSectionRecordLike
-}): T {
-  const resolved = unwrapSharedSectionStructureToPageLayoutBlock(args.sharedSection.structure)
-
-  if (!resolved || resolved.blockType !== args.block.blockType) {
-    return cloneValue(args.block)
-  }
-
-  const reusable = (args.block as ReusableAwareLayoutBlock).composerReusable
-
-  return {
-    ...cloneValue(resolved),
-    blockName: args.block.blockName,
-    composerReusable: reusable
-      ? {
-          ...reusable,
-          label: args.sharedSection.name,
-          sharedSectionId: args.sharedSection.id,
-          sourceType: 'shared-section',
-          syncedVersion: args.sharedSection.currentVersion,
-        }
-      : undefined,
-    id: args.block.id,
-    isHidden: args.block.isHidden,
-  } as unknown as T
-}
-
-export function resolvePageComposerReusableBlock<T extends LayoutBlock>(
-  block: T,
-  options?: ResolveReusableBlockOptions,
-): T {
+export function resolvePageComposerReusableBlock<T extends LayoutBlock>(block: T): T {
   const reusable = (block as ReusableAwareLayoutBlock).composerReusable
-  const sourceType =
-    reusable?.sourceType || (typeof reusable?.sharedSectionId === 'number' ? 'shared-section' : 'preset')
 
   if (reusable?.mode !== 'linked' || !reusable.key) {
-    if (
-      reusable?.mode === 'linked' &&
-      sourceType === 'shared-section' &&
-      typeof reusable?.sharedSectionId === 'number' &&
-      options?.sharedSectionsById?.has(reusable.sharedSectionId)
-    ) {
-      return resolveSharedSectionReusableBlock({
-        block,
-        sharedSection: options.sharedSectionsById.get(reusable.sharedSectionId) as SharedSectionRecordLike,
-      })
-    }
-
     return cloneValue(block)
   }
 
@@ -301,29 +227,4 @@ export function resolvePageComposerReusableBlock<T extends LayoutBlock>(
 
 export function isLinkedReusableBlock(block: LayoutBlock | null | undefined): boolean {
   return Boolean((block as ReusableAwareLayoutBlock | null | undefined)?.composerReusable?.mode === 'linked')
-}
-
-export function isLinkedSharedSectionBlock(block: LayoutBlock | null | undefined): boolean {
-  const reusable = (block as ReusableAwareLayoutBlock | null | undefined)?.composerReusable
-
-  return Boolean(
-    reusable?.mode === 'linked' &&
-      (reusable.sourceType === 'shared-section' ||
-        (reusable.sourceType == null && typeof reusable.sharedSectionId === 'number')),
-  )
-}
-
-export function linkedSharedSectionId(block: LayoutBlock | null | undefined): null | number {
-  const reusable = (block as ReusableAwareLayoutBlock | null | undefined)?.composerReusable
-
-  if (
-    reusable?.mode === 'linked' &&
-    (reusable.sourceType === 'shared-section' ||
-      (reusable.sourceType == null && typeof reusable.sharedSectionId === 'number')) &&
-    typeof reusable.sharedSectionId === 'number'
-  ) {
-    return reusable.sharedSectionId
-  }
-
-  return null
 }

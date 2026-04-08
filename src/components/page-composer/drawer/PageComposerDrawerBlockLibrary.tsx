@@ -8,13 +8,11 @@ import { PageComposerDrawerBlockLibraryEmptyState } from '@/components/page-comp
 import { PageComposerDrawerBlockLibraryFilters } from '@/components/page-composer/drawer/PageComposerDrawerBlockLibraryFilters'
 import { PageComposerDrawerBlockLibraryHeader } from '@/components/page-composer/drawer/PageComposerDrawerBlockLibraryHeader'
 import { PageComposerDrawerReusablePresetCard } from '@/components/page-composer/drawer/PageComposerDrawerReusablePresetCard'
-import { PageComposerDrawerSharedSectionCard } from '@/components/page-composer/drawer/PageComposerDrawerSharedSectionCard'
 import {
   resolveBlockLibraryCategory,
   type BlockLibraryCategory,
   type PageComposerDrawerBlockLibraryProps,
 } from '@/components/page-composer/drawer/PageComposerDrawerBlockLibraryTypes'
-import { Badge } from '@/components/ui/badge'
 
 export function PageComposerDrawerBlockLibrary({
   blockLibraryMode,
@@ -23,18 +21,13 @@ export function PageComposerDrawerBlockLibrary({
   closeBlockLibrary,
   filteredBlockDefinitions,
   filteredReusablePresets,
-  filteredSharedSections,
   insertRegisteredBlock,
   insertReusablePreset,
-  insertSharedSection,
-  openSharedSectionSourceEditor,
-  sharedSectionsLoading,
-  sharedSectionsStatus,
   setBlockLibraryQuery,
 }: PageComposerDrawerBlockLibraryProps) {
   const [activeCategory, setActiveCategory] = useState<BlockLibraryCategory>('all')
   const visibleBlockDefinitions = useMemo(() => {
-    if (activeCategory === 'all' || activeCategory === 'shared') {
+    if (activeCategory === 'all') {
       return filteredBlockDefinitions
     }
 
@@ -49,19 +42,12 @@ export function PageComposerDrawerBlockLibrary({
       return filteredReusablePresets
     }
 
-    if (activeCategory === 'shared' || activeCategory === 'hero') {
+    if (activeCategory === 'hero') {
       return []
     }
 
     return filteredReusablePresets.filter((preset) => resolveBlockLibraryCategory(preset.blockType) === activeCategory)
   }, [activeCategory, filteredReusablePresets])
-  const visibleSharedSections = useMemo(() => {
-    if (activeCategory === 'all' || activeCategory === 'shared') {
-      return filteredSharedSections
-    }
-
-    return []
-  }, [activeCategory, filteredSharedSections])
 
   return (
     <div className="fixed right-4 top-[calc(var(--portal-sticky-top)+4.75rem)] z-[120] h-[min(42rem,calc(100vh-7rem))] w-[min(31rem,calc(100vw-1rem))] overflow-hidden rounded-[1.75rem] border border-border/70 bg-background/98 shadow-2xl backdrop-blur-sm">
@@ -112,38 +98,7 @@ export function PageComposerDrawerBlockLibrary({
               </section>
             ) : null}
 
-            <section className="grid gap-3">
-              <div className="flex items-center justify-between gap-3">
-                <div className={adminPanelChrome.fieldLabel}>Shared sections</div>
-                {sharedSectionsLoading ? <Badge variant="outline">Loading</Badge> : null}
-              </div>
-
-              {sharedSectionsStatus ? <div className={adminPanelChrome.warnAmberCompact}>{sharedSectionsStatus}</div> : null}
-
-              {visibleSharedSections.length ? (
-                <div className="grid gap-3">
-                  {visibleSharedSections.map((item) => (
-                    <PageComposerDrawerSharedSectionCard
-                      blockLibraryMode={blockLibraryMode}
-                      insertSharedSection={insertSharedSection}
-                      item={item}
-                      key={`shared-${item.id}`}
-                      openSharedSectionSourceEditor={openSharedSectionSourceEditor}
-                    />
-                  ))}
-                </div>
-              ) : sharedSectionsLoading && (activeCategory === 'all' || activeCategory === 'shared') ? (
-                <PageComposerDrawerBlockLibraryEmptyState>
-                  Loading published shared sections...
-                </PageComposerDrawerBlockLibraryEmptyState>
-              ) : activeCategory === 'all' || activeCategory === 'shared' ? (
-                <PageComposerDrawerBlockLibraryEmptyState>
-                  No published shared sections match that search yet.
-                </PageComposerDrawerBlockLibraryEmptyState>
-              ) : null}
-            </section>
-
-            {!visibleBlockDefinitions.length && !visibleReusablePresets.length && !visibleSharedSections.length ? (
+            {!visibleBlockDefinitions.length && !visibleReusablePresets.length ? (
               <PageComposerDrawerBlockLibraryEmptyState>
                 No blocks match that search and category yet.
               </PageComposerDrawerBlockLibraryEmptyState>

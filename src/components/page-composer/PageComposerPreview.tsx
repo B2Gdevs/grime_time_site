@@ -13,10 +13,8 @@ import { createLexicalParagraph, lexicalToPlainText } from '@/lib/pages/pageComp
 import { buildPageComposerSectionSummaries, type PageComposerDocument } from '@/lib/pages/pageComposer'
 import {
   isLinkedReusableBlock,
-  isLinkedSharedSectionBlock,
   resolvePageComposerReusableBlock,
 } from '@/lib/pages/pageComposerReusableBlocks'
-import type { SharedSectionRecord } from '@/lib/pages/sharedSections'
 import type { Page } from '@/payload-types'
 
 export type PageComposerLayoutBlock = Page['layout'][number]
@@ -40,7 +38,6 @@ type Props = {
   page: PageComposerDocument | null
   previewMode: PageComposerPreviewMode
   selectedIndex: number
-  sharedSectionsById?: Map<number, Pick<SharedSectionRecord, 'currentVersion' | 'id' | 'name' | 'structure'>>
 }
 
 function frameClassName(mode: PageComposerPreviewMode): string {
@@ -112,7 +109,6 @@ function BlockChrome({
   hidden,
   inlineEditor,
   isLinked,
-  isLinkedSharedSection,
   label,
   onAddAbove,
   onAddBelow,
@@ -127,7 +123,6 @@ function BlockChrome({
   hidden: boolean
   inlineEditor?: React.ReactNode
   isLinked: boolean
-  isLinkedSharedSection?: boolean
   label: string
   onAddAbove: () => void
   onAddBelow: () => void
@@ -171,9 +166,7 @@ function BlockChrome({
         <div className="mt-4 grid gap-3">
           {isLinked ? (
             <div className="rounded-2xl border border-primary/30 bg-primary/5 px-3 py-3 text-sm text-foreground">
-              {isLinkedSharedSection
-                ? 'This block is using a linked shared section source. Open the source editor or detach a local copy before editing content here.'
-                : 'This block is using a linked preset. Detach it before editing the preset content locally.'}
+              This block is using a linked preset. Detach it before editing the preset content locally.
               <div className="mt-2">
                 <Button onClick={onDetach} size="sm" type="button" variant="outline">
                   <UnplugIcon className="h-4 w-4" />
@@ -585,11 +578,10 @@ export function PageComposerPreview({
   page,
   previewMode,
   selectedIndex,
-  sharedSectionsById,
 }: Props) {
   const summaries = React.useMemo(
-    () => buildPageComposerSectionSummaries(page?.layout, sharedSectionsById),
-    [page?.layout, sharedSectionsById],
+    () => buildPageComposerSectionSummaries(page?.layout),
+    [page?.layout],
   )
 
   if (!page) {
@@ -607,10 +599,9 @@ export function PageComposerPreview({
       <div className="grid gap-4">
         {(page.layout || []).map((block, index) => {
           const summary = summaries[index]
-          const resolvedBlock = resolvePageComposerReusableBlock(block, { sharedSectionsById })
+          const resolvedBlock = resolvePageComposerReusableBlock(block)
           const selected = selectedIndex === index
           const isLinked = isLinkedReusableBlock(block)
-          const isLinkedSharedSection = isLinkedSharedSectionBlock(block)
           const label = summary?.label || `${block.blockType} block ${index + 1}`
 
           return (
@@ -618,7 +609,6 @@ export function PageComposerPreview({
               hidden={Boolean(block.isHidden)}
               inlineEditor={selected ? renderInlineEditor(resolvedBlock, (nextBlock) => onUpdateBlock(index, nextBlock)) : null}
               isLinked={isLinked}
-              isLinkedSharedSection={isLinkedSharedSection}
               key={`${block.blockType}-${index}`}
               label={label}
               onAddAbove={() => onAddAbove(index)}
@@ -635,11 +625,7 @@ export function PageComposerPreview({
                 {summary?.variant ? <Badge variant="secondary">{summary.variant}</Badge> : null}
                 {summary?.badges?.includes('reusable') ? (
                   <Badge variant="secondary">
-                    {isLinked
-                      ? isLinkedSharedSection
-                        ? 'linked shared section'
-                        : 'linked preset'
-                      : 'detached copy'}
+                    {isLinked ? 'linked preset' : 'detached copy'}
                   </Badge>
                 ) : null}
                 {block.isHidden ? <Badge variant="outline">hidden</Badge> : null}

@@ -135,13 +135,6 @@ describe('PageComposer shell integration', () => {
         } as Response
       }
 
-      if (url === '/api/internal/shared-sections?status=published') {
-        return {
-          json: async () => ({ items: [] }),
-          ok: true,
-        } as Response
-      }
-
       throw new Error(`Unexpected fetch: ${url}`)
     }) as typeof fetch
   })
@@ -254,13 +247,6 @@ describe('PageComposer shell integration', () => {
         } as Response
       }
 
-      if (url === '/api/internal/shared-sections?status=published') {
-        return {
-          json: async () => ({ items: [] }),
-          ok: true,
-        } as Response
-      }
-
       throw new Error(`Unexpected fetch: ${url} (${method})`)
     }) as typeof fetch
 
@@ -309,13 +295,6 @@ describe('PageComposer shell integration', () => {
       }
 
       if (url === '/api/internal/page-composer/media') {
-        return {
-          json: async () => ({ items: [] }),
-          ok: true,
-        } as Response
-      }
-
-      if (url === '/api/internal/shared-sections?status=published') {
         return {
           json: async () => ({ items: [] }),
           ok: true,
@@ -405,13 +384,6 @@ describe('PageComposer shell integration', () => {
       }
 
       if (url === '/api/internal/page-composer/media') {
-        return {
-          json: async () => ({ items: [] }),
-          ok: true,
-        } as Response
-      }
-
-      if (url === '/api/internal/shared-sections?status=published') {
         return {
           json: async () => ({ items: [] }),
           ok: true,
@@ -547,13 +519,6 @@ describe('PageComposer shell integration', () => {
         } as Response
       }
 
-      if (url === '/api/internal/shared-sections?status=published') {
-        return {
-          json: async () => ({ items: [] }),
-          ok: true,
-        } as Response
-      }
-
       throw new Error(`Unexpected fetch: ${url} (${method})`)
     }) as typeof fetch
 
@@ -598,3 +563,4 @@ describe('PageComposer shell integration', () => {
     window.removeEventListener(PAGE_COMPOSER_TOOLBAR_EVENT, handleToolbarChange as EventListener)
   })
 })
+

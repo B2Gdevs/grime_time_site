@@ -47,14 +47,10 @@ import {
 } from '@/lib/pages/pageComposerBlockRegistry'
 import {
   createReusablePresetBlock,
-  createSharedSectionLinkedBlock,
   getPageComposerReusablePresets,
-  linkedSharedSectionId,
-  isLinkedSharedSectionBlock,
   resolvePageComposerReusableBlock,
   type ReusableAwareLayoutBlock,
 } from '@/lib/pages/pageComposerReusableBlocks'
-import type { SharedSectionRecord } from '@/lib/pages/sharedSections'
 import type {
   CallToActionBlock,
   ContentBlock,
@@ -267,9 +263,6 @@ export function PageComposerDrawer({
   const [bulkPhraseTarget, setBulkPhraseTarget] = useState<null | 'pages' | 'versions'>(null)
   const [bulkPhraseBusy, setBulkPhraseBusy] = useState(false)
   const [savedPage, setSavedPage] = useState<null | PageComposerDocument>(null)
-  const [sharedSections, setSharedSections] = useState<SharedSectionRecord[]>([])
-  const [sharedSectionsLoading, setSharedSectionsLoading] = useState(false)
-  const [sharedSectionsStatus, setSharedSectionsStatus] = useState<null | string>(null)
   const [status, setStatus] = useState<null | string>(null)
   const [titleDraft, setTitleDraft] = useState('')
   const [slugDraft, setSlugDraft] = useState('')
@@ -315,13 +308,9 @@ export function PageComposerDrawer({
     [composer],
   )
 
-  const sharedSectionsById = useMemo(
-    () => new Map(sharedSections.map((item) => [item.id, item])),
-    [sharedSections],
-  )
   const sectionSummaries = useMemo(
-    () => buildPageComposerSectionSummaries(draftPage?.layout, sharedSectionsById),
-    [draftPage?.layout, sharedSectionsById],
+    () => buildPageComposerSectionSummaries(draftPage?.layout),
+    [draftPage?.layout],
   )
   const blockDefinitions = useMemo(() => getPageComposerBlockDefinitions(), [])
   const reusablePresets = useMemo(() => getPageComposerReusablePresets(), [])
@@ -348,21 +337,9 @@ export function PageComposerDrawer({
       )
     })
   }, [blockLibraryQuery, reusablePresets])
-  const filteredSharedSections = useMemo(() => {
-    const query = blockLibraryQuery.trim().toLowerCase()
-
-    return sharedSections.filter((item) => {
-      if (!query) return true
-      return [item.name, item.description || '', item.slug, item.category, ...item.tags].some((value) =>
-        value.toLowerCase().includes(query),
-      )
-    })
-  }, [blockLibraryQuery, sharedSections])
   const selectedBlock = draftPage?.layout?.[selectedIndex] || null
   const selectedSummary = sectionSummaries.find((summary) => summary.index === selectedIndex) || null
-  const resolvedSelectedBlock = selectedBlock
-    ? resolvePageComposerReusableBlock(selectedBlock, { sharedSectionsById })
-    : null
+  const resolvedSelectedBlock = selectedBlock ? resolvePageComposerReusableBlock(selectedBlock) : null
   const selectedServiceGrid =
     resolvedSelectedBlock?.blockType === 'serviceGrid'
       ? (resolvedSelectedBlock as ServiceGridBlock)
@@ -388,8 +365,6 @@ export function PageComposerDrawer({
       ? (resolvedSelectedBlock as HeroBlock)
       : null
   const heroCopy = lexicalToPlainText(selectedHeroBlock?.richText)
-  const selectedSharedSectionId = linkedSharedSectionId(selectedBlock)
-  const selectedBlockIsLinkedSharedSection = isLinkedSharedSectionBlock(selectedBlock)
   const mediaSlots = useMemo<SectionMediaSlot[]>(() => {
     if (!draftPage) {
       return []
@@ -467,10 +442,9 @@ export function PageComposerDrawer({
               title: titleDraft,
               visibility: visibilityDraft,
             },
-            sharedSectionsById,
           })
         : null,
-    [draftPage, sharedSectionsById, slugDraft, titleDraft, visibilityDraft],
+    [draftPage, slugDraft, titleDraft, visibilityDraft],
   )
 
   useEffect(() => {
@@ -778,30 +752,11 @@ export function PageComposerDrawer({
     }
   }, [enabled, open])
 
-  const loadSharedSectionLibrary = useCallback(async () => {
-    if (!enabled || !open) return
-    setSharedSectionsLoading(true)
-    setSharedSectionsStatus(null)
-    try {
-      const response = await fetch('/api/internal/shared-sections?status=published')
-      const payload = await parseResponseJson<null | { error?: string; items?: SharedSectionRecord[] }>(response)
-      if (!response.ok) {
-        throw new Error(payload?.error || 'Unable to load shared sections.')
-      }
-      setSharedSections(payload?.items || [])
-    } catch (error) {
-      setSharedSectionsStatus(error instanceof Error ? error.message : 'Unable to load shared sections.')
-    } finally {
-      setSharedSectionsLoading(false)
-    }
-  }, [enabled, open])
-
   useEffect(() => {
     if (!open) return
     void loadPage()
     void loadMediaLibrary()
-    void loadSharedSectionLibrary()
-  }, [loadMediaLibrary, loadPage, loadSharedSectionLibrary, open])
+  }, [loadMediaLibrary, loadPage, open])
 
   useEffect(() => {
     if (open) return
@@ -953,11 +908,6 @@ export function PageComposerDrawer({
 
   function insertRegisteredBlock(type: PageComposerInsertableBlockType) {
     applyBlockLibrarySelection(createPageComposerBlock(type))
-  }
-
-  function openSharedSectionSourceEditor(sharedSectionId: number) {
-    composer?.close()
-    router.push(`/shared-sections/${sharedSectionId}/edit`)
   }
 
   const persistPage = useCallback(
@@ -1548,20 +1498,6 @@ export function PageComposerDrawer({
     applyBlockLibrarySelection(nextBlock)
   }
 
-  function insertSharedSection(args: { item: SharedSectionRecord; mode: 'detached' | 'linked' }) {
-    const nextBlock = createSharedSectionLinkedBlock({
-      mode: args.mode,
-      sharedSection: args.item,
-    })
-
-    if (!nextBlock) {
-      setStatus('This shared section cannot be inserted until its source structure maps to a single composer block.')
-      return
-    }
-
-    applyBlockLibrarySelection(nextBlock)
-  }
-
   function detachReusableBlock(index: number) {
     const block = draftPage?.layout?.[index]
 
@@ -1569,7 +1505,7 @@ export function PageComposerDrawer({
       return
     }
 
-    const resolved = resolvePageComposerReusableBlock(block, { sharedSectionsById })
+    const resolved = resolvePageComposerReusableBlock(block)
     const reusableMeta = (block as ReusableAwareLayoutBlock).composerReusable
     updateBlockAtIndex(index, {
       ...resolved,
@@ -1693,14 +1629,9 @@ export function PageComposerDrawer({
     closeBlockLibrary,
     filteredBlockDefinitions,
     filteredReusablePresets,
-    filteredSharedSections,
     insertRegisteredBlock,
     insertReusablePreset,
-    insertSharedSection,
     isBlockLibraryOpen,
-    openSharedSectionSourceEditor,
-    sharedSectionsLoading,
-    sharedSectionsStatus,
     setBlockLibraryQuery,
   }
 
@@ -1724,11 +1655,9 @@ export function PageComposerDrawer({
     sectionSummaries,
     selectedBlock,
     resolvedSelectedBlock,
-    selectedBlockIsLinkedSharedSection,
     selectedHeroBlock,
     selectedIndex,
     selectedServiceGrid,
-    selectedSharedSectionId,
     selectedSummary,
     sensors,
     setSelectedIndex,

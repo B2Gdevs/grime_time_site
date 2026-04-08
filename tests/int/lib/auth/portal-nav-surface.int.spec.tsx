@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { usePortalStaffRoute } from '@/lib/auth/portalNavSurface'
 
 vi.mock('next/navigation', () => ({
-  usePathname: () => '/shared-sections',
+  usePathname: () => '/ops/workspace',
 }))
 
 function HookProbe() {
@@ -12,7 +12,7 @@ function HookProbe() {
 }
 
 describe('usePortalStaffRoute', () => {
-  it('treats shared-section routes as staff routes', () => {
+  it('treats ops routes as staff routes', () => {
     render(<HookProbe />)
 
     expect(screen.getByText('staff')).toBeTruthy()

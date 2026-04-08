@@ -26,7 +26,6 @@ import { OpsScorecardRows } from './collections/OpsScorecardRows'
 import { Opportunities } from './collections/Opportunities'
 import { Pages } from './collections/Pages'
 import { Posts } from './collections/Posts'
-import { SharedSections } from './collections/SharedSections'
 import { Testimonials } from './collections/Testimonials'
 import { Quotes } from './collections/Quotes'
 import { SequenceEnrollments } from './collections/SequenceEnrollments'
@@ -127,7 +126,6 @@ export default buildConfig({
   }),
   collections: [
     Pages,
-    SharedSections,
     Posts,
     Testimonials,
     Media,

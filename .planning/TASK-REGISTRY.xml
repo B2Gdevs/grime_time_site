@@ -881,7 +881,7 @@
         <command>See Pages versions behavior, the future shared-section collection, and composer publish/history surfaces.</command>
       </commands>
     </task>
-    <task id="18-06" agent-id="" status="planned">
+    <task id="18-06" agent-id="" status="active">
       <goal>Remove shared-section authoring from the active product model and verify the simplified page-local block workflow: block insertion/replacement/removal, page-local copy editing, media selection and replacement from first-party media records, and clear boundaries for code-owned app blocks versus future dynamic data blocks.</goal>
       <keywords>tests,playwright,vitest,blocks,media,copy,composer</keywords>
       <commands>

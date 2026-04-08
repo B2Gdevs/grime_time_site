@@ -20,11 +20,7 @@ import { ServiceEstimatorBlock } from '@/blocks/ServiceEstimator/Component'
 import { TestimonialsBlock } from '@/blocks/Testimonials/Component'
 import { getVisiblePageLayoutBlocks } from '@/lib/pages/pageLayoutVisibility'
 import { buildPageComposerSectionSummaries } from '@/lib/pages/pageComposer'
-import {
-  linkedSharedSectionId,
-  resolvePageComposerReusableBlock,
-} from '@/lib/pages/pageComposerReusableBlocks'
-import { loadPublishedSharedSectionsByIds } from '@/lib/pages/sharedSectionLibrary'
+import { resolvePageComposerReusableBlock } from '@/lib/pages/pageComposerReusableBlocks'
 import { getInstantQuoteCatalog } from '@/lib/quotes/getInstantQuoteCatalog'
 import type { InstantQuoteCatalog } from '@/lib/quotes/instantQuoteCatalog'
 import { getCachedGlobal } from '@/utilities/getGlobals'
@@ -44,13 +40,6 @@ export async function RenderBlocks({ blocks, instantQuoteCatalog: quoteCatalogPr
     index: layoutBlocks.indexOf(block),
   }))
   const hasBlocks = visibleBlocks.length > 0
-  const sharedSectionIds = Array.from(
-    new Set(
-      visibleBlocks
-        .map(({ block }) => linkedSharedSectionId(block))
-        .filter((id): id is number => typeof id === 'number'),
-    ),
-  )
   const needsPricingGlobal = hasBlocks && visibleBlocks.some(({ block }) => block.blockType === 'pricingTable')
   const needsInstantQuoteCatalog =
     hasBlocks &&
@@ -68,21 +57,14 @@ export async function RenderBlocks({ blocks, instantQuoteCatalog: quoteCatalogPr
       : needsInstantQuoteCatalog
         ? await getInstantQuoteCatalog({ draft, payload: await getPayload({ config }) })
         : null
-  const sharedSectionsById =
-    sharedSectionIds.length > 0
-      ? await loadPublishedSharedSectionsByIds({
-          ids: sharedSectionIds,
-          payload: await getPayload({ config }),
-        })
-      : undefined
-  const sectionSummaries = buildPageComposerSectionSummaries(layoutBlocks, sharedSectionsById)
+  const sectionSummaries = buildPageComposerSectionSummaries(layoutBlocks)
 
   if (!hasBlocks) return null
 
   return (
     <Fragment>
       {visibleBlocks.map(({ block, index }) => {
-        const resolvedBlock = resolvePageComposerReusableBlock(block, { sharedSectionsById })
+        const resolvedBlock = resolvePageComposerReusableBlock(block)
         const { blockType } = resolvedBlock
         const summaryLabel = sectionSummaries[index]?.label || `${resolvedBlock.blockType} block ${index + 1}`
 

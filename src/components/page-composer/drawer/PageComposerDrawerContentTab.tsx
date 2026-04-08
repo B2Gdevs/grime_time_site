@@ -7,7 +7,6 @@ import type { HeroBlock, ServiceGridBlock } from '@/payload-types'
 import { PageComposerDrawerContentEmptyState } from '@/components/page-composer/drawer/PageComposerDrawerContentEmptyState'
 import { PageComposerDrawerHeroEditor } from '@/components/page-composer/drawer/PageComposerDrawerHeroEditor'
 import { PageComposerDrawerLinkedReusablePresetPanel } from '@/components/page-composer/drawer/PageComposerDrawerLinkedReusablePresetPanel'
-import { PageComposerDrawerLinkedSharedSectionPanel } from '@/components/page-composer/drawer/PageComposerDrawerLinkedSharedSectionPanel'
 import { PageComposerDrawerSelectedBlockPanel } from '@/components/page-composer/drawer/PageComposerDrawerSelectedBlockPanel'
 import { PageComposerDrawerServiceGridEditor } from '@/components/page-composer/drawer/PageComposerDrawerServiceGridEditor'
 
@@ -20,14 +19,11 @@ export function PageComposerDrawerContentTab({
   mutateSelectedServiceGrid,
   onOpenMediaSlot,
   openBlockLibrary,
-  openSharedSectionSourceEditor,
   removeBlock,
   resolvedSelectedBlock,
   selectedBlock,
-  selectedBlockIsLinkedSharedSection,
   selectedHeroBlock,
   selectedIndex,
-  selectedSharedSectionId,
   selectedSummary,
   status,
   updateHeroCopy,
@@ -37,18 +33,20 @@ export function PageComposerDrawerContentTab({
   draftPage: null | PageComposerDocument
   heroCopy: string
   loading: boolean
-  mutateSelectedService: (serviceIndex: number, mutator: (service: NonNullable<ServiceGridBlock['services']>[number]) => NonNullable<ServiceGridBlock['services']>[number]) => void
+  mutateSelectedService: (
+    serviceIndex: number,
+    mutator: (
+      service: NonNullable<ServiceGridBlock['services']>[number],
+    ) => NonNullable<ServiceGridBlock['services']>[number],
+  ) => void
   mutateSelectedServiceGrid: (mutator: (block: ServiceGridBlock) => ServiceGridBlock) => void
   onOpenMediaSlot: (relationPath: string) => void
   openBlockLibrary: (index: number, mode?: 'insert' | 'replace') => void
-  openSharedSectionSourceEditor: (id: number) => void
   removeBlock: (index: number) => void
   resolvedSelectedBlock: ReusableAwareLayoutBlock | null
   selectedBlock: ReusableAwareLayoutBlock | null
-  selectedBlockIsLinkedSharedSection: boolean
   selectedHeroBlock: HeroBlock | null
   selectedIndex: number
-  selectedSharedSectionId: null | number
   selectedSummary: null | PageComposerSectionSummary
   status: null | string
   updateHeroCopy: (value: string) => void
@@ -76,19 +74,6 @@ export function PageComposerDrawerContentTab({
       <PageComposerDrawerContentEmptyState>
         Select a section on the live page to manage its block, or use the canvas insert handles to open block search at the correct position.
       </PageComposerDrawerContentEmptyState>
-    )
-  }
-
-  if (selectedBlockIsLinkedSharedSection && selectedSharedSectionId) {
-    return (
-      <PageComposerDrawerLinkedSharedSectionPanel
-        detachReusableBlock={detachReusableBlock}
-        openBlockLibrary={openBlockLibrary}
-        openSharedSectionSourceEditor={openSharedSectionSourceEditor}
-        removeBlock={removeBlock}
-        selectedIndex={selectedIndex}
-        selectedSharedSectionId={selectedSharedSectionId}
-      />
     )
   }
 
