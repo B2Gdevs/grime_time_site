@@ -63,6 +63,7 @@ import type {
 import { formatComposerTimestamp } from '@/utilities/formatComposerTimestamp'
 import { parseResponseJson } from '@/utilities/parseResponseJson'
 
+import { PageComposerFloatingLauncher } from '@/components/admin-impersonation/PageComposerFloatingLauncher'
 import { PageComposerDrawerShell } from '@/components/admin-impersonation/page-composer-drawer/PageComposerDrawerShell'
 import { PhraseConfirmDialog } from '@/components/admin-impersonation/PhraseConfirmDialog'
 import { TypePathConfirmDialog } from '@/components/admin-impersonation/TypePathConfirmDialog'
@@ -1135,6 +1136,18 @@ export function PageComposerDrawer({
     setSelectedIndex(index)
   }, [setSelectedIndex])
 
+  const openMediaSlotForRelationPath = useCallback(
+    (relationPath: string) => {
+      const targetIndex = resolveSelectedIndexFromMediaRelationPath(relationPath)
+      if (typeof targetIndex === 'number') {
+        setSelectedIndex(targetIndex)
+      }
+      setSelectedMediaPath(relationPath)
+      setActiveTab('media')
+    },
+    [setActiveTab, setSelectedIndex],
+  )
+
   useEffect(() => {
     if (typeof window === 'undefined') {
       return
@@ -1162,14 +1175,7 @@ export function PageComposerDrawer({
             onStageMediaSlot: (media, relationPath) => {
               stageMediaSlot(media, relationPath)
             },
-            onOpenMediaSlot: (relationPath) => {
-              const targetIndex = resolveSelectedIndexFromMediaRelationPath(relationPath)
-              if (typeof targetIndex === 'number') {
-                setSelectedIndex(targetIndex)
-              }
-              setSelectedMediaPath(relationPath)
-              setActiveTab('media')
-            },
+            onOpenMediaSlot: openMediaSlotForRelationPath,
             onSetSlugDraft: (value) => {
               setDirty(true)
               setSlugDraft(value)
@@ -1490,6 +1496,7 @@ export function PageComposerDrawer({
     mutateSelectedCallToAction,
     mutateSelectedContentBlock,
     mutateSelectedTestimonialsBlock,
+    openMediaSlotForRelationPath,
   ])
 
   function updateBlockAtIndex(index: number, block: NonNullable<PageComposerDocument['layout']>[number]) {
@@ -1693,6 +1700,7 @@ export function PageComposerDrawer({
     sensors,
     setSelectedIndex,
     toggleBlockHidden,
+    onOpenMediaSlot: openMediaSlotForRelationPath,
   }
 
   const media = {
@@ -1748,14 +1756,17 @@ export function PageComposerDrawer({
 
   return (
     <>
+      <PageComposerFloatingLauncher />
       <PageComposerDrawerShell
         activeTab={activeTab}
         blockLibrary={blockLibrary}
         embedded={embedded}
         enabled={enabled}
         isOpen={open}
+        isPanelMinimized={composer.isPanelMinimized}
         media={media}
         onDismiss={onRequestClose || composer.close}
+        onMinimizePanel={() => composer.setPanelMinimized(true)}
         page={page}
         history={history}
         sections={sections}

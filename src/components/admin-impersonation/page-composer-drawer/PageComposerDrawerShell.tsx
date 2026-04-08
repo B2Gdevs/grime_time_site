@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, type PointerEvent as ReactPointerEvent } from 'react'
-import { motion, useDragControls, useMotionValue } from 'motion/react'
+import { AnimatePresence, motion, useDragControls, useMotionValue } from 'motion/react'
 
 import {
   PageComposerDrawerChrome,
@@ -12,6 +12,8 @@ type PageComposerDrawerShellProps = Omit<PageComposerDrawerChromeProps, 'onStart
   embedded?: boolean
   enabled: boolean
   isOpen: boolean
+  /** When true, the floating panel is hidden and the edge launcher is shown instead. */
+  isPanelMinimized: boolean
 }
 
 export function PageComposerDrawerShell({
@@ -20,8 +22,10 @@ export function PageComposerDrawerShell({
   embedded = false,
   enabled,
   isOpen,
+  isPanelMinimized,
   media,
   onDismiss,
+  onMinimizePanel,
   page,
   history,
   sections,
@@ -70,7 +74,7 @@ export function PageComposerDrawerShell({
   }, [x, y])
 
   useEffect(() => {
-    if (!enabled || !isOpen) {
+    if (!enabled || !isOpen || isPanelMinimized) {
       return
     }
 
@@ -85,11 +89,7 @@ export function PageComposerDrawerShell({
     return () => {
       window.removeEventListener('resize', clampToViewport)
     }
-  }, [clampToViewport, enabled, isOpen])
-
-  if (!enabled || !isOpen) {
-    return null
-  }
+  }, [clampToViewport, enabled, isOpen, isPanelMinimized])
 
   function startDrag(event: ReactPointerEvent<HTMLElement>) {
     dragControls.start(event)
@@ -102,6 +102,7 @@ export function PageComposerDrawerShell({
       embedded={embedded}
       media={media}
       onDismiss={onDismiss}
+      onMinimizePanel={embedded ? undefined : onMinimizePanel}
       onStartDrag={startDrag}
       page={page}
       history={history}
@@ -110,28 +111,41 @@ export function PageComposerDrawerShell({
     />
   )
 
+  if (!enabled || !isOpen) {
+    return null
+  }
+
   if (embedded) {
+    if (isPanelMinimized) {
+      return null
+    }
     return panel
   }
 
   return (
-    <motion.div
-      animate={{ opacity: 1, scale: 1 }}
-      aria-label="Page composer"
-      aria-modal="false"
-      className="fixed right-4 top-[5.5rem] z-[96] w-[min(36rem,calc(100vw-1rem))] max-w-[calc(100vw-1rem)]"
-      drag
-      dragControls={dragControls}
-      dragListener={false}
-      dragMomentum={false}
-      initial={{ opacity: 0, scale: 0.98 }}
-      onDragEnd={clampToViewport}
-      ref={panelRef}
-      role="dialog"
-      style={{ x, y }}
-      transition={{ duration: 0.16, ease: 'easeOut' }}
-    >
-      <div className="h-[min(44rem,calc(100vh-6rem))]">{panel}</div>
-    </motion.div>
+    <AnimatePresence>
+      {!isPanelMinimized ? (
+        <motion.div
+          key="page-composer-floating-panel"
+          animate={{ opacity: 1, scale: 1 }}
+          aria-label="Page composer"
+          aria-modal="false"
+          className="fixed right-4 top-[5.5rem] z-[96] w-[min(36rem,calc(100vw-1rem))] max-w-[calc(100vw-1rem)]"
+          drag
+          dragControls={dragControls}
+          dragListener={false}
+          dragMomentum={false}
+          exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1] } }}
+          initial={{ opacity: 0, scale: 0.98 }}
+          onDragEnd={clampToViewport}
+          ref={panelRef}
+          role="dialog"
+          style={{ x, y }}
+          transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <div className="h-[min(44rem,calc(100vh-6rem))]">{panel}</div>
+        </motion.div>
+      ) : null}
+    </AnimatePresence>
   )
 }

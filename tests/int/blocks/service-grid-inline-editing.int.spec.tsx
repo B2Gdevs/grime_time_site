@@ -5,7 +5,9 @@ import { ServiceGridBlock } from '@/blocks/ServiceGrid/Component'
 
 const composerState = {
   isOpen: true,
+  isPanelMinimized: false,
   setActiveTab: vi.fn(),
+  setPanelMinimized: vi.fn(),
 }
 
 const copilotState = {

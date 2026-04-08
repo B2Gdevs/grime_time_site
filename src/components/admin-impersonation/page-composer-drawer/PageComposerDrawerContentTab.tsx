@@ -15,6 +15,7 @@ export function PageComposerDrawerContentTab({
   loading,
   mutateSelectedService,
   mutateSelectedServiceGrid,
+  onOpenMediaSlot,
   openBlockLibrary,
   openSharedSectionSourceEditor,
   removeBlock,
@@ -32,6 +33,7 @@ export function PageComposerDrawerContentTab({
   loading: boolean
   mutateSelectedService: (serviceIndex: number, mutator: (service: NonNullable<ServiceGridBlock['services']>[number]) => NonNullable<ServiceGridBlock['services']>[number]) => void
   mutateSelectedServiceGrid: (mutator: (block: ServiceGridBlock) => ServiceGridBlock) => void
+  onOpenMediaSlot: (relationPath: string) => void
   openBlockLibrary: (index: number, mode?: 'insert' | 'replace') => void
   openSharedSectionSourceEditor: (id: number) => void
   removeBlock: (index: number) => void
@@ -96,7 +98,9 @@ export function PageComposerDrawerContentTab({
       <PageComposerDrawerServiceGridEditor
         mutateSelectedService={mutateSelectedService}
         mutateSelectedServiceGrid={mutateSelectedServiceGrid}
+        onOpenMediaSlot={onOpenMediaSlot}
         selectedBlock={resolvedSelectedBlock as ServiceGridBlock}
+        selectedLayoutIndex={selectedIndex}
       />
     )
   }

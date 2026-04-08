@@ -1,7 +1,7 @@
 'use client'
 
 import type { PointerEvent as ReactPointerEvent, RefObject } from 'react'
-import { GripVerticalIcon, ImageIcon, InfoIcon, LayoutListIcon, TypeIcon, XIcon } from 'lucide-react'
+import { GripVerticalIcon, ImageIcon, InfoIcon, LayoutListIcon, Minimize2Icon, TypeIcon, XIcon } from 'lucide-react'
 
 import { adminPanelChrome } from '@/components/admin-impersonation/adminPanelChrome'
 import { PageComposerDrawerBlockLibrary } from '@/components/admin-impersonation/page-composer-drawer/PageComposerDrawerBlockLibrary'
@@ -57,6 +57,8 @@ export type PageComposerDrawerChromeProps = {
   }
   embedded: boolean
   onDismiss: () => void
+  /** Collapse the floating drawer while keeping the compose session active (launcher returns). */
+  onMinimizePanel?: () => void
   onStartDrag: (event: ReactPointerEvent<HTMLElement>) => void
   page: {
     draftPage: null | PageComposerDocument
@@ -86,6 +88,7 @@ export type PageComposerDrawerChromeProps = {
       mutator: (service: NonNullable<ServiceGridBlock['services']>[number]) => NonNullable<ServiceGridBlock['services']>[number],
     ) => void
     mutateSelectedServiceGrid: (mutator: (block: ServiceGridBlock) => ServiceGridBlock) => void
+    onOpenMediaSlot: (relationPath: string) => void
     selectedServiceGrid: ServiceGridBlock | null
   }
   media: {
@@ -161,6 +164,7 @@ export function PageComposerDrawerChrome({
   embedded,
   media,
   onDismiss,
+  onMinimizePanel,
   onStartDrag,
   page,
   history,
@@ -206,6 +210,7 @@ export function PageComposerDrawerChrome({
     detachReusableBlock,
     mutateSelectedService,
     mutateSelectedServiceGrid,
+    onOpenMediaSlot,
     selectedServiceGrid: _selectedServiceGrid,
   } = sections
   const {
@@ -278,16 +283,40 @@ export function PageComposerDrawerChrome({
               </h3>
             </div>
           </div>
-          <Button
-            aria-label="Dismiss page composer"
-            data-page-composer-no-drag="true"
-            onClick={onDismiss}
-            size="icon"
-            type="button"
-            variant="ghost"
-          >
-            <XIcon className="h-4 w-4" />
-          </Button>
+          <div className="flex shrink-0 items-center gap-1">
+            {onMinimizePanel ? (
+              <TooltipProvider delayDuration={200}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      aria-label="Minimize composer panel"
+                      data-page-composer-no-drag="true"
+                      onClick={onMinimizePanel}
+                      size="icon"
+                      type="button"
+                      variant="ghost"
+                    >
+                      <Minimize2Icon className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-[240px] text-xs" side="bottom">
+                    Hide the panel to see more of the page. Your draft and selection stay active — use the edge
+                    launcher to expand again.
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            ) : null}
+            <Button
+              aria-label="Dismiss page composer"
+              data-page-composer-no-drag="true"
+              onClick={onDismiss}
+              size="icon"
+              type="button"
+              variant="ghost"
+            >
+              <XIcon className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       ) : null}
 
@@ -417,6 +446,7 @@ export function PageComposerDrawerChrome({
               loading={loading}
               mutateSelectedService={mutateSelectedService}
               mutateSelectedServiceGrid={mutateSelectedServiceGrid}
+              onOpenMediaSlot={onOpenMediaSlot}
               openBlockLibrary={openBlockLibrary}
               openSharedSectionSourceEditor={openSharedSectionSourceEditor}
               removeBlock={removeBlock}

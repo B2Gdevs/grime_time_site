@@ -116,6 +116,8 @@ type PageComposerContextValue = {
   activeTab: PageComposerTab
   activePagePath: null | string
   close: () => void
+  /** When the composer session is open but the drawer is collapsed to a launcher strip (full page visible). */
+  isPanelMinimized: boolean
   isOpen: boolean
   open: () => void
   previewMode: PageComposerCanvasMode
@@ -123,6 +125,7 @@ type PageComposerContextValue = {
   setActivePagePath: (value: null | string) => void
   setActiveTab: (value: PageComposerTab) => void
   setOpen: (value: boolean) => void
+  setPanelMinimized: (value: boolean) => void
   setPreviewMode: (value: PageComposerCanvasMode) => void
   setSelectedIndex: (value: number) => void
   toggle: () => void
@@ -135,13 +138,18 @@ export function PageComposerProvider({ children }: { children: ReactNode }) {
   const [activeTab, setActiveTab] = useState<PageComposerTab>('content')
   const [activePagePath, setActivePagePath] = useState<null | string>(null)
   const [isOpen, setIsOpen] = useState(false)
+  const [isPanelMinimized, setPanelMinimized] = useState(false)
   const [previewMode, setPreviewMode] = useState<PageComposerCanvasMode>('desktop')
   const [selectedIndex, setSelectedIndex] = useState(0)
 
-  const open = useCallback(() => setIsOpen(true), [])
+  const open = useCallback(() => {
+    setIsOpen(true)
+    setPanelMinimized(false)
+  }, [])
   const close = useCallback(() => {
     setIsOpen(false)
     setActivePagePath(null)
+    setPanelMinimized(false)
   }, [])
   const toggle = useCallback(() => setIsOpen((current) => !current), [])
 
@@ -150,6 +158,7 @@ export function PageComposerProvider({ children }: { children: ReactNode }) {
       activeTab,
       activePagePath,
       close,
+      isPanelMinimized,
       isOpen,
       open,
       previewMode,
@@ -157,11 +166,12 @@ export function PageComposerProvider({ children }: { children: ReactNode }) {
       setActivePagePath,
       setActiveTab,
       setOpen: setIsOpen,
+      setPanelMinimized,
       setPreviewMode,
       setSelectedIndex,
       toggle,
     }),
-    [activePagePath, activeTab, close, isOpen, open, previewMode, selectedIndex, toggle],
+    [activePagePath, activeTab, close, isOpen, isPanelMinimized, open, previewMode, selectedIndex, toggle],
   )
 
   return <PageComposerContext.Provider value={value}>{children}</PageComposerContext.Provider>

@@ -3,7 +3,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { PAGE_COMPOSER_TOOLBAR_EVENT, PageComposerProvider } from '@/components/admin-impersonation/PageComposerContext'
 import { PageComposerDrawer } from '@/components/admin-impersonation/PageComposerDrawer'
-import { PageComposerLauncherButton } from '@/components/admin-impersonation/PageComposerLauncherButton'
 import { usePageComposer } from '@/components/admin-impersonation/PageComposerContext'
 
 const refresh = vi.fn()
@@ -153,7 +152,6 @@ describe('PageComposer shell integration', () => {
   it('opens the floating composer panel from a shared launcher and loads the current page', async () => {
     render(
       <PageComposerProvider>
-        <PageComposerLauncherButton />
         <PagesTabHarness />
         <PageComposerDrawer enabled />
       </PageComposerProvider>,
@@ -183,7 +181,6 @@ describe('PageComposer shell integration', () => {
 
     render(
       <PageComposerProvider>
-        <PageComposerLauncherButton />
         <PagesTabHarness />
         <PageComposerDrawer enabled />
       </PageComposerProvider>,
@@ -265,7 +262,6 @@ describe('PageComposer shell integration', () => {
 
     render(
       <PageComposerProvider>
-        <PageComposerLauncherButton />
         <PageComposerDrawer enabled />
       </PageComposerProvider>,
     )
@@ -351,7 +347,6 @@ describe('PageComposer shell integration', () => {
 
     render(
       <PageComposerProvider>
-        <PageComposerLauncherButton />
         <PageComposerDrawer enabled />
       </PageComposerProvider>,
     )
@@ -488,7 +483,6 @@ describe('PageComposer shell integration', () => {
 
     render(
       <PageComposerProvider>
-        <PageComposerLauncherButton />
         <PageComposerDrawer enabled />
       </PageComposerProvider>,
     )
