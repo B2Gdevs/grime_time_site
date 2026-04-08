@@ -338,7 +338,7 @@ export function InlinePageMediaEditor({ children, relationPath }: InlinePageMedi
   return (
     <div
       data-page-composer-interactive="true"
-      className={`group/page-media relative ${dragActive ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : ''}`}
+      className={`group/page-media relative block h-full w-full ${dragActive ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : ''}`}
       onClick={(event) => {
         handleCanvasSelection(event.target)
       }}

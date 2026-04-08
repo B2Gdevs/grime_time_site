@@ -274,4 +274,18 @@ describe('InlinePageMediaEditor', () => {
 
     expect(onOpenMediaSlot).toHaveBeenCalledWith('layout.0.services.0.media')
   })
+
+  it('keeps a full-size wrapper so fill media can inherit slot height', () => {
+    render(
+      <InlinePageMediaEditor relationPath="layout.0.services.0.media">
+        <div>Drop zone</div>
+      </InlinePageMediaEditor>,
+    )
+
+    const wrapper = screen.getByText('Drop zone').parentElement
+
+    expect(wrapper?.className).toContain('h-full')
+    expect(wrapper?.className).toContain('w-full')
+    expect(wrapper?.className).toContain('block')
+  })
 })
