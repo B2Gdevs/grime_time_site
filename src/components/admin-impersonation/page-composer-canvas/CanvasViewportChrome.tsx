@@ -8,30 +8,7 @@ import { CanvasViewportDirtyBadge } from './CanvasViewportDirtyBadge'
 import { CanvasViewportDraftFields } from './CanvasViewportDraftFields'
 import { CanvasViewportIdentity } from './CanvasViewportIdentity'
 import { CanvasViewportInteractable } from './CanvasViewportInteractable'
-
-function canvasFrameClassName(mode: PageComposerCanvasMode) {
-  if (mode === 'mobile') {
-    return 'mx-auto w-full max-w-[26rem]'
-  }
-
-  if (mode === 'tablet') {
-    return 'mx-auto w-full max-w-[52rem]'
-  }
-
-  return 'w-full'
-}
-
-function formatComposerBreadcrumbs(pagePath: string) {
-  if (pagePath === '/') {
-    return ['Home']
-  }
-
-  return pagePath
-    .split('/')
-    .filter(Boolean)
-    .map((segment) => segment.replace(/-/g, ' '))
-    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
-}
+import { canvasViewportFrameClassName } from './CanvasViewportUtils'
 
 export function CanvasViewportChrome({
   breadcrumbs,
@@ -43,7 +20,6 @@ export function CanvasViewportChrome({
   onSetPreviewMode,
   pagePath,
   previewMode,
-  previewPath,
   selectedSummaryLabel,
   toolbarState,
   activeTab,
@@ -63,7 +39,6 @@ export function CanvasViewportChrome({
   onSetPreviewMode: (mode: PageComposerCanvasMode) => void
   pagePath: string
   previewMode: PageComposerCanvasMode
-  previewPath: string
   selectedBlockType: string
   selectedIndex: number
   selectedLabel: string
@@ -94,19 +69,20 @@ export function CanvasViewportChrome({
                   selectedSummaryLabel={selectedSummaryLabel}
                   toolbarState={toolbarState}
                 />
+                <CanvasViewportDraftFields
+                  isPublishTabActive={isPublishTabActive}
+                  onOpenPublish={onOpenPublish}
+                  toolbarState={toolbarState}
+                />
                 <CanvasViewportActions
                   onClose={onClose}
                   onSetPreviewMode={onSetPreviewMode}
                   previewMode={previewMode}
-                  previewPath={previewPath}
+                  toolbarState={toolbarState}
                 />
               </div>
 
-              <CanvasViewportDraftFields
-                isPublishTabActive={isPublishTabActive}
-                onOpenPublish={onOpenPublish}
-                toolbarState={toolbarState}
-              />
+
             </div>
 
             <CanvasViewportDirtyBadge dirty={dirty} />
@@ -114,11 +90,7 @@ export function CanvasViewportChrome({
         </TooltipProvider>
       </div>
 
-      <div className={canvasFrameClassName(previewMode)}>{children}</div>
+      <div className={canvasViewportFrameClassName(previewMode)}>{children}</div>
     </div>
   )
-}
-
-export function resolveCanvasViewportBreadcrumbs(pagePath: string) {
-  return formatComposerBreadcrumbs(pagePath)
 }

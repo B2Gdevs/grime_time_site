@@ -8,24 +8,9 @@ function sanitizeInteger(value: unknown): null | number {
   return typeof value === 'number' && Number.isInteger(value) && value > 0 ? value : null
 }
 
-export function sanitizeCopilotAuthoringContext(
-  value: unknown,
-): CopilotAuthoringContext | null {
-  if (!value || typeof value !== 'object') {
-    return null
-  }
-
-  const record = value as {
-    mediaSlot?: unknown
-    page?: unknown
-    section?: unknown
-    surface?: unknown
-  }
-
-  if (record.surface !== 'page-composer') {
-    return null
-  }
-
+function sanitizePageRecord(record: {
+  page?: unknown
+}): CopilotAuthoringContext['page'] {
   const pageRecord =
     record.page && typeof record.page === 'object'
       ? (record.page as {
@@ -43,6 +28,64 @@ export function sanitizeCopilotAuthoringContext(
   const pagePath = sanitizeText(pageRecord?.pagePath)
   const pageStatus = pageRecord?.status === 'published' ? 'published' : 'draft'
   const pageVisibility = pageRecord?.visibility === 'private' ? 'private' : 'public'
+
+  return pageTitle && pageSlug && pagePath
+    ? {
+        id: pageId,
+        pagePath,
+        slug: pageSlug,
+        status: pageStatus,
+        title: pageTitle,
+        visibility: pageVisibility,
+      }
+    : null
+}
+
+export function sanitizeCopilotAuthoringContext(
+  value: unknown,
+): CopilotAuthoringContext | null {
+  if (!value || typeof value !== 'object') {
+    return null
+  }
+
+  const record = value as {
+    libraryMedia?: unknown
+    mediaSlot?: unknown
+    page?: unknown
+    section?: unknown
+    surface?: unknown
+  }
+
+  if (record.surface === 'media-library') {
+    const lib =
+      record.libraryMedia && typeof record.libraryMedia === 'object'
+        ? (record.libraryMedia as { id?: unknown; label?: unknown; mimeType?: unknown })
+        : null
+    const libId = sanitizeInteger(lib?.id)
+    const libLabel = sanitizeText(lib?.label)
+
+    if (!libId || !libLabel) {
+      return null
+    }
+
+    return {
+      libraryMedia: {
+        id: libId,
+        label: libLabel,
+        mimeType: sanitizeText(lib?.mimeType) || null,
+      },
+      mediaSlot: null,
+      page: sanitizePageRecord(record),
+      section: null,
+      surface: 'media-library',
+    }
+  }
+
+  if (record.surface !== 'page-composer') {
+    return null
+  }
+
+  const page = sanitizePageRecord(record)
 
   const sectionRecord =
     record.section && typeof record.section === 'object'
@@ -75,6 +118,7 @@ export function sanitizeCopilotAuthoringContext(
   const mediaId = sanitizeInteger(mediaRecord?.mediaId)
 
   return {
+    libraryMedia: null,
     mediaSlot:
       mediaRelationPath && mediaLabel
         ? {
@@ -84,17 +128,7 @@ export function sanitizeCopilotAuthoringContext(
             relationPath: mediaRelationPath,
           }
         : null,
-    page:
-      pageTitle && pageSlug && pagePath
-        ? {
-          id: pageId,
-          pagePath,
-          slug: pageSlug,
-            status: pageStatus,
-            title: pageTitle,
-            visibility: pageVisibility,
-          }
-        : null,
+    page,
     section:
       sectionIndex !== null && sectionLabel && sectionBlockType
         ? {
@@ -164,6 +198,21 @@ export function buildCopilotAuthoringSystemMessage(args: {
   focusedSession?: CopilotFocusedSession | null
 }): null | string {
   const lines: string[] = []
+
+  if (args.authoringContext?.surface === 'media-library') {
+    lines.push('Active authoring surface: media library (site composer tab)')
+    if (args.authoringContext.libraryMedia) {
+      lines.push(
+        `Library media target: id ${args.authoringContext.libraryMedia.id} — ${args.authoringContext.libraryMedia.label}`,
+      )
+      if (args.authoringContext.libraryMedia.mimeType) {
+        lines.push(`Current file kind: ${args.authoringContext.libraryMedia.mimeType}`)
+      }
+    }
+    if (args.authoringContext.page) {
+      lines.push(`Open page context: ${args.authoringContext.page.title} (${args.authoringContext.page.pagePath})`)
+    }
+  }
 
   if (args.authoringContext?.surface === 'page-composer') {
     lines.push('Active authoring surface: page composer')

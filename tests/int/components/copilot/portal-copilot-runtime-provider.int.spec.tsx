@@ -46,8 +46,8 @@ describe('PortalCopilotRuntimeProvider', () => {
     )
 
     expect(screen.getByText('runtime child')).toBeTruthy()
-    expect(assistantUiMocks.useLocalRuntime).toHaveBeenCalled()
-    expect(assistantUiMocks.useLocalRuntime.mock.calls[0]?.[1]).toEqual(
+    expect(assistantUiMocks.useLocalRuntime).toHaveBeenCalledWith(
+      expect.any(Object),
       expect.objectContaining({
         cloud: expect.any(Object),
       }),

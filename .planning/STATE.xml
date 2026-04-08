@@ -5,6 +5,6 @@
   <current-phase>18</current-phase>
   <current-plan>18-06</current-plan>
   <status>in-progress</status>
-  <next-action>Quick task `quick-2026-04-07-composer-one-component-per-file` is complete: drawer tab and card surfaces are split into leaf components, and `PageComposerDrawer` remains the orchestrator. Resume `18-06`.</next-action>
-  <sink-compiled sink="apps/portfolio/content/docs/grime-time/planning/" at="2026-04-06T20:35:07.079Z" />
+  <next-action>Quick task `quick-2026-04-07-composer-one-component-per-file` is extended and complete: the drawer launcher, viewport mode strip, and block library are split into smaller leaf files so the composer surfaces stay easier to review while behavior remains unchanged. Resume `18-06`. Architecture follow-ups captured in `.planning/todos/2026-04-07-layout-first-page-model-hero-block.md`, `.planning/todos/2026-04-07-instant-quote-app-block.md`, and `.planning/todos/2026-04-07-composer-media-target-model.md`.</next-action>
+  <sink-compiled sink="apps/portfolio/content/docs/grime-time/planning/" at="2026-04-07T20:06:41.163Z" />
 </state>

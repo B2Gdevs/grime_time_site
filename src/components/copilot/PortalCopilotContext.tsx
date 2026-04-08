@@ -54,7 +54,10 @@ function sameAuthoringContext(
     left.mediaSlot?.label === right.mediaSlot?.label &&
     left.mediaSlot?.mediaId === right.mediaSlot?.mediaId &&
     left.mediaSlot?.mimeType === right.mediaSlot?.mimeType &&
-    left.mediaSlot?.relationPath === right.mediaSlot?.relationPath
+    left.mediaSlot?.relationPath === right.mediaSlot?.relationPath &&
+    left.libraryMedia?.id === right.libraryMedia?.id &&
+    left.libraryMedia?.label === right.libraryMedia?.label &&
+    left.libraryMedia?.mimeType === right.libraryMedia?.mimeType
   )
 }
 

@@ -2,10 +2,9 @@
 
 import { Link2Icon, TypeIcon } from 'lucide-react'
 
-import { CanvasToolbarField } from './CanvasPrimitives'
-import { CanvasViewportCreateDraftButton } from './CanvasViewportCreateDraftButton'
-import { CanvasViewportPublishButton } from './CanvasViewportPublishButton'
-import { CanvasViewportRouteState } from './CanvasViewportRouteState'
+import type { PageComposerToolbarState } from '@/components/admin-impersonation/PageComposerContext'
+import { CanvasToolbarField } from './CanvasToolbarField'
+import { CanvasViewportDraftToolbar } from './CanvasViewportDraftToolbar'
 import { CanvasViewportVisibilityToggle } from './CanvasViewportVisibilityToggle'
 
 export function CanvasViewportDraftFields({
@@ -15,22 +14,7 @@ export function CanvasViewportDraftFields({
 }: {
   isPublishTabActive: boolean
   onOpenPublish: null | (() => void)
-  toolbarState: null | {
-    creatingDraftClone: boolean
-    dirty: boolean
-    draftPage?: null | {
-      _status?: null | string
-      id?: null | number
-    }
-    loading: boolean
-    onCreateDraft: () => void
-    onSetSlugDraft: (value: string) => void
-    onSetTitleDraft: (value: string) => void
-    onSetVisibilityDraft: (value: 'private' | 'public') => void
-    slugDraft: string
-    titleDraft: string
-    visibilityDraft: 'private' | 'public'
-  }
+  toolbarState: null | PageComposerToolbarState
 }) {
   if (!toolbarState) {
     return null
@@ -52,13 +36,7 @@ export function CanvasViewportDraftFields({
         placeholder="page-slug"
         value={toolbarState.slugDraft}
       />
-      <CanvasViewportRouteState toolbarState={toolbarState} />
-      <CanvasViewportCreateDraftButton toolbarState={toolbarState} />
-      <CanvasViewportPublishButton
-        isPublishTabActive={isPublishTabActive}
-        onOpenPublish={onOpenPublish}
-        toolbarState={toolbarState}
-      />
+      <CanvasViewportDraftToolbar toolbarState={toolbarState} />
       <CanvasViewportVisibilityToggle toolbarState={toolbarState} />
     </div>
   )

@@ -5,7 +5,7 @@ const push = vi.fn()
 const refresh = vi.fn()
 const composerState = {
   activePagePath: null as null | string,
-  activeTab: 'structure' as 'content' | 'media' | 'publish' | 'structure',
+  activeTab: 'structure' as 'content' | 'media' | 'pages' | 'structure',
   close: vi.fn(),
   isOpen: false,
   open: vi.fn(),

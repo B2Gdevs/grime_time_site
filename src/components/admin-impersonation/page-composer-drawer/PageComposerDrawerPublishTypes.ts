@@ -1,10 +1,10 @@
-﻿'use client'
+'use client'
 
 export type ValidationIssue = {
   blockIndex: null | number
   id: string
   message: string
-  tone: 'default' | 'warning'
+  tone: 'info' | 'warning'
 }
 
 export type ValidationSummary = {

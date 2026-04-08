@@ -1,11 +1,9 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { PageComposerProvider } from '@/components/admin-impersonation/PageComposerContext'
-import {
-  PageComposerDrawer,
-  PageComposerLauncherButton,
-} from '@/components/admin-impersonation/PageComposerDrawer'
+import { PAGE_COMPOSER_TOOLBAR_EVENT, PageComposerProvider } from '@/components/admin-impersonation/PageComposerContext'
+import { PageComposerDrawer } from '@/components/admin-impersonation/PageComposerDrawer'
+import { PageComposerLauncherButton } from '@/components/admin-impersonation/PageComposerLauncherButton'
 import { usePageComposer } from '@/components/admin-impersonation/PageComposerContext'
 
 const refresh = vi.fn()
@@ -17,12 +15,12 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ push, refresh }),
 }))
 
-function PublishTabHarness() {
+function PagesTabHarness() {
   const composer = usePageComposer()
 
   return (
-    <button onClick={() => composer.setActiveTab('publish')} type="button">
-      Open publish tab
+    <button onClick={() => composer.setActiveTab('pages')} type="button">
+      Open pages tab
     </button>
   )
 }
@@ -156,7 +154,7 @@ describe('PageComposer shell integration', () => {
     render(
       <PageComposerProvider>
         <PageComposerLauncherButton />
-        <PublishTabHarness />
+        <PagesTabHarness />
         <PageComposerDrawer enabled />
       </PageComposerProvider>,
     )
@@ -179,14 +177,14 @@ describe('PageComposer shell integration', () => {
     expect(composer.className).toContain('rounded-[2rem]')
   })
 
-  it('restores a page version from the publish tab', async () => {
+  it('restores a page version from the Pages tab (History sub-tab)', async () => {
     const originalConfirm = window.confirm
     window.confirm = vi.fn().mockReturnValue(true)
 
     render(
       <PageComposerProvider>
         <PageComposerLauncherButton />
-        <PublishTabHarness />
+        <PagesTabHarness />
         <PageComposerDrawer enabled />
       </PageComposerProvider>,
     )
@@ -197,7 +195,7 @@ describe('PageComposer shell integration', () => {
       expect(global.fetch).toHaveBeenCalledWith('/api/internal/page-composer?pagePath=%2F')
     })
 
-    fireEvent.click(screen.getByRole('button', { name: 'Open publish tab' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Open pages tab' }))
     fireEvent.click(screen.getByRole('button', { name: 'Restore draft' }))
 
     await waitFor(() => {
@@ -281,5 +279,251 @@ describe('PageComposer shell integration', () => {
     expect(screen.getByText('Visual composer')).toBeTruthy()
     expect(screen.getByText(/selected block/i)).toBeTruthy()
     expect(screen.queryByText(/select a page/i)).toBeNull()
+  })
+
+  it('keeps published-page draft saves on the current route instead of cloning or pushing a new route', async () => {
+    global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input)
+      const method = init?.method || 'GET'
+
+      if (url === '/api/internal/page-composer?pagePath=%2F') {
+        return {
+          json: async () => ({
+            ok: true,
+            page: {
+              _status: 'published',
+              hero: { type: 'lowImpact' },
+              id: 7,
+              layout: [],
+              pagePath: '/',
+              publishedAt: '2026-04-05T00:00:00.000Z',
+              slug: 'home',
+              title: 'Home',
+              updatedAt: '2026-04-05T00:00:00.000Z',
+              visibility: 'public',
+            },
+            pages: [],
+            versions: [],
+          }),
+          ok: true,
+        } as Response
+      }
+
+      if (url === '/api/internal/page-composer' && method === 'POST') {
+        return {
+          json: async () => ({
+            ok: true,
+            page: {
+              _status: 'draft',
+              hero: { type: 'lowImpact' },
+              id: 7,
+              layout: [],
+              pagePath: '/home-updated',
+              publishedAt: '2026-04-05T00:00:00.000Z',
+              slug: 'home-updated',
+              title: 'Home Updated',
+              updatedAt: '2026-04-05T00:00:00.000Z',
+              visibility: 'public',
+            },
+            pages: [],
+            versions: [],
+          }),
+          ok: true,
+        } as Response
+      }
+
+      if (url === '/api/internal/page-composer/media') {
+        return {
+          json: async () => ({ items: [] }),
+          ok: true,
+        } as Response
+      }
+
+      if (url === '/api/internal/shared-sections?status=published') {
+        return {
+          json: async () => ({ items: [] }),
+          ok: true,
+        } as Response
+      }
+
+      throw new Error(`Unexpected fetch: ${url} (${method})`)
+    }) as typeof fetch
+
+    render(
+      <PageComposerProvider>
+        <PageComposerLauncherButton />
+        <PageComposerDrawer enabled />
+      </PageComposerProvider>,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /page composer/i }))
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith('/api/internal/page-composer?pagePath=%2F')
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save draft' }))
+
+    await waitFor(
+      () => {
+        const saveDraftRequest = (global.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls.find(
+          ([url, init]) =>
+            url === '/api/internal/page-composer' &&
+            typeof init?.body === 'string' &&
+            JSON.parse(init.body).action === 'save-draft',
+        )
+
+        expect(saveDraftRequest).toBeTruthy()
+      },
+      { timeout: 4000 },
+    )
+
+    expect(
+      (global.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls.find(
+        ([url, init]) =>
+          url === '/api/internal/page-composer' &&
+          typeof init?.body === 'string' &&
+          JSON.parse(init.body).action === 'clone-page',
+      ),
+    ).toBeFalsy()
+    expect(push).not.toHaveBeenCalled()
+  })
+
+  it('targets the requested service lane in the media tab and assigns library media from the gallery', async () => {
+    let toolbarDetail: null | Record<string, unknown> = null
+    const handleToolbarChange = (event: Event) => {
+      toolbarDetail = (event as CustomEvent).detail as Record<string, unknown>
+    }
+
+    window.addEventListener(PAGE_COMPOSER_TOOLBAR_EVENT, handleToolbarChange as EventListener)
+
+    global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input)
+      const method = init?.method || 'GET'
+
+      if (url === '/api/internal/page-composer?pagePath=%2F') {
+        return {
+          json: async () => ({
+            ok: true,
+            page: {
+              _status: 'draft',
+              hero: { type: 'lowImpact' },
+              id: 7,
+              layout: [
+                {
+                  blockName: 'Intro media',
+                  blockType: 'mediaBlock',
+                  media: null,
+                },
+                {
+                  blockType: 'serviceGrid',
+                  heading: 'What we do',
+                  intro: 'Exterior cleaning lanes.',
+                  services: [
+                    {
+                      media: null,
+                      name: 'House washing',
+                      summary: 'Wash siding.',
+                    },
+                    {
+                      media: null,
+                      name: 'Driveway lane',
+                      summary: 'Clean flatwork.',
+                    },
+                  ],
+                },
+              ],
+              pagePath: '/',
+              publishedAt: null,
+              slug: 'home',
+              title: 'Home',
+              updatedAt: '2026-04-05T00:00:00.000Z',
+              visibility: 'public',
+            },
+            pages: [],
+            versions: [],
+          }),
+          ok: true,
+        } as Response
+      }
+
+      if (url === '/api/internal/page-composer/media') {
+        return {
+          json: async () => ({
+            items: [
+              {
+                alt: 'Fresh exterior shot',
+                filename: 'fresh-exterior.jpg',
+                id: 901,
+                media: {
+                  alt: 'Fresh exterior shot',
+                  createdAt: '2026-04-05T00:00:00.000Z',
+                  filename: 'fresh-exterior.jpg',
+                  height: 900,
+                  id: 901,
+                  mimeType: 'image/jpeg',
+                  updatedAt: '2026-04-05T00:00:00.000Z',
+                  url: '/media/fresh-exterior.jpg',
+                  width: 1600,
+                },
+                mimeType: 'image/jpeg',
+                previewUrl: '/media/fresh-exterior.jpg',
+                updatedAt: '2026-04-05T00:00:00.000Z',
+              },
+            ],
+          }),
+          ok: true,
+        } as Response
+      }
+
+      if (url === '/api/internal/shared-sections?status=published') {
+        return {
+          json: async () => ({ items: [] }),
+          ok: true,
+        } as Response
+      }
+
+      throw new Error(`Unexpected fetch: ${url} (${method})`)
+    }) as typeof fetch
+
+    render(
+      <PageComposerProvider>
+        <PageComposerLauncherButton />
+        <PageComposerDrawer enabled />
+      </PageComposerProvider>,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /page composer/i }))
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith('/api/internal/page-composer?pagePath=%2F')
+      expect(toolbarDetail && typeof toolbarDetail.onOpenMediaSlot).toBe('function')
+    })
+
+    act(() => {
+      ;(toolbarDetail?.onOpenMediaSlot as (relationPath: string) => void)('layout.1.services.1.media')
+    })
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Use media 901 for Driveway lane' })).toBeTruthy()
+    })
+
+    expect(screen.queryByText('Recent media')).toBeNull()
+
+    expect(screen.getByText(/Targeting/)).toBeTruthy()
+    expect(screen.getByText(/Driveway lane/)).toBeTruthy()
+
+    const fetchCallsBeforeSwap = (global.fetch as ReturnType<typeof vi.fn>).mock.calls.length
+
+    fireEvent.click(screen.getByRole('button', { name: 'Use media 901 for Driveway lane' }))
+
+    await waitFor(() => {
+      expect((global.fetch as ReturnType<typeof vi.fn>).mock.calls.length).toBe(fetchCallsBeforeSwap)
+    })
+
+    expect(screen.getByText(/Targeting/)).toBeTruthy()
+    expect(screen.getByText(/Driveway lane/)).toBeTruthy()
+
+    window.removeEventListener(PAGE_COMPOSER_TOOLBAR_EVENT, handleToolbarChange as EventListener)
   })
 })

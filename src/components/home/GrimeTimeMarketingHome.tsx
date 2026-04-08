@@ -54,6 +54,7 @@ export async function GrimeTimeMarketingHome({
       block.blockType === 'serviceGrid' && resolveServiceGridDisplayVariant(block) === 'featureCards',
   )
   const featuredServices = featureCardsBlock?.services?.slice(0, 3) || []
+  const serviceLaneCount = featureCardsBlock?.services?.length || instantQuoteCatalog.services.length
   const startingPrice = Math.min(...instantQuoteCatalog.services.map((service) => service.minimum))
   const quarterlySavings = Math.round((1 - instantQuoteCatalog.frequencyMultipliers.quarterly) * 100)
 
@@ -94,7 +95,7 @@ export async function GrimeTimeMarketingHome({
               </div>
 
               <div className="mt-8 grid gap-4 sm:grid-cols-3">
-                {renderMetric('Service lanes', `${instantQuoteCatalog.services.length}`)}
+                {renderMetric('Service lanes', `${serviceLaneCount}`)}
                 {renderMetric('Starting minimum', formatCurrency(startingPrice))}
                 {renderMetric('Quarterly plan savings', `${quarterlySavings}% off`)}
               </div>

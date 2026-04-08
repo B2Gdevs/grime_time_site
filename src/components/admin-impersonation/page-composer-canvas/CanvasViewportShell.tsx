@@ -8,9 +8,9 @@ import {
   type PageComposerToolbarState,
 } from '@/components/admin-impersonation/PageComposerContext'
 import { usePortalCopilotOptional } from '@/components/copilot/PortalCopilotContext'
-import { pageSlugToFrontendPath } from '@/lib/pages/pageComposer'
 
-import { CanvasViewportChrome, resolveCanvasViewportBreadcrumbs } from './CanvasViewportChrome'
+import { CanvasViewportChrome } from './CanvasViewportChrome'
+import { resolveCanvasViewportBreadcrumbs } from './CanvasViewportUtils'
 
 export function PageComposerCanvasViewportShell({
   children,
@@ -35,24 +35,21 @@ export function PageComposerCanvasViewportShell({
   const breadcrumbs = resolveCanvasViewportBreadcrumbs(toolbarState?.draftPage?.pagePath ?? pathname)
   const dirty = toolbarState?.dirty ?? false
   const pagePath = toolbarState?.draftPage?.pagePath ?? pathname
-  const previewPath = toolbarState ? pageSlugToFrontendPath(toolbarState.slugDraft) : pathname
-
   return (
     <CanvasViewportChrome
       active={isActive}
       activeTab={composer.activeTab}
       breadcrumbs={breadcrumbs}
       dirty={dirty}
-      isPublishTabActive={composer.activeTab === 'publish'}
+      isPublishTabActive={composer.activeTab === 'pages'}
       onClose={() => composer.close()}
       onOpenPublish={() => {
-        composer.setActiveTab('publish')
+        composer.setActiveTab('pages')
         copilot?.openTools()
       }}
       onSetPreviewMode={(mode) => composer.setPreviewMode(mode)}
       pagePath={pagePath}
       previewMode={composer.previewMode}
-      previewPath={previewPath}
       selectedBlockType={selectedSummary?.blockType ?? ''}
       selectedIndex={composer.selectedIndex}
       selectedLabel={selectedSummary?.label ?? (composer.selectedIndex === -1 ? 'Hero' : '')}

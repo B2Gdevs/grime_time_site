@@ -19,12 +19,12 @@ export function PageComposerDrawerSelectedBlockPanel({
         <div className="text-sm font-semibold text-foreground">{selectedSummary?.label || 'Selected block'}</div>
         <div className="mt-1 text-sm text-muted-foreground">
           {selectedIndex < 0
-            ? 'Hero editing now happens directly on the page. Use the live canvas copy and media affordances instead of this side surface.'
-            : 'This first content editor is focused on reusable `serviceGrid` sections. Other block types can still be replaced, reordered, duplicated, and removed while the shared-section authoring surface expands.'}
+            ? 'Hero editing happens directly on the page. This drawer stays focused on finding, replacing, and arranging sections.'
+            : 'Edit copy directly on the live canvas. Use this block surface to replace the current section with a different layout, preset, or shared source.'}
         </div>
         <div className="mt-3">
           <Button disabled={selectedIndex < 0} onClick={() => openBlockLibrary(selectedIndex, 'replace')} size="sm" type="button" variant="outline">
-            Replace section
+            Find blocks
           </Button>
         </div>
       </div>

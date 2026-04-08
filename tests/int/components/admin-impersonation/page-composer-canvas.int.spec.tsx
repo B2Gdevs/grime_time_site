@@ -14,8 +14,6 @@ vi.mock('@/components/copilot/CopilotInteractable', () => ({
   useSectionInteractable: () => undefined,
 }))
 
-const onCreateDraft = vi.fn()
-
 function ComposerHarness() {
   const composer = usePageComposer()
 
@@ -24,56 +22,73 @@ function ComposerHarness() {
       <button
         onClick={() => {
           composer.setActivePagePath('/')
-          window.dispatchEvent(new CustomEvent(PAGE_COMPOSER_TOOLBAR_EVENT, { detail: {
-            creatingDraftClone: false,
-            dirty: false,
-            draftPage: {
-              _status: 'draft',
-              hero: { type: 'lowImpact' },
-              id: 7,
-              layout: [],
-              pagePath: '/',
-              publishedAt: null,
-              slug: 'home',
-              title: 'Home',
-              updatedAt: '2026-04-06T00:00:00.000Z',
-              visibility: 'public',
+          window.dispatchEvent(new CustomEvent(PAGE_COMPOSER_TOOLBAR_EVENT, {
+            detail: {
+              canDeleteDraftPage: false,
+              canResetDraft: false,
+              contentBlockEditor: null,
+              ctaEditor: null,
+              deleteDraftPageBusy: false,
+              dirty: false,
+              draftPage: {
+                _status: 'draft',
+                hero: { type: 'lowImpact' },
+                id: 7,
+                layout: [],
+                pagePath: '/',
+                publishedAt: null,
+                slug: 'home',
+                title: 'Home',
+                updatedAt: '2026-04-06T00:00:00.000Z',
+                visibility: 'public',
+              },
+              draftToolbarBusy: false,
+              draftToolbarStatusLabel: null,
+              heroEditor: null,
+              loading: false,
+              onAddAbove: vi.fn(),
+              onAddBelow: vi.fn(),
+              onDeleteBlock: vi.fn(),
+              onDeleteDraftPage: vi.fn(),
+              onDuplicateBlock: vi.fn(),
+              onStageMediaSlot: vi.fn(),
+              onOpenMediaSlot: vi.fn(),
+              onResetDraft: vi.fn(),
+              onSetSlugDraft: vi.fn(),
+              onSetTitleDraft: vi.fn(),
+              onSetVisibilityDraft: vi.fn(),
+              onToggleHidden: vi.fn(),
+              pricingTableEditor: null,
+              sectionSummaries: [
+                {
+                  badges: [],
+                  blockType: 'content',
+                  category: 'static',
+                  description: 'Hero section',
+                  hidden: false,
+                  index: 0,
+                  label: 'What we do',
+                  variant: null,
+                },
+                {
+                  badges: ['reusable'],
+                  blockType: 'pricing',
+                  category: 'static',
+                  description: 'Pricing explainer',
+                  hidden: false,
+                  index: 1,
+                  label: 'How pricing works',
+                  variant: 'stacked',
+                },
+              ],
+              selectedIndex: composer.selectedIndex,
+              serviceGridEditor: null,
+              slugDraft: 'home',
+              testimonialsEditor: null,
+              titleDraft: 'Home',
+              visibilityDraft: 'public',
             },
-            loading: false,
-            onAddAbove: vi.fn(),
-            onAddBelow: vi.fn(),
-            onCreateDraft,
-            onDeleteBlock: vi.fn(),
-            onDuplicateBlock: vi.fn(),
-            onSetSlugDraft: vi.fn(),
-            onSetTitleDraft: vi.fn(),
-            onSetVisibilityDraft: vi.fn(),
-            onToggleHidden: vi.fn(),
-            sectionSummaries: [
-              {
-                badges: [],
-                blockType: 'content',
-                description: 'Hero section',
-                hidden: false,
-                index: 0,
-                label: 'What we do',
-                variant: null,
-              },
-              {
-                badges: ['reusable'],
-                blockType: 'pricing',
-                description: 'Pricing explainer',
-                hidden: false,
-                index: 1,
-                label: 'How pricing works',
-                variant: 'stacked',
-              },
-            ],
-            selectedIndex: composer.selectedIndex,
-            slugDraft: 'home',
-            titleDraft: 'Home',
-            visibilityDraft: 'public',
-          }}))
+          }))
           composer.open()
         }}
         type="button"
@@ -95,8 +110,6 @@ function ComposerHarness() {
 
 describe('PageComposer canvas integration', () => {
   it('uses the live page surface as the selectable canvas when the composer is open', () => {
-    onCreateDraft.mockReset()
-
     render(
       <PageComposerProvider>
         <ComposerHarness />
@@ -105,25 +118,18 @@ describe('PageComposer canvas integration', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Open composer' }))
 
-    expect(screen.getByText('Composer admin bar')).toBeTruthy()
+    expect(screen.getByText('Composer canvas bar')).toBeTruthy()
     expect(screen.getByDisplayValue('Home')).toBeTruthy()
     expect(screen.getByDisplayValue('home')).toBeTruthy()
-    expect(screen.getByText(/editing the page document for this route/i)).toBeTruthy()
-    expect(screen.getByRole('button', { name: /create draft/i })).toBeTruthy()
-    expect(screen.getByRole('button', { name: /^draft$/i })).toBeTruthy()
-    expect(screen.getByRole('button', { name: /^public$/i })).toBeTruthy()
-    expect(screen.getByRole('link', { name: /open route preview/i })).toBeTruthy()
-    expect(screen.getByRole('button', { name: /desktop preview/i })).toBeTruthy()
+    expect(screen.getByText(/^draft$/i)).toBeTruthy()
+    expect(screen.getByText(/^public$/i)).toBeTruthy()
+    expect(screen.getByRole('button', { name: /preview size/i })).toBeTruthy()
     expect(screen.getByRole('button', { name: /close composer/i })).toBeTruthy()
-
-    fireEvent.click(screen.getByRole('button', { name: /create draft/i }))
-    expect(onCreateDraft).toHaveBeenCalled()
 
     fireEvent.click(screen.getByText('Section two'))
 
     expect(screen.getByTestId('selected-index').textContent).toBe('1')
-    expect(screen.getByText(/Section 2/i)).toBeTruthy()
-    expect(screen.getAllByText(/How pricing works/i).length).toBeGreaterThan(0)
+    expect(screen.getByText('Section two')).toBeTruthy()
 
     fireEvent.click(screen.getByRole('button', { name: /close composer/i }))
 

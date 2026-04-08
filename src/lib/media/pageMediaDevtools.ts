@@ -69,35 +69,31 @@ export function collectPageMediaReferences(args: {
   const pageTitle = page.title || page.slug || 'Untitled page'
   const heroMedia = asMedia(page.hero?.media)
 
-  if (heroMedia) {
-    refs.push({
-      label: 'Hero image',
-      media: buildMediaDevtoolsSummary(heroMedia),
-      mediaId: Number(heroMedia.id),
-      pageId,
-      pagePath,
-      pageSlug,
-      pageTitle,
-      relationPath: 'hero.media',
-    })
-  }
+  refs.push({
+    label: 'Hero image',
+    media: heroMedia ? buildMediaDevtoolsSummary(heroMedia) : null,
+    mediaId: heroMedia ? Number(heroMedia.id) : null,
+    pageId,
+    pagePath,
+    pageSlug,
+    pageTitle,
+    relationPath: 'hero.media',
+  })
 
   for (const [blockIndex, block] of (page.layout || []).entries()) {
     if (block.blockType === 'mediaBlock') {
       const blockMedia = asMedia(block.media)
 
-      if (blockMedia) {
-        refs.push({
-          label: getBlockLabel(block, blockIndex),
-          media: buildMediaDevtoolsSummary(blockMedia),
-          mediaId: Number(blockMedia.id),
-          pageId,
-          pagePath,
-          pageSlug,
-          pageTitle,
-          relationPath: `layout.${blockIndex}.media`,
-        })
-      }
+      refs.push({
+        label: getBlockLabel(block, blockIndex),
+        media: blockMedia ? buildMediaDevtoolsSummary(blockMedia) : null,
+        mediaId: blockMedia ? Number(blockMedia.id) : null,
+        pageId,
+        pagePath,
+        pageSlug,
+        pageTitle,
+        relationPath: `layout.${blockIndex}.media`,
+      })
 
       continue
     }
@@ -108,15 +104,12 @@ export function collectPageMediaReferences(args: {
 
     for (const [serviceIndex, service] of block.services.entries()) {
       const rowMedia = asMedia(service.media)
-
-      if (!rowMedia) {
-        continue
-      }
+      const rowLabel = service.name?.trim() || `Row ${serviceIndex + 1}`
 
       refs.push({
-        label: `${getBlockLabel(block, blockIndex)}: ${service.name}`,
-        media: buildMediaDevtoolsSummary(rowMedia),
-        mediaId: Number(rowMedia.id),
+        label: `${getBlockLabel(block, blockIndex)}: ${rowLabel}`,
+        media: rowMedia ? buildMediaDevtoolsSummary(rowMedia) : null,
+        mediaId: rowMedia ? Number(rowMedia.id) : null,
         pageId,
         pagePath,
         pageSlug,

@@ -181,6 +181,42 @@ export function pageSlugToFrontendPath(slug: null | string | undefined): string 
   return `/${trimmed}`
 }
 
+/** Marketing `[slug]` routes only — excludes multi-segment paths and non-composer surfaces. */
+export function isMarketingComposerPagePath(pagePath: string): boolean {
+  return frontendPathToPageSlug(pagePath) !== null
+}
+
+export function filterMarketingComposerPageSummaries(
+  pages: PageComposerPageSummary[],
+): PageComposerPageSummary[] {
+  return pages.filter((p) => isMarketingComposerPagePath(p.pagePath))
+}
+
+/**
+ * Collapsed composer “Pages” list: published marketing routes only, plus the page document
+ * for the route currently open in the preview (even when it is draft-only). Draft-only
+ * experiments on other slugs stay hidden until the user turns on “Show all”.
+ */
+export function filterUniqueMarketingRouteSummariesForComposer(
+  pages: PageComposerPageSummary[],
+  currentPath: string,
+): PageComposerPageSummary[] {
+  const current = normalizeComposerRoutePath(currentPath)
+  return pages.filter((p) => {
+    if (p._status === 'published') {
+      return true
+    }
+    return normalizeComposerRoutePath(p.pagePath) === current
+  })
+}
+
+/** Normalize path for comparing current route to `pagePath` (trailing slash, home). */
+export function normalizeComposerRoutePath(path: string): string {
+  const t = path.trim() || '/'
+  if (t === '/') return '/'
+  return t.endsWith('/') ? t.slice(0, -1) : t
+}
+
 export function createPageComposerDocumentSeed(args: { pagePath: string }): PageComposerDocument {
   const normalizedPagePath = args.pagePath.trim() || '/'
   const slug = frontendPathToPageSlug(normalizedPagePath) || ''

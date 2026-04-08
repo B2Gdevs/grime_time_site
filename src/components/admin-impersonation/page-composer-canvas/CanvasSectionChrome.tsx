@@ -2,10 +2,8 @@
 
 import type { MouseEvent, ReactNode, RefObject } from 'react'
 
-import { CanvasInsertHandle } from './CanvasPrimitives'
 import { CanvasSectionActionRail } from './CanvasSectionActionRail'
 import { CanvasSectionSelectionChip } from './CanvasSectionSelectionChip'
-import { CanvasSectionSummaryBadges } from './CanvasSectionSummaryBadges'
 import type { PageComposerToolbarState } from '@/components/admin-impersonation/PageComposerContext'
 import { cn } from '@/utilities/ui'
 import type { PageComposerSectionSummary } from '@/lib/pages/pageComposer'
@@ -15,7 +13,6 @@ type CanvasSectionChromeProps = {
   index: number
   isSelected: boolean
   label: string
-  sectionBadgeLabel: string
   sectionRef: RefObject<HTMLDivElement | null>
   sectionSummary: null | PageComposerSectionSummary
   supportsInsertionAbove: boolean
@@ -28,7 +25,6 @@ export function CanvasSectionChrome({
   index,
   isSelected,
   label,
-  sectionBadgeLabel,
   sectionRef,
   sectionSummary,
   supportsInsertionAbove,
@@ -50,41 +46,16 @@ export function CanvasSectionChrome({
       data-page-composer-selected={isSelected ? 'true' : 'false'}
       onClickCapture={onClickCapture}
     >
-      <CanvasInsertHandle
-        align="top"
-        hidden={!hasToolbarState || !supportsInsertionAbove}
-        onClick={(event) => {
-          event.preventDefault()
-          event.stopPropagation()
-          toolbarState?.onAddAbove(index)
-        }}
-      />
-
-      <CanvasSectionSelectionChip isSelected={isSelected} label={label} sectionBadgeLabel={sectionBadgeLabel} />
-
       {visibleSectionSummary && sectionToolbarState ? (
-        <CanvasSectionSummaryBadges
-          dirty={sectionToolbarState.dirty}
-          sectionBadgeLabel={sectionBadgeLabel}
+        <CanvasSectionActionRail
+          index={index}
           sectionSummary={visibleSectionSummary}
+          supportsInsertionAbove={hasToolbarState && supportsInsertionAbove}
+          toolbarState={sectionToolbarState}
         />
       ) : null}
 
-      {visibleSectionSummary && sectionToolbarState && index >= 0 ? (
-        <CanvasSectionActionRail index={index} sectionSummary={visibleSectionSummary} toolbarState={sectionToolbarState} />
-      ) : null}
-
       <div data-selected={isSelected ? 'true' : 'false'}>{children}</div>
-
-      <CanvasInsertHandle
-        align="bottom"
-        hidden={!hasToolbarState}
-        onClick={(event) => {
-          event.preventDefault()
-          event.stopPropagation()
-          toolbarState?.onAddBelow(index)
-        }}
-      />
     </div>
   )
 }

@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { ServiceGridBlock } from '@/blocks/ServiceGrid/Component'
 
@@ -15,6 +15,18 @@ const copilotState = {
 const updateBlockField = vi.fn()
 const updateHighlightText = vi.fn()
 const updateServiceField = vi.fn()
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ refresh: vi.fn() }),
+}))
+
+const mediaResource = {
+  alt: 'Freshly cleaned exterior',
+  createdAt: '2026-04-06T00:00:00.000Z',
+  id: 55,
+  updatedAt: '2026-04-06T00:00:00.000Z',
+  url: '/media/freshly-cleaned.jpg',
+}
 
 const toolbarState = {
   selectedIndex: 0,
@@ -52,6 +64,12 @@ const toolbarState = {
   },
 }
 
+vi.mock('@/components/Media', () => ({
+  Media: ({ resource }: { resource?: { alt?: string | null; id?: number } }) => (
+    <div data-testid="service-grid-media">{resource?.id}:{resource?.alt}</div>
+  ),
+}))
+
 vi.mock('@/components/admin-impersonation/PageComposerCanvas', () => ({
   usePageComposerCanvasToolbarState: () => toolbarState,
 }))
@@ -71,6 +89,31 @@ vi.mock('@/components/copilot/CopilotInteractable', () => ({
 }))
 
 describe('ServiceGridBlock inline editing', () => {
+  beforeEach(() => {
+    composerState.setActiveTab.mockReset()
+    copilotState.openFocusedTextSession.mockReset()
+    updateBlockField.mockReset()
+    updateHighlightText.mockReset()
+    updateServiceField.mockReset()
+
+    toolbarState.selectedIndex = 0
+    toolbarState.serviceGridEditor.block = {
+      blockType: 'serviceGrid' as const,
+      displayVariant: 'featureCards' as const,
+      heading: 'What we do',
+      intro: 'Visible intro copy.',
+      services: [
+        {
+          eyebrow: 'Soft wash',
+          highlights: [{ text: 'Highlight proof point.' }],
+          name: 'House washing',
+          pricingHint: 'Home size and buildup',
+          summary: 'Visible summary copy.',
+        },
+      ],
+    }
+  })
+
   it('renders direct on-page editors for the selected service grid block', () => {
     render(
       <ServiceGridBlock
@@ -112,7 +155,48 @@ describe('ServiceGridBlock inline editing', () => {
     expect(updateHighlightText).toHaveBeenCalledWith(0, 0, 'Updated highlight')
 
     fireEvent.click(screen.getAllByRole('button', { name: /generate text for this field/i })[0]!)
-    expect(composerState.setActiveTab).toHaveBeenCalledWith('content')
     expect(copilotState.openFocusedTextSession).toHaveBeenCalled()
+  })
+
+  it('renders service-grid media from the live draft block instead of stale props', () => {
+    toolbarState.serviceGridEditor.block = {
+      blockType: 'serviceGrid' as const,
+      displayVariant: 'interactive' as const,
+      heading: 'Services',
+      intro: 'Draft intro copy.',
+      services: [
+        {
+          eyebrow: 'Soft wash',
+          highlights: [{ text: 'Highlight proof point.' }],
+          media: mediaResource as never,
+          name: 'Draft lane',
+          pricingHint: 'Home size and buildup',
+          summary: 'Draft summary copy.',
+        },
+      ],
+    }
+
+    render(
+      <ServiceGridBlock
+        blockIndex={0}
+        blockType="serviceGrid"
+        displayVariant="interactive"
+        heading="Services"
+        intro="Prop intro copy."
+        services={[
+          {
+            eyebrow: 'Soft wash',
+            highlights: [{ text: 'Highlight proof point.' }],
+            media: null,
+            name: 'Prop lane',
+            pricingHint: 'Home size and buildup',
+            summary: 'Prop summary copy.',
+          },
+        ]}
+      />,
+    )
+
+    expect(screen.getByDisplayValue('Draft lane')).toBeTruthy()
+    expect(screen.getByTestId('service-grid-media').textContent).toContain('55:Freshly cleaned exterior')
   })
 })

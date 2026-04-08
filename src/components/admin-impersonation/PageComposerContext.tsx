@@ -5,24 +5,33 @@ import type { PageComposerDocument, PageComposerSectionSummary } from '@/lib/pag
 import type {
   CallToActionBlock,
   ContentBlock,
+  Media,
   PricingTableBlock,
   ServiceGridBlock,
   TestimonialsSectionBlock,
 } from '@/payload-types'
 
 export type PageComposerCanvasMode = 'desktop' | 'mobile' | 'tablet'
-export type PageComposerTab = 'content' | 'media' | 'publish' | 'structure'
+export type PageComposerTab = 'content' | 'media' | 'pages' | 'structure'
 export type PageComposerVisibilityMode = 'private' | 'public'
 export type PageComposerToolbarState = {
-  creatingDraftClone: boolean
+  /** True while auto-save or manual save-draft is running. */
+  draftToolbarBusy: boolean
+  /** Short status next to the spinner when `draftToolbarBusy` (e.g. "Saving…"). */
+  draftToolbarStatusLabel: null | string
   dirty: boolean
   draftPage: null | PageComposerDocument
   loading: boolean
   onAddAbove: (index: number) => void
   onAddBelow: (index: number) => void
-  onCreateDraft: () => void
+  /** Revert canvas + field drafts to the last saved snapshot (same as last successful save/load). */
+  onResetDraft: () => void
+  canResetDraft: boolean
   onDeleteBlock: (index: number) => void
   onDuplicateBlock: (index: number) => void
+  /** Stage a slot media change in the current draft so autosave can persist it without blocking editing. */
+  onStageMediaSlot: (media: Media, relationPath: string) => void
+  onOpenMediaSlot: (relationPath: string) => void
   onSetSlugDraft: (value: string) => void
   onSetTitleDraft: (value: string) => void
   onSetVisibilityDraft: (value: PageComposerVisibilityMode) => void
@@ -69,6 +78,7 @@ export type PageComposerToolbarState = {
     updatePlanLinkLabel: (planIndex: number, value: string) => void
   }
   serviceGridEditor: null | {
+    addServiceLane: () => void
     block: ServiceGridBlock
     updateBlockField: (field: 'eyebrow' | 'heading' | 'intro', value: string) => void
     updateHighlightText: (highlightIndex: number, rowIndex: number, value: string) => void
@@ -96,6 +106,10 @@ export type PageComposerToolbarState = {
   slugDraft: string
   titleDraft: string
   visibilityDraft: PageComposerVisibilityMode
+  /** Draft-only pages with a persisted id can be deleted; published pages are blocked. */
+  canDeleteDraftPage: boolean
+  deleteDraftPageBusy: boolean
+  onDeleteDraftPage: () => void
 }
 
 type PageComposerContextValue = {

@@ -19,7 +19,7 @@ export function PageComposerDrawerMediaSelectedSlotDetails({
       <div>
         <div className="text-sm font-semibold text-foreground">{selectedMediaSlot.label}</div>
         <div className="mt-1 text-xs text-muted-foreground">
-          {selectedMediaSlot.media?.alt || 'Use upload, generate, or recent-library swap to fill this row.'}
+          {selectedMediaSlot.media?.alt || 'Use the library gallery, upload, or generate to fill this slot.'}
         </div>
       </div>
       <div className="grid gap-2 text-xs text-muted-foreground">

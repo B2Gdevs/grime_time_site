@@ -29,7 +29,6 @@ export function PageComposerCanvasSectionShell({
   )
   const isSelected = Boolean(isActive && composer?.selectedIndex === index)
   const sectionSummary = toolbarState ? toolbarState.sectionSummaries.find((summary) => summary.index === index) ?? null : null
-  const sectionBadgeLabel = index < 0 ? 'Hero' : `Section ${index + 1}`
 
   useEffect(() => {
     if (!isSelected) {
@@ -53,7 +52,6 @@ export function PageComposerCanvasSectionShell({
       index={index}
       isSelected={isSelected}
       label={label}
-      sectionBadgeLabel={sectionBadgeLabel}
       sectionRef={sectionRef}
       sectionSummary={sectionSummary}
       supportsInsertionAbove={supportsInsertionAbove}

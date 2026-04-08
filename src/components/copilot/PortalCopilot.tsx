@@ -269,10 +269,25 @@ function AuthoringContextSummary({
     <div className="mx-auto mb-4 flex w-full max-w-3xl flex-col gap-3 rounded-[1.75rem] border bg-card/80 p-4 shadow-sm">
       <div className="flex flex-wrap items-center gap-2">
         <Badge variant="outline">Authoring context</Badge>
+        {authoringContext?.surface === 'media-library' ? (
+          <Badge variant="secondary">Media library</Badge>
+        ) : null}
         {authoringContext?.page ? <Badge variant="secondary">{authoringContext.page.pagePath}</Badge> : null}
         {authoringContext?.section ? <Badge variant="secondary">{authoringContext.section.label}</Badge> : null}
         {authoringContext?.mediaSlot ? <Badge variant="secondary">{authoringContext.mediaSlot.label}</Badge> : null}
+        {authoringContext?.libraryMedia ? (
+          <Badge variant="secondary">Library #{authoringContext.libraryMedia.id}</Badge>
+        ) : null}
       </div>
+
+      {authoringContext?.surface === 'media-library' && authoringContext.libraryMedia ? (
+        <div className="grid gap-1 text-sm text-muted-foreground">
+          <div className="font-medium text-foreground">{authoringContext.libraryMedia.label}</div>
+          <div>
+            {authoringContext.libraryMedia.mimeType ? `${authoringContext.libraryMedia.mimeType} • ` : ''}ID {authoringContext.libraryMedia.id}
+          </div>
+        </div>
+      ) : null}
 
       {authoringContext?.page ? (
         <div className="grid gap-1 text-sm text-muted-foreground">
@@ -438,7 +453,7 @@ export function PortalCopilot({
       return
     }
 
-    if (composer?.isOpen && composer.activeTab === 'publish' && hasToolsView) {
+    if (composer?.isOpen && composer.activeTab === 'pages' && hasToolsView) {
       setActiveView('tools')
       return
     }

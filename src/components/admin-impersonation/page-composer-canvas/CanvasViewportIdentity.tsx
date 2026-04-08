@@ -22,20 +22,16 @@ export function CanvasViewportIdentity({
   }
 }) {
   return (
-    <div className="flex min-w-0 flex-wrap items-center gap-2">
-      <div className={cn('flex flex-wrap items-center gap-2', adminPanelChrome.fieldLabelTight)}>
-        <span>Composer admin bar</span>
-        {breadcrumbs.map((segment, index) => (
-          <span className="inline-flex items-center gap-2" key={`${segment}-${index}`}>
-            <span>/</span>
-            <span>{segment}</span>
-          </span>
-        ))}
+    <div className="grid gap-1">
+      <div className="flex min-w-0 flex-wrap items-center gap-2">
+        <div className={cn('flex flex-wrap items-center gap-2', adminPanelChrome.fieldLabelTight)}>
+          <span>Composer canvas bar</span>
+
+        </div>
+        {toolbarState?.draftPage ? <Badge variant="secondary">{pagePath}</Badge> : null}
+        {toolbarState?.draftPage ? <Badge variant="outline">{toolbarState.draftPage._status || 'draft'}</Badge> : null}
+        {dirty ? <Badge>Unsaved</Badge> : null}
       </div>
-      {toolbarState?.draftPage ? <Badge variant="secondary">{pagePath}</Badge> : null}
-      {toolbarState?.draftPage ? <Badge variant="outline">{toolbarState.draftPage._status || 'draft'}</Badge> : null}
-      {dirty ? <Badge>Unsaved</Badge> : null}
-      {selectedSummaryLabel ? <Badge variant="outline">{selectedSummaryLabel}</Badge> : null}
     </div>
   )
 }

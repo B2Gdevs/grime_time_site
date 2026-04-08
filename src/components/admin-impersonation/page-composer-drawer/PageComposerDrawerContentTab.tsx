@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import type { PageComposerDocument, PageComposerSectionSummary } from '@/lib/pages/pageComposer'
 import type { ReusableAwareLayoutBlock } from '@/lib/pages/pageComposerReusableBlocks'
@@ -13,9 +13,12 @@ import { PageComposerDrawerServiceGridEditor } from '@/components/admin-imperson
 export function PageComposerDrawerContentTab({
   draftPage,
   loading,
+  mutateSelectedService,
+  mutateSelectedServiceGrid,
   openBlockLibrary,
   openSharedSectionSourceEditor,
   removeBlock,
+  resolvedSelectedBlock,
   selectedBlock,
   selectedBlockIsLinkedSharedSection,
   selectedIndex,
@@ -23,8 +26,6 @@ export function PageComposerDrawerContentTab({
   selectedSummary,
   status,
   detachReusableBlock,
-  mutateSelectedServiceGrid,
-  mutateSelectedService,
 }: {
   detachReusableBlock: (index: number) => void
   draftPage: null | PageComposerDocument
@@ -34,6 +35,7 @@ export function PageComposerDrawerContentTab({
   openBlockLibrary: (index: number, mode?: 'insert' | 'replace') => void
   openSharedSectionSourceEditor: (id: number) => void
   removeBlock: (index: number) => void
+  resolvedSelectedBlock: ReusableAwareLayoutBlock | null
   selectedBlock: ReusableAwareLayoutBlock | null
   selectedBlockIsLinkedSharedSection: boolean
   selectedIndex: number
@@ -42,7 +44,7 @@ export function PageComposerDrawerContentTab({
   status: null | string
 }) {
   if (loading) {
-    return <PageComposerDrawerContentEmptyState>Loading section editor...</PageComposerDrawerContentEmptyState>
+    return <PageComposerDrawerContentEmptyState>Loading block launcher...</PageComposerDrawerContentEmptyState>
   }
 
   if (!draftPage) {
@@ -52,13 +54,17 @@ export function PageComposerDrawerContentTab({
   if (selectedIndex < 0) {
     return (
       <PageComposerDrawerContentEmptyState>
-        Hero copy and hero media edit directly on the live canvas. Click the hero content on the page to update it inline.
+        Hero editing stays on the live canvas. Use the page itself to edit copy and media, and use this surface to find blocks for the sections around it.
       </PageComposerDrawerContentEmptyState>
     )
   }
 
   if (!selectedBlock) {
-    return <PageComposerDrawerContentEmptyState>Select a section on the live page to edit its content.</PageComposerDrawerContentEmptyState>
+    return (
+      <PageComposerDrawerContentEmptyState>
+        Select a section on the live page to manage its block, or use the canvas insert handles to open block search at the correct position.
+      </PageComposerDrawerContentEmptyState>
+    )
   }
 
   if (selectedBlockIsLinkedSharedSection && selectedSharedSectionId) {
@@ -85,12 +91,12 @@ export function PageComposerDrawerContentTab({
     )
   }
 
-  if (selectedBlock.blockType === 'serviceGrid') {
+  if (resolvedSelectedBlock?.blockType === 'serviceGrid') {
     return (
       <PageComposerDrawerServiceGridEditor
         mutateSelectedService={mutateSelectedService}
         mutateSelectedServiceGrid={mutateSelectedServiceGrid}
-        selectedBlock={selectedBlock as ServiceGridBlock}
+        selectedBlock={resolvedSelectedBlock as ServiceGridBlock}
       />
     )
   }

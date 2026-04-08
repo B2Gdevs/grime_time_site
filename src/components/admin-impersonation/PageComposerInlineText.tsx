@@ -3,7 +3,6 @@
 import { SparklesIcon } from 'lucide-react'
 import { useCallback } from 'react'
 
-import { usePageComposerOptional } from '@/components/admin-impersonation/PageComposerContext'
 import { usePortalCopilotOptional } from '@/components/copilot/PortalCopilotContext'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -87,7 +86,6 @@ export function InlineTextarea({
 }
 
 export function usePageComposerTextGenerator() {
-  const composer = usePageComposerOptional()
   const copilot = usePortalCopilotOptional()
 
   return useCallback((args: {
@@ -97,7 +95,6 @@ export function usePageComposerTextGenerator() {
     fieldPath: string
     instructions?: string
   }) => {
-    composer?.setActiveTab('content')
     copilot?.openFocusedTextSession(args)
-  }, [composer, copilot])
+  }, [copilot])
 }

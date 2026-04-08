@@ -22,12 +22,6 @@ async function dragSectionAbove(args: {
   await sourceHandle.press('Space')
 }
 
-async function openPageComposer(page: import('@playwright/test').Page) {
-  await page.goto('/')
-  await page.getByRole('button', { name: 'Page composer' }).click()
-  await expect(page.getByRole('button', { name: 'Dismiss page composer' })).toBeVisible()
-}
-
 async function openPageComposerAtPath(page: import('@playwright/test').Page, pathname: string) {
   await page.goto(pathname)
   await page.getByRole('button', { name: 'Page composer' }).click()
@@ -81,20 +75,6 @@ async function persistComposerDraft(page: import('@playwright/test').Page) {
   }
 
   throw lastError || new Error('Unable to persist the page draft.')
-}
-
-async function createDraftPage(args: {
-  page: import('@playwright/test').Page
-}) {
-  const previousPath = new URL(args.page.url()).pathname
-  await composerDrawer(args.page).getByRole('button', { name: 'Create draft' }).click()
-  await args.page.waitForURL((url) => url.pathname !== previousPath)
-
-  const currentUrl = new URL(args.page.url())
-  const slug = currentUrl.pathname.replace(/^\//, '')
-  const title = await composerDrawer(args.page).locator('input').first().inputValue()
-
-  return { slug, title }
 }
 
 async function insertServiceGrid(page: import('@playwright/test').Page) {
@@ -155,8 +135,8 @@ test.describe('Staff page composer', () => {
 
     await openPageComposerAtPath(page, pathname)
 
-    await expect(composerDrawer(page).getByDisplayValue('Playwright Missing Route')).toBeVisible()
-    await expect(composerDrawer(page).getByDisplayValue(slug)).toBeVisible()
+    await expect(composerDrawer(page).getByPlaceholder('Page title')).toHaveValue('Playwright Missing Route')
+    await expect(composerDrawer(page).getByPlaceholder('page-slug')).toHaveValue(slug)
     await expect(composerDrawer(page).getByText(/save draft or publish to create it/i)).toBeVisible()
 
     await clickComposerButton(page, 'Save draft')
@@ -166,11 +146,13 @@ test.describe('Staff page composer', () => {
     await expect(page).toHaveURL(new RegExp(`${pathname}$`))
   })
 
-  test('can clone a draft page, insert blocks through the library, reorder them, run media actions, and publish', async ({
+  test('can create a route draft, insert blocks through the library, reorder them, run media actions, and publish', async ({
     page,
   }) => {
     test.setTimeout(90000)
     const mediaRequests: string[] = []
+    const slug = `playwright-composer-${Date.now()}`
+    const pathname = `/${slug}`
 
     await page.route('**/api/internal/page-composer/media', async (route) => {
       if (route.request().method() === 'GET') {
@@ -201,9 +183,10 @@ test.describe('Staff page composer', () => {
       })
     })
 
-    await openPageComposer(page)
-    const created = await createDraftPage({ page })
-    createdSlugs.add(created.slug)
+    await openPageComposerAtPath(page, pathname)
+    await clickComposerButton(page, 'Save draft')
+    await expect(composerDrawer(page).getByText('Draft created.')).toBeVisible({ timeout: 60000 })
+    createdSlugs.add(slug)
 
     await insertServiceGrid(page)
     await renameSelectedServiceGrid(page, 'Interactive service section', 'Composer Alpha')
@@ -263,6 +246,13 @@ test.describe('Staff page composer', () => {
     test.skip(!copilotEnabled, 'Enable AI_OPS_ASSISTANT_ENABLED=true to run the shared copilot authoring flow.')
 
     let capturedCopilotBody: Record<string, unknown> | null = null
+    const slug = `playwright-copilot-${Date.now()}`
+    const pathname = `/${slug}`
+    const draftTitle = slug
+      .split('-')
+      .filter(Boolean)
+      .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+      .join(' ')
 
     await page.route('**/api/internal/page-composer/media', async (route) => {
       if (route.request().method() === 'GET') {
@@ -317,9 +307,10 @@ test.describe('Staff page composer', () => {
       })
     })
 
-    await openPageComposer(page)
-    const created = await createDraftPage({ page })
-    createdSlugs.add(created.slug)
+    await openPageComposerAtPath(page, pathname)
+    await clickComposerButton(page, 'Save draft')
+    await expect(composerDrawer(page).getByText('Draft created.')).toBeVisible({ timeout: 60000 })
+    createdSlugs.add(slug)
 
     await insertServiceGrid(page)
     await renameSelectedServiceGrid(page, 'Interactive service section', 'Copilot Service Grid')
@@ -332,7 +323,7 @@ test.describe('Staff page composer', () => {
 
     await expect(page.getByRole('heading', { name: 'Grime Time Copilot' })).toBeVisible()
     await expect(page.getByText('Authoring context', { exact: true })).toBeVisible()
-    await expect(page.getByText(created.title, { exact: true })).toBeVisible()
+    await expect(page.getByText(draftTitle, { exact: true })).toBeVisible()
     await expect(page.getByText(/Section \d+: Copilot Service Grid/)).toBeVisible()
     await expect(page.getByText('Focused media session', { exact: true })).toBeVisible()
 

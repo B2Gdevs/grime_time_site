@@ -15,6 +15,12 @@ export type CopilotAuthoringContext = {
     mimeType?: null | string
     relationPath: string
   } | null
+  /** Composer media tab: editing a library record via copilot (generate flow TBD). */
+  libraryMedia?: {
+    id: number
+    label: string
+    mimeType?: null | string
+  } | null
   page?: {
     id: null | number
     pagePath: string
@@ -30,7 +36,7 @@ export type CopilotAuthoringContext = {
     label: string
     variant?: null | string
   } | null
-  surface: 'page-composer'
+  surface: 'media-library' | 'page-composer'
 }
 
 export type CopilotMediaFocusedSession = {

@@ -7,6 +7,7 @@ import { generateOpenAIImage } from '@/lib/media/openaiImageGeneration'
 import { generateOpenAIVideo } from '@/lib/media/openaiVideoGeneration'
 import { getServerSideURL } from '@/utilities/getURL'
 import type { Media, Page } from '@/payload-types'
+import type { MediaLibraryItem } from '@/components/admin-impersonation/page-composer-drawer/PageComposerDrawerMediaTypes'
 
 async function requireStaffPageComposerAuth() {
   const auth = await getCurrentAuthContext()
@@ -153,6 +154,18 @@ function buildMediaResponse(doc: Media | null | undefined) {
   return doc ? buildMediaDevtoolsSummary(doc) : null
 }
 
+function buildMediaLibraryItem(doc: Media): MediaLibraryItem {
+  return {
+    alt: doc.alt || null,
+    filename: doc.filename || null,
+    id: Number(doc.id),
+    media: doc,
+    mimeType: doc.mimeType || null,
+    previewUrl: doc.sizes?.thumbnail?.url || doc.thumbnailURL || doc.url || null,
+    updatedAt: doc.updatedAt,
+  }
+}
+
 function parsePositiveNumber(value: FormDataEntryValue | null): null | number {
   const parsed = Number(value)
   return Number.isInteger(parsed) && parsed > 0 ? parsed : null
@@ -183,7 +196,7 @@ export async function GET(): Promise<Response> {
   })
 
   return Response.json({
-    items: (media.docs as Media[]).map((doc) => buildMediaDevtoolsSummary(doc)),
+    items: (media.docs as Media[]).map((doc) => buildMediaLibraryItem(doc)),
   })
 }
 
@@ -200,6 +213,32 @@ export async function POST(request: Request): Promise<Response> {
   const mediaKind = parseMediaKind(formData.get('mediaKind'))
   const sourceMediaId = parsePositiveNumber(formData.get('sourceMediaId'))
   const payloadReq = await createLocalReq({ user: auth.realUser || undefined }, auth.payload)
+
+  if (action === 'delete-media') {
+    const mediaId = parsePositiveNumber(formData.get('mediaId'))
+
+    if (!mediaId) {
+      return Response.json({ error: 'A valid media id is required.' }, { status: 400 })
+    }
+
+    try {
+      await auth.payload.delete({
+        collection: 'media',
+        id: mediaId,
+        overrideAccess: false,
+        req: payloadReq,
+      })
+
+      return Response.json({ ok: true })
+    } catch (error) {
+      return Response.json(
+        {
+          error: error instanceof Error ? error.message : 'Unable to delete media.',
+        },
+        { status: 400 },
+      )
+    }
+  }
 
   if (action === 'generate-replace-existing' || action === 'generate-and-swap') {
     const prompt = String(formData.get('prompt') || '').trim()

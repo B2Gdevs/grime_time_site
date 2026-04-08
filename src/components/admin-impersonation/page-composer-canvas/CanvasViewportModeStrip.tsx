@@ -1,9 +1,17 @@
 'use client'
 
-import { MonitorIcon, SmartphoneIcon, TabletSmartphoneIcon } from 'lucide-react'
-
-import { CanvasModeButton } from './CanvasPrimitives'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import type { PageComposerCanvasMode } from '@/components/admin-impersonation/PageComposerContext'
+
+import { CanvasViewportModeMenuItem } from './CanvasViewportModeMenuItem'
+import { canvasViewportModeOptions } from './CanvasViewportModeOptions'
+import { CanvasViewportModeTrigger } from './CanvasViewportModeTrigger'
 
 export function CanvasViewportModeStrip({
   activeMode,
@@ -12,26 +20,20 @@ export function CanvasViewportModeStrip({
   activeMode: PageComposerCanvasMode
   onSetMode: (mode: PageComposerCanvasMode) => void
 }) {
+  const active = canvasViewportModeOptions.find((option) => option.mode === activeMode) ?? canvasViewportModeOptions[0]
+
   return (
-    <>
-      <CanvasModeButton
-        active={activeMode === 'desktop'}
-        icon={<MonitorIcon className="h-4 w-4" />}
-        label="Desktop preview"
-        onClick={() => onSetMode('desktop')}
-      />
-      <CanvasModeButton
-        active={activeMode === 'tablet'}
-        icon={<TabletSmartphoneIcon className="h-4 w-4" />}
-        label="Tablet preview"
-        onClick={() => onSetMode('tablet')}
-      />
-      <CanvasModeButton
-        active={activeMode === 'mobile'}
-        icon={<SmartphoneIcon className="h-4 w-4" />}
-        label="Mobile preview"
-        onClick={() => onSetMode('mobile')}
-      />
-    </>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <CanvasViewportModeTrigger active={active} />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuLabel>Canvas width</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        {canvasViewportModeOptions.map((option) => (
+          <CanvasViewportModeMenuItem activeMode={activeMode} key={option.mode} onSetMode={onSetMode} option={option} />
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }

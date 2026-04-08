@@ -1,6 +1,6 @@
 'use client'
 
-import { PageComposerLauncherButton } from '@/components/admin-impersonation/PageComposerDrawer'
+import { PageComposerLauncherButton } from '@/components/admin-impersonation/PageComposerLauncherButton'
 import { usePageComposerOptional } from '@/components/admin-impersonation/PageComposerContext'
 
 export function ContentAuthoringToolbar() {

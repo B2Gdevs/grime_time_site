@@ -156,6 +156,25 @@ function ServiceGridInteractableRegistrar({
   return null
 }
 
+function ServiceGridAddLaneButton({
+  onClick,
+}: {
+  onClick: () => void
+}) {
+  return (
+    <Button
+      className="h-9 rounded-full"
+      data-page-composer-interactive="true"
+      onClick={onClick}
+      size="sm"
+      type="button"
+      variant="outline"
+    >
+      Add lane
+    </Button>
+  )
+}
+
 export const ServiceGridBlock: React.FC<ServiceGridBlockProps> = ({
   blockIndex,
   displayVariant,
@@ -164,9 +183,23 @@ export const ServiceGridBlock: React.FC<ServiceGridBlockProps> = ({
   intro,
   services,
 }) => {
-  const variant = resolveServiceGridDisplayVariant({ displayVariant, heading })
   const composer = usePageComposerOptional()
   const toolbarState = usePageComposerCanvasToolbarState()
+  const liveBlock =
+    composer?.isOpen &&
+    typeof blockIndex === 'number' &&
+    toolbarState?.selectedIndex === blockIndex &&
+    toolbarState.serviceGridEditor?.block
+      ? toolbarState.serviceGridEditor.block
+      : null
+  const resolvedEyebrow = liveBlock?.eyebrow ?? eyebrow
+  const resolvedHeading = liveBlock?.heading ?? heading
+  const resolvedIntro = liveBlock?.intro ?? intro
+  const resolvedServices = liveBlock?.services ?? services
+  const variant = resolveServiceGridDisplayVariant({
+    displayVariant: liveBlock?.displayVariant ?? displayVariant,
+    heading: resolvedHeading,
+  })
 
   if (variant === 'featureCards') {
     return (
@@ -175,22 +208,22 @@ export const ServiceGridBlock: React.FC<ServiceGridBlockProps> = ({
           <ServiceGridInteractableRegistrar
             blockType="serviceGrid"
             description="A structured services or pricing explainer section on the live page canvas."
-            heading={heading || ''}
-            id={`service-grid:${blockIndex ?? heading ?? variant}`}
+            heading={resolvedHeading || ''}
+            id={`service-grid:${blockIndex ?? resolvedHeading ?? variant}`}
             index={blockIndex ?? -1}
-            intro={intro || ''}
+            intro={resolvedIntro || ''}
             pagePath={toolbarState.draftPage?.pagePath ?? '/'}
-            rowLabels={(services || []).map((service) => service.name).filter(Boolean).slice(0, 6)}
+            rowLabels={(resolvedServices || []).map((service) => service.name).filter(Boolean).slice(0, 6)}
             selected={typeof blockIndex === 'number' && toolbarState.selectedIndex === blockIndex}
             variant={variant}
           />
         ) : null}
         <FeatureCardsServiceGrid
           blockIndex={blockIndex}
-          eyebrow={eyebrow}
-          heading={heading}
-          intro={intro}
-          services={services}
+          eyebrow={resolvedEyebrow}
+          heading={resolvedHeading}
+          intro={resolvedIntro}
+          services={resolvedServices}
         />
       </>
     )
@@ -203,17 +236,23 @@ export const ServiceGridBlock: React.FC<ServiceGridBlockProps> = ({
           <ServiceGridInteractableRegistrar
             blockType="serviceGrid"
             description="A structured services or pricing explainer section on the live page canvas."
-            heading={heading || ''}
-            id={`service-grid:${blockIndex ?? heading ?? variant}`}
+            heading={resolvedHeading || ''}
+            id={`service-grid:${blockIndex ?? resolvedHeading ?? variant}`}
             index={blockIndex ?? -1}
-            intro={intro || ''}
+            intro={resolvedIntro || ''}
             pagePath={toolbarState.draftPage?.pagePath ?? '/'}
-            rowLabels={(services || []).map((service) => service.name).filter(Boolean).slice(0, 6)}
+            rowLabels={(resolvedServices || []).map((service) => service.name).filter(Boolean).slice(0, 6)}
             selected={typeof blockIndex === 'number' && toolbarState.selectedIndex === blockIndex}
             variant={variant}
           />
         ) : null}
-        <PricingStepsServiceGrid blockIndex={blockIndex} eyebrow={eyebrow} heading={heading} intro={intro} services={services} />
+        <PricingStepsServiceGrid
+          blockIndex={blockIndex}
+          eyebrow={resolvedEyebrow}
+          heading={resolvedHeading}
+          intro={resolvedIntro}
+          services={resolvedServices}
+        />
       </>
     )
   }
@@ -224,17 +263,23 @@ export const ServiceGridBlock: React.FC<ServiceGridBlockProps> = ({
         <ServiceGridInteractableRegistrar
           blockType="serviceGrid"
           description="A structured services or pricing explainer section on the live page canvas."
-          heading={heading || ''}
-          id={`service-grid:${blockIndex ?? heading ?? variant}`}
+          heading={resolvedHeading || ''}
+          id={`service-grid:${blockIndex ?? resolvedHeading ?? variant}`}
           index={blockIndex ?? -1}
-          intro={intro || ''}
+          intro={resolvedIntro || ''}
           pagePath={toolbarState.draftPage?.pagePath ?? '/'}
-          rowLabels={(services || []).map((service) => service.name).filter(Boolean).slice(0, 6)}
+          rowLabels={(resolvedServices || []).map((service) => service.name).filter(Boolean).slice(0, 6)}
           selected={typeof blockIndex === 'number' && toolbarState.selectedIndex === blockIndex}
           variant={variant}
         />
       ) : null}
-      <InteractiveServiceGrid blockIndex={blockIndex} eyebrow={eyebrow} heading={heading} intro={intro} services={services} />
+      <InteractiveServiceGrid
+        blockIndex={blockIndex}
+        eyebrow={resolvedEyebrow}
+        heading={resolvedHeading}
+        intro={resolvedIntro}
+        services={resolvedServices}
+      />
     </>
   )
 }
@@ -249,17 +294,21 @@ const InteractiveServiceGrid: React.FC<
   services,
 }) => {
   const { editor, openTextGenerator } = useInlineServiceGridEditor(blockIndex)
-  const sectionId = heading?.trim().toLowerCase() === 'what we do' ? 'services' : undefined
-  const headingKey = heading?.trim().toLowerCase() || ''
+  const currentBlock = editor?.block
+  const currentEyebrow = currentBlock?.eyebrow ?? eyebrow
+  const currentHeading = currentBlock?.heading ?? heading
+  const currentIntro = currentBlock?.intro ?? intro
+  const rows = currentBlock?.services || services || []
+  const sectionId = currentHeading?.trim().toLowerCase() === 'what we do' ? 'services' : undefined
+  const headingKey = currentHeading?.trim().toLowerCase() || ''
   const isPricing = headingKey === 'how our pricing works'
   const isWhatWeDo = headingKey === 'what we do'
-  const rows = services || []
   const [activeIndex, setActiveIndex] = React.useState(0)
   const activeRow = rows[activeIndex] || rows[0]
 
   React.useEffect(() => {
     setActiveIndex(0)
-  }, [heading, rows.length])
+  }, [currentHeading, rows.length])
 
   if (!activeRow) return null
 
@@ -275,16 +324,16 @@ const InteractiveServiceGrid: React.FC<
               onGenerate={() =>
                 openTextGenerator?.({
                   applyText: (value) => editor.updateBlockField('eyebrow', value),
-                  currentText: eyebrow || '',
+                  currentText: currentEyebrow || '',
                   fieldLabel: 'section eyebrow',
                   fieldPath: `layout.${blockIndex}.eyebrow`,
                 })}
               placeholder="Section eyebrow"
-              value={eyebrow || ''}
+              value={currentEyebrow || ''}
             />
-          ) : eyebrow ? (
+          ) : currentEyebrow ? (
             <p className="mb-2 text-xs font-medium uppercase tracking-[0.24em] text-primary sm:mb-3 sm:text-sm">
-              {eyebrow}
+              {currentEyebrow}
             </p>
           ) : null}
           {editor ? (
@@ -294,15 +343,15 @@ const InteractiveServiceGrid: React.FC<
               onGenerate={() =>
                 openTextGenerator?.({
                   applyText: (value) => editor.updateBlockField('heading', value),
-                  currentText: heading || '',
+                  currentText: currentHeading || '',
                   fieldLabel: 'section heading',
                   fieldPath: `layout.${blockIndex}.heading`,
                 })}
               placeholder="Section heading"
-              value={heading || ''}
+              value={currentHeading || ''}
             />
           ) : (
-            <h2 className="mb-3 text-2xl font-semibold tracking-tight sm:text-3xl md:text-4xl">{heading}</h2>
+            <h2 className="mb-3 text-2xl font-semibold tracking-tight sm:text-3xl md:text-4xl">{currentHeading}</h2>
           )}
           {editor ? (
             <InlineTextarea
@@ -311,23 +360,26 @@ const InteractiveServiceGrid: React.FC<
               onGenerate={() =>
                 openTextGenerator?.({
                   applyText: (value) => editor.updateBlockField('intro', value),
-                  currentText: intro || '',
+                  currentText: currentIntro || '',
                   fieldLabel: 'section intro',
                   fieldPath: `layout.${blockIndex}.intro`,
                 })}
               placeholder="Section intro"
-              value={intro || ''}
+              value={currentIntro || ''}
             />
-          ) : intro ? <p className="text-base leading-relaxed text-muted-foreground sm:text-lg">{intro}</p> : null}
+          ) : currentIntro ? <p className="text-base leading-relaxed text-muted-foreground sm:text-lg">{currentIntro}</p> : null}
         </div>
 
         <div
           className={`grid gap-6 ${isPricing ? 'lg:grid-cols-[minmax(0,1fr)_18rem]' : 'lg:grid-cols-[18rem_minmax(0,1fr)]'}`}
         >
           <div className={`rounded-[1.4rem] border border-border/80 bg-background/80 p-3 ${isPricing ? 'lg:order-2' : ''}`}>
-            <p className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-              {isPricing ? 'Select pricing step' : 'Select exterior lane'}
-            </p>
+            <div className="flex items-center justify-between gap-3 px-3 pb-2">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                {isPricing ? 'Select pricing step' : 'Select exterior lane'}
+              </p>
+              {editor ? <ServiceGridAddLaneButton onClick={editor.addServiceLane} /> : null}
+            </div>
             <ul className="flex snap-x gap-2 overflow-x-auto px-1 pb-1 lg:grid lg:gap-2 lg:overflow-visible lg:px-0 lg:pb-0">
               {rows.map((row, index) => {
                 const active = index === activeIndex
@@ -368,15 +420,20 @@ const InteractiveServiceGrid: React.FC<
               return (
                 <>
                   <div className="relative aspect-[4/3] overflow-hidden border-b border-border/80 bg-muted sm:aspect-[18/8]">
-                    {rowMedia ? (
-                      <>
-                        {typeof blockIndex === 'number' ? (
-                          <InlinePageMediaEditor relationPath={`layout.${blockIndex}.services.${activeIndex}.media`}>
+                    {typeof blockIndex === 'number' ? (
+                      <InlinePageMediaEditor relationPath={`layout.${blockIndex}.services.${activeIndex}.media`}>
+                        {rowMedia ? (
+                          <>
                             <Media fill imgClassName="object-cover" priority resource={rowMedia} />
-                          </InlinePageMediaEditor>
+                            <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(7,13,25,0.08)_0%,rgba(7,13,25,0.74)_100%)]" />
+                          </>
                         ) : (
-                          <Media fill imgClassName="object-cover" priority resource={rowMedia} />
+                          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(86,175,255,0.22),transparent_50%),linear-gradient(180deg,rgba(242,247,255,0.9)_0%,rgba(232,240,249,0.6)_100%)]" />
                         )}
+                      </InlinePageMediaEditor>
+                    ) : rowMedia ? (
+                      <>
+                        <Media fill imgClassName="object-cover" priority resource={rowMedia} />
                         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(7,13,25,0.08)_0%,rgba(7,13,25,0.74)_100%)]" />
                       </>
                     ) : (
@@ -531,8 +588,12 @@ const FeatureCardsServiceGrid: React.FC<
   intro,
   services,
 }) => {
-  const rows = services || []
   const { editor, openTextGenerator } = useInlineServiceGridEditor(blockIndex)
+  const currentBlock = editor?.block
+  const currentEyebrow = currentBlock?.eyebrow ?? eyebrow
+  const currentHeading = currentBlock?.heading ?? heading
+  const currentIntro = currentBlock?.intro ?? intro
+  const rows = currentBlock?.services || services || []
 
   if (!rows.length) {
     return null
@@ -542,22 +603,27 @@ const FeatureCardsServiceGrid: React.FC<
     <section className="mx-auto max-w-7xl px-6 py-16 md:py-20" id="services">
       <div className="max-w-3xl">
         {editor ? (
+          <div className="mb-4">
+            <ServiceGridAddLaneButton onClick={editor.addServiceLane} />
+          </div>
+        ) : null}
+        {editor ? (
           <InlineTextInput
             className="h-9 border-primary/30 bg-background/90 text-[0.7rem] font-semibold uppercase tracking-[0.34em] text-primary"
             onChange={(value) => editor.updateBlockField('eyebrow', value)}
             onGenerate={() =>
-              openTextGenerator?.({
-                applyText: (value) => editor.updateBlockField('eyebrow', value),
-                currentText: eyebrow || '',
-                fieldLabel: 'section eyebrow',
-                fieldPath: `layout.${blockIndex}.eyebrow`,
-              })}
+                openTextGenerator?.({
+                  applyText: (value) => editor.updateBlockField('eyebrow', value),
+                  currentText: currentEyebrow || '',
+                  fieldLabel: 'section eyebrow',
+                  fieldPath: `layout.${blockIndex}.eyebrow`,
+                })}
             placeholder="Section eyebrow"
-            value={eyebrow || ''}
+            value={currentEyebrow || ''}
           />
         ) : (
           <p className="text-[0.7rem] font-semibold uppercase tracking-[0.34em] text-primary/80">
-            {eyebrow || 'Featured services'}
+            {currentEyebrow || 'Featured services'}
           </p>
         )}
         {editor ? (
@@ -565,33 +631,33 @@ const FeatureCardsServiceGrid: React.FC<
             className="mt-4 h-14 border-primary/30 bg-background/90 text-4xl font-semibold tracking-tight text-foreground md:text-5xl"
             onChange={(value) => editor.updateBlockField('heading', value)}
             onGenerate={() =>
-              openTextGenerator?.({
-                applyText: (value) => editor.updateBlockField('heading', value),
-                currentText: heading || '',
-                fieldLabel: 'section heading',
-                fieldPath: `layout.${blockIndex}.heading`,
-              })}
+                openTextGenerator?.({
+                  applyText: (value) => editor.updateBlockField('heading', value),
+                  currentText: currentHeading || '',
+                  fieldLabel: 'section heading',
+                  fieldPath: `layout.${blockIndex}.heading`,
+                })}
             placeholder="Section heading"
-            value={heading || ''}
+            value={currentHeading || ''}
           />
         ) : (
-          <h2 className="mt-4 text-4xl font-semibold tracking-tight text-foreground md:text-5xl">{heading}</h2>
+          <h2 className="mt-4 text-4xl font-semibold tracking-tight text-foreground md:text-5xl">{currentHeading}</h2>
         )}
         {editor ? (
           <InlineTextarea
             className="mt-4 min-h-24 max-w-2xl border-primary/30 bg-background/90 text-lg leading-8 text-muted-foreground"
             onChange={(value) => editor.updateBlockField('intro', value)}
             onGenerate={() =>
-              openTextGenerator?.({
-                applyText: (value) => editor.updateBlockField('intro', value),
-                currentText: intro || '',
-                fieldLabel: 'section intro',
-                fieldPath: `layout.${blockIndex}.intro`,
-              })}
+                openTextGenerator?.({
+                  applyText: (value) => editor.updateBlockField('intro', value),
+                  currentText: currentIntro || '',
+                  fieldLabel: 'section intro',
+                  fieldPath: `layout.${blockIndex}.intro`,
+                })}
             placeholder="Section intro"
-            value={intro || ''}
+            value={currentIntro || ''}
           />
-        ) : intro ? <p className="mt-4 max-w-2xl text-lg leading-8 text-muted-foreground">{intro}</p> : null}
+        ) : currentIntro ? <p className="mt-4 max-w-2xl text-lg leading-8 text-muted-foreground">{currentIntro}</p> : null}
       </div>
 
       <div className="mt-10 grid gap-6 lg:grid-cols-3">
@@ -606,9 +672,15 @@ const FeatureCardsServiceGrid: React.FC<
               className="overflow-hidden rounded-[1.9rem] border border-border/70 bg-card/82 shadow-[0_18px_80px_-52px_rgba(2,6,23,0.85)]"
             >
               <div className="relative">
-                {media && relationPath ? (
+                {relationPath ? (
                   <InlinePageMediaEditor relationPath={relationPath}>
-                    <Media imgClassName="aspect-[16/10] w-full object-cover" resource={media} />
+                    {media ? (
+                      <Media imgClassName="aspect-[16/10] w-full object-cover" resource={media} />
+                    ) : (
+                      <div className="flex aspect-[16/10] w-full items-center justify-center bg-[linear-gradient(180deg,rgba(7,19,33,0.88),rgba(17,49,77,0.72))] px-3 text-center">
+                        <span className="text-xs font-medium text-white/70">Drop media from the library</span>
+                      </div>
+                    )}
                   </InlinePageMediaEditor>
                 ) : media ? (
                   <Media imgClassName="aspect-[16/10] w-full object-cover" resource={media} />
@@ -748,8 +820,12 @@ const PricingStepsServiceGrid: React.FC<
   intro,
   services,
 }) => {
-  const rows = services?.slice(0, 3) || []
   const { editor, openTextGenerator } = useInlineServiceGridEditor(blockIndex)
+  const currentBlock = editor?.block
+  const currentEyebrow = currentBlock?.eyebrow ?? eyebrow
+  const currentHeading = currentBlock?.heading ?? heading
+  const currentIntro = currentBlock?.intro ?? intro
+  const rows = (currentBlock?.services || services)?.slice(0, 3) || []
 
   if (!rows.length) {
     return null
@@ -761,22 +837,27 @@ const PricingStepsServiceGrid: React.FC<
         <div className="grid gap-10 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:items-start">
           <div>
             {editor ? (
+              <div className="mb-4">
+                <ServiceGridAddLaneButton onClick={editor.addServiceLane} />
+              </div>
+            ) : null}
+            {editor ? (
               <InlineTextInput
                 className="h-9 border-primary/30 bg-background/90 text-[0.7rem] font-semibold uppercase tracking-[0.34em] text-primary"
                 onChange={(value) => editor.updateBlockField('eyebrow', value)}
                 onGenerate={() =>
                     openTextGenerator?.({
                       applyText: (value) => editor.updateBlockField('eyebrow', value),
-                      currentText: eyebrow || '',
+                      currentText: currentEyebrow || '',
                       fieldLabel: 'section eyebrow',
                       fieldPath: `layout.${blockIndex}.eyebrow`,
                   })}
                 placeholder="Section eyebrow"
-                value={eyebrow || ''}
+                value={currentEyebrow || ''}
               />
             ) : (
               <p className="text-[0.7rem] font-semibold uppercase tracking-[0.34em] text-primary/80">
-                {eyebrow || 'Estimate logic'}
+                {currentEyebrow || 'Estimate logic'}
               </p>
             )}
             {editor ? (
@@ -786,15 +867,15 @@ const PricingStepsServiceGrid: React.FC<
                 onGenerate={() =>
                     openTextGenerator?.({
                       applyText: (value) => editor.updateBlockField('heading', value),
-                      currentText: heading || '',
+                      currentText: currentHeading || '',
                       fieldLabel: 'section heading',
                       fieldPath: `layout.${blockIndex}.heading`,
                   })}
                 placeholder="Section heading"
-                value={heading || ''}
+                value={currentHeading || ''}
               />
             ) : (
-              <h2 className="mt-4 text-4xl font-semibold tracking-tight text-foreground md:text-5xl">{heading}</h2>
+              <h2 className="mt-4 text-4xl font-semibold tracking-tight text-foreground md:text-5xl">{currentHeading}</h2>
             )}
             {editor ? (
               <InlineTextarea
@@ -803,14 +884,14 @@ const PricingStepsServiceGrid: React.FC<
                 onGenerate={() =>
                     openTextGenerator?.({
                       applyText: (value) => editor.updateBlockField('intro', value),
-                      currentText: intro || '',
+                      currentText: currentIntro || '',
                       fieldLabel: 'section intro',
                       fieldPath: `layout.${blockIndex}.intro`,
                   })}
                 placeholder="Section intro"
-                value={intro || ''}
+                value={currentIntro || ''}
               />
-            ) : intro ? <p className="mt-4 max-w-2xl text-lg leading-8 text-muted-foreground">{intro}</p> : null}
+            ) : currentIntro ? <p className="mt-4 max-w-2xl text-lg leading-8 text-muted-foreground">{currentIntro}</p> : null}
           </div>
 
           <div className="grid gap-4 md:grid-cols-3">

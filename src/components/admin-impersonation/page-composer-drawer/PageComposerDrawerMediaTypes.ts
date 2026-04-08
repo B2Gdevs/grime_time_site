@@ -1,8 +1,16 @@
-﻿'use client'
+'use client'
 
+import type { Media } from '@/payload-types'
 import type { ServiceGridBlock } from '@/payload-types'
 
-export type MediaAction = 'create-and-swap' | 'generate-and-swap' | 'swap-existing-reference'
+export type MediaAction =
+  | 'create-and-swap'
+  | 'create-only'
+  | 'delete-media'
+  | 'generate-and-swap'
+  | 'generate-only'
+  | 'replace-existing'
+  | 'swap-existing-reference'
 
 export type MediaKind = 'image' | 'video'
 
@@ -10,6 +18,7 @@ export type MediaLibraryItem = {
   alt: null | string
   filename: null | string
   id: number
+  media: Media
   mimeType: null | string
   previewUrl: null | string
   updatedAt: string

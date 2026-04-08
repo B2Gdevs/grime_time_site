@@ -369,11 +369,13 @@ export async function POST(request: Request): Promise<Response> {
         action?: string
         layout?: Page['layout']
         pageId?: number
+        pageIds?: number[]
         pagePath?: string
         sourcePageId?: number
         slug?: string
         title?: string
         versionId?: string
+        versionIds?: string[]
         visibility?: Page['visibility']
       }
 
@@ -392,7 +394,11 @@ export async function POST(request: Request): Promise<Response> {
     action !== 'publish-page' &&
     action !== 'create-page' &&
     action !== 'clone-page' &&
-    action !== 'restore-page-version'
+    action !== 'restore-page-version' &&
+    action !== 'delete-draft' &&
+    action !== 'delete-page' &&
+    action !== 'bulk-delete-pages' &&
+    action !== 'bulk-delete-page-versions'
   ) {
     return Response.json({ error: 'Unsupported composer action.' }, { status: 400 })
   }
@@ -400,6 +406,197 @@ export async function POST(request: Request): Promise<Response> {
   const payloadReq = await createLocalReq({ user: auth.realUser || undefined }, auth.payload)
 
   try {
+    if (action === 'delete-draft') {
+      if (!Number.isInteger(pageId) || pageId <= 0) {
+        return Response.json({ error: 'Page id is required.' }, { status: 400 })
+      }
+
+      const existing = (await auth.payload.findByID({
+        collection: 'pages',
+        depth: 0,
+        draft: true,
+        id: pageId,
+        overrideAccess: false,
+        req: payloadReq,
+      })) as Page
+
+      if (existing._status === 'published') {
+        return Response.json({ error: 'Published pages cannot be deleted here.' }, { status: 400 })
+      }
+
+      await auth.payload.delete({
+        collection: 'pages',
+        id: pageId,
+        overrideAccess: false,
+        req: payloadReq,
+      })
+
+      return Response.json({ ok: true })
+    }
+
+    if (action === 'delete-page') {
+      if (!Number.isInteger(pageId) || pageId <= 0) {
+        return Response.json({ error: 'Page id is required.' }, { status: 400 })
+      }
+
+      const existing = (await auth.payload.findByID({
+        collection: 'pages',
+        depth: 0,
+        draft: true,
+        id: pageId,
+        overrideAccess: false,
+        req: payloadReq,
+      })) as Page | undefined
+
+      if (!existing) {
+        return Response.json({ error: 'Page not found.' }, { status: 404 })
+      }
+
+      await auth.payload.delete({
+        collection: 'pages',
+        id: pageId,
+        overrideAccess: false,
+        req: payloadReq,
+      })
+
+      return Response.json({
+        ok: true,
+        pages: await loadComposerPages({
+          payload: auth.payload,
+          req: payloadReq,
+        }),
+      })
+    }
+
+    if (action === 'bulk-delete-pages') {
+      const rawIds = Array.isArray(body?.pageIds) ? body.pageIds : []
+      const uniqueIds = [
+        ...new Set(
+          rawIds
+            .map((id) => Number(id))
+            .filter((id) => Number.isInteger(id) && id > 0),
+        ),
+      ]
+
+      if (uniqueIds.length === 0) {
+        return Response.json({ error: 'At least one valid page id is required.' }, { status: 400 })
+      }
+
+      for (const id of uniqueIds) {
+        const existing = (await auth.payload.findByID({
+          collection: 'pages',
+          depth: 0,
+          draft: true,
+          id,
+          overrideAccess: false,
+          req: payloadReq,
+        })) as Page | undefined
+
+        if (!existing) {
+          continue
+        }
+
+        await auth.payload.delete({
+          collection: 'pages',
+          id,
+          overrideAccess: false,
+          req: payloadReq,
+        })
+      }
+
+      return Response.json({
+        ok: true,
+        pages: await loadComposerPages({
+          payload: auth.payload,
+          req: payloadReq,
+        }),
+      })
+    }
+
+    if (action === 'bulk-delete-page-versions') {
+      if (!Number.isInteger(pageId) || pageId <= 0) {
+        return Response.json({ error: 'Page id is required.' }, { status: 400 })
+      }
+
+      const rawVersionIds = Array.isArray(body?.versionIds) ? body.versionIds : []
+      const versionIds = [...new Set(rawVersionIds.map((id) => String(id).trim()).filter(Boolean))]
+
+      if (versionIds.length === 0) {
+        return Response.json({ error: 'At least one version id is required.' }, { status: 400 })
+      }
+
+      const matched = await auth.payload.findVersions({
+        collection: 'pages',
+        depth: 0,
+        draft: true,
+        limit: Math.max(versionIds.length, 1),
+        overrideAccess: false,
+        pagination: false,
+        req: payloadReq,
+        where: {
+          and: [
+            {
+              parent: {
+                equals: pageId,
+              },
+            },
+            {
+              id: {
+                in: versionIds,
+              },
+            },
+          ],
+        },
+      })
+
+      if (matched.docs.length !== versionIds.length) {
+        return Response.json(
+          { error: 'One or more versions were not found for this page.' },
+          { status: 400 },
+        )
+      }
+
+      const hasLatest = (matched.docs as TypeWithVersion<Page>[]).some((doc) => doc.latest)
+
+      if (hasLatest) {
+        return Response.json(
+          {
+            error:
+              'Cannot delete the current draft snapshot. Deselect the row marked “Current draft” and try again.',
+          },
+          { status: 400 },
+        )
+      }
+
+      await auth.payload.db.deleteVersions({
+        collection: 'pages',
+        req: payloadReq,
+        where: {
+          and: [
+            {
+              parent: {
+                equals: pageId,
+              },
+            },
+            {
+              id: {
+                in: versionIds,
+              },
+            },
+          ],
+        },
+      })
+
+      return Response.json({
+        ok: true,
+        versions: await loadPageVersions({
+          pageId,
+          payload: auth.payload,
+          req: payloadReq,
+        }),
+      })
+    }
+
     if (action === 'create-page') {
       if (!title || !slug) {
         return Response.json({ error: 'Title and slug are required.' }, { status: 400 })
