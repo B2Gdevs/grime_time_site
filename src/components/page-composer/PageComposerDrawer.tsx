@@ -12,6 +12,7 @@ import { KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/c
 import type { DragEndEvent } from '@dnd-kit/core'
 import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import { usePathname, useRouter } from 'next/navigation'
+import { flushSync } from 'react-dom'
 
 import {
   PAGE_COMPOSER_TOOLBAR_EVENT,
@@ -776,6 +777,23 @@ export function PageComposerDrawer({
     })
   }
 
+  const runCanvasLayoutTransition = useCallback((update: () => void) => {
+    const documentWithViewTransition = document as Document & {
+      startViewTransition?: (callback: () => void) => unknown
+    }
+
+    if (typeof documentWithViewTransition.startViewTransition === 'function') {
+      documentWithViewTransition.startViewTransition(() => {
+        flushSync(() => {
+          update()
+        })
+      })
+      return
+    }
+
+    update()
+  }, [])
+
   const stageMediaSlot = useCallback((media: Media, relationPath: string) => {
     setDraftPage((current) => {
       if (!current) {
@@ -798,21 +816,23 @@ export function PageComposerDrawer({
     }))
   }, [selectedIndex])
   const moveBlock = useCallback((index: number, direction: -1 | 1) => {
-    mutatePage((page) => {
-      const layout = page.layout || []
-      const nextIndex = index + direction
+    runCanvasLayoutTransition(() => {
+      mutatePage((page) => {
+        const layout = page.layout || []
+        const nextIndex = index + direction
 
-      if (index < 0 || index >= layout.length || nextIndex < 0 || nextIndex >= layout.length) {
-        return page
-      }
+        if (index < 0 || index >= layout.length || nextIndex < 0 || nextIndex >= layout.length) {
+          return page
+        }
 
-      return {
-        ...page,
-        layout: arrayMove(layout, index, nextIndex),
-      }
+        return {
+          ...page,
+          layout: arrayMove(layout, index, nextIndex),
+        }
+      })
+      setSelectedIndex(index + direction)
     })
-    setSelectedIndex(index + direction)
-  }, [setSelectedIndex])
+  }, [runCanvasLayoutTransition, setSelectedIndex])
   const updateHeroCopy = useCallback((value: string) => {
     if (!selectedHeroBlock) return
     replaceSelectedBlock({
@@ -883,8 +903,10 @@ export function PageComposerDrawer({
     const activeId = Number(event.active.id)
     const overId = Number(event.over?.id)
     if (!Number.isInteger(activeId) || !Number.isInteger(overId) || activeId === overId) return
-    mutatePage((page) => ({ ...page, layout: arrayMove(page.layout || [], activeId, overId) }))
-    setSelectedIndex(overId)
+    runCanvasLayoutTransition(() => {
+      mutatePage((page) => ({ ...page, layout: arrayMove(page.layout || [], activeId, overId) }))
+      setSelectedIndex(overId)
+    })
   }
 
   function openBlockLibrary(index: number, mode: BlockLibraryMode = 'insert') {
@@ -904,19 +926,21 @@ export function PageComposerDrawer({
       return
     }
 
-    if (blockLibraryMode === 'replace') {
-      updateBlockAtIndex(blockLibraryTargetIndex, nextBlock)
-    } else {
-      mutatePage((page) => ({
-        ...page,
-        layout: insertPageLayoutRegisteredBlock({
-          index: blockLibraryTargetIndex,
-          layout: page.layout || [],
-          type: nextBlock.blockType as PageComposerInsertableBlockType,
-        }).map((block, index) => (index === blockLibraryTargetIndex ? nextBlock : block)),
-      }))
-      setSelectedIndex(blockLibraryTargetIndex)
-    }
+    runCanvasLayoutTransition(() => {
+      if (blockLibraryMode === 'replace') {
+        updateBlockAtIndex(blockLibraryTargetIndex, nextBlock)
+      } else {
+        mutatePage((page) => ({
+          ...page,
+          layout: insertPageLayoutRegisteredBlock({
+            index: blockLibraryTargetIndex,
+            layout: page.layout || [],
+            type: nextBlock.blockType as PageComposerInsertableBlockType,
+          }).map((block, index) => (index === blockLibraryTargetIndex ? nextBlock : block)),
+        }))
+        setSelectedIndex(blockLibraryTargetIndex)
+      }
+    })
 
     setIsBlockLibraryOpen(false)
     setBlockLibraryMode('insert')
@@ -1110,20 +1134,24 @@ export function PageComposerDrawer({
   }, [composer, draftPage, router])
 
   const duplicateBlock = useCallback((index: number) => {
-    mutatePage((page) => ({
-      ...page,
-      layout: duplicatePageLayoutSection({ index, layout: page.layout || [] }),
-    }))
-    setSelectedIndex(index + 1)
-  }, [setSelectedIndex])
+    runCanvasLayoutTransition(() => {
+      mutatePage((page) => ({
+        ...page,
+        layout: duplicatePageLayoutSection({ index, layout: page.layout || [] }),
+      }))
+      setSelectedIndex(index + 1)
+    })
+  }, [runCanvasLayoutTransition, setSelectedIndex])
 
   const removeBlock = useCallback((index: number) => {
-    mutatePage((page) => ({
-      ...page,
-      layout: removePageLayoutSection({ index, layout: page.layout || [] }),
-    }))
-    setSelectedIndex(Math.max(0, index - 1))
-  }, [setSelectedIndex])
+    runCanvasLayoutTransition(() => {
+      mutatePage((page) => ({
+        ...page,
+        layout: removePageLayoutSection({ index, layout: page.layout || [] }),
+      }))
+      setSelectedIndex(Math.max(0, index - 1))
+    })
+  }, [runCanvasLayoutTransition, setSelectedIndex])
 
   const toggleBlockHidden = useCallback((index: number) => {
     mutatePage((page) => ({

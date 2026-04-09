@@ -70,6 +70,11 @@ export function PageComposerCanvasSectionShell({
       onClickCapture={(event) => {
         const target = event.target as HTMLElement | null
         const interactiveTarget = target?.closest('[data-page-composer-interactive="true"]')
+        const actionRailTarget = target?.closest('[data-page-composer-action-rail="true"]')
+
+        if (actionRailTarget) {
+          return
+        }
 
         if (interactiveTarget) {
           composer.setSelectedIndex(index)

@@ -37,6 +37,9 @@ export function CanvasSectionChrome({
   const sectionToolbarState = sectionSummary && toolbarState ? toolbarState : null
   const visibleSectionSummary = sectionSummary && toolbarState ? sectionSummary : null
   const sectionOrder = sectionSummary?.index
+  const sectionViewTransitionName = sectionIdentity
+    ? `page-composer-section-${sectionIdentity.replace(/[^a-z0-9_-]/gi, '-')}`
+    : undefined
 
   return (
     <div
@@ -50,7 +53,10 @@ export function CanvasSectionChrome({
       data-page-composer-block-order={sectionOrder ?? index}
       data-page-composer-selected={isSelected ? 'true' : 'false'}
       onClickCapture={onClickCapture}
-      style={typeof sectionOrder === 'number' ? { order: sectionOrder } : undefined}
+      style={{
+        ...(typeof sectionOrder === 'number' ? { order: sectionOrder } : {}),
+        ...(sectionViewTransitionName ? { viewTransitionName: sectionViewTransitionName } : {}),
+      }}
     >
       {visibleSectionSummary && sectionToolbarState ? (
         <CanvasSectionActionRail

@@ -280,4 +280,27 @@ describe('PageComposer canvas integration', () => {
     expect(firstSection?.getAttribute('data-page-composer-block-order')).toBe('1')
     expect(secondSection?.getAttribute('data-page-composer-block-order')).toBe('0')
   })
+
+  it('does not reselect and scroll the section when opening the add picker from the action rail', () => {
+    render(
+      <TooltipProvider>
+        <PageComposerProvider>
+          <ComposerHarness />
+        </PageComposerProvider>
+      </TooltipProvider>,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open composer' }))
+
+    expect(screen.getByTestId('selected-index').textContent).toBe('0')
+
+    fireEvent.click(
+      within(
+        screen.getByText('Section two').closest('[data-page-composer-block-index="1"]') as HTMLElement,
+      ).getByRole('button', { name: 'Add block' }),
+    )
+
+    expect(screen.getByTestId('selected-index').textContent).toBe('0')
+    expect(screen.getByRole('button', { name: 'Add block below' })).toBeTruthy()
+  })
 })

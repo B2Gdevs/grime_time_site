@@ -23,10 +23,11 @@ export function CanvasSectionActionRail({
 
   return (
     <div
-      className="pointer-events-none absolute inset-x-3 bottom-3 z-20 flex min-h-10 items-end justify-center opacity-0 transition group-hover:opacity-100 group-focus-within:opacity-100"
+      className="pointer-events-none absolute inset-x-3 bottom-3 z-20 flex min-h-10 items-end justify-center opacity-0 transition duration-200 group-hover:opacity-100 group-focus-within:opacity-100"
+      data-page-composer-action-rail="true"
       data-page-composer-interactive="true"
     >
-      <div className="pointer-events-auto flex flex-wrap items-center gap-2 rounded-[1.1rem] border border-border/70 bg-background/94 p-2 shadow-lg backdrop-blur">
+      <div className="pointer-events-auto flex flex-wrap items-center gap-2 rounded-[1.1rem] border border-border/70 bg-background/94 p-2 shadow-lg backdrop-blur transition-transform duration-200 group-hover:-translate-y-1 group-focus-within:-translate-y-1">
         {supportsInsertionAbove ? (
           <CanvasActionButton
             label="Move block up"
@@ -63,7 +64,10 @@ export function CanvasSectionActionRail({
             <PlusIcon className="h-4 w-4" />
           </CanvasActionButton>
           {insertPickerOpen ? (
-            <div className="absolute bottom-full left-1/2 z-30 mb-2 flex -translate-x-1/2 gap-2 rounded-[1rem] border border-border/70 bg-background/96 p-2 shadow-lg backdrop-blur">
+            <div
+              className="absolute bottom-full left-1/2 z-30 mb-2 flex -translate-x-1/2 gap-2 rounded-[1rem] border border-border/70 bg-background/96 p-2 shadow-lg backdrop-blur animate-[page-composer-picker-in_180ms_cubic-bezier(0.22,1,0.36,1)]"
+              data-page-composer-action-rail="true"
+            >
               {supportsInsertionAbove ? (
                 <CanvasActionButton
                   label="Add block above"
