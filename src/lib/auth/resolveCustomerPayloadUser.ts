@@ -188,7 +188,7 @@ async function findPortalUserByEmail(
 async function findCustomerAccountByEmail(
   email: string,
   payload: Awaited<ReturnType<typeof getPayload>>,
-): Promise<null | Pick<Account, 'id' | 'name'>> {
+): Promise<null | { id: Account['id']; name: null | string }> {
   const result = await payload.find({
     collection: 'accounts',
     depth: 0,

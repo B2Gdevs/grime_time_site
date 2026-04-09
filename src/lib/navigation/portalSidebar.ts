@@ -1,5 +1,6 @@
 import type { LucideIcon } from 'lucide-react'
 import {
+  Building2Icon,
   CalendarClockIcon,
   FileTextIcon,
   HomeIcon,
@@ -9,10 +10,16 @@ import {
   Settings2Icon,
   ShieldIcon,
   UserRoundCogIcon,
+  UsersIcon,
 } from 'lucide-react'
 
 import { isPortalPreviewTestUser } from '@/lib/auth/previewIdentity'
-import { CUSTOMER_DASHBOARD_PATH, OPS_DASHBOARD_PATH } from '@/lib/navigation/portalPaths'
+import {
+  CUSTOMER_DASHBOARD_PATH,
+  OPS_CUSTOMERS_PATH,
+  OPS_DASHBOARD_PATH,
+  OPS_USERS_PATH,
+} from '@/lib/navigation/portalPaths'
 
 export type PortalSidebarItem = {
   icon: LucideIcon
@@ -45,14 +52,24 @@ export function buildPortalMainNav(args: {
   if (staffShell) {
     return [
       {
+        icon: LayoutDashboardIcon,
+        title: 'Ops dashboard',
+        url: OPS_DASHBOARD_PATH,
+      },
+      {
         icon: ReceiptTextIcon,
         title: 'Ops workspace',
         url: '/ops/workspace',
       },
       {
-        icon: LayoutDashboardIcon,
-        title: 'Ops dashboard',
-        url: OPS_DASHBOARD_PATH,
+        icon: UsersIcon,
+        title: 'Users',
+        url: OPS_USERS_PATH,
+      },
+      {
+        icon: Building2Icon,
+        title: 'Customers',
+        url: OPS_CUSTOMERS_PATH,
       },
     ]
   }

@@ -85,7 +85,7 @@
     <goal>Finish the Clerk-primary identity migration by locking public account creation down to invite and claim flows, moving the customer and ops portals onto explicit dashboard routes, and completing the first-run staff onboarding path into the app-owned ops experience without reviving Supabase-first entry points.</goal>
     <requirements>REQ-04, REQ-05, REQ-06</requirements>
     <depends>07,08</depends>
-    <status>in-progress</status>
+    <status>complete</status>
     <plans>.planning/phases/11-clerk-auth-and-portal-onboarding/</plans>
   </phase>
   <phase id="12">
