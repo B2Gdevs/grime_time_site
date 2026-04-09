@@ -117,7 +117,10 @@ async function findDefaultOrganization(payload: Payload, req: PayloadRequest): P
   return (bySlug.docs[0] as Organization | undefined) ?? null
 }
 
-async function ensureDefaultOrganization(payload: Payload, req: PayloadRequest): Promise<Organization> {
+export async function ensureDefaultStaffOrganization(
+  payload: Payload,
+  req: PayloadRequest,
+): Promise<Organization> {
   const existing = await findDefaultOrganization(payload, req)
 
   if (existing) {
@@ -173,16 +176,23 @@ export async function ensureBootstrapOrganizationMembership(
   }
 
   const req = await createLocalReq({ user }, payload)
-  const organization = await ensureDefaultOrganization(payload, req)
+  const organization = await ensureDefaultStaffOrganization(payload, req)
   const existingMembership = await getUserOrganizationMembership(payload, {
     organizationId: Number(organization.id),
     userId: user.id,
     req,
   })
 
+  const nextRoleTemplate =
+    existingMembership &&
+    existingMembership.roleTemplate?.startsWith('staff-') &&
+    roleTemplate.startsWith('staff-')
+      ? existingMembership.roleTemplate
+      : roleTemplate
+
   if (existingMembership) {
     const shouldUpdate =
-      existingMembership.roleTemplate !== roleTemplate ||
+      existingMembership.roleTemplate !== nextRoleTemplate ||
       existingMembership.status !== 'active' ||
       existingMembership.clerkMembershipID !== (clerkMembership?.clerkMembershipID || undefined) ||
       existingMembership.syncSource !== (clerkMembership ? 'clerk' : 'bootstrap')
@@ -194,7 +204,7 @@ export async function ensureBootstrapOrganizationMembership(
         data: {
           clerkMembershipID: clerkMembership?.clerkMembershipID,
           lastSyncedAt: new Date().toISOString(),
-          roleTemplate,
+          roleTemplate: nextRoleTemplate,
           status: 'active',
           syncSource: clerkMembership ? 'clerk' : 'bootstrap',
         },
@@ -219,7 +229,7 @@ export async function ensureBootstrapOrganizationMembership(
       clerkMembershipID: clerkMembership?.clerkMembershipID,
       lastSyncedAt: new Date().toISOString(),
       organization: organization.id,
-      roleTemplate,
+      roleTemplate: nextRoleTemplate,
       status: 'active',
       syncSource: clerkMembership ? 'clerk' : 'bootstrap',
       user: user.id,

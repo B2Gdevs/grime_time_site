@@ -1,21 +1,29 @@
 'use client'
 
 import * as React from 'react'
+import { useMutation } from '@tanstack/react-query'
 import {
   BadgeCheckIcon,
   Building2Icon,
   KeyRoundIcon,
+  LoaderCircleIcon,
   Link2Icon,
+  MailPlusIcon,
+  RefreshCcwIcon,
   ShieldCheckIcon,
   ShieldIcon,
   UserRoundIcon,
   UsersIcon,
 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 
 import { SectionCards } from '@/components/section-cards'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { Separator } from '@/components/ui/separator'
 import {
   Select,
   SelectContent,
@@ -38,6 +46,7 @@ import {
   describeRoleTemplate,
   formatSyncTimestamp,
 } from '@/lib/ops/loaders/opsAdminData'
+import { requestJson } from '@/lib/query/request'
 
 const scopeOptions = [
   { label: 'All users', value: 'all' },
@@ -45,6 +54,13 @@ const scopeOptions = [
   { label: 'Customer only', value: 'customer' },
   { label: 'Hybrid', value: 'hybrid' },
   { label: 'Needs assignment', value: 'unassigned' },
+] as const
+
+const staffRoleOptions = [
+  { label: 'Staff Owner', value: 'staff-owner' },
+  { label: 'Staff Admin', value: 'staff-admin' },
+  { label: 'Staff Designer', value: 'staff-designer' },
+  { label: 'Staff Operator', value: 'staff-operator' },
 ] as const
 
 function filterUserRows(args: {
@@ -106,6 +122,7 @@ function scopeLabel(scope: OpsUserDirectoryRow['scope']) {
 }
 
 export function OpsUsersPageView({ data }: { data: OpsUsersPageData }) {
+  const router = useRouter()
   const [query, setQuery] = React.useState('')
   const [scope, setScope] = React.useState('all')
   const [inviteState, setInviteState] = React.useState('all')
@@ -121,6 +138,38 @@ export function OpsUsersPageView({ data }: { data: OpsUsersPageData }) {
   )
   const selectedUser =
     filteredRows.find((row) => row.id === selectedUserId) ?? filteredRows[0] ?? null
+  const currentStaffRoleTemplate =
+    selectedUser?.memberships.find((membership) => membership.kind === 'staff')?.roleTemplate ??
+    'staff-operator'
+  const [staffRoleTemplate, setStaffRoleTemplate] = React.useState(currentStaffRoleTemplate)
+
+  const actionMutation = useMutation({
+    mutationFn: async (action: {
+      action: 'resync_provider' | 'revoke_staff_invite'
+    } | {
+      action: 'send_staff_invite' | 'update_staff_role'
+      roleTemplate: string
+    }) => {
+      if (!selectedUser?.id) {
+        throw new Error('Pick a user first.')
+      }
+
+      return requestJson<{ message: string }>(`/api/internal/ops/users/${selectedUser.id}`, {
+        body: JSON.stringify(action),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        method: 'POST',
+      })
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : 'Unable to update staff access.')
+    },
+    onSuccess: async (body) => {
+      toast.success(body.message)
+      router.refresh()
+    },
+  })
 
   React.useEffect(() => {
     if (!filteredRows.length) {
@@ -132,6 +181,18 @@ export function OpsUsersPageView({ data }: { data: OpsUsersPageData }) {
       setSelectedUserId(filteredRows[0]?.id ?? null)
     }
   }, [filteredRows, selectedUserId])
+
+  React.useEffect(() => {
+    setStaffRoleTemplate(currentStaffRoleTemplate)
+  }, [currentStaffRoleTemplate, selectedUser?.id])
+
+  const inviteActionLabel = selectedUser?.hasClerkLink
+    ? 'Grant staff access'
+    : selectedUser?.portalInviteState === 'invite_pending'
+      ? 'Reissue invite'
+      : 'Send invite'
+  const canRevokeInvite = selectedUser?.portalInviteState === 'invite_pending'
+  const canResyncProvider = Boolean(selectedUser?.hasClerkLink)
 
   return (
     <div className="@container/main flex flex-col gap-6 py-4 md:py-6">
@@ -432,6 +493,142 @@ export function OpsUsersPageView({ data }: { data: OpsUsersPageData }) {
                         No explicit org entitlements derived yet.
                       </span>
                     )}
+                  </div>
+                </div>
+
+                <div className="grid gap-4 rounded-[1.75rem] border border-slate-800/80 bg-[radial-gradient(circle_at_top_left,rgba(14,116,144,0.22),transparent_46%),linear-gradient(135deg,rgba(2,6,23,0.98),rgba(15,23,42,0.95))] p-4 text-slate-50 shadow-[0_24px_90px_-56px_rgba(2,132,199,0.9)]">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="space-y-1">
+                      <div className="text-xs font-medium uppercase tracking-[0.22em] text-sky-200/80">
+                        Staff controls
+                      </div>
+                      <div className="text-base font-semibold">
+                        Invite, role, and provider sync in one place
+                      </div>
+                      <p className="max-w-xl text-sm leading-6 text-slate-200/78">
+                        Clerk handles the auth transport. Grime Time keeps the durable staff role
+                        template and membership state here.
+                      </p>
+                    </div>
+                    <Badge className="rounded-full border border-sky-300/20 bg-sky-300/10 text-sky-100 hover:bg-sky-300/10">
+                      {selectedUser.hasClerkLink ? 'Clerk-linked user' : 'Invite required'}
+                    </Badge>
+                  </div>
+
+                  <Separator className="bg-white/10" />
+
+                  <div className="grid gap-4 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+                    <div className="grid gap-3 rounded-3xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
+                      <div className="space-y-1">
+                        <div className="text-sm font-medium">Role template</div>
+                        <p className="text-sm leading-6 text-slate-300/75">
+                          This first-party role stays authoritative even when Clerk only knows a
+                          broader member versus admin role.
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        <label
+                          htmlFor="ops-users-staff-role"
+                          className="text-xs font-medium uppercase tracking-[0.18em] text-slate-300/72"
+                        >
+                          Staff role
+                        </label>
+                        <Select value={staffRoleTemplate} onValueChange={setStaffRoleTemplate}>
+                          <SelectTrigger
+                            id="ops-users-staff-role"
+                            className="border-white/10 bg-slate-950/40 text-slate-50"
+                          >
+                            <SelectValue placeholder="Choose a staff role" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {staffRoleOptions.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <Button
+                        className="justify-start bg-sky-500 text-slate-950 hover:bg-sky-400"
+                        disabled={actionMutation.isPending || !selectedUser}
+                        onClick={() =>
+                          actionMutation.mutate({
+                            action: 'update_staff_role',
+                            roleTemplate: staffRoleTemplate,
+                          })
+                        }
+                        type="button"
+                      >
+                        {actionMutation.isPending ? (
+                          <LoaderCircleIcon className="animate-spin" data-icon="inline-start" />
+                        ) : null}
+                        Save role template
+                      </Button>
+                    </div>
+
+                    <div className="grid gap-3 rounded-3xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <Button
+                          className="justify-start"
+                          disabled={actionMutation.isPending || !selectedUser}
+                          onClick={() =>
+                            actionMutation.mutate({
+                              action: 'send_staff_invite',
+                              roleTemplate: staffRoleTemplate,
+                            })
+                          }
+                          type="button"
+                          variant="secondary"
+                        >
+                          {actionMutation.isPending ? (
+                            <LoaderCircleIcon className="animate-spin" data-icon="inline-start" />
+                          ) : (
+                            <MailPlusIcon data-icon="inline-start" />
+                          )}
+                          {inviteActionLabel}
+                        </Button>
+                        <Button
+                          className="justify-start border-white/12 text-slate-100 hover:bg-white/10"
+                          disabled={actionMutation.isPending || !canResyncProvider}
+                          onClick={() => actionMutation.mutate({ action: 'resync_provider' })}
+                          type="button"
+                          variant="outline"
+                        >
+                          {actionMutation.isPending ? (
+                            <LoaderCircleIcon className="animate-spin" data-icon="inline-start" />
+                          ) : (
+                            <RefreshCcwIcon data-icon="inline-start" />
+                          )}
+                          Resync from Clerk
+                        </Button>
+                      </div>
+                      <Button
+                        className="justify-start border-white/12 text-slate-100 hover:bg-white/10"
+                        disabled={actionMutation.isPending || !canRevokeInvite}
+                        onClick={() => actionMutation.mutate({ action: 'revoke_staff_invite' })}
+                        type="button"
+                        variant="outline"
+                      >
+                        {actionMutation.isPending ? (
+                          <LoaderCircleIcon className="animate-spin" data-icon="inline-start" />
+                        ) : (
+                          <MailPlusIcon data-icon="inline-start" />
+                        )}
+                        Revoke pending invite
+                      </Button>
+                      <div className="grid gap-2 rounded-2xl border border-white/10 bg-slate-950/35 p-3 text-sm text-slate-300/78">
+                        <div className="font-medium text-slate-100">Current sync posture</div>
+                        <div>
+                          {selectedUser.hasClerkLink
+                            ? 'This user already has a Clerk identity, so Grime Time can grant or resync staff membership immediately.'
+                            : 'This user still needs a Clerk invitation email before they can complete staff onboarding.'}
+                        </div>
+                        <div>
+                          Invite state: <span className="text-slate-100">{describeInviteState(selectedUser.portalInviteState)}</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </>

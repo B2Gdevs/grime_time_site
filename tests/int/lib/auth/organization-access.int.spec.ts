@@ -264,4 +264,85 @@ describe('organizationAccess', () => {
       }
     },
   )
+
+  it(
+    'preserves an existing first-party staff role when Clerk membership sync attaches the provider id',
+    { timeout: 15000 },
+    async () => {
+      const user = await createUser({
+        email: `${runKey}.operator@example.com`,
+        name: 'Field Operator',
+        password: 'test-password',
+        roles: ['customer'],
+      })
+
+      const existingOrgResult = await payload.find({
+        collection: 'organizations',
+        depth: 0,
+        limit: 1,
+        overrideAccess: true,
+        pagination: false,
+        where: {
+          clerkOrgID: {
+            equals: DEFAULT_GRIME_TIME_CLERK_ORG_ID,
+          },
+        },
+      })
+      const hadDefaultOrganization = Boolean(existingOrgResult.docs[0])
+      const { ensureDefaultStaffOrganization, ensureBootstrapOrganizationMembership } = await import(
+        '@/lib/auth/organizationSync'
+      )
+      const { createLocalReq } = await import('payload')
+      const req = await createLocalReq({ user }, payload)
+      const organization = await ensureDefaultStaffOrganization(payload, req)
+      const existingMembership = await createMembership({
+        organization: organization.id,
+        roleTemplate: 'staff-operator',
+        status: 'active',
+        syncSource: 'app',
+        user: user.id,
+      })
+
+      const syncedMembership = await ensureBootstrapOrganizationMembership(payload, user, {
+        clerkMemberships: [
+          {
+            clerkMembershipID: `${runKey}-mem-operator`,
+            clerkOrgID: DEFAULT_GRIME_TIME_CLERK_ORG_ID,
+            role: 'org:member',
+          },
+        ],
+      })
+
+      expect(syncedMembership?.id).toBe(existingMembership.id)
+      expect(syncedMembership?.roleTemplate).toBe('staff-operator')
+      expect(syncedMembership?.clerkMembershipID).toBe(`${runKey}-mem-operator`)
+      expect(syncedMembership?.syncSource).toBe('clerk')
+
+      const reloadedUser = (await payload.findByID({
+        collection: 'users',
+        depth: 0,
+        id: user.id,
+        overrideAccess: true,
+      })) as User
+
+      expect(reloadedUser.roles).toEqual(expect.not.arrayContaining(['admin']))
+
+      const defaultOrganization = (await payload.find({
+        collection: 'organizations',
+        depth: 0,
+        limit: 1,
+        overrideAccess: true,
+        pagination: false,
+        where: {
+          clerkOrgID: {
+            equals: DEFAULT_GRIME_TIME_CLERK_ORG_ID,
+          },
+        },
+      })) as { docs: Organization[] }
+
+      if (!hadDefaultOrganization && defaultOrganization.docs[0]?.id) {
+        created.push({ collection: 'organizations', id: defaultOrganization.docs[0].id })
+      }
+    },
+  )
 })
