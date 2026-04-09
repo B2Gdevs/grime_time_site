@@ -288,4 +288,47 @@ describe('InlinePageMediaEditor', () => {
     expect(wrapper?.className).toContain('w-full')
     expect(wrapper?.className).toContain('block')
   })
+
+  it('stages dropped media when only text/plain JSON survives the drag payload', async () => {
+    render(
+      <InlinePageMediaEditor relationPath="layout.0.services.0.media">
+        <div>Drop zone</div>
+      </InlinePageMediaEditor>,
+    )
+
+    fireEvent.drop(screen.getByText('Drop zone').parentElement as HTMLElement, {
+      dataTransfer: {
+        files: [],
+        getData: (type: string) => {
+          if (type === PAGE_COMPOSER_MEDIA_DRAG_PAYLOAD_MIME) {
+            return ''
+          }
+          if (type === 'text/plain') {
+            return JSON.stringify({
+              id: 44,
+              media: {
+                alt: 'Bright exterior',
+                filename: 'bright-exterior.jpg',
+                height: 900,
+                id: 44,
+                mimeType: 'image/jpeg',
+                updatedAt: '2026-04-07T00:00:00.000Z',
+                url: '/media/bright-exterior.jpg',
+                width: 1600,
+              },
+            })
+          }
+
+          return ''
+        },
+      },
+    })
+
+    await waitFor(() => {
+      expect(onStageMediaSlot).toHaveBeenCalledTimes(1)
+    })
+
+    expect(global.fetch).not.toHaveBeenCalled()
+    expect(screen.getByText('Media staged for this draft. Autosave will persist it.')).toBeTruthy()
+  })
 })

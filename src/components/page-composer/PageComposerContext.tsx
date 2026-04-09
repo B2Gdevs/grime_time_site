@@ -24,6 +24,8 @@ export type PageComposerToolbarState = {
   loading: boolean
   onAddAbove: (index: number) => void
   onAddBelow: (index: number) => void
+  onMoveDown: (index: number) => void
+  onMoveUp: (index: number) => void
   /** Revert canvas + field drafts to the last saved snapshot (same as last successful save/load). */
   onResetDraft: () => void
   canResetDraft: boolean

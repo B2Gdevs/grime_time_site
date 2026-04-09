@@ -1,6 +1,7 @@
 'use client'
 
-import { ArrowDownIcon, ArrowUpIcon, CopyPlusIcon, EyeIcon, EyeOffIcon, Trash2Icon } from 'lucide-react'
+import { useState } from 'react'
+import { ArrowDownIcon, ArrowUpIcon, CopyPlusIcon, EyeIcon, EyeOffIcon, PlusIcon, Trash2Icon } from 'lucide-react'
 
 import { CanvasActionButton } from './CanvasActionButton'
 import type { PageComposerToolbarState } from '@/components/page-composer/PageComposerContext'
@@ -18,35 +19,78 @@ export function CanvasSectionActionRail({
   toolbarState: PageComposerToolbarState
 }) {
   const isLayoutBlock = index >= 0
+  const [insertPickerOpen, setInsertPickerOpen] = useState(false)
 
   return (
     <div
-      className="pointer-events-none absolute inset-x-3 top-3 z-20 flex min-h-10 items-start opacity-0 transition group-hover:opacity-100 group-focus-within:opacity-100"
+      className="pointer-events-none absolute inset-x-3 bottom-3 z-20 flex min-h-10 items-end justify-center opacity-0 transition group-hover:opacity-100 group-focus-within:opacity-100"
       data-page-composer-interactive="true"
     >
       <div className="pointer-events-auto flex flex-wrap items-center gap-2 rounded-[1.1rem] border border-border/70 bg-background/94 p-2 shadow-lg backdrop-blur">
         {supportsInsertionAbove ? (
           <CanvasActionButton
-            label="Add block above"
+            label="Move block up"
             onClick={(event) => {
               event.preventDefault()
               event.stopPropagation()
-              toolbarState.onAddAbove(index)
+              setInsertPickerOpen(false)
+              toolbarState.onMoveUp(index)
             }}
           >
             <ArrowUpIcon className="h-4 w-4" />
           </CanvasActionButton>
         ) : null}
         <CanvasActionButton
-          label="Add block below"
+          label="Move block down"
           onClick={(event) => {
             event.preventDefault()
             event.stopPropagation()
-            toolbarState.onAddBelow(index)
+            setInsertPickerOpen(false)
+            toolbarState.onMoveDown(index)
           }}
         >
           <ArrowDownIcon className="h-4 w-4" />
         </CanvasActionButton>
+        <div className="relative">
+          <CanvasActionButton
+            label="Add block"
+            onClick={(event) => {
+              event.preventDefault()
+              event.stopPropagation()
+              setInsertPickerOpen((current) => !current)
+            }}
+          >
+            <PlusIcon className="h-4 w-4" />
+          </CanvasActionButton>
+          {insertPickerOpen ? (
+            <div className="absolute bottom-full left-1/2 z-30 mb-2 flex -translate-x-1/2 gap-2 rounded-[1rem] border border-border/70 bg-background/96 p-2 shadow-lg backdrop-blur">
+              {supportsInsertionAbove ? (
+                <CanvasActionButton
+                  label="Add block above"
+                  onClick={(event) => {
+                    event.preventDefault()
+                    event.stopPropagation()
+                    setInsertPickerOpen(false)
+                    toolbarState.onAddAbove(index)
+                  }}
+                >
+                  <ArrowUpIcon className="h-4 w-4" />
+                </CanvasActionButton>
+              ) : null}
+              <CanvasActionButton
+                label="Add block below"
+                onClick={(event) => {
+                  event.preventDefault()
+                  event.stopPropagation()
+                  setInsertPickerOpen(false)
+                  toolbarState.onAddBelow(index)
+                }}
+              >
+                <ArrowDownIcon className="h-4 w-4" />
+              </CanvasActionButton>
+            </div>
+          ) : null}
+        </div>
         {isLayoutBlock ? (
           <>
             <CanvasActionButton
@@ -54,6 +98,7 @@ export function CanvasSectionActionRail({
               onClick={(event) => {
                 event.preventDefault()
                 event.stopPropagation()
+                setInsertPickerOpen(false)
                 toolbarState.onToggleHidden(index)
               }}
             >
@@ -64,6 +109,7 @@ export function CanvasSectionActionRail({
               onClick={(event) => {
                 event.preventDefault()
                 event.stopPropagation()
+                setInsertPickerOpen(false)
                 toolbarState.onDuplicateBlock(index)
               }}
             >
@@ -75,6 +121,7 @@ export function CanvasSectionActionRail({
               onClick={(event) => {
                 event.preventDefault()
                 event.stopPropagation()
+                setInsertPickerOpen(false)
                 toolbarState.onDeleteBlock(index)
               }}
             >

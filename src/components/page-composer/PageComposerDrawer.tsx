@@ -797,6 +797,22 @@ export function PageComposerDrawer({
       layout: updatePageLayoutSection({ block, index: selectedIndex, layout: page.layout || [] }),
     }))
   }, [selectedIndex])
+  const moveBlock = useCallback((index: number, direction: -1 | 1) => {
+    mutatePage((page) => {
+      const layout = page.layout || []
+      const nextIndex = index + direction
+
+      if (index < 0 || index >= layout.length || nextIndex < 0 || nextIndex >= layout.length) {
+        return page
+      }
+
+      return {
+        ...page,
+        layout: arrayMove(layout, index, nextIndex),
+      }
+    })
+    setSelectedIndex(index + direction)
+  }, [setSelectedIndex])
   const updateHeroCopy = useCallback((value: string) => {
     if (!selectedHeroBlock) return
     replaceSelectedBlock({
@@ -1148,6 +1164,8 @@ export function PageComposerDrawer({
             loading,
             onAddAbove: (index) => openBlockLibrary(index < 0 ? 0 : index),
             onAddBelow: (index) => openBlockLibrary(index < 0 ? 0 : index + 1),
+            onMoveDown: (index) => moveBlock(index, 1),
+            onMoveUp: (index) => moveBlock(index, -1),
             onDeleteBlock: (index) => {
               if (index < 0) return
               removeBlock(index)
@@ -1451,6 +1469,7 @@ export function PageComposerDrawer({
     embedded,
     heroCopy,
     loading,
+    moveBlock,
     mutateSelectedPricingPlan,
     mutateSelectedService,
     mutateSelectedServiceGrid,

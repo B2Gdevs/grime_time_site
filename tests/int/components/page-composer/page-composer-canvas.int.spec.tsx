@@ -1,8 +1,15 @@
-import { fireEvent, render, screen } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 
 import { PageComposerCanvasSection, PageComposerCanvasViewport } from '@/components/page-composer/PageComposerCanvas'
 import { PAGE_COMPOSER_TOOLBAR_EVENT, PageComposerProvider, usePageComposer } from '@/components/page-composer/PageComposerContext'
+import { CanvasSectionActionRail } from '@/components/page-composer/canvas/CanvasSectionActionRail'
+import { TooltipProvider } from '@/components/ui/tooltip'
+
+const onAddAbove = vi.fn()
+const onAddBelow = vi.fn()
+const onMoveDown = vi.fn()
+const onMoveUp = vi.fn()
 
 vi.mock('next/navigation', () => ({
   usePathname: () => '/',
@@ -46,11 +53,13 @@ function ComposerHarness() {
               draftToolbarStatusLabel: null,
               heroEditor: null,
               loading: false,
-              onAddAbove: vi.fn(),
-              onAddBelow: vi.fn(),
+              onAddAbove,
+              onAddBelow,
               onDeleteBlock: vi.fn(),
               onDeleteDraftPage: vi.fn(),
               onDuplicateBlock: vi.fn(),
+              onMoveDown,
+              onMoveUp,
               onStageMediaSlot: vi.fn(),
               onOpenMediaSlot: vi.fn(),
               onResetDraft: vi.fn(),
@@ -109,6 +118,79 @@ function ComposerHarness() {
 }
 
 describe('PageComposer canvas integration', () => {
+  afterEach(() => {
+    cleanup()
+  })
+
+  it('uses move arrows for reordering and keeps add choices behind the plus button', () => {
+    onAddAbove.mockReset()
+    onAddBelow.mockReset()
+    onMoveDown.mockReset()
+    onMoveUp.mockReset()
+
+    render(
+      <TooltipProvider>
+        <CanvasSectionActionRail
+          index={0}
+          sectionSummary={{
+            badges: [],
+            blockType: 'content',
+            category: 'static',
+            description: 'Hero section',
+            hidden: false,
+            index: 0,
+            label: 'What we do',
+            variant: null,
+          }}
+          supportsInsertionAbove
+          toolbarState={{
+            canDeleteDraftPage: false,
+            canResetDraft: false,
+            contentBlockEditor: null,
+            ctaEditor: null,
+            deleteDraftPageBusy: false,
+            dirty: false,
+            draftPage: null,
+            draftToolbarBusy: false,
+            draftToolbarStatusLabel: null,
+            heroEditor: null,
+            loading: false,
+            onAddAbove,
+            onAddBelow,
+            onDeleteBlock: vi.fn(),
+            onDeleteDraftPage: vi.fn(),
+            onDuplicateBlock: vi.fn(),
+            onMoveDown,
+            onMoveUp,
+            onOpenMediaSlot: vi.fn(),
+            onResetDraft: vi.fn(),
+            onSetSlugDraft: vi.fn(),
+            onSetTitleDraft: vi.fn(),
+            onSetVisibilityDraft: vi.fn(),
+            onStageMediaSlot: vi.fn(),
+            onToggleHidden: vi.fn(),
+            pricingTableEditor: null,
+            sectionSummaries: [],
+            selectedIndex: 0,
+            selectedMediaRelationPath: null,
+            serviceGridEditor: null,
+            slugDraft: '',
+            testimonialsEditor: null,
+            titleDraft: '',
+            visibilityDraft: 'public',
+          }}
+        />
+      </TooltipProvider>,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Move block down' }))
+    expect(onMoveDown).toHaveBeenCalledWith(0)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add block' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Add block below' }))
+    expect(onAddBelow).toHaveBeenCalledWith(0)
+  })
+
   it('uses the live page surface as the selectable canvas when the composer is open', () => {
     render(
       <PageComposerProvider>

@@ -65,6 +65,10 @@ describe('PageComposerDrawerMediaLibraryCard', () => {
       PAGE_COMPOSER_MEDIA_DRAG_PAYLOAD_MIME,
       expect.stringContaining('"id":44'),
     )
+    expect(setData).toHaveBeenCalledWith(
+      'text/plain',
+      expect.stringContaining('"id":44'),
+    )
 
     fireEvent.click(screen.getByRole('button', { name: 'Use media 44 for Driveway lane' }))
 
@@ -115,6 +119,10 @@ describe('PageComposerDrawerMediaLibraryCard', () => {
     expect(setData).toHaveBeenCalledWith(PAGE_COMPOSER_MEDIA_DRAG_MIME, '44')
     expect(setData).toHaveBeenCalledWith(
       PAGE_COMPOSER_MEDIA_DRAG_PAYLOAD_MIME,
+      expect.stringContaining('"id":44'),
+    )
+    expect(setData).toHaveBeenCalledWith(
+      'text/plain',
       expect.stringContaining('"id":44'),
     )
   })
