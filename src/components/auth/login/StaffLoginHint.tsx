@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { OPS_DASHBOARD_PATH } from '@/lib/navigation/portalPaths'
 
 /**
  * Separates customer sign-in from the staff/operator lanes that open after the hosted login succeeds.
@@ -9,8 +10,8 @@ export function StaffLoginHint() {
       <p className="font-medium text-foreground">Staff &amp; operators</p>
       <p className="mt-2 text-balance">
         Team access starts with the hosted Grime Time sign-in on this page. After sign-in, open{' '}
-        <Link className="font-medium text-primary underline-offset-4 hover:underline" href="/ops">
-          /ops
+        <Link className="font-medium text-primary underline-offset-4 hover:underline" href={OPS_DASHBOARD_PATH}>
+          {OPS_DASHBOARD_PATH}
         </Link>{' '}
         for day-to-day work,{' '}
         <Link className="font-medium text-primary underline-offset-4 hover:underline" href="/portal">

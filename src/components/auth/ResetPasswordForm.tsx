@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { ClerkCustomerAccessPanel } from '@/components/auth/ClerkCustomerAccessPanel'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { isClerkClientConfigured } from '@/lib/clerk/config'
+import { CUSTOMER_DASHBOARD_PATH } from '@/lib/navigation/portalPaths'
 
 const SupabaseResetPasswordCard = dynamic(
   () =>
@@ -32,7 +33,10 @@ export function ResetPasswordForm() {
             If you opened an older reset link, start a fresh sign-in instead and complete password
             recovery there with the same customer email.
           </div>
-          <ClerkCustomerAccessPanel showSignUp={false} signInFallbackHref="/dashboard" />
+          <ClerkCustomerAccessPanel
+            showSignUp={false}
+            signInFallbackHref={CUSTOMER_DASHBOARD_PATH}
+          />
           <div className="text-center text-sm text-muted-foreground">
             <Link href="/forgot-password" className="font-medium text-primary hover:underline">
               Need help finding the right email?

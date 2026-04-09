@@ -74,7 +74,7 @@ describe('portal access helpers', () => {
       },
       overrideAccess: true,
     })) as User
-  })
+  }, 20000)
 
   afterAll(async () => {
     for (const entry of created.reverse()) {

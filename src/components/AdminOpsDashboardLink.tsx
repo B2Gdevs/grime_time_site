@@ -1,10 +1,11 @@
 import Link from 'next/link'
+import { OPS_DASHBOARD_PATH } from '@/lib/navigation/portalPaths'
 
 export default function AdminOpsDashboardLink() {
   return (
     <div style={{ padding: '0 0.75rem 0.75rem' }}>
       <Link
-        href="/ops"
+        href={OPS_DASHBOARD_PATH}
         style={{
           alignItems: 'center',
           background: 'var(--theme-elevation-50)',

@@ -1,5 +1,6 @@
 import { Banner } from '@payloadcms/ui/elements/Banner'
 import React from 'react'
+import { OPS_DASHBOARD_PATH } from '@/lib/navigation/portalPaths'
 
 import { SeedButton } from './SeedButton'
 import './index.scss'
@@ -13,7 +14,7 @@ const BeforeDashboard: React.FC = () => {
         <h4>Welcome to your dashboard!</h4>
       </Banner>
       <div className={`${baseClass}__ops-link`}>
-        <a href="/ops" target="_blank" rel="noreferrer">
+        <a href={OPS_DASHBOARD_PATH} target="_blank" rel="noreferrer">
           Open ops dashboard
         </a>
       </div>

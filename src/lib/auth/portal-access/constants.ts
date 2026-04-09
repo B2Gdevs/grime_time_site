@@ -1,3 +1,5 @@
+import { CUSTOMER_DASHBOARD_PATH } from '@/lib/navigation/portalPaths'
+
 export const PORTAL_INVITE_STATE_OPTIONS = [
   { label: 'None', value: 'none' },
   { label: 'Claim pending', value: 'claim_pending' },
@@ -11,4 +13,4 @@ export const PORTAL_ACCESS_TOKEN_TTL_HOURS = 72
 
 export const PORTAL_ACCESS_TOKEN_QUERY_KEY = 'claim'
 
-export const PORTAL_ACCESS_DEFAULT_NEXT_PATH = '/dashboard'
+export const PORTAL_ACCESS_DEFAULT_NEXT_PATH = CUSTOMER_DASHBOARD_PATH

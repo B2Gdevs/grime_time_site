@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phase-plan>
+  <meta>
+    <phase-id>19</phase-id>
+    <phase-name>Inbound media intake and composer media ops</phase-name>
+    <date>2026-04-09</date>
+  </meta>
+  <status>planned</status>
+
+  <intent>
+    <item>Make page-local media editing feel immediate and reliable in the composer.</item>
+    <item>Let the ops team turn emailed attachments into normal Grime Time media without manual dashboard juggling.</item>
+    <item>Keep inbound processing auditable and provider-agnostic.</item>
+  </intent>
+
+  <tasks>
+    <task ref="19-01">Define the inbound media ingestion contract, validation rules, logging, and replay behavior.</task>
+    <task ref="19-02">Finish composer replace and drop assignment polish so the correct media slot surface opens or refreshes immediately.</task>
+    <task ref="19-03">Implement Resend inbound attachment ingestion into first-party media records and expose result state for ops review.</task>
+  </tasks>
+</phase-plan>

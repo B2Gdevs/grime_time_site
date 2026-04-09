@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/card'
 import type { CustomerPortalSnapshot } from '@/lib/customers/getCustomerPortalData'
 import { formatCurrency, formatDate, sentenceCase } from '@/lib/customers/format'
+import { OPS_DASHBOARD_PATH } from '@/lib/navigation/portalPaths'
 
 export function CustomerDashboardView({
   cards,
@@ -40,7 +41,7 @@ export function CustomerDashboardView({
             <div className="mx-4 rounded-lg border border-amber-500/40 bg-amber-500/5 px-4 py-3 text-sm text-amber-950 dark:text-amber-50 lg:mx-6">
               <span className="font-medium">Admin preview</span>
               <span className="text-muted-foreground"> — This is the same view a customer sees. Use </span>
-              <Link href="/ops" className="font-medium underline underline-offset-2">
+              <Link href={OPS_DASHBOARD_PATH} className="font-medium underline underline-offset-2">
                 Ops dashboard
               </Link>
               <span className="text-muted-foreground"> for internal tools.</span>

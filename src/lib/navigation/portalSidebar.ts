@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 
 import { isPortalPreviewTestUser } from '@/lib/auth/previewIdentity'
+import { CUSTOMER_DASHBOARD_PATH, OPS_DASHBOARD_PATH } from '@/lib/navigation/portalPaths'
 
 export type PortalSidebarItem = {
   icon: LucideIcon
@@ -26,7 +27,7 @@ export function buildPortalDashboardUrl({
   isRealAdmin: boolean
   isStaffRoute: boolean
 }): string {
-  return isRealAdmin && isStaffRoute ? '/ops' : '/dashboard'
+  return isRealAdmin && isStaffRoute ? OPS_DASHBOARD_PATH : CUSTOMER_DASHBOARD_PATH
 }
 
 export function buildCustomerScopeLabel(effectiveUserEmail: string): null | string {
@@ -51,7 +52,7 @@ export function buildPortalMainNav(args: {
       {
         icon: LayoutDashboardIcon,
         title: 'Ops dashboard',
-        url: '/ops',
+        url: OPS_DASHBOARD_PATH,
       },
     ]
   }
@@ -60,7 +61,7 @@ export function buildPortalMainNav(args: {
     {
       icon: LayoutDashboardIcon,
       title: customerScopeLabel ? `Dashboard ${customerScopeLabel}` : 'Dashboard',
-      url: '/dashboard',
+      url: CUSTOMER_DASHBOARD_PATH,
     },
     {
       icon: ReceiptTextIcon,

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phase-plan>
+  <meta>
+    <phase-id>11</phase-id>
+    <phase-name>Clerk auth completion and portal onboarding</phase-name>
+    <date>2026-04-09</date>
+  </meta>
+  <status>in-progress</status>
+
+  <intent>
+    <item>Finish the Clerk-primary cutover without breaking the deployed customer or staff portal.</item>
+    <item>Make route ownership explicit so customer, ops, invite, and onboarding flows stop guessing where “dashboard” means.</item>
+    <item>Keep Payload users and app-owned onboarding state authoritative even when Clerk hosts auth UX.</item>
+  </intent>
+
+  <goals>
+    <goal id="G1">Canonicalize the portal routes around `/customer/dashboard` and `/ops/dashboard`, while preserving compatibility redirects from the old paths.</goal>
+    <goal id="G2">Lock public account creation down to invite and claim flows when Clerk is active.</goal>
+    <goal id="G3">Complete the Clerk-first staff invite and first-login path into a one-time welcome modal on the ops dashboard.</goal>
+    <goal id="G4">Retire the remaining Supabase-first customer auth entry points and fallbacks that no longer belong in the product direction.</goal>
+  </goals>
+
+  <requirements>
+    <item>Existing bookmarks, email links, and internal tests must keep working through redirects while the canonical paths change.</item>
+    <item>The route migration must preserve staff-vs-customer navigation behavior, admin preview, and impersonation logic.</item>
+    <item>Welcome-dismissed state belongs to Grime Time data, not Clerk metadata.</item>
+    <item>Public sign-up should not reopen broad self-serve account creation while invite and claim flows are being hardened.</item>
+  </requirements>
+
+  <tasks>
+    <task ref="11-05.1">Route migration: move the customer and ops dashboard pages to `/customer/dashboard` and `/ops/dashboard`, add compatibility redirects, update sidebar/auth defaults, and refresh tests that assume the old paths.</task>
+    <task ref="11-05.2">Public sign-up lockdown: remove or narrow remaining self-serve sign-up affordances when Clerk is active, keeping claim and invite completion working.</task>
+    <task ref="11-05.3">Staff invite onboarding: route invited staff through Clerk-hosted auth, bind or create the local user and membership, and show a one-time welcome modal on first arrival at `/ops/dashboard`.</task>
+    <task ref="11-05.4">Supabase retirement: remove stale fallback auth surfaces that are no longer part of the supported product flow, then verify Stripe and Payload user linkage remain intact.</task>
+  </tasks>
+
+  <definition-of-done>
+    <item>The portal uses explicit canonical dashboard routes and the old paths only redirect.</item>
+    <item>Clerk-primary mode no longer presents broad public account creation outside invite or claim flow.</item>
+    <item>Staff can accept an invite, authenticate, land on the ops dashboard, dismiss the welcome modal once, and continue without seeing it on every visit.</item>
+    <item>Focused tests cover route redirects, onboarding state, and auth-surface expectations.</item>
+  </definition-of-done>
+</phase-plan>

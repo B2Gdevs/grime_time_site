@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react'
+
 import { ChartAreaInteractive } from '@/components/chart-area-interactive'
 import { SectionCards, type SectionCardItem } from '@/components/section-cards'
 import { SiteHeader } from '@/components/site-header'
@@ -10,6 +12,7 @@ export function AdminDashboardView({
   chartMetricSummaries,
   chartTrend,
   chartTrendIsLive,
+  children,
   pipelineSnapshotLabel,
   pipelineSnapshotValue,
 }: {
@@ -18,11 +21,13 @@ export function AdminDashboardView({
   chartMetricSummaries: OpsDashboardData['chartMetricSummaries']
   chartTrend?: OpsChartTrendPoint[] | null
   chartTrendIsLive?: boolean
+  children?: ReactNode
   pipelineSnapshotLabel?: string | null
   pipelineSnapshotValue?: string | null
 }) {
   return (
     <>
+      {children}
       <SiteHeader
         title="Ops dashboard"
         description="KPI scan and chart view for current operations."

@@ -17,6 +17,10 @@ import type { AdminPreviewSearchUser, AdminPreviewUser } from '@/components/admi
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import {
+  CUSTOMER_DASHBOARD_PATH,
+  OPS_DASHBOARD_PATH,
+} from '@/lib/navigation/portalPaths'
 import { parseResponseJson } from '@/utilities/parseResponseJson'
 
 import { adminPanelChrome } from './adminPanelChrome'
@@ -158,13 +162,13 @@ export function SiteOperatorToolsPanel({
               </Link>
             </Button>
             <Button asChild size="sm" type="button" variant="outline">
-              <Link className="justify-start" href="/ops">
+              <Link className="justify-start" href={OPS_DASHBOARD_PATH}>
                 <ShieldIcon className="h-4 w-4" />
                 Ops
               </Link>
             </Button>
             <Button asChild size="sm" type="button" variant="outline">
-              <Link className="justify-start" href="/dashboard">
+              <Link className="justify-start" href={CUSTOMER_DASHBOARD_PATH}>
                 <LayoutDashboardIcon className="h-4 w-4" />
                 Dashboard
               </Link>
@@ -281,7 +285,7 @@ export function SiteOperatorToolsPanel({
 
           {impersonatedUser ? (
             <Button asChild size="sm" type="button" variant="ghost">
-              <Link href="/dashboard">
+              <Link href={CUSTOMER_DASHBOARD_PATH}>
                 <ArrowUpRightIcon className="h-4 w-4" />
                 Open customer dashboard
               </Link>

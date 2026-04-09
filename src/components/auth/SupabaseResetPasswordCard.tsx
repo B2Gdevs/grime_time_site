@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { CUSTOMER_DASHBOARD_PATH } from '@/lib/navigation/portalPaths'
 import { getSupabaseBrowserClient } from '@/lib/supabase/browser'
 
 export function SupabaseResetPasswordCard() {
@@ -83,7 +84,7 @@ export function SupabaseResetPasswordCard() {
 
       setSuccess('Your password is updated. Redirecting to your dashboard...')
       setTimeout(() => {
-        router.push('/dashboard')
+        router.push(CUSTOMER_DASHBOARD_PATH)
         router.refresh()
       }, 1000)
     } catch (submitError) {

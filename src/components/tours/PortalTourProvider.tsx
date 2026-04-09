@@ -19,6 +19,7 @@ import {
   portalTourRegistry,
   type PortalTourId,
 } from '@/lib/tours/registry'
+import { OPS_DASHBOARD_PATH } from '@/lib/navigation/portalPaths'
 import { hasSeenPortalTour, markTourSeen } from '@/lib/tours/storage'
 
 const SESSION_AUTO_OPS_KEY = 'grime_portal_session_autolaunch_ops_v1'
@@ -77,7 +78,7 @@ function StaffOpsAutolaunch({
   const autolaunchOnce = useRef(false)
 
   useEffect(() => {
-    if (!toursEnabled || !isRealAdmin || pathname !== '/ops') return
+    if (!toursEnabled || !isRealAdmin || pathname !== OPS_DASHBOARD_PATH) return
     if (!portalTourRegistry['ops-dashboard'].staffAutolaunch) return
     if (hasSeenPortalTour('ops-dashboard')) return
     if (typeof sessionStorage !== 'undefined' && sessionStorage.getItem(SESSION_AUTO_OPS_KEY)) return
@@ -87,7 +88,7 @@ function StaffOpsAutolaunch({
       sessionStorage.setItem(SESSION_AUTO_OPS_KEY, '1')
     }
     startTour('ops-dashboard')
-  }, [isRealAdmin, pathname, startTour])
+  }, [isRealAdmin, pathname, startTour, toursEnabled])
 
   return null
 }

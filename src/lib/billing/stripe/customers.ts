@@ -9,6 +9,10 @@ type EnsureStripeCustomerArgs = {
   user?: null | User
 }
 
+type StripeCustomerCarrier = {
+  stripeCustomerID?: null | string
+}
+
 function addressGroupToStripeAddress(address: Account['billingAddress'] | Account['serviceAddress'] | User['billingAddress'] | User['serviceAddress']) {
   if (!address?.street1 && !address?.city && !address?.postalCode) {
     return undefined
@@ -27,9 +31,21 @@ function addressGroupToStripeAddress(address: Account['billingAddress'] | Accoun
 export async function ensureStripeCustomer(args: EnsureStripeCustomerArgs) {
   const { account, payload, user } = args
   const stripe = getStripeOrThrow()
+  const existingCustomerID =
+    account.stripeCustomerID?.trim() || (await findLinkedStripeCustomerID(payload, account.id))
 
-  if (account.stripeCustomerID?.trim()) {
-    return account.stripeCustomerID.trim()
+  if (existingCustomerID) {
+    if (existingCustomerID !== account.stripeCustomerID?.trim()) {
+      await payload.update({
+        collection: 'accounts',
+        id: account.id,
+        data: {
+          stripeCustomerID: existingCustomerID,
+        },
+      })
+    }
+
+    return existingCustomerID
   }
 
   const customer = await stripe.customers.create({
@@ -60,4 +76,35 @@ export async function ensureStripeCustomer(args: EnsureStripeCustomerArgs) {
   })
 
   return customer.id
+}
+
+async function findLinkedStripeCustomerID(
+  payload: Payload,
+  accountID: number | string,
+): Promise<null | string> {
+  for (const collection of ['invoices', 'service-plans'] as const) {
+    const result = await payload.find({
+      collection,
+      depth: 0,
+      limit: 10,
+      overrideAccess: true,
+      pagination: false,
+      sort: '-updatedAt',
+      where: {
+        account: {
+          equals: accountID,
+        },
+      },
+    })
+
+    const customerID = (result.docs as StripeCustomerCarrier[])
+      .map((doc) => doc.stripeCustomerID?.trim())
+      .find((value): value is string => Boolean(value))
+
+    if (customerID) {
+      return customerID
+    }
+  }
+
+  return null
 }

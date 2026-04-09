@@ -1,5 +1,9 @@
 import type { Step } from 'react-joyride'
 
+import {
+  CUSTOMER_DASHBOARD_PATH,
+  OPS_DASHBOARD_PATH,
+} from '@/lib/navigation/portalPaths'
 import type { OpsSectionId } from '@/lib/ops/uiMeta'
 
 /** Who the tour is for — drives sidebar grouping and autolaunch rules. */
@@ -8,11 +12,11 @@ export type PortalTourAudience = 'customer' | 'staff'
 /** Portal routes that have Joyride targets (excluding `/ops` tab variants). */
 export type PortalTourPath =
   | '/account'
-  | '/dashboard'
+  | typeof CUSTOMER_DASHBOARD_PATH
   | '/docs'
   | '/estimates'
   | '/invoices'
-  | '/ops'
+  | typeof OPS_DASHBOARD_PATH
   | '/ops/workspace'
   | '/service-schedule'
 
@@ -226,7 +230,7 @@ export const portalTourRegistry: Record<PortalTourId, PortalTourDefinition> = {
     audience: 'staff',
     label: 'Ops overview',
     blurb: 'Start here — autolaunches once for staff',
-    path: '/ops',
+    path: OPS_DASHBOARD_PATH,
     staffAutolaunch: true,
     steps: opsOverviewSteps,
   },
@@ -235,7 +239,7 @@ export const portalTourRegistry: Record<PortalTourId, PortalTourDefinition> = {
     audience: 'customer',
     label: 'Customer portal',
     blurb: 'For homeowners and commercial account users',
-    path: '/dashboard',
+    path: CUSTOMER_DASHBOARD_PATH,
     steps: customerDashboardSteps,
   },
   'staff-crm-workspace': {
@@ -252,7 +256,7 @@ export const portalTourRegistry: Record<PortalTourId, PortalTourDefinition> = {
     audience: 'staff',
     label: 'Today board',
     blurb: 'Routes, jobs, and daily workload',
-    path: '/ops',
+    path: OPS_DASHBOARD_PATH,
     opsTab: 'today',
     steps: staffTodaySteps,
   },
@@ -261,7 +265,7 @@ export const portalTourRegistry: Record<PortalTourId, PortalTourDefinition> = {
     audience: 'staff',
     label: 'Scorecard & liabilities',
     blurb: 'KPIs and business drag',
-    path: '/ops',
+    path: OPS_DASHBOARD_PATH,
     opsTab: 'scorecard',
     steps: staffScorecardSteps,
   },
@@ -270,7 +274,7 @@ export const portalTourRegistry: Record<PortalTourId, PortalTourDefinition> = {
     audience: 'staff',
     label: 'Asset inventory',
     blurb: 'Current equipment and planned additions',
-    path: '/ops',
+    path: OPS_DASHBOARD_PATH,
     opsTab: 'assets',
     steps: staffAssetsSteps,
   },
@@ -279,7 +283,7 @@ export const portalTourRegistry: Record<PortalTourId, PortalTourDefinition> = {
     audience: 'staff',
     label: 'Milestones',
     blurb: 'Growth ladder and standards',
-    path: '/ops',
+    path: OPS_DASHBOARD_PATH,
     opsTab: 'milestones',
     steps: staffMilestonesSteps,
   },

@@ -1,5 +1,6 @@
 import type { Payload } from 'payload'
 
+import { isClerkCustomerAuthPrimaryServer } from '@/lib/auth/customerAuthMode'
 import { provisionPortalAccess } from '@/lib/auth/portal-access/provision'
 import { findCustomerUserByEmail } from '@/lib/auth/portal-access/claims'
 import type { User } from '@/payload-types'
@@ -12,7 +13,16 @@ export type PortalAccessCta = {
 
 function isActivePortalUser(user: User | null): boolean {
   if (!user) return false
-  return user.portalInviteState === 'active' && Boolean(user.clerkUserID || user.supabaseAuthUserID)
+
+  if (user.portalInviteState !== 'active') {
+    return false
+  }
+
+  if (user.clerkUserID) {
+    return true
+  }
+
+  return Boolean(user.supabaseAuthUserID) && !isClerkCustomerAuthPrimaryServer()
 }
 
 export async function resolvePortalAccessCta(args: {

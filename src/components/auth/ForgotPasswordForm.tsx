@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { ClerkCustomerAccessPanel } from '@/components/auth/ClerkCustomerAccessPanel'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { isClerkClientConfigured } from '@/lib/clerk/config'
+import { CUSTOMER_DASHBOARD_PATH } from '@/lib/navigation/portalPaths'
 
 const SupabaseForgotPasswordCard = dynamic(
   () =>
@@ -32,7 +33,10 @@ export function ForgotPasswordForm() {
             Clerk handles password recovery for the customer portal now. Start sign-in with the same
             email on your estimate, invoice, or company invite, then follow the reset steps there.
           </div>
-          <ClerkCustomerAccessPanel showSignUp={false} signInFallbackHref="/dashboard" />
+          <ClerkCustomerAccessPanel
+            showSignUp={false}
+            signInFallbackHref={CUSTOMER_DASHBOARD_PATH}
+          />
           <div className="text-center text-sm text-muted-foreground">
             <Link href="/login" className="font-medium text-primary hover:underline">
               Back to sign in

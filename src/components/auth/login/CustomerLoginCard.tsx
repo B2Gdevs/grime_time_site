@@ -59,8 +59,16 @@ export function CustomerLoginCard() {
                 Use Clerk sign-in for portal access. Choose the same email used on your estimate, invoice,
                 or company invite so Grime Time can attach this session to the correct customer record.
               </div>
+              <div className="rounded-xl border border-border/70 bg-background p-4 text-sm text-muted-foreground">
+                Need access for the first time? Use the secure link from your estimate, invoice, or company
+                invite, or open <span className="font-medium text-foreground">/claim-account</span> with the same email.
+              </div>
             </Show>
-            <ClerkCustomerAccessPanel signInFallbackHref={nextPath} signUpFallbackHref={nextPath} />
+            <ClerkCustomerAccessPanel
+              showSignUp={false}
+              signInFallbackHref={nextPath}
+              signUpFallbackHref={nextPath}
+            />
           </div>
         ) : !supabaseConfigured ? (
           <AuthError message="Customer sign-in is not configured yet. Add the Clerk or public Supabase auth env vars first." />

@@ -10,6 +10,11 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { getCustomerAuthEmailIssue, normalizeCustomerAuthEmail } from '@/lib/auth/customerEmail'
 import { isAdminUser } from '@/lib/auth/roles'
+import {
+  CUSTOMER_DASHBOARD_PATH,
+  isCustomerDashboardPath,
+  OPS_DASHBOARD_PATH,
+} from '@/lib/navigation/portalPaths'
 import { getSupabaseBrowserClient } from '@/lib/supabase/browser'
 
 type Props = {
@@ -27,10 +32,10 @@ function resolvePostLoginPath(payload: unknown, fallbackPath: string): string {
       : null
 
   if (isAdminUser(user)) {
-    return fallbackPath === '/dashboard' ? '/ops' : fallbackPath
+    return isCustomerDashboardPath(fallbackPath) ? OPS_DASHBOARD_PATH : fallbackPath
   }
 
-  return fallbackPath
+  return fallbackPath || CUSTOMER_DASHBOARD_PATH
 }
 
 export function PasswordSignInForm({ nextPath }: Props) {

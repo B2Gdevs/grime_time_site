@@ -81,20 +81,20 @@
     <plans>.planning/workflows/google-business-profile-chat.md</plans>
   </phase>
   <phase id="11">
-    <title>Field-agent messaging, notifications, and subscriptions</title>
-    <goal>Ship employee quote-notification email first, then add a shared Grime Time tool surface for field-agent messaging and an OpenClaw plugin path, while keeping Stripe as the default infrastructure for recurring services and subscriptions.</goal>
-    <requirements>REQ-05, REQ-06</requirements>
+    <title>Clerk auth completion and portal onboarding</title>
+    <goal>Finish the Clerk-primary identity migration by locking public account creation down to invite and claim flows, moving the customer and ops portals onto explicit dashboard routes, and completing the first-run staff onboarding path into the app-owned ops experience without reviving Supabase-first entry points.</goal>
+    <requirements>REQ-04, REQ-05, REQ-06</requirements>
     <depends>07,08</depends>
-    <status>complete</status>
-    <plans>.planning/workflows/field-agent-messaging-and-notifications.md</plans>
+    <status>in-progress</status>
+    <plans>.planning/phases/11-clerk-auth-and-portal-onboarding/</plans>
   </phase>
   <phase id="12">
-    <title>Organizations, RBAC, and provider sync</title>
-    <goal>Define a first-party organization and membership model, keep Clerk as the identity provider rather than the business-authorization source of truth, support role and entitlement changes from Grime Time admin, and sync org/user changes safely to external providers and downstream apps.</goal>
+    <title>Staff admin, users, customers, and provider sync</title>
+    <goal>Build the first-party staff administration layer on top of the new organization model: `/ops/users` and `/ops/customers`, role-template and entitlement controls, invite management, and adapter-based sync so Clerk remains an identity provider instead of the long-term business-authorization source of truth.</goal>
     <requirements>REQ-04, REQ-05, REQ-06</requirements>
     <depends>04,07,11</depends>
-    <status>complete</status>
-    <plans>.planning/workflows/orgs-rbac-and-provider-sync.md</plans>
+    <status>in-progress</status>
+    <plans>.planning/phases/12-staff-admin-rbac-and-provider-sync/</plans>
   </phase>
   <phase id="13">
     <title>Visual page composer and copilot authoring</title>
@@ -143,6 +143,14 @@
     <depends>15,16,17</depends>
     <status>complete</status>
     <plans>.planning/phases/18-shared-sections-and-constrained-reuse/</plans>
+  </phase>
+  <phase id="19">
+    <title>Inbound media intake and composer media ops</title>
+    <goal>Finish the next media-operations lane by making composer replacement flows reliable in the new page-local media tab and adding a first-party inbound email attachment ingestion path that turns Resend-delivered attachments into Grime Time media records with auditability and replay-safe processing.</goal>
+    <requirements>REQ-03, REQ-05</requirements>
+    <depends>11,12,18</depends>
+    <status>planned</status>
+    <plans>.planning/phases/19-inbound-media-intake-and-composer-ops/</plans>
   </phase>
   <doc-flow>
     <doc name="TASK-REGISTRY.xml">Tasks by phase.</doc>

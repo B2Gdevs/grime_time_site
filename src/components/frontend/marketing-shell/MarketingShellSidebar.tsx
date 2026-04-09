@@ -16,6 +16,7 @@ import {
   SidebarMenu,
   SidebarRail,
 } from '@/components/ui/sidebar'
+import { CUSTOMER_DASHBOARD_PATH } from '@/lib/navigation/portalPaths'
 import { ThemeSelector } from '@/providers/Theme/ThemeSelector'
 import type { MarketingNavLink } from '@/lib/marketing/public-shell'
 
@@ -77,10 +78,11 @@ export function MarketingShellSidebar({
 
         <div className="rounded-2xl border border-sidebar-border/80 bg-sidebar-accent/35 px-3 py-3 group-data-[collapsible=icon]:hidden">
           <ClerkCustomerAccessPanel
-            accountMenuHref="/dashboard"
+            accountMenuHref={CUSTOMER_DASHBOARD_PATH}
             compact
-            signInFallbackHref="/dashboard"
-            signUpFallbackHref="/dashboard"
+            showSignUp={false}
+            signInFallbackHref={CUSTOMER_DASHBOARD_PATH}
+            signUpFallbackHref={CUSTOMER_DASHBOARD_PATH}
           />
         </div>
 

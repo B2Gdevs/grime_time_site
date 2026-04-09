@@ -996,4 +996,58 @@
       <file path="src/components/page-composer/drawer/PageComposerDrawerSelectedBlockPanel.tsx" />
     </references>
   </decision>
+  <decision id="D-auth-008">
+    <title>Portal dashboards use explicit `/customer/dashboard` and `/ops/dashboard` routes</title>
+    <summary>Grime Time should stop overloading `/dashboard` and `/ops` as both the public contract and the implementation detail. The canonical customer landing route is `/customer/dashboard`, and the canonical internal landing route is `/ops/dashboard`. The old `/dashboard` and `/ops` paths remain compatibility redirects so deployed links, emails, and bookmarks keep working while the app moves over.</summary>
+    <impact>This makes route ownership clearer for auth redirects, onboarding, and future subpages under each area. It also removes ambiguity when building invite and welcome flows, because “customer dashboard” and “ops dashboard” become explicit destinations rather than inferred meanings attached to generic root paths.</impact>
+    <references>
+      <file path=".planning/ROADMAP.xml" />
+      <file path=".planning/TASK-REGISTRY.xml" />
+      <file path="src/lib/navigation/portalSidebar.ts" />
+      <file path="src/app/(portal)/layout.tsx" />
+    </references>
+  </decision>
+  <decision id="D-auth-009">
+    <title>Staff administration lives in `/ops/users` and `/ops/customers`, with staff as a filtered user slice</title>
+    <summary>The ops admin area should not grow separate top-level pages for staff, users, and customers when the underlying entities overlap. `/ops/users` is the identity and membership management surface, including staff invites, role templates, and entitlement controls. `/ops/customers` is the first-party customer and account-management surface. “Staff” is treated as a filtered subset or view within users, not a third standalone page.</summary>
+    <impact>This keeps the ops IA compact, aligns with the first-party authorization model, and avoids hard-coding Clerk or Stripe concepts as the main admin information architecture. It also keeps future provider swaps easier because Grime Time's own user and customer surfaces stay the primary operational contract.</impact>
+    <references>
+      <file path=".planning/ROADMAP.xml" />
+      <file path=".planning/TASK-REGISTRY.xml" />
+      <file path=".planning/workflows/orgs-rbac-and-provider-sync.md" />
+      <file path="src/lib/auth/organizationAccess.ts" />
+    </references>
+  </decision>
+  <decision id="D-content-027">
+    <title>Inbound email attachments feed first-party media ingestion instead of becoming a Resend-owned media model</title>
+    <summary>Inbound media-by-email should use Resend only as the transport and webhook adapter. The app receives `email.received`, fetches attachment binaries, validates them, writes first-party ingestion records, and creates normal Grime Time media records. Sender metadata, audit logs, and replay behavior belong to Grime Time, not to provider-specific inbox state.</summary>
+    <impact>This keeps media ingestion compatible with future provider swaps, gives the ops team a real audit trail for attachment failures or replays, and lets the composer or media library treat email uploads as normal first-party media after ingestion instead of as a separate external bucket.</impact>
+    <references>
+      <file path=".planning/ROADMAP.xml" />
+      <file path=".planning/TASK-REGISTRY.xml" />
+      <file path=".planning/workflows/customer-auth-and-portal-access.md" />
+    </references>
+  </decision>
+  <decision id="D-auth-012">
+    <title>Ops welcome dismissal state stays first-party in Payload preferences</title>
+    <summary>The first-run welcome gate for invited staff on `/ops/dashboard` should not depend on Clerk user metadata or provider-specific flags. Grime Time stores the dismissed state as a first-party `payload-preferences` record keyed to the local Payload user, and the ops dashboard reads that state server-side before rendering the modal.</summary>
+    <impact>This keeps onboarding state portable across identity providers, avoids coupling staff UX to Clerk metadata shape, and lets the app preserve one-time ops onboarding behavior even when the same staff identity is rebound, mirrored, or reconciled later. It also keeps the welcome contract close to the app-owned user record that already backs impersonation and portal authorization.</impact>
+    <references>
+      <file path=".planning/TASK-REGISTRY.xml" />
+      <file path="src/lib/ops/welcome.ts" />
+      <file path="src/lib/ops/loaders/loadOpsRouteData.ts" />
+      <file path="src/app/api/internal/ops/welcome/route.ts" />
+    </references>
+  </decision>
+  <decision id="D-auth-013">
+    <title>Clerk-primary customer migration backfills first-party account and rebinding state before creating new billing identities</title>
+    <summary>When Clerk is the primary customer auth path, Grime Time should treat a signed-in customer as migrated only after the Clerk-backed session is tied back to first-party account state. Customer-session resolution now backfills the matching account by first-party account email, portal CTA generation reissues claim or invite access for Supabase-only users that have not rebound to Clerk yet, and Stripe customer creation should reuse first-party billing document customer ids before creating a new Stripe customer.</summary>
+    <impact>This reduces duplicate customer records during the auth migration, keeps billing portal access working for first-time Clerk sessions that match an existing account, and avoids suppressing rebinding emails just because a legacy Supabase id still exists on the user. It also keeps Stripe migration logic grounded in app-owned invoices and service plans instead of assuming the account record was already perfectly backfilled.</impact>
+    <references>
+      <file path=".planning/TASK-REGISTRY.xml" />
+      <file path="src/lib/auth/resolveCustomerPayloadUser.ts" />
+      <file path="src/lib/email/portalAccessCta.ts" />
+      <file path="src/lib/billing/stripe/customers.ts" />
+    </references>
+  </decision>
 </decisions>

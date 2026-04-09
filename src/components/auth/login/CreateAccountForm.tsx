@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { getCustomerAuthEmailIssue, normalizeCustomerAuthEmail } from '@/lib/auth/customerEmail'
+import { CUSTOMER_DASHBOARD_PATH } from '@/lib/navigation/portalPaths'
 import { getSupabaseBrowserClient } from '@/lib/supabase/browser'
 import { getClientSideURL } from '@/utilities/getURL'
 
@@ -60,7 +61,7 @@ export function CreateAccountForm() {
           data: {
             name,
           },
-          emailRedirectTo: `${getClientSideURL()}/auth/confirm?next=/dashboard`,
+          emailRedirectTo: `${getClientSideURL()}/auth/confirm?next=${encodeURIComponent(CUSTOMER_DASHBOARD_PATH)}`,
         },
       })
 
@@ -69,7 +70,7 @@ export function CreateAccountForm() {
       }
 
       if (data.session) {
-        router.push('/dashboard')
+        router.push(CUSTOMER_DASHBOARD_PATH)
         router.refresh()
         return
       }

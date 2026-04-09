@@ -1,32 +1,27 @@
 import { redirect } from 'next/navigation'
 
-import { AdminDashboardView } from '@/components/portal/AdminDashboardView'
-import { loadOpsRouteData } from '@/lib/ops/loaders/loadOpsRouteData'
-import { parseOpsTabQuery } from '@/lib/ops/opsCommandCenterTabs'
+import { OPS_DASHBOARD_PATH } from '@/lib/navigation/portalPaths'
 
 type OpsPageProps = {
-  searchParams: Promise<{ tab?: string }>
+  searchParams: Promise<Record<string, string | string[] | undefined>>
 }
 
-export default async function OpsDashboardPage({ searchParams }: OpsPageProps) {
+export default async function OpsLegacyRedirectPage({ searchParams }: OpsPageProps) {
   const sp = await searchParams
-  const initialCommandCenterTab = parseOpsTabQuery(sp.tab)
+  const params = new URLSearchParams()
 
-  if (initialCommandCenterTab) {
-    redirect(`/ops/workspace?tab=${initialCommandCenterTab}`)
+  for (const [key, value] of Object.entries(sp)) {
+    if (typeof value === 'string') {
+      params.set(key, value)
+      continue
+    }
+
+    if (Array.isArray(value)) {
+      for (const entry of value) {
+        params.append(key, entry)
+      }
+    }
   }
 
-  const { data } = await loadOpsRouteData()
-
-  return (
-    <AdminDashboardView
-      cards={data.cards}
-      chartDisclaimer={data.chartDisclaimer}
-      chartMetricSummaries={data.chartMetricSummaries}
-      chartTrend={data.chartTrend}
-      chartTrendIsLive={data.chartTrendIsLive}
-      pipelineSnapshotLabel={data.pipelineSnapshotLabel}
-      pipelineSnapshotValue={data.pipelineSnapshotValue}
-    />
-  )
+  redirect(params.size > 0 ? `${OPS_DASHBOARD_PATH}?${params.toString()}` : OPS_DASHBOARD_PATH)
 }

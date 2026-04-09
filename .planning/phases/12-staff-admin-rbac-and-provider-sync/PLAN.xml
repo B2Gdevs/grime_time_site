@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phase-plan>
+  <meta>
+    <phase-id>12</phase-id>
+    <phase-name>Staff admin, users, customers, and provider sync</phase-name>
+    <date>2026-04-09</date>
+  </meta>
+  <status>planned</status>
+
+  <intent>
+    <item>Expose first-party staff and customer administration in the ops app instead of outsourcing operational truth to provider dashboards.</item>
+    <item>Keep the admin IA compact: users, customers, and staff filters instead of three disconnected management systems.</item>
+    <item>Preserve a provider-adapter boundary so Clerk remains replaceable.</item>
+  </intent>
+
+  <tasks>
+    <task ref="12-02.1">Build `/ops/users` with searchable user rows, staff filters, invite actions, membership summaries, and role-template assignment.</task>
+    <task ref="12-02.2">Build `/ops/customers` with first-party account and customer views that do not assume Clerk or Stripe are the source of truth.</task>
+    <task ref="12-02.3">Add entitlement lock/unlock controls, sync status metadata, and manual resync affordances for staff admins.</task>
+    <task ref="12-03.1">Implement inbound Clerk webhook reconciliation plus outbound first-party domain events for users, organizations, and memberships.</task>
+    <task ref="12-03.2">Keep provider-specific fields behind an adapter layer so identity or billing providers can change without rewriting app authorization.</task>
+  </tasks>
+</phase-plan>

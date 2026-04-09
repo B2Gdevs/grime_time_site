@@ -26,11 +26,22 @@ async function createUser(data: Record<string, unknown>) {
   return user
 }
 
+async function createAccount(data: Record<string, unknown>) {
+  const account = (await payload.create({
+    collection: 'accounts',
+    data,
+    overrideAccess: true,
+  } as never)) as { id: number | string; name?: null | string }
+
+  created.push({ collection: 'accounts', id: account.id })
+  return account
+}
+
 describe('resolveCustomerPayloadUser', () => {
   beforeAll(async () => {
     const payloadConfig = await config
     payload = await getPayload({ config: payloadConfig })
-  })
+  }, 20000)
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -119,6 +130,42 @@ describe('resolveCustomerPayloadUser', () => {
       expect(result?.user.clerkUserID).toBe(`clerk_customer_${runKey}`)
       expect(result?.user.roles).toEqual(expect.arrayContaining(['customer']))
       expect(result?.user.portalInviteState).toBe('active')
+
+      if (result?.user?.id) {
+        created.push({ collection: 'users', id: result.user.id })
+      }
+    },
+  )
+
+  it(
+    'backfills the matching account onto a first-time Clerk customer session by account email',
+    { timeout: 15000 },
+    async () => {
+      const customerEmail = `${runKey}.account-match@example.com`
+      const account = await createAccount({
+        accountType: 'residential',
+        billingEmail: customerEmail,
+        name: 'Matched Account',
+        status: 'active',
+      })
+
+      resolveCustomerSessionIdentity.mockResolvedValue({
+        clerkUserID: `clerk_account_${runKey}`,
+        email: customerEmail,
+        firstName: 'Matched',
+        kind: 'clerk',
+        lastName: 'Customer',
+        organizationMemberships: [],
+        user_metadata: {
+          name: 'Matched Customer',
+        },
+      })
+
+      const { resolveCustomerPayloadUser } = await import('@/lib/auth/resolveCustomerPayloadUser')
+      const result = await resolveCustomerPayloadUser()
+
+      expect(result?.user.account).toEqual(account.id)
+      expect(result?.user.company).toBe('Matched Account')
 
       if (result?.user?.id) {
         created.push({ collection: 'users', id: result.user.id })

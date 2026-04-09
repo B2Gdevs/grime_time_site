@@ -1,5 +1,9 @@
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import {
+  CUSTOMER_DASHBOARD_PATH,
+  OPS_DASHBOARD_PATH,
+} from '@/lib/navigation/portalPaths'
 
 const push = vi.fn()
 const refresh = vi.fn()
@@ -60,8 +64,10 @@ describe('SiteOperatorToolsPanel', () => {
 
     expect(screen.getByText('Operator tools')).toBeTruthy()
     expect(screen.getByRole('link', { name: /home/i }).getAttribute('href')).toBe('/')
-    expect(screen.getByRole('link', { name: /ops/i }).getAttribute('href')).toBe('/ops')
-    expect(screen.getByRole('link', { name: /dashboard/i }).getAttribute('href')).toBe('/dashboard')
+    expect(screen.getByRole('link', { name: /ops/i }).getAttribute('href')).toBe(OPS_DASHBOARD_PATH)
+    expect(screen.getByRole('link', { name: /dashboard/i }).getAttribute('href')).toBe(
+      CUSTOMER_DASHBOARD_PATH,
+    )
     expect(screen.queryByRole('switch', { name: /live page editing/i })).toBeNull()
     expect(screen.getByText(/signed in as/i)).toBeTruthy()
     expect(screen.getByText(/admin direct view/i)).toBeTruthy()

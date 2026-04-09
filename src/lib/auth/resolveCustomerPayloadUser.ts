@@ -4,7 +4,7 @@ import config from '@payload-config'
 import { getPayload } from 'payload'
 
 import { USERS_COLLECTION_SLUG } from '@/collections/Users'
-import type { User } from '@/payload-types'
+import type { Account, User } from '@/payload-types'
 import { resolveCustomerSessionIdentity } from '@/lib/auth/customerSessionIdentity'
 import { ensureBootstrapOrganizationMembership } from '@/lib/auth/organizationSync'
 
@@ -30,6 +30,7 @@ export async function resolveCustomerPayloadUser() {
   const payload = await getPayload({ config })
   const normalizedEmail = identity.email.trim().toLowerCase()
   let existingUser: User | null = null
+  const matchedAccount = await findCustomerAccountByEmail(normalizedEmail, payload)
 
   if (identity.kind === 'clerk') {
     existingUser = await findCustomerUserByClerkID(identity.clerkUserID, payload)
@@ -69,6 +70,8 @@ export async function resolveCustomerPayloadUser() {
           identity.kind === 'supabase'
             ? identity.supabaseAuthUserID
             : existingUser.supabaseAuthUserID,
+        account: existingUser.account ?? matchedAccount?.id,
+        company: existingUser.company || matchedAccount?.name || undefined,
       },
       overrideAccess: true,
     })) as User
@@ -88,6 +91,8 @@ export async function resolveCustomerPayloadUser() {
       email: normalizedEmail,
       lastPortalLoginAt: new Date().toISOString(),
       name: readIdentityDisplayName(identity),
+      account: matchedAccount?.id,
+      company: matchedAccount?.name || undefined,
       portalInviteState: 'active',
       roles: ['customer'],
       clerkUserID: identity.kind === 'clerk' ? identity.clerkUserID : undefined,
@@ -178,6 +183,44 @@ async function findPortalUserByEmail(
   })
 
   return (result.docs[0] as User | undefined) ?? null
+}
+
+async function findCustomerAccountByEmail(
+  email: string,
+  payload: Awaited<ReturnType<typeof getPayload>>,
+): Promise<null | Pick<Account, 'id' | 'name'>> {
+  const result = await payload.find({
+    collection: 'accounts',
+    depth: 0,
+    limit: 1,
+    overrideAccess: true,
+    pagination: false,
+    where: {
+      or: [
+        {
+          billingEmail: {
+            equals: email,
+          },
+        },
+        {
+          accountsPayableEmail: {
+            equals: email,
+          },
+        },
+      ],
+    },
+  })
+
+  const account = result.docs[0] as Account | undefined
+
+  if (!account) {
+    return null
+  }
+
+  return {
+    id: account.id,
+    name: account.name || null,
+  }
 }
 
 function readIdentityDisplayName(user: {

@@ -12,6 +12,13 @@ vi.mock('@clerk/nextjs', () => ({
   SignInButton: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   SignUpButton: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   UserButton: () => <div>UserButton</div>,
+  useClerk: () => ({
+    signOut: vi.fn(),
+  }),
+  useUser: () => ({
+    isLoaded: true,
+    user: null,
+  }),
 }))
 
 describe('CustomerLoginCard', () => {
@@ -34,10 +41,12 @@ describe('CustomerLoginCard', () => {
     render(<CustomerLoginCard />)
 
     expect(screen.getByText('Customer account')).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Customer sign in' })).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Create account' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Sign in' })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Create account' })).toBeNull()
     expect(
       screen.getByText(/Use Clerk sign-in for portal access/i),
     ).toBeTruthy()
+    expect(screen.getByText(/Need access for the first time/i)).toBeTruthy()
+    expect(screen.getByText('/claim-account')).toBeTruthy()
   })
 })
