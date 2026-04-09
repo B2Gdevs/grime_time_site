@@ -163,6 +163,7 @@ describe('PageComposer shell integration', () => {
     expect(screen.getByText('Visual composer')).toBeTruthy()
     expect(screen.getByRole('button', { name: /dismiss page composer/i })).toBeTruthy()
     expect(screen.getByRole('button', { name: /move page composer/i })).toBeTruthy()
+    expect(screen.getByRole('tab', { name: 'Layout' })).toBeTruthy()
     expect(screen.getByText(/selected block/i)).toBeTruthy()
     expect(screen.queryByText(/the live page is the canvas/i)).toBeNull()
     expect(screen.queryByText(/^Preview$/i)).toBeNull()

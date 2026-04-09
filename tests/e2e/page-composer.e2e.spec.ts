@@ -50,7 +50,7 @@ async function clickComposerButton(page: import('@playwright/test').Page, name: 
   await button.evaluate((element: HTMLButtonElement) => element.click())
 }
 
-async function clickComposerTab(page: import('@playwright/test').Page, name: 'Content' | 'Media' | 'Publish' | 'Structure') {
+async function clickComposerTab(page: import('@playwright/test').Page, name: 'Content' | 'Layout' | 'Media' | 'Publish') {
   const tab = composerDrawer(page).getByRole('tab', { name })
   await tab.click()
 }
@@ -78,7 +78,7 @@ async function persistComposerDraft(page: import('@playwright/test').Page) {
 }
 
 async function insertServiceGrid(page: import('@playwright/test').Page) {
-  await clickComposerTab(page, 'Structure')
+  await clickComposerTab(page, 'Layout')
   await clickElement(activeComposerPanel(page).getByRole('button', { name: 'Add block' }).first())
   await clickElement(composerDrawer(page).getByRole('button', { name: /Service grid/i }))
 }
@@ -194,7 +194,7 @@ test.describe('Staff page composer', () => {
     await insertServiceGrid(page)
     await renameSelectedServiceGrid(page, 'Interactive service section', 'Composer Beta')
 
-    await clickComposerTab(page, 'Structure')
+    await clickComposerTab(page, 'Layout')
     await dragSectionAbove({
       page,
       sourceLabel: 'Composer Beta',

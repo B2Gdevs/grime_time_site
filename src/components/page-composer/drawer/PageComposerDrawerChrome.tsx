@@ -369,7 +369,35 @@ export function PageComposerDrawerChrome({
           {showInlineAdminBar ? (
             <div className={adminPanelChrome.drawerTabsStrip}>
               <TooltipProvider delayDuration={200}>
-                <TabsList className="grid h-auto w-full grid-cols-3 gap-1 rounded-xl p-1">
+                <TabsList className="grid h-auto w-full grid-cols-4 gap-1 rounded-xl p-1">
+                  <div className="relative min-w-0">
+                    <TabsTrigger className="w-full pr-7 text-xs sm:text-sm" value="structure">
+                      <span className="inline-flex items-center gap-2">
+                        <LayoutListIcon className="h-4 w-4 shrink-0" />
+                        Layout
+                      </span>
+                    </TabsTrigger>
+                    <div
+                      className="pointer-events-auto absolute right-1 top-1/2 z-10 -translate-y-1/2"
+                      data-page-composer-no-drag="true"
+                    >
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            aria-label="About the Layout tab"
+                            className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                            type="button"
+                          >
+                            <InfoIcon aria-hidden className="h-3.5 w-3.5" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-[280px] text-xs leading-snug" side="bottom">
+                          Reorder the page with drag-and-drop, replace a block in place, and add a new block at the
+                          bottom without leaving the composer.
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                  </div>
                   <div className="relative min-w-0">
                     <TabsTrigger className="w-full pr-7 text-xs sm:text-sm" value="content">
                       <span className="inline-flex items-center gap-2">
@@ -393,7 +421,7 @@ export function PageComposerDrawerChrome({
                         </TooltipTrigger>
                         <TooltipContent className="max-w-[280px] text-xs leading-snug" side="bottom">
                           Edit fields for the block selected on the canvas (same data as the inline editor). Open the
-                          block library to insert blocks and reusable presets from the structure tab or canvas.
+                          block library to insert blocks and reusable presets from the layout tab or canvas.
                         </TooltipContent>
                       </Tooltip>
                     </div>

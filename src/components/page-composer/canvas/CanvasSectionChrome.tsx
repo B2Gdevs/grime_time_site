@@ -1,9 +1,9 @@
 'use client'
 
 import type { MouseEvent, ReactNode, RefObject } from 'react'
+import { motion } from 'motion/react'
 
 import { CanvasSectionActionRail } from './CanvasSectionActionRail'
-import { CanvasSectionSelectionChip } from './CanvasSectionSelectionChip'
 import type { PageComposerToolbarState } from '@/components/page-composer/PageComposerContext'
 import { cn } from '@/utilities/ui'
 import type { PageComposerSectionSummary } from '@/lib/pages/pageComposer'
@@ -25,7 +25,7 @@ export function CanvasSectionChrome({
   children,
   index,
   isSelected,
-  label,
+  label: _label,
   sectionIdentity,
   sectionRef,
   sectionSummary,
@@ -42,10 +42,11 @@ export function CanvasSectionChrome({
     : undefined
 
   return (
-    <div
+    <motion.div
+      layout="position"
       ref={sectionRef}
       className={cn(
-        'group relative rounded-[1.6rem] transition',
+        'group relative rounded-[1.6rem] transition will-change-transform',
         isSelected ? 'ring-2 ring-primary/40 ring-offset-4 ring-offset-background' : 'hover:ring-2 hover:ring-primary/20 hover:ring-offset-4 hover:ring-offset-background',
       )}
       data-page-composer-block-index={index}
@@ -56,6 +57,14 @@ export function CanvasSectionChrome({
       style={{
         ...(typeof sectionOrder === 'number' ? { order: sectionOrder } : {}),
         ...(sectionViewTransitionName ? { viewTransitionName: sectionViewTransitionName } : {}),
+      }}
+      transition={{
+        layout: {
+          damping: 30,
+          mass: 0.7,
+          stiffness: 320,
+          type: 'spring',
+        },
       }}
     >
       {visibleSectionSummary && sectionToolbarState ? (
@@ -68,6 +77,6 @@ export function CanvasSectionChrome({
       ) : null}
 
       <div data-selected={isSelected ? 'true' : 'false'}>{children}</div>
-    </div>
+    </motion.div>
   )
 }
