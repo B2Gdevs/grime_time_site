@@ -10,7 +10,7 @@ import {
 } from 'react'
 import { KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import type { DragEndEvent } from '@dnd-kit/core'
-import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable'
+import { sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import { usePathname, useRouter } from 'next/navigation'
 import { flushSync } from 'react-dom'
 
@@ -27,8 +27,10 @@ import {
   buildPageComposerSectionSummaries,
   countPageComposerChangedBlocks,
   duplicatePageLayoutSection,
+  findPageLayoutSectionIndexByIdentity,
   filterMarketingComposerPageSummaries,
   insertPageLayoutRegisteredBlock,
+  movePageLayoutSection,
   normalizeComposerRoutePath,
   removePageLayoutSection,
   togglePageLayoutSectionHidden,
@@ -777,6 +779,30 @@ export function PageComposerDrawer({
     })
   }
 
+  function violatesPinnedHero(args: {
+    fromIndex: number
+    layout: NonNullable<PageComposerDocument['layout']>
+    toIndex: number
+  }) {
+    const { fromIndex, layout, toIndex } = args
+    const heroPinnedAtTop = layout[0]?.blockType === 'heroBlock'
+
+    if (!heroPinnedAtTop) {
+      return false
+    }
+
+    const movingBlock = layout[fromIndex]
+    if (!movingBlock) {
+      return false
+    }
+
+    if (movingBlock.blockType === 'heroBlock') {
+      return toIndex !== 0
+    }
+
+    return toIndex === 0
+  }
+
   const runCanvasLayoutTransition = useCallback((update: () => void) => {
     const documentWithViewTransition = document as Document & {
       startViewTransition?: (callback: () => void) => unknown
@@ -815,22 +841,45 @@ export function PageComposerDrawer({
       layout: updatePageLayoutSection({ block, index: selectedIndex, layout: page.layout || [] }),
     }))
   }, [selectedIndex])
-  const moveBlock = useCallback((index: number, direction: -1 | 1) => {
+  const moveBlock = useCallback((identity: string, direction: -1 | 1) => {
     runCanvasLayoutTransition(() => {
+      let nextSelectedIndex: null | number = null
+
       mutatePage((page) => {
         const layout = page.layout || []
-        const nextIndex = index + direction
+        const currentIndex = findPageLayoutSectionIndexByIdentity({ identity, layout })
+        const nextIndex = currentIndex + direction
 
-        if (index < 0 || index >= layout.length || nextIndex < 0 || nextIndex >= layout.length) {
+        if (currentIndex < 0 || nextIndex < 0 || nextIndex >= layout.length) {
+          nextSelectedIndex = currentIndex >= 0 ? currentIndex : null
           return page
         }
 
+        if (violatesPinnedHero({ fromIndex: currentIndex, layout, toIndex: nextIndex })) {
+          nextSelectedIndex = currentIndex
+          return page
+        }
+
+        const nextLayout = movePageLayoutSection({
+          fromIndex: currentIndex,
+          layout,
+          toIndex: nextIndex,
+        })
+
+        nextSelectedIndex = findPageLayoutSectionIndexByIdentity({
+          identity,
+          layout: nextLayout,
+        })
+
         return {
           ...page,
-          layout: arrayMove(layout, index, nextIndex),
+          layout: nextLayout,
         }
       })
-      setSelectedIndex(index + direction)
+
+      if (typeof nextSelectedIndex === 'number' && nextSelectedIndex >= 0) {
+        setSelectedIndex(nextSelectedIndex)
+      }
     })
   }, [runCanvasLayoutTransition, setSelectedIndex])
   const updateHeroCopy = useCallback((value: string) => {
@@ -900,12 +949,51 @@ export function PageComposerDrawer({
   }, [mutateSelectedPricingTable])
 
   function handleDragEnd(event: DragEndEvent) {
-    const activeId = Number(event.active.id)
-    const overId = Number(event.over?.id)
-    if (!Number.isInteger(activeId) || !Number.isInteger(overId) || activeId === overId) return
+    const activeIdentity = String(event.active.id)
+    const overIdentity = event.over?.id ? String(event.over.id) : null
+
+    if (!overIdentity || activeIdentity === overIdentity) {
+      return
+    }
+
     runCanvasLayoutTransition(() => {
-      mutatePage((page) => ({ ...page, layout: arrayMove(page.layout || [], activeId, overId) }))
-      setSelectedIndex(overId)
+      let nextSelectedIndex: null | number = null
+
+      mutatePage((page) => {
+        const layout = page.layout || []
+        const fromIndex = findPageLayoutSectionIndexByIdentity({ identity: activeIdentity, layout })
+        const toIndex = findPageLayoutSectionIndexByIdentity({ identity: overIdentity, layout })
+
+        if (fromIndex < 0 || toIndex < 0 || fromIndex === toIndex) {
+          nextSelectedIndex = fromIndex >= 0 ? fromIndex : null
+          return page
+        }
+
+        if (violatesPinnedHero({ fromIndex, layout, toIndex })) {
+          nextSelectedIndex = fromIndex
+          return page
+        }
+
+        const nextLayout = movePageLayoutSection({
+          fromIndex,
+          layout,
+          toIndex,
+        })
+
+        nextSelectedIndex = findPageLayoutSectionIndexByIdentity({
+          identity: activeIdentity,
+          layout: nextLayout,
+        })
+
+        return {
+          ...page,
+          layout: nextLayout,
+        }
+      })
+
+      if (typeof nextSelectedIndex === 'number' && nextSelectedIndex >= 0) {
+        setSelectedIndex(nextSelectedIndex)
+      }
     })
   }
 
@@ -1192,8 +1280,8 @@ export function PageComposerDrawer({
             loading,
             onAddAbove: (index) => openBlockLibrary(index < 0 ? 0 : index),
             onAddBelow: (index) => openBlockLibrary(index < 0 ? 0 : index + 1),
-            onMoveDown: (index) => moveBlock(index, 1),
-            onMoveUp: (index) => moveBlock(index, -1),
+            onMoveDown: (identity) => moveBlock(identity, 1),
+            onMoveUp: (identity) => moveBlock(identity, -1),
             onDeleteBlock: (index) => {
               if (index < 0) return
               removeBlock(index)
@@ -1514,6 +1602,7 @@ export function PageComposerDrawer({
     selectedServiceGrid,
     selectedCallToAction,
     selectedContentBlock,
+    selectedHeroBlock,
     selectedTestimonialsBlock,
     selectedMediaPath,
     setSelectedIndex,

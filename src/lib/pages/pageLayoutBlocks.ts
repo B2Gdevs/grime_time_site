@@ -1,14 +1,15 @@
 import type { HeroBlock, Page, ServiceEstimatorBlock } from '@/payload-types'
+import { assignPageLayoutBlockUuid } from '@/lib/pages/pageComposerBlockIdentity'
 
 function cloneValue<T>(value: T): T {
   return structuredClone(value)
 }
 
 function createBaseHeroBlock(): HeroBlock {
-  return {
+  return assignPageLayoutBlockUuid({
     blockType: 'heroBlock',
     type: 'lowImpact',
-  }
+  })
 }
 
 export function createDefaultHeroBlock(): HeroBlock {
@@ -24,9 +25,26 @@ export function createDefaultHeroBlock(): HeroBlock {
 }
 
 export function createServiceEstimatorBlock(): ServiceEstimatorBlock {
-  return {
+  return assignPageLayoutBlockUuid({
     blockType: 'serviceEstimator',
+  })
+}
+
+function normalizeHeroBlockToFront(layout: Page['layout']): Page['layout'] {
+  const next = cloneValue(layout || [])
+  const heroIndex = next.findIndex((block) => block.blockType === 'heroBlock')
+
+  if (heroIndex <= 0) {
+    return next
   }
+
+  const [heroBlock] = next.splice(heroIndex, 1)
+
+  if (heroBlock) {
+    next.unshift(heroBlock)
+  }
+
+  return next
 }
 
 export function createLegacyHeroBlockFromPageHero(hero: Page['hero'] | null | undefined): HeroBlock | null {
@@ -81,7 +99,7 @@ export function normalizePageLayoutBlocks(args: {
   page: Pick<Page, 'hero' | 'layout'>
   pagePath: string
 }): Page['layout'] {
-  const layout = cloneValue(args.page.layout || [])
+  let layout = cloneValue(args.page.layout || [])
   const hasHeroBlock = layout.some((block) => block.blockType === 'heroBlock')
   const hasServiceEstimator = layout.some((block) => block.blockType === 'serviceEstimator')
   const legacyHeroBlock = createLegacyHeroBlockFromPageHero(args.page.hero)
@@ -96,7 +114,7 @@ export function normalizePageLayoutBlocks(args: {
     layout.push(createServiceEstimatorBlock())
   }
 
-  return layout
+  return normalizeHeroBlockToFront(layout)
 }
 
 export function findHeroBlock(layout: null | Page['layout'] | undefined): HeroBlock | null {
@@ -108,7 +126,7 @@ export function buildPageDocumentBlocksForSave(args: {
   fallbackHero?: null | Page['hero']
   layout: Page['layout']
 }): Pick<Page, 'hero' | 'layout'> {
-  const layout = cloneValue(args.layout || [])
+  const layout = normalizeHeroBlockToFront(cloneValue(args.layout || []))
   const heroBlock = findHeroBlock(layout)
 
   return {

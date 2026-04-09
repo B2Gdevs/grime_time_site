@@ -3,7 +3,6 @@
 import { DndContext, type DragEndEvent, closestCenter, useSensors } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { PlusIcon } from 'lucide-react'
-import { AnimatePresence } from 'motion/react'
 
 import { adminPanelChrome } from '@/components/admin-impersonation/adminPanelChrome'
 import { PageComposerDrawerSortableSectionRow } from '@/components/page-composer/drawer/PageComposerDrawerSortableSectionRow'
@@ -77,27 +76,26 @@ export function PageComposerDrawerStructureTab({
       {layoutSectionSummaries.length ? (
         <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd} sensors={sensors}>
           <SortableContext
-            items={layoutSectionSummaries.map((summary) => String(summary.index))}
+            items={layoutSectionSummaries.map((summary) => summary.identity)}
             strategy={verticalListSortingStrategy}
           >
             <div className="grid gap-3">
-              <AnimatePresence initial={false}>
-                {layoutSectionSummaries.map((summary) => (
-                  <PageComposerDrawerSortableSectionRow
-                    active={selectedIndex === summary.index}
-                    key={summary.identity}
-                    onClick={() => setSelectedIndex(summary.index)}
-                    onDuplicate={() => duplicateBlock(summary.index)}
-                    onRemove={() => removeBlock(summary.index)}
-                    onReplace={() => {
-                      setSelectedIndex(summary.index)
-                      openBlockLibrary(summary.index, 'replace')
-                    }}
-                    onToggleHidden={() => toggleBlockHidden(summary.index)}
-                    summary={summary}
-                  />
-                ))}
-              </AnimatePresence>
+              {layoutSectionSummaries.map((summary) => (
+                <PageComposerDrawerSortableSectionRow
+                  active={selectedIndex === summary.index}
+                  disableSorting={summary.blockType === 'heroBlock' && summary.index === 0}
+                  key={summary.identity}
+                  onClick={() => setSelectedIndex(summary.index)}
+                  onDuplicate={() => duplicateBlock(summary.index)}
+                  onRemove={() => removeBlock(summary.index)}
+                  onReplace={() => {
+                    setSelectedIndex(summary.index)
+                    openBlockLibrary(summary.index, 'replace')
+                  }}
+                  onToggleHidden={() => toggleBlockHidden(summary.index)}
+                  summary={summary}
+                />
+              ))}
             </div>
           </SortableContext>
         </DndContext>

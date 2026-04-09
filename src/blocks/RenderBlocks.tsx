@@ -80,6 +80,7 @@ export async function RenderBlocks({ blocks, instantQuoteCatalog: quoteCatalogPr
               instantQuoteCatalog={instantQuoteCatalog}
               layoutBlocks={layoutBlocks}
               pagePath={pagePath}
+              sectionIdentity={sectionSummary?.identity}
             />
           )
         }
@@ -93,7 +94,7 @@ export async function RenderBlocks({ blocks, instantQuoteCatalog: quoteCatalogPr
         else if (blockType === 'serviceGrid') {
           blockNode = (
             <div className="my-16">
-              <ServiceGridBlock {...resolvedBlock} blockIndex={index} />
+              <ServiceGridBlock {...resolvedBlock} blockIndex={index} sectionIdentity={sectionSummary?.identity} />
             </div>
           )
         }
@@ -155,6 +156,7 @@ export async function RenderBlocks({ blocks, instantQuoteCatalog: quoteCatalogPr
                 {...(resolvedBlock as unknown as React.ComponentProps<typeof MediaBlock>)}
                 blockIndex={index}
                 disableInnerContainer
+                sectionIdentity={sectionSummary?.identity}
               />
             </div>
           )

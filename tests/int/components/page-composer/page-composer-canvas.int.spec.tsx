@@ -70,11 +70,12 @@ function ComposerHarness() {
             onDeleteBlock: vi.fn(),
             onDeleteDraftPage: vi.fn(),
             onDuplicateBlock: vi.fn(),
-            onMoveDown: (index: number) => {
-              onMoveDown(index)
+            onMoveDown: (identity: string) => {
+              onMoveDown(identity)
               setToolbarDetail((current) => {
                 if (!current) return current
                 const summaries = [...(current.sectionSummaries as Array<Record<string, unknown>>)]
+                const index = summaries.findIndex((summary) => summary.identity === identity)
                 if (index < 0 || index >= summaries.length - 1) {
                   return current
                 }
@@ -90,8 +91,8 @@ function ComposerHarness() {
                 }
               })
             },
-            onMoveUp: (index: number) => {
-              onMoveUp(index)
+            onMoveUp: (identity: string) => {
+              onMoveUp(identity)
             },
             onStageMediaSlot: vi.fn(),
             onOpenMediaSlot: vi.fn(),
@@ -220,7 +221,7 @@ describe('PageComposer canvas integration', () => {
     )
 
     fireEvent.click(screen.getByRole('button', { name: 'Move block down' }))
-    expect(onMoveDown).toHaveBeenCalledWith(0)
+    expect(onMoveDown).toHaveBeenCalledWith('id:block-a')
 
     fireEvent.click(screen.getByRole('button', { name: 'Add block' }))
     fireEvent.click(screen.getByRole('button', { name: 'Add block below' }))
@@ -276,7 +277,7 @@ describe('PageComposer canvas integration', () => {
     const firstSection = screen.getByText('Section one').closest('[data-page-composer-block-index="0"]')
     const secondSection = screen.getByText('Section two').closest('[data-page-composer-block-index="1"]')
 
-    expect(onMoveDown).toHaveBeenCalledWith(0)
+    expect(onMoveDown).toHaveBeenCalledWith('id:block-a')
     expect(firstSection?.getAttribute('data-page-composer-block-order')).toBe('1')
     expect(secondSection?.getAttribute('data-page-composer-block-order')).toBe('0')
   })

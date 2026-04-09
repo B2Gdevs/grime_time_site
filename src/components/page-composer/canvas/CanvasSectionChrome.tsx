@@ -9,6 +9,7 @@ import { cn } from '@/utilities/ui'
 import type { PageComposerSectionSummary } from '@/lib/pages/pageComposer'
 
 type CanvasSectionChromeProps = {
+  actionIndex: number
   children: ReactNode
   index: number
   isSelected: boolean
@@ -22,6 +23,7 @@ type CanvasSectionChromeProps = {
 }
 
 export function CanvasSectionChrome({
+  actionIndex,
   children,
   index,
   isSelected,
@@ -69,7 +71,7 @@ export function CanvasSectionChrome({
     >
       {visibleSectionSummary && sectionToolbarState ? (
         <CanvasSectionActionRail
-          index={index}
+          index={actionIndex}
           sectionSummary={visibleSectionSummary}
           supportsInsertionAbove={hasToolbarState && supportsInsertionAbove}
           toolbarState={sectionToolbarState}

@@ -5,6 +5,7 @@ import {
   type PageComposerInsertableBlockType,
 } from '@/lib/pages/pageComposerBlockRegistry'
 import { createDefaultHeroBlock, createServiceEstimatorBlock } from '@/lib/pages/pageLayoutBlocks'
+import { assignPageLayoutBlockUuid } from '@/lib/pages/pageComposerBlockIdentity'
 import { lexicalToPlainText } from '@/lib/pages/pageComposerLexical'
 import {
   resolvePageComposerReusableBlock,
@@ -628,6 +629,13 @@ export function movePageLayoutSection(args: {
   return next
 }
 
+export function findPageLayoutSectionIndexByIdentity(args: {
+  identity: string
+  layout: Page['layout']
+}): number {
+  return (args.layout || []).findIndex((block, index) => getPageComposerSectionIdentity({ block, index }) === args.identity)
+}
+
 export function duplicatePageLayoutSection(args: {
   index: number
   layout: Page['layout']
@@ -645,11 +653,15 @@ export function duplicatePageLayoutSection(args: {
   }
 
   const duplicate = cloneValue(item)
+  const duplicateWithIdentity = assignPageLayoutBlockUuid({
+    ...duplicate,
+    _uuid: undefined,
+  }) as Page['layout'][number] & { _uuid: string }
   if (duplicate.blockName) {
-    duplicate.blockName = `${duplicate.blockName} copy`
+    duplicateWithIdentity.blockName = `${duplicate.blockName} copy`
   }
 
-  next.splice(args.index + 1, 0, duplicate)
+  next.splice(args.index + 1, 0, duplicateWithIdentity)
   return next
 }
 

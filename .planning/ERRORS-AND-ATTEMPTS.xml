@@ -338,4 +338,15 @@
       <command>cmd /c npm.cmd exec -- vitest run tests/int/components/admin-impersonation/page-composer-shell.int.spec.tsx --testTimeout=20000</command>
     </verification>
   </attempt>
+  <attempt id="18-06-a1" phase="18" task="18-06" status="resolved">
+    <title>Layout-tab reorder still targeted stale draft slots and could push the hero to the bottom of the saved page</title>
+    <symptom>After the layout-tab refresh shipped, moving blocks in the composer could still leave the live canvas and draft editor out of sync: selected blocks could jump, hero editing could target the wrong draft slot, the visible Layout tab could trip a client-side failure while sorting, and operators reported the hero winding up at the bottom after reorder attempts.</symptom>
+    <cause>The reorder path still mixed transient array indexes into multiple surfaces. Drawer sorting and canvas move actions could reorder by index while live block editors still resolved relation paths like `layout.${blockIndex}` from the original render order. Motion-wrapped sortable rows and automatic canvas scroll-on-select made the bug read like a focus jump instead of the underlying identity mismatch.</cause>
+    <attempted-fix>Refactor page-composer reorder and live editing around stable section identity: move up/down and drag sorting now use section identity end to end, new and duplicated layout blocks receive `_uuid` identities, live hero/service/media blocks resolve their current draft index from the active section identity, hero normalization keeps the hero block pinned to the first slot during layout normalization/save, and the canvas shell no longer auto-scrolls on selection. Split the canvas wrapper's stable render index from its live action index so reorder actions still hit the correct draft slot without losing stable DOM anchors.</attempted-fix>
+    <verification>
+      <command>cmd /c npm.cmd exec vitest run tests/int/components/page-composer/page-composer-layout-tab.int.spec.tsx tests/int/components/page-composer/page-composer-canvas.int.spec.tsx tests/int/components/page-composer/page-composer-shell.int.spec.tsx</command>
+      <command>cmd /c npm.cmd exec eslint src/blocks/Hero/Component.tsx src/blocks/MediaBlock/Component.tsx src/blocks/RenderBlocks.tsx src/blocks/ServiceGrid/Component.tsx src/components/page-composer/PageComposerContext.tsx src/components/page-composer/PageComposerDrawer.tsx src/components/page-composer/useResolvedComposerBlockIndex.ts src/components/page-composer/canvas/CanvasSectionActionRail.tsx src/components/page-composer/canvas/CanvasSectionChrome.tsx src/components/page-composer/canvas/CanvasSectionShell.tsx src/components/page-composer/drawer/PageComposerDrawerSortableSectionRow.tsx src/components/page-composer/drawer/PageComposerDrawerStructureTab.tsx src/lib/pages/pageComposer.ts src/lib/pages/pageComposerBlockIdentity.ts src/lib/pages/pageComposerBlockRegistry.ts src/lib/pages/pageLayoutBlocks.ts tests/int/components/page-composer/page-composer-canvas.int.spec.tsx</command>
+      <command>cmd /c npm.cmd run build</command>
+    </verification>
+  </attempt>
 </errors-and-attempts>

@@ -1,7 +1,7 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
-import { useEffect, useRef, type ReactNode } from 'react'
+import { useRef, type ReactNode } from 'react'
 
 import { usePageComposerOptional, type PageComposerToolbarState } from '@/components/page-composer/PageComposerContext'
 import { resolveComposerPagePathForPathname } from '@/lib/pages/pageComposerLiveRoute'
@@ -31,7 +31,6 @@ export function PageComposerCanvasSectionShell({
   const isActive = Boolean(
     composerPagePath && composer?.isOpen && composer.activePagePath && composer.activePagePath === composerPagePath,
   )
-  const isSelected = Boolean(isActive && composer?.selectedIndex === index)
   const sectionSummary = toolbarState
     ? (
         sectionIdentity
@@ -39,19 +38,8 @@ export function PageComposerCanvasSectionShell({
           : undefined
       ) ?? toolbarState.sectionSummaries.find((summary) => summary.index === index) ?? null
     : null
-
-  useEffect(() => {
-    if (!isSelected) {
-      return
-    }
-
-    if (typeof sectionRef.current?.scrollIntoView === 'function') {
-      sectionRef.current.scrollIntoView({
-        behavior: 'smooth',
-        block: 'center',
-      })
-    }
-  }, [isSelected])
+  const resolvedIndex = sectionSummary?.index ?? index
+  const isSelected = Boolean(isActive && composer?.selectedIndex === resolvedIndex)
 
   if (!composer || !isActive) {
     return <>{children}</>
@@ -59,6 +47,7 @@ export function PageComposerCanvasSectionShell({
 
   return (
     <CanvasSectionChrome
+      actionIndex={resolvedIndex}
       index={index}
       isSelected={isSelected}
       label={label}
@@ -77,13 +66,13 @@ export function PageComposerCanvasSectionShell({
         }
 
         if (interactiveTarget) {
-          composer.setSelectedIndex(index)
+          composer.setSelectedIndex(resolvedIndex)
           return
         }
 
         event.preventDefault()
         event.stopPropagation()
-        composer.setSelectedIndex(index)
+        composer.setSelectedIndex(resolvedIndex)
       }}
     >
       {children}

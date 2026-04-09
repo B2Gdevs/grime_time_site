@@ -6,7 +6,7 @@ import { ArrowRightIcon, DropletsIcon, WavesIcon } from 'lucide-react'
 import { resolveServiceGridDisplayVariant } from '@/blocks/ServiceGrid/variants'
 import { MarketingHeroLead, MarketingHeroPanel } from '@/components/home/MarketingHeroEditable'
 import { PageHeroMediaEditable } from '@/components/home/PageHeroRichTextEditable'
-import { usePageComposerCanvasToolbarState } from '@/components/page-composer/PageComposerCanvas'
+import { useResolvedComposerBlockIndex } from '@/components/page-composer/useResolvedComposerBlockIndex'
 import { Media } from '@/components/Media'
 import { RenderHero } from '@/heros/RenderHero'
 import { extractLexicalPlainText } from '@/lib/marketing/public-shell'
@@ -60,18 +60,13 @@ function toHeroRenderable(block: HeroBlockData): HeroRenderable {
 function resolveDraftHeroBlock(args: {
   block: HeroBlockData
   blockIndex?: number
-  pagePath?: string
-  toolbarState: ReturnType<typeof usePageComposerCanvasToolbarState>
+  toolbarState: ReturnType<typeof useResolvedComposerBlockIndex>['toolbarState']
 }): HeroBlockData {
-  if (typeof args.blockIndex !== 'number' || !args.pagePath) {
+  if (typeof args.blockIndex !== 'number' || !args.toolbarState) {
     return args.block
   }
 
-  if (args.toolbarState?.draftPage?.pagePath !== args.pagePath) {
-    return args.block
-  }
-
-  const draftBlock = args.toolbarState.draftPage.layout?.[args.blockIndex]
+  const draftBlock = args.toolbarState.draftPage?.layout?.[args.blockIndex]
 
   return draftBlock?.blockType === 'heroBlock' ? draftBlock : args.block
 }
@@ -81,18 +76,22 @@ export function HeroBlock({
   instantQuoteCatalog,
   layoutBlocks,
   pagePath,
+  sectionIdentity,
   ...block
 }: HeroBlockData & {
   blockIndex?: number
   instantQuoteCatalog?: InstantQuoteCatalog | null
   layoutBlocks?: Page['layout']
   pagePath?: string
+  sectionIdentity?: string
 }) {
-  const toolbarState = usePageComposerCanvasToolbarState()
+  const { resolvedBlockIndex, toolbarState } = useResolvedComposerBlockIndex({
+    blockIndex,
+    sectionIdentity,
+  })
   const draftBlock = resolveDraftHeroBlock({
     block,
-    blockIndex,
-    pagePath,
+    blockIndex: resolvedBlockIndex,
     toolbarState,
   })
 
@@ -184,7 +183,7 @@ export function HeroBlock({
 
             <div className="relative overflow-hidden rounded-[2.3rem] border border-white/10 bg-[#071321] p-4 text-white shadow-[0_32px_100px_-40px_rgba(2,6,23,0.95)]">
               {heroMedia ? (
-                <PageHeroMediaEditable relationPath={typeof blockIndex === 'number' ? `layout.${blockIndex}.media` : undefined}>
+                <PageHeroMediaEditable relationPath={typeof resolvedBlockIndex === 'number' ? `layout.${resolvedBlockIndex}.media` : undefined}>
                   <div className="relative overflow-hidden rounded-[1.6rem]">
                     <Media
                       imgClassName="aspect-[4/4.8] w-full object-cover"

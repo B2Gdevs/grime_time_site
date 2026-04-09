@@ -1,5 +1,6 @@
 import type { Page } from '@/payload-types'
 import { createLexicalParagraph } from '@/lib/pages/pageComposerLexical'
+import { assignPageLayoutBlockUuid } from '@/lib/pages/pageComposerBlockIdentity'
 
 export type PageComposerBlockCategory = 'container' | 'dynamic' | 'static'
 export type PageComposerRegisteredBlockType = Page['layout'][number]['blockType'] | 'customHtml'
@@ -45,6 +46,10 @@ const DEFAULT_SERVICE_ROWS = [
 
 function cloneValue<T>(value: T): T {
   return structuredClone(value)
+}
+
+function withBlockUuid(block: LayoutBlock): LayoutBlock {
+  return assignPageLayoutBlockUuid(block) as LayoutBlock
 }
 
 const pageComposerBlockDefinitions: PageComposerBlockDefinition[] = [
@@ -234,7 +239,7 @@ export function findPageComposerBlockDefinition(
 
 export function createPageComposerBlock(type: PageComposerInsertableBlockType): LayoutBlock {
   if (type === 'homepageHero') {
-    return {
+    return withBlockUuid({
       blockType: 'heroBlock',
       eyebrow: 'Grime Time exterior cleaning',
       headlineAccent: 'Visible results.',
@@ -243,30 +248,30 @@ export function createPageComposerBlock(type: PageComposerInsertableBlockType): 
       panelEyebrow: 'Fast lane for homeowners',
       panelHeading: 'Quotes and scheduling without vague contractor talk.',
       type: 'lowImpact',
-    }
+    })
   }
 
   if (type === 'heroBlock') {
-    return {
+    return withBlockUuid({
       blockType: 'heroBlock',
       richText: createLexicalParagraph('Use this hero to introduce the page with a clearer route-specific promise.'),
       type: 'mediumImpact',
-    }
+    })
   }
 
   if (type === 'serviceGrid') {
-    return {
+    return withBlockUuid({
       blockType: 'serviceGrid',
       displayVariant: 'interactive',
       eyebrow: 'Section label',
       heading: 'Interactive service section',
       intro: 'Use this reusable service section anywhere on the page.',
       services: cloneValue(DEFAULT_SERVICE_ROWS),
-    }
+    })
   }
 
   if (type === 'features') {
-    return {
+    return withBlockUuid({
       blockType: 'features',
       eyebrow: 'Features',
       heading: 'Why customers choose us',
@@ -288,88 +293,88 @@ export function createPageComposerBlock(type: PageComposerInsertableBlockType): 
           title: 'Visible result',
         },
       ],
-    } as LayoutBlock
+    } as LayoutBlock)
   }
 
   if (type === 'pricingTable') {
-    return {
+    return withBlockUuid({
       blockType: 'pricingTable',
       dataSource: 'global',
       heading: 'Pricing & packages',
       inlinePlans: [],
-    }
+    })
   }
 
   if (type === 'cta') {
-    return {
+    return withBlockUuid({
       blockType: 'cta',
       links: [],
-    }
+    })
   }
 
   if (type === 'content') {
-    return {
+    return withBlockUuid({
       blockType: 'content',
       columns: [
         {
           size: 'full',
         },
       ],
-    }
+    })
   }
 
   if (type === 'mediaBlock') {
-    return {
+    return withBlockUuid({
       blockType: 'mediaBlock',
       media: 0,
-    }
+    })
   }
 
   if (type === 'archive') {
-    return {
+    return withBlockUuid({
       blockType: 'archive',
       categories: [],
       limit: 6,
       populateBy: 'collection',
       relationTo: 'posts',
       selectedDocs: [],
-    }
+    })
   }
 
   if (type === 'formBlock') {
-    return {
+    return withBlockUuid({
       blockType: 'formBlock',
       enableIntro: false,
       form: 0,
-    }
+    })
   }
 
   if (type === 'contactRequest') {
-    return {
+    return withBlockUuid({
       blockType: 'contactRequest',
       layoutVariant: 'default',
-    }
+    })
   }
 
   if (type === 'serviceEstimator') {
-    return {
+    return withBlockUuid({
       blockType: 'serviceEstimator',
-    }
+    })
   }
 
   if (type === 'customHtml') {
-    return {
+    return withBlockUuid({
       blockType: 'customHtml',
       html: '<div class="gt-embed-shell">Trusted HTML snippet</div>',
       label: 'Custom HTML',
-    } as LayoutBlock
+    } as LayoutBlock)
   }
 
-  return {
+  return withBlockUuid({
     blockType: 'testimonialsBlock',
     heading: 'Testimonials',
     limit: 6,
     selectionMode: 'selected',
     testimonials: [],
-  }
+  })
 }

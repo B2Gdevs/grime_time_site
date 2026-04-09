@@ -18,7 +18,7 @@ import {
 import { InlinePageMediaEditor } from '@/components/admin-impersonation/InlinePageMediaEditor'
 import { InlineTextarea, InlineTextInput, usePageComposerTextGenerator } from '@/components/page-composer/PageComposerInlineText'
 import { usePageComposerCanvasToolbarState } from '@/components/page-composer/PageComposerCanvas'
-import { usePageComposerOptional } from '@/components/page-composer/PageComposerContext'
+import { useResolvedComposerBlockIndex } from '@/components/page-composer/useResolvedComposerBlockIndex'
 import { useSectionInteractable } from '@/components/copilot/CopilotInteractable'
 import { BubbleBackground } from '@/components/BubbleBackground'
 import { Media } from '@/components/Media'
@@ -31,6 +31,7 @@ type ServiceGridRow = NonNullable<ServiceGridBlockData['services']>[number]
 
 type ServiceGridBlockProps = ServiceGridBlockData & {
   blockIndex?: number
+  sectionIdentity?: string
 }
 
 function hasMedia(
@@ -103,8 +104,7 @@ function ServiceGridRowIcon({ className, name }: { className?: string; name: str
 }
 
 function useInlineServiceGridEditor(blockIndex?: number) {
-  const composer = usePageComposerOptional()
-  const toolbarState = usePageComposerCanvasToolbarState()
+  const { composer, toolbarState } = useResolvedComposerBlockIndex({ blockIndex })
   const openFocusedTextSession = usePageComposerTextGenerator()
 
   const isSelected =
@@ -203,14 +203,17 @@ export const ServiceGridBlock: React.FC<ServiceGridBlockProps> = ({
   eyebrow,
   heading,
   intro,
+  sectionIdentity,
   services,
 }) => {
-  const composer = usePageComposerOptional()
-  const toolbarState = usePageComposerCanvasToolbarState()
+  const { composer, resolvedBlockIndex, toolbarState } = useResolvedComposerBlockIndex({
+    blockIndex,
+    sectionIdentity,
+  })
   const liveBlock =
     composer?.isOpen &&
-    typeof blockIndex === 'number' &&
-    toolbarState?.selectedIndex === blockIndex &&
+    typeof resolvedBlockIndex === 'number' &&
+    toolbarState?.selectedIndex === resolvedBlockIndex &&
     toolbarState.serviceGridEditor?.block
       ? toolbarState.serviceGridEditor.block
       : null
@@ -231,17 +234,17 @@ export const ServiceGridBlock: React.FC<ServiceGridBlockProps> = ({
             blockType="serviceGrid"
             description="A structured services or pricing explainer section on the live page canvas."
             heading={resolvedHeading || ''}
-            id={`service-grid:${blockIndex ?? resolvedHeading ?? variant}`}
-            index={blockIndex ?? -1}
+            id={`service-grid:${sectionIdentity ?? resolvedBlockIndex ?? resolvedHeading ?? variant}`}
+            index={resolvedBlockIndex ?? -1}
             intro={resolvedIntro || ''}
             pagePath={toolbarState.draftPage?.pagePath ?? '/'}
             rowLabels={(resolvedServices || []).map((service) => service.name).filter(Boolean).slice(0, 6)}
-            selected={typeof blockIndex === 'number' && toolbarState.selectedIndex === blockIndex}
+            selected={typeof resolvedBlockIndex === 'number' && toolbarState.selectedIndex === resolvedBlockIndex}
             variant={variant}
           />
         ) : null}
         <FeatureCardsServiceGrid
-          blockIndex={blockIndex}
+          blockIndex={resolvedBlockIndex}
           eyebrow={resolvedEyebrow}
           heading={resolvedHeading}
           intro={resolvedIntro}
@@ -259,17 +262,17 @@ export const ServiceGridBlock: React.FC<ServiceGridBlockProps> = ({
             blockType="serviceGrid"
             description="A structured services or pricing explainer section on the live page canvas."
             heading={resolvedHeading || ''}
-            id={`service-grid:${blockIndex ?? resolvedHeading ?? variant}`}
-            index={blockIndex ?? -1}
+            id={`service-grid:${sectionIdentity ?? resolvedBlockIndex ?? resolvedHeading ?? variant}`}
+            index={resolvedBlockIndex ?? -1}
             intro={resolvedIntro || ''}
             pagePath={toolbarState.draftPage?.pagePath ?? '/'}
             rowLabels={(resolvedServices || []).map((service) => service.name).filter(Boolean).slice(0, 6)}
-            selected={typeof blockIndex === 'number' && toolbarState.selectedIndex === blockIndex}
+            selected={typeof resolvedBlockIndex === 'number' && toolbarState.selectedIndex === resolvedBlockIndex}
             variant={variant}
           />
         ) : null}
         <PricingStepsServiceGrid
-          blockIndex={blockIndex}
+          blockIndex={resolvedBlockIndex}
           eyebrow={resolvedEyebrow}
           heading={resolvedHeading}
           intro={resolvedIntro}
@@ -286,17 +289,17 @@ export const ServiceGridBlock: React.FC<ServiceGridBlockProps> = ({
           blockType="serviceGrid"
           description="A structured services or pricing explainer section on the live page canvas."
           heading={resolvedHeading || ''}
-          id={`service-grid:${blockIndex ?? resolvedHeading ?? variant}`}
-          index={blockIndex ?? -1}
+          id={`service-grid:${sectionIdentity ?? resolvedBlockIndex ?? resolvedHeading ?? variant}`}
+          index={resolvedBlockIndex ?? -1}
           intro={resolvedIntro || ''}
           pagePath={toolbarState.draftPage?.pagePath ?? '/'}
           rowLabels={(resolvedServices || []).map((service) => service.name).filter(Boolean).slice(0, 6)}
-          selected={typeof blockIndex === 'number' && toolbarState.selectedIndex === blockIndex}
+          selected={typeof resolvedBlockIndex === 'number' && toolbarState.selectedIndex === resolvedBlockIndex}
           variant={variant}
         />
       ) : null}
       <InteractiveServiceGrid
-        blockIndex={blockIndex}
+        blockIndex={resolvedBlockIndex}
         eyebrow={resolvedEyebrow}
         heading={resolvedHeading}
         intro={resolvedIntro}

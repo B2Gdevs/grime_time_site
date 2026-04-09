@@ -20,6 +20,9 @@ export function CanvasSectionActionRail({
 }) {
   const isLayoutBlock = index >= 0
   const [insertPickerOpen, setInsertPickerOpen] = useState(false)
+  const heroPinnedAtTop = toolbarState.sectionSummaries[0]?.blockType === 'heroBlock'
+  const canMoveUp = supportsInsertionAbove && !(heroPinnedAtTop && sectionSummary.index <= 1)
+  const canMoveDown = !(heroPinnedAtTop && sectionSummary.blockType === 'heroBlock' && sectionSummary.index === 0)
 
   return (
     <div
@@ -28,30 +31,32 @@ export function CanvasSectionActionRail({
       data-page-composer-interactive="true"
     >
       <div className="pointer-events-auto flex flex-wrap items-center gap-2 rounded-[1.1rem] border border-border/70 bg-background/94 p-2 shadow-lg backdrop-blur transition-transform duration-200 group-hover:-translate-y-1 group-focus-within:-translate-y-1">
-        {supportsInsertionAbove ? (
+        {canMoveUp ? (
           <CanvasActionButton
             label="Move block up"
             onClick={(event) => {
               event.preventDefault()
               event.stopPropagation()
               setInsertPickerOpen(false)
-              toolbarState.onMoveUp(index)
+              toolbarState.onMoveUp(sectionSummary.identity)
             }}
           >
             <ArrowUpIcon className="h-4 w-4" />
           </CanvasActionButton>
         ) : null}
-        <CanvasActionButton
-          label="Move block down"
-          onClick={(event) => {
-            event.preventDefault()
-            event.stopPropagation()
-            setInsertPickerOpen(false)
-            toolbarState.onMoveDown(index)
-          }}
-        >
-          <ArrowDownIcon className="h-4 w-4" />
-        </CanvasActionButton>
+        {canMoveDown ? (
+          <CanvasActionButton
+            label="Move block down"
+            onClick={(event) => {
+              event.preventDefault()
+              event.stopPropagation()
+              setInsertPickerOpen(false)
+              toolbarState.onMoveDown(sectionSummary.identity)
+            }}
+          >
+            <ArrowDownIcon className="h-4 w-4" />
+          </CanvasActionButton>
+        ) : null}
         <div className="relative">
           <CanvasActionButton
             label="Add block"
