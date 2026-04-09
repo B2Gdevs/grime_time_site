@@ -12,12 +12,14 @@ export function PageComposerCanvasSectionShell({
   children,
   index,
   label,
+  sectionIdentity,
   supportsInsertionAbove = true,
   toolbarState,
 }: {
   children: ReactNode
   index: number
   label: string
+  sectionIdentity?: string
   supportsInsertionAbove?: boolean
   toolbarState: null | PageComposerToolbarState
 }) {
@@ -30,7 +32,13 @@ export function PageComposerCanvasSectionShell({
     composerPagePath && composer?.isOpen && composer.activePagePath && composer.activePagePath === composerPagePath,
   )
   const isSelected = Boolean(isActive && composer?.selectedIndex === index)
-  const sectionSummary = toolbarState ? toolbarState.sectionSummaries.find((summary) => summary.index === index) ?? null : null
+  const sectionSummary = toolbarState
+    ? (
+        sectionIdentity
+          ? toolbarState.sectionSummaries.find((summary) => summary.identity === sectionIdentity)
+          : undefined
+      ) ?? toolbarState.sectionSummaries.find((summary) => summary.index === index) ?? null
+    : null
 
   useEffect(() => {
     if (!isSelected) {
@@ -54,6 +62,7 @@ export function PageComposerCanvasSectionShell({
       index={index}
       isSelected={isSelected}
       label={label}
+      sectionIdentity={sectionIdentity}
       sectionRef={sectionRef}
       sectionSummary={sectionSummary}
       supportsInsertionAbove={supportsInsertionAbove}

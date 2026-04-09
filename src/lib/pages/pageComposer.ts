@@ -23,6 +23,7 @@ export type PageComposerSectionSummary = {
   category: PageComposerBlockCategory
   description: string
   hidden: boolean
+  identity: string
   index: number
   label: string
   variant: null | string
@@ -128,6 +129,28 @@ function relationId(value: unknown): null | number {
   }
 
   return typeof value === 'number' ? value : null
+}
+
+export function getPageComposerSectionIdentity(args: {
+  block: Page['layout'][number]
+  index: number
+}): string {
+  const { block, index } = args
+  const candidate = block as { _uuid?: unknown; id?: unknown }
+
+  if (typeof candidate.id === 'string' && candidate.id.trim()) {
+    return `id:${candidate.id}`
+  }
+
+  if (typeof candidate.id === 'number' && Number.isFinite(candidate.id)) {
+    return `id:${candidate.id}`
+  }
+
+  if (typeof candidate._uuid === 'string' && candidate._uuid.trim()) {
+    return `uuid:${candidate._uuid}`
+  }
+
+  return `index:${index}:${block.blockType}`
 }
 
 function buildSummaryBadges(blockType: Page['layout'][number]['blockType']): {
@@ -316,6 +339,7 @@ export function buildPageComposerNotices(args: {
 export function buildPageComposerSectionSummaries(layout: null | Page['layout'] | undefined): PageComposerSectionSummary[] {
   return (layout || []).map((rawBlock, index) => {
     const block = resolvePageComposerReusableBlock(rawBlock)
+    const identity = getPageComposerSectionIdentity({ block: rawBlock, index })
     const summaryMeta = buildSummaryBadges(block.blockType)
     const hidden = Boolean(block.isHidden)
     const reusableMeta = (rawBlock as ReusableAwareLayoutBlock).composerReusable
@@ -336,6 +360,7 @@ export function buildPageComposerSectionSummaries(layout: null | Page['layout'] 
         category: summaryMeta.category,
         description: `${variant} - ${count} row${count === 1 ? '' : 's'}`,
         hidden,
+        identity,
         index,
         label: reusableMeta?.label || block.heading || `Service section ${index + 1}`,
         variant,
@@ -351,6 +376,7 @@ export function buildPageComposerSectionSummaries(layout: null | Page['layout'] 
         category: summaryMeta.category,
         description: `${count} feature card${count === 1 ? '' : 's'}`,
         hidden,
+        identity,
         index,
         label: block.heading || `Features ${index + 1}`,
         variant: null,
@@ -364,6 +390,7 @@ export function buildPageComposerSectionSummaries(layout: null | Page['layout'] 
         category: summaryMeta.category,
         description: block.media ? 'Media assigned' : 'No media assigned yet',
         hidden,
+        identity,
         index,
         label: block.blockName?.trim() || `Media block ${index + 1}`,
         variant: null,
@@ -382,6 +409,7 @@ export function buildPageComposerSectionSummaries(layout: null | Page['layout'] 
               ? `${block.type} hero with media`
               : `${block.type} hero`,
         hidden,
+        identity,
         index,
         label: 'Hero',
         variant: block.type || null,
@@ -395,6 +423,7 @@ export function buildPageComposerSectionSummaries(layout: null | Page['layout'] 
         category: summaryMeta.category,
         description: 'Code-owned quote and estimator experience',
         hidden,
+        identity,
         index,
         label: 'Service estimator',
         variant: null,
@@ -416,8 +445,9 @@ export function buildPageComposerSectionSummaries(layout: null | Page['layout'] 
                 : `${block.inlinePlans?.length || 0} inline plan${block.inlinePlans?.length === 1 ? '' : 's'}`
               : block.blockType === 'customHtml'
                 ? block.label?.trim() || 'Trusted custom HTML'
-                : block.blockName?.trim() || `${block.blockType} section`,
+              : block.blockName?.trim() || `${block.blockType} section`,
       hidden,
+      identity,
       index,
       label:
         reusableMeta?.label ||

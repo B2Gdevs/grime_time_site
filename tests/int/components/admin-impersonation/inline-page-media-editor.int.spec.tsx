@@ -60,6 +60,7 @@ const toolbarState = {
       category: 'reusable',
       description: 'Interactive service lane',
       hidden: false,
+      identity: 'id:service-grid',
       index: 0,
       label: 'What we do',
       variant: 'interactive',

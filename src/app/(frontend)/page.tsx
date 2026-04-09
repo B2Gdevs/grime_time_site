@@ -31,7 +31,7 @@ export default async function HomePage() {
         pageTitle={page.title}
       />
       <PageComposerCanvasViewport>
-        {await RenderBlocks({ blocks: layout, pagePath: '/' })}
+        <div className="marketing-page-body">{await RenderBlocks({ blocks: layout, pagePath: '/' })}</div>
       </PageComposerCanvasViewport>
     </>
   )

@@ -39,11 +39,13 @@ export function PageComposerCanvasSection({
   children,
   index,
   label,
+  sectionIdentity,
   supportsInsertionAbove = true,
 }: {
   children: React.ReactNode
   index: number
   label: string
+  sectionIdentity?: string
   supportsInsertionAbove?: boolean
 }) {
   const toolbarState = usePageComposerCanvasToolbarState()
@@ -52,6 +54,7 @@ export function PageComposerCanvasSection({
     <PageComposerCanvasSectionShell
       index={index}
       label={label}
+      sectionIdentity={sectionIdentity}
       supportsInsertionAbove={supportsInsertionAbove}
       toolbarState={toolbarState}
     >

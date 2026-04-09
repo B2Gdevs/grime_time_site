@@ -67,7 +67,8 @@ export async function RenderBlocks({ blocks, instantQuoteCatalog: quoteCatalogPr
       {visibleBlocks.map(({ block, index }) => {
         const resolvedBlock = resolvePageComposerReusableBlock(block)
         const { blockType } = resolvedBlock
-        const summaryLabel = sectionSummaries[index]?.label || `${resolvedBlock.blockType} block ${index + 1}`
+        const sectionSummary = sectionSummaries.find((summary) => summary.index === index) ?? null
+        const summaryLabel = sectionSummary?.label || `${resolvedBlock.blockType} block ${index + 1}`
 
         let blockNode: React.ReactNode = null
 
@@ -182,7 +183,12 @@ export async function RenderBlocks({ blocks, instantQuoteCatalog: quoteCatalogPr
         }
 
         return (
-          <PageComposerCanvasSection index={index} key={index} label={summaryLabel}>
+          <PageComposerCanvasSection
+            index={index}
+            key={sectionSummary?.identity || index}
+            label={summaryLabel}
+            sectionIdentity={sectionSummary?.identity}
+          >
             {blockNode}
           </PageComposerCanvasSection>
         )

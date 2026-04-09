@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { within } from '@testing-library/react'
+import React from 'react'
 
 import { PageComposerCanvasSection, PageComposerCanvasViewport } from '@/components/page-composer/PageComposerCanvas'
 import { PAGE_COMPOSER_TOOLBAR_EVENT, PageComposerProvider, usePageComposer } from '@/components/page-composer/PageComposerContext'
@@ -23,81 +25,114 @@ vi.mock('@/components/copilot/CopilotInteractable', () => ({
 
 function ComposerHarness() {
   const composer = usePageComposer()
+  const [toolbarDetail, setToolbarDetail] = React.useState<null | Record<string, unknown>>(null)
+
+  React.useEffect(() => {
+    if (!toolbarDetail) {
+      return
+    }
+
+    window.dispatchEvent(new CustomEvent(PAGE_COMPOSER_TOOLBAR_EVENT, {
+      detail: toolbarDetail,
+    }))
+  }, [toolbarDetail])
 
   return (
     <>
       <button
         onClick={() => {
           composer.setActivePagePath('/')
-          window.dispatchEvent(new CustomEvent(PAGE_COMPOSER_TOOLBAR_EVENT, {
-            detail: {
-              canDeleteDraftPage: false,
-              canResetDraft: false,
-              contentBlockEditor: null,
-              ctaEditor: null,
-              deleteDraftPageBusy: false,
-              dirty: false,
-              draftPage: {
-                _status: 'draft',
-                hero: { type: 'lowImpact' },
-                id: 7,
-                layout: [],
-                pagePath: '/',
-                publishedAt: null,
-                slug: 'home',
-                title: 'Home',
-                updatedAt: '2026-04-06T00:00:00.000Z',
-                visibility: 'public',
-              },
-              draftToolbarBusy: false,
-              draftToolbarStatusLabel: null,
-              heroEditor: null,
-              loading: false,
-              onAddAbove,
-              onAddBelow,
-              onDeleteBlock: vi.fn(),
-              onDeleteDraftPage: vi.fn(),
-              onDuplicateBlock: vi.fn(),
-              onMoveDown,
-              onMoveUp,
-              onStageMediaSlot: vi.fn(),
-              onOpenMediaSlot: vi.fn(),
-              onResetDraft: vi.fn(),
-              onSetSlugDraft: vi.fn(),
-              onSetTitleDraft: vi.fn(),
-              onSetVisibilityDraft: vi.fn(),
-              onToggleHidden: vi.fn(),
-              pricingTableEditor: null,
-              sectionSummaries: [
-                {
-                  badges: [],
-                  blockType: 'content',
-                  category: 'static',
-                  description: 'Hero section',
-                  hidden: false,
-                  index: 0,
-                  label: 'What we do',
-                  variant: null,
-                },
-                {
-                  badges: ['reusable'],
-                  blockType: 'pricing',
-                  category: 'static',
-                  description: 'Pricing explainer',
-                  hidden: false,
-                  index: 1,
-                  label: 'How pricing works',
-                  variant: 'stacked',
-                },
-              ],
-              selectedIndex: composer.selectedIndex,
-              serviceGridEditor: null,
-              slugDraft: 'home',
-              testimonialsEditor: null,
-              titleDraft: 'Home',
-              visibilityDraft: 'public',
+          setToolbarDetail({
+            canDeleteDraftPage: false,
+            canResetDraft: false,
+            contentBlockEditor: null,
+            ctaEditor: null,
+            deleteDraftPageBusy: false,
+            dirty: false,
+            draftPage: {
+              _status: 'draft',
+              hero: { type: 'lowImpact' },
+              id: 7,
+              layout: [],
+              pagePath: '/',
+              publishedAt: null,
+              slug: 'home',
+              title: 'Home',
+              updatedAt: '2026-04-06T00:00:00.000Z',
+              visibility: 'public',
             },
-          }))
+            draftToolbarBusy: false,
+            draftToolbarStatusLabel: null,
+            heroEditor: null,
+            loading: false,
+            onAddAbove,
+            onAddBelow,
+            onDeleteBlock: vi.fn(),
+            onDeleteDraftPage: vi.fn(),
+            onDuplicateBlock: vi.fn(),
+            onMoveDown: (index: number) => {
+              onMoveDown(index)
+              setToolbarDetail((current) => {
+                if (!current) return current
+                const summaries = [...(current.sectionSummaries as Array<Record<string, unknown>>)]
+                if (index < 0 || index >= summaries.length - 1) {
+                  return current
+                }
+                const next = [...summaries]
+                const [moved] = next.splice(index, 1)
+                next.splice(index + 1, 0, moved)
+                return {
+                  ...current,
+                  sectionSummaries: next.map((summary, summaryIndex) => ({
+                    ...summary,
+                    index: summaryIndex,
+                  })),
+                }
+              })
+            },
+            onMoveUp: (index: number) => {
+              onMoveUp(index)
+            },
+            onStageMediaSlot: vi.fn(),
+            onOpenMediaSlot: vi.fn(),
+            onResetDraft: vi.fn(),
+            onSetSlugDraft: vi.fn(),
+            onSetTitleDraft: vi.fn(),
+            onSetVisibilityDraft: vi.fn(),
+            onToggleHidden: vi.fn(),
+            pricingTableEditor: null,
+            sectionSummaries: [
+              {
+                badges: [],
+                blockType: 'content',
+                category: 'static',
+                description: 'Hero section',
+                hidden: false,
+                identity: 'id:block-a',
+                index: 0,
+                label: 'What we do',
+                variant: null,
+              },
+              {
+                badges: ['reusable'],
+                blockType: 'pricing',
+                category: 'static',
+                description: 'Pricing explainer',
+                hidden: false,
+                identity: 'id:block-b',
+                index: 1,
+                label: 'How pricing works',
+                variant: 'stacked',
+              },
+            ],
+            selectedIndex: composer.selectedIndex,
+            selectedMediaRelationPath: null,
+            serviceGridEditor: null,
+            slugDraft: 'home',
+            testimonialsEditor: null,
+            titleDraft: 'Home',
+            visibilityDraft: 'public',
+          })
           composer.open()
         }}
         type="button"
@@ -106,10 +141,10 @@ function ComposerHarness() {
       </button>
       <div data-testid="selected-index">{composer.selectedIndex}</div>
       <PageComposerCanvasViewport>
-        <PageComposerCanvasSection index={0} label="What we do">
+        <PageComposerCanvasSection index={0} label="What we do" sectionIdentity="id:block-a">
           <div>Section one</div>
         </PageComposerCanvasSection>
-        <PageComposerCanvasSection index={1} label="How pricing works">
+        <PageComposerCanvasSection index={1} label="How pricing works" sectionIdentity="id:block-b">
           <div>Section two</div>
         </PageComposerCanvasSection>
       </PageComposerCanvasViewport>
@@ -138,6 +173,7 @@ describe('PageComposer canvas integration', () => {
             category: 'static',
             description: 'Hero section',
             hidden: false,
+            identity: 'id:block-a',
             index: 0,
             label: 'What we do',
             variant: null,
@@ -193,9 +229,11 @@ describe('PageComposer canvas integration', () => {
 
   it('uses the live page surface as the selectable canvas when the composer is open', () => {
     render(
-      <PageComposerProvider>
-        <ComposerHarness />
-      </PageComposerProvider>,
+      <TooltipProvider>
+        <PageComposerProvider>
+          <ComposerHarness />
+        </PageComposerProvider>
+      </TooltipProvider>,
     )
 
     fireEvent.click(screen.getByRole('button', { name: 'Open composer' }))
@@ -216,5 +254,30 @@ describe('PageComposer canvas integration', () => {
     fireEvent.click(screen.getByRole('button', { name: /close composer/i }))
 
     expect(screen.queryByDisplayValue('Home')).toBeNull()
+  })
+
+  it('reorders live canvas sections when move actions change draft order', () => {
+    render(
+      <TooltipProvider>
+        <PageComposerProvider>
+          <ComposerHarness />
+        </PageComposerProvider>
+      </TooltipProvider>,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open composer' }))
+    fireEvent.click(screen.getByText('Section one'))
+    fireEvent.click(
+      within(
+        screen.getByText('Section one').closest('[data-page-composer-block-index="0"]') as HTMLElement,
+      ).getByRole('button', { name: 'Move block down' }),
+    )
+
+    const firstSection = screen.getByText('Section one').closest('[data-page-composer-block-index="0"]')
+    const secondSection = screen.getByText('Section two').closest('[data-page-composer-block-index="1"]')
+
+    expect(onMoveDown).toHaveBeenCalledWith(0)
+    expect(firstSection?.getAttribute('data-page-composer-block-order')).toBe('1')
+    expect(secondSection?.getAttribute('data-page-composer-block-order')).toBe('0')
   })
 })

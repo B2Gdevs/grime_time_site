@@ -13,6 +13,7 @@ type CanvasSectionChromeProps = {
   index: number
   isSelected: boolean
   label: string
+  sectionIdentity?: string
   sectionRef: RefObject<HTMLDivElement | null>
   sectionSummary: null | PageComposerSectionSummary
   supportsInsertionAbove: boolean
@@ -25,6 +26,7 @@ export function CanvasSectionChrome({
   index,
   isSelected,
   label,
+  sectionIdentity,
   sectionRef,
   sectionSummary,
   supportsInsertionAbove,
@@ -34,6 +36,7 @@ export function CanvasSectionChrome({
   const hasToolbarState = Boolean(toolbarState)
   const sectionToolbarState = sectionSummary && toolbarState ? toolbarState : null
   const visibleSectionSummary = sectionSummary && toolbarState ? sectionSummary : null
+  const sectionOrder = sectionSummary?.index
 
   return (
     <div
@@ -43,8 +46,11 @@ export function CanvasSectionChrome({
         isSelected ? 'ring-2 ring-primary/40 ring-offset-4 ring-offset-background' : 'hover:ring-2 hover:ring-primary/20 hover:ring-offset-4 hover:ring-offset-background',
       )}
       data-page-composer-block-index={index}
+      data-page-composer-block-identity={sectionIdentity}
+      data-page-composer-block-order={sectionOrder ?? index}
       data-page-composer-selected={isSelected ? 'true' : 'false'}
       onClickCapture={onClickCapture}
+      style={typeof sectionOrder === 'number' ? { order: sectionOrder } : undefined}
     >
       {visibleSectionSummary && sectionToolbarState ? (
         <CanvasSectionActionRail

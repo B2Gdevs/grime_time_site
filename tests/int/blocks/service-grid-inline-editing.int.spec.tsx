@@ -40,6 +40,7 @@ const toolbarState = {
       category: 'reusable',
       description: 'featureCards - 1 row',
       hidden: false,
+      identity: 'id:service-grid',
       index: 0,
       label: 'What we do',
       variant: 'featureCards',
