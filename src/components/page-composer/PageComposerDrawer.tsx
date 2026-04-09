@@ -161,6 +161,28 @@ function resolveSelectedIndexFromMediaRelationPath(relationPath: string): null |
   return Number(layoutMediaMatch[1])
 }
 
+function mergePersistedPageMetadata(args: {
+  action: SavingAction
+  current: PageComposerDocument | null
+  nextPage: PageComposerDocument
+  pathname: string
+}): PageComposerDocument {
+  const { action, current, nextPage, pathname } = args
+
+  if (!current) {
+    return nextPage
+  }
+
+  return {
+    ...current,
+    _status: nextPage._status,
+    id: typeof current.id === 'number' ? current.id : nextPage.id,
+    pagePath: action === 'save-draft' && nextPage.pagePath !== pathname ? pathname : current.pagePath || nextPage.pagePath,
+    publishedAt: nextPage.publishedAt,
+    updatedAt: nextPage.updatedAt,
+  }
+}
+
 /** Resolve a media slot from the page draft alone so targeting works before `selectedIndex` catches up with the canvas. */
 function resolveMediaSlotFromRelationPath(
   draftPage: PageComposerDocument,
@@ -272,6 +294,7 @@ export function PageComposerDrawer({
   const [visibilityDraft, setVisibilityDraft] = useState<'private' | 'public'>('public')
   const [dirty, setDirty] = useState(false)
   const mediaUploadInputRef = useRef<HTMLInputElement | null>(null)
+  const draftRevisionRef = useRef(0)
   const mediaPromptId = useId()
   const open = composer?.isOpen ?? false
   const activeTab = composer?.activeTab ?? 'content'
@@ -771,13 +794,18 @@ export function PageComposerDrawer({
     setBlockLibraryQuery('')
   }, [open])
 
-  function mutatePage(mutator: (page: PageComposerDocument) => PageComposerDocument) {
+  const markDraftDirty = useCallback(() => {
+    draftRevisionRef.current += 1
+    setDirty(true)
+  }, [])
+
+  const mutatePage = useCallback((mutator: (page: PageComposerDocument) => PageComposerDocument) => {
     setDraftPage((current) => {
       if (!current) return current
-      setDirty(true)
+      markDraftDirty()
       return mutator(current)
     })
-  }
+  }, [markDraftDirty])
 
   function violatesPinnedHero(args: {
     fromIndex: number
@@ -826,21 +854,21 @@ export function PageComposerDrawer({
         return current
       }
 
-      setDirty(true)
+      markDraftDirty()
       return stagePageComposerMediaSlot({
         media,
         page: current,
         relationPath,
       })
     })
-  }, [])
+  }, [markDraftDirty])
 
   const replaceSelectedBlock = useCallback((block: NonNullable<PageComposerDocument['layout']>[number]) => {
     mutatePage((page) => ({
       ...page,
       layout: updatePageLayoutSection({ block, index: selectedIndex, layout: page.layout || [] }),
     }))
-  }, [selectedIndex])
+  }, [mutatePage, selectedIndex])
   const moveBlock = useCallback((identity: string, direction: -1 | 1) => {
     runCanvasLayoutTransition(() => {
       let nextSelectedIndex: null | number = null
@@ -881,7 +909,7 @@ export function PageComposerDrawer({
         setSelectedIndex(nextSelectedIndex)
       }
     })
-  }, [runCanvasLayoutTransition, setSelectedIndex])
+  }, [mutatePage, runCanvasLayoutTransition, setSelectedIndex])
   const updateHeroCopy = useCallback((value: string) => {
     if (!selectedHeroBlock) return
     replaceSelectedBlock({
@@ -1043,6 +1071,7 @@ export function PageComposerDrawer({
   const persistPage = useCallback(
     async (action: SavingAction) => {
       if (!draftPage) return
+      const requestRevision = draftRevisionRef.current
       setSavingAction(action)
       setStatus(null)
       const priorId = draftPage.id
@@ -1069,25 +1098,39 @@ export function PageComposerDrawer({
                 pagePath: pathname,
               }
             : payload.page
-        setDraftPage(nextPage)
         setPageVersions(payload.versions || [])
         if (payload.pages) {
           setMarketingPages(filterMarketingComposerPageSummaries(payload.pages))
         }
         setSavedPage(nextPage)
-        setTitleDraft(nextPage.title || '')
-        setSlugDraft(nextPage.slug || '')
-        setVisibilityDraft(nextPage.visibility === 'private' ? 'private' : 'public')
-        setDirty(false)
-        setStatus(
-          action === 'publish-page'
-            ? priorId
-              ? 'Page published.'
-              : 'Page created and published.'
-            : priorId
-              ? 'Draft saved.'
-              : 'Draft created.',
-        )
+        const hasNewerLocalChanges = action === 'save-draft' && draftRevisionRef.current !== requestRevision
+
+        if (hasNewerLocalChanges) {
+          setDraftPage((current) =>
+            mergePersistedPageMetadata({
+              action,
+              current,
+              nextPage,
+              pathname,
+            }),
+          )
+          setStatus('Draft saved. Newer edits are still pending.')
+        } else {
+          setDraftPage(nextPage)
+          setTitleDraft(nextPage.title || '')
+          setSlugDraft(nextPage.slug || '')
+          setVisibilityDraft(nextPage.visibility === 'private' ? 'private' : 'public')
+          setDirty(false)
+          setStatus(
+            action === 'publish-page'
+              ? priorId
+                ? 'Page published.'
+                : 'Page created and published.'
+              : priorId
+                ? 'Draft saved.'
+                : 'Draft created.',
+          )
+        }
         if (action === 'publish-page' && payload.page.pagePath !== pathname) {
           router.push(payload.page.pagePath)
         }
@@ -1229,7 +1272,7 @@ export function PageComposerDrawer({
       }))
       setSelectedIndex(index + 1)
     })
-  }, [runCanvasLayoutTransition, setSelectedIndex])
+  }, [mutatePage, runCanvasLayoutTransition, setSelectedIndex])
 
   const removeBlock = useCallback((index: number) => {
     runCanvasLayoutTransition(() => {
@@ -1239,7 +1282,7 @@ export function PageComposerDrawer({
       }))
       setSelectedIndex(Math.max(0, index - 1))
     })
-  }, [runCanvasLayoutTransition, setSelectedIndex])
+  }, [mutatePage, runCanvasLayoutTransition, setSelectedIndex])
 
   const toggleBlockHidden = useCallback((index: number) => {
     mutatePage((page) => ({
@@ -1250,7 +1293,7 @@ export function PageComposerDrawer({
       }),
     }))
     setSelectedIndex(index)
-  }, [setSelectedIndex])
+  }, [mutatePage, setSelectedIndex])
 
   const openMediaSlotForRelationPath = useCallback(
     (relationPath: string) => {
@@ -1295,15 +1338,15 @@ export function PageComposerDrawer({
             },
             onOpenMediaSlot: openMediaSlotForRelationPath,
             onSetSlugDraft: (value) => {
-              setDirty(true)
+              markDraftDirty()
               setSlugDraft(value)
             },
             onSetTitleDraft: (value) => {
-              setDirty(true)
+              markDraftDirty()
               setTitleDraft(value)
             },
             onSetVisibilityDraft: (value) => {
-              setDirty(true)
+              markDraftDirty()
               setVisibilityDraft(value)
             },
             onToggleHidden: (index) => {
@@ -1586,6 +1629,7 @@ export function PageComposerDrawer({
     heroCopy,
     loading,
     moveBlock,
+    markDraftDirty,
     mutateSelectedPricingPlan,
     mutateSelectedService,
     mutateSelectedServiceGrid,
@@ -1777,6 +1821,7 @@ export function PageComposerDrawer({
     heroCopy,
     heroSummary,
     layoutSectionSummaries,
+    moveBlock,
     mutateSelectedService,
     mutateSelectedServiceGrid,
     openBlockLibrary,
@@ -1809,11 +1854,13 @@ export function PageComposerDrawer({
     mediaKind,
     mediaLibrary,
     mediaLoading,
+    mediaSlots,
     mediaPrompt,
     mediaPromptId,
     mediaUploadInputRef,
     setMediaKind,
     setMediaPrompt,
+    setSelectedMediaPath,
     selectedMediaSlot,
     submitMediaAction,
     submittingMediaAction,

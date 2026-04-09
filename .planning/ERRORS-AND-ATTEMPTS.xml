@@ -349,4 +349,16 @@
       <command>cmd /c npm.cmd run build</command>
     </verification>
   </attempt>
+  <attempt id="18-06-a2" phase="18" task="18-06" status="resolved">
+    <title>Media-tab verification drifted after the page-local refactor because slot-focused controls were no longer mounted and browser specs assumed the wrong contract</title>
+    <symptom>The rebuilt production-browser pass no longer failed on reorder, but the page-composer media flow still broke during verification. The Media tab showed the global library, yet the browser spec could not find the old slot-selection button, swap success text, or focused-copilot trigger reliably. The full Playwright file also ran the focused media copilot spec in environments where the feature flag intentionally hid that control.</symptom>
+    <cause>The simplified page-local media tab still received `selectedMediaSlot`, `mediaSlots`, and slot-targeted actions from the drawer state, but only the library surface remained mounted. Existing slot-focused components for selected-slot details, preview, and upload/generate swap actions had been left unused, so the product surface and browser coverage drifted apart. On top of that, the focused-copilot test only checked `AI_OPS_ASSISTANT_ENABLED` instead of the narrower `NEXT_PUBLIC_COPILOT_MEDIA_GENERATION_ENABLED` gate used by the UI.</cause>
+    <attempted-fix>Refactor the Media tab into a hybrid surface: keep the global library, but mount the selected-block slot list plus selected-slot details, preview, and upload/generate card whenever block-local media slots exist. Give slot buttons stable accessible labels, update the shell integration coverage to assert the restored slot surface, change the Playwright media flow to target the stable slot/button labels and request-side effects instead of missing toast text, and gate the focused-copilot browser spec on both the shared assistant flag and the focused-media-generation flag. Capture the pattern in `.planning/skills/page-composer-media-slot-surface.md`.</attempted-fix>
+    <verification>
+      <command>cmd /c npm.cmd exec eslint src/components/page-composer/PageComposerDrawer.tsx src/components/page-composer/drawer/PageComposerDrawerChrome.tsx src/components/page-composer/drawer/PageComposerDrawerMediaTab.tsx src/components/page-composer/drawer/PageComposerDrawerMediaSlotList.tsx tests/e2e/page-composer.e2e.spec.ts tests/int/components/page-composer/page-composer-shell.int.spec.tsx</command>
+      <command>cmd /c npm.cmd exec vitest run tests/int/components/page-composer/page-composer-layout-tab.int.spec.tsx tests/int/components/page-composer/page-composer-shell.int.spec.tsx tests/int/components/page-composer/page-composer-canvas.int.spec.tsx</command>
+      <command>cmd /c npm.cmd run build</command>
+      <command>powershell -NoProfile -Command "$env:PLAYWRIGHT_BASE_URL='http://localhost:3101'; npm.cmd exec -- playwright test tests/e2e/page-composer.e2e.spec.ts --config=playwright.local.config.ts --reporter=line"</command>
+    </verification>
+  </attempt>
 </errors-and-attempts>

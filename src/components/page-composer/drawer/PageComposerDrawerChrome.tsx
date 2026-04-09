@@ -69,6 +69,7 @@ export type PageComposerDrawerChromeProps = {
     heroCopy: string
     heroSummary: null | PageComposerSectionSummary
     layoutSectionSummaries: PageComposerSectionSummary[]
+    moveBlock: (identity: string, direction: -1 | 1) => void
     openBlockLibrary: (index: number, mode?: 'insert' | 'replace') => void
     sensors: unknown
     removeBlock: (index: number) => void
@@ -119,12 +120,14 @@ export type PageComposerDrawerChromeProps = {
       updatedAt: string
     }>
     mediaLoading: boolean
+    mediaSlots: SectionMediaSlot[]
     mediaPrompt: string
     mediaPromptId: string
     selectedMediaSlot: SectionMediaSlot | null
     mediaUploadInputRef: RefObject<HTMLInputElement | null>
     setMediaKind: (value: 'image' | 'video') => void
     setMediaPrompt: (value: string) => void
+    setSelectedMediaPath: (value: null | string) => void
     submitMediaAction: (args: {
       action: MediaAction
       file?: File
@@ -202,6 +205,7 @@ export function PageComposerDrawerChrome({
     heroCopy,
     heroSummary,
     layoutSectionSummaries,
+    moveBlock,
     openBlockLibrary,
     sensors,
     removeBlock,
@@ -230,12 +234,14 @@ export function PageComposerDrawerChrome({
     mediaKind,
     mediaLibrary,
     mediaLoading,
+    mediaSlots,
     mediaPrompt,
     mediaPromptId,
     selectedMediaSlot: _selectedMediaSlot,
     mediaUploadInputRef,
     setMediaKind,
     setMediaPrompt,
+    setSelectedMediaPath,
     submitMediaAction,
     submittingMediaAction,
   } = media
@@ -495,6 +501,7 @@ export function PageComposerDrawerChrome({
               heroSummary={heroSummary}
               layoutSectionSummaries={layoutSectionSummaries}
               loading={loading}
+              moveBlock={moveBlock}
               openBlockLibrary={openBlockLibrary}
               removeBlock={removeBlock}
               sectionSummaries={sectionSummaries}
@@ -539,11 +546,13 @@ export function PageComposerDrawerChrome({
               mediaKind={mediaKind}
               mediaLibrary={mediaLibrary}
               mediaLoading={mediaLoading}
+              mediaSlots={mediaSlots}
               mediaPrompt={mediaPrompt}
               mediaPromptId={mediaPromptId}
               mediaUploadInputRef={mediaUploadInputRef}
               setMediaKind={setMediaKind}
               setMediaPrompt={setMediaPrompt}
+              setSelectedMediaPath={setSelectedMediaPath}
               selectedMediaSlot={_selectedMediaSlot}
               submitMediaAction={submitMediaAction}
               submittingMediaAction={submittingMediaAction}
@@ -574,6 +583,7 @@ export function PageComposerDrawerChrome({
             persistPage={persistPage}
             restoringVersionId={restoringVersionId}
             savingAction={savingAction}
+            status={status}
           />
         </Tabs>
 

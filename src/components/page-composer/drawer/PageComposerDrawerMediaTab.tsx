@@ -6,11 +6,15 @@ import { InfoIcon, RefreshCwIcon, SearchIcon, UploadIcon, Wand2Icon } from 'luci
 import { adminPanelChrome } from '@/components/admin-impersonation/adminPanelChrome'
 import { COPILOT_MEDIA_GENERATION_ENABLED } from '@/constants/copilotFeatures'
 import { PageComposerDrawerMediaLibraryCard } from '@/components/page-composer/drawer/PageComposerDrawerMediaLibraryCard'
+import { PageComposerDrawerMediaSelectedSlotDetails } from '@/components/page-composer/drawer/PageComposerDrawerMediaSelectedSlotDetails'
+import { PageComposerDrawerMediaSelectedSlotPreview } from '@/components/page-composer/drawer/PageComposerDrawerMediaSelectedSlotPreview'
+import { PageComposerDrawerMediaSlotList } from '@/components/page-composer/drawer/PageComposerDrawerMediaSlotList'
 import type {
   MediaAction,
   MediaLibraryItem,
   SectionMediaSlot,
 } from '@/components/page-composer/drawer/PageComposerDrawerMediaTypes'
+import { PageComposerDrawerMediaUploadGenerateCard } from '@/components/page-composer/drawer/PageComposerDrawerMediaUploadGenerateCard'
 import { usePortalCopilotOptional } from '@/components/copilot/PortalCopilotContext'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -19,7 +23,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import type { PageComposerDocument } from '@/lib/pages/pageComposer'
 
 export function PageComposerDrawerMediaTab({
-  copilot: _copilot,
+  copilot,
   dirty,
   draftPage,
   loadMediaLibrary,
@@ -28,11 +32,13 @@ export function PageComposerDrawerMediaTab({
   mediaKind,
   mediaLibrary,
   mediaLoading,
+  mediaSlots,
   mediaPrompt,
   mediaPromptId,
   mediaUploadInputRef,
   setMediaKind,
   setMediaPrompt,
+  setSelectedMediaPath,
   selectedMediaSlot,
   submitMediaAction,
   submittingMediaAction,
@@ -48,11 +54,13 @@ export function PageComposerDrawerMediaTab({
   mediaKind: 'image' | 'video'
   mediaLibrary: MediaLibraryItem[]
   mediaLoading: boolean
+  mediaSlots: SectionMediaSlot[]
   mediaPrompt: string
   mediaPromptId: string
   mediaUploadInputRef: MutableRefObject<HTMLInputElement | null>
   setMediaKind: (value: 'image' | 'video') => void
   setMediaPrompt: (value: string) => void
+  setSelectedMediaPath: (value: null | string) => void
   selectedMediaSlot: SectionMediaSlot | null
   submitMediaAction: (args: {
     action: MediaAction
@@ -64,7 +72,6 @@ export function PageComposerDrawerMediaTab({
   }) => Promise<void>
   submittingMediaAction: null | MediaAction
 }) {
-  void _copilot
   const portalCopilot = usePortalCopilotOptional()
   const [query, setQuery] = useState('')
   const [replaceTargetId, setReplaceTargetId] = useState<null | number>(null)
@@ -155,11 +162,54 @@ export function PageComposerDrawerMediaTab({
         <p className="text-xs text-muted-foreground">
           Targeting <span className="font-medium text-foreground">{selectedMediaSlot.label}</span>
         </p>
+      ) : mediaSlots.length ? (
+        <p className="text-xs text-muted-foreground">
+          Choose a slot from the selected block below, or click a media area on the canvas to focus it.
+        </p>
       ) : (
         <div className={adminPanelChrome.emptyOnBackground}>
           Click a media area on the canvas (hero, section, or service row) to target it, then use the gallery below.
         </div>
       )}
+
+      {mediaSlots.length ? (
+        <div className="grid gap-3">
+          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+            Current block media slots
+          </div>
+          <PageComposerDrawerMediaSlotList
+            mediaSlots={mediaSlots}
+            selectedMediaSlot={selectedMediaSlot}
+            setMediaKind={setMediaKind}
+            setSelectedMediaPath={setSelectedMediaPath}
+          />
+        </div>
+      ) : null}
+
+      {selectedMediaSlot ? (
+        <div className="grid gap-4">
+          <PageComposerDrawerMediaSelectedSlotDetails
+            mediaKind={mediaKind}
+            selectedMediaSlot={selectedMediaSlot}
+            setMediaKind={setMediaKind}
+          />
+          <PageComposerDrawerMediaSelectedSlotPreview selectedMediaSlot={selectedMediaSlot} />
+          <PageComposerDrawerMediaUploadGenerateCard
+            copilot={copilot}
+            loadMediaLibrary={loadMediaLibrary}
+            mediaActionsLocked={mediaActionsLocked}
+            mediaKind={mediaKind}
+            mediaLoading={mediaLoading}
+            mediaPrompt={mediaPrompt}
+            mediaPromptId={mediaPromptId}
+            mediaUploadInputRef={mediaUploadInputRef}
+            selectedMediaSlot={selectedMediaSlot}
+            setMediaPrompt={setMediaPrompt}
+            submitMediaAction={submitMediaAction}
+            submittingMediaAction={submittingMediaAction}
+          />
+        </div>
+      ) : null}
 
       {dirty ? (
         <div className={adminPanelChrome.warnAmber}>

@@ -2,9 +2,9 @@
 <state>
   <agent-registry>
   </agent-registry>
-  <current-phase>18</current-phase>
-  <current-plan>18-06</current-plan>
+  <current-phase>11</current-phase>
+  <current-plan>11-05</current-plan>
   <status>in-progress</status>
-  <next-action>`18-06` remains active, but the layout-tab/runtime reorder path is now stabilized around persistent section identity instead of transient indexes. The composer now resolves live block editing paths from section identity, assigns `_uuid` to new and duplicated layout blocks, keeps the hero pinned at the front of normalized page layouts, and no longer auto-scrolls canvas sections during move actions. Build and focused composer integration checks are green. The next execution pass should stay inside the simplified page-local model and finish the remaining risk area: reliable media replacement and selected-block editing across hero/service/media blocks, plus a follow-up on the existing isolated production-browser save-draft expectation before calling browser verification complete. Supporting notes remain in `.planning/todos/2026-04-07-layout-first-page-model-hero-block.md`, `.planning/todos/2026-04-07-instant-quote-app-block.md`, `.planning/todos/2026-04-07-composer-media-target-model.md`, `.planning/todos/2026-04-08-cms-route-gating-and-block-actions.md`, and `.planning/todos/2026-04-08-resend-delivery-and-customer-email-verification.md`.</next-action>
+  <next-action>Phase `18` is now complete. The page-local composer model has been verified through focused Vitest coverage, localhost production build verification, and Playwright coverage for missing-route draft creation plus route-draft insert/reorder/media/publish flow. The last pass restored slot-focused media controls inside the Media tab, added in-tab slot selection for the selected block, aligned browser coverage with the real feature-flag contract for focused media copilot, and documented the pattern in `.planning/skills/page-composer-media-slot-surface.md`. The next autonomous pass should rehydrate task `11-05`: finish replacing the remaining Supabase customer-auth path with Clerk-hosted auth/social login and close the first-party Payload user + Clerk identity edge cases that are still marked in progress.</next-action>
   <sink-compiled sink="apps/portfolio/content/docs/grime-time/planning/" at="2026-04-07T20:06:41.163Z" />
 </state>

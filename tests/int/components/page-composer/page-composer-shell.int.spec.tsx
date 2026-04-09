@@ -565,9 +565,11 @@ describe('PageComposer shell integration', () => {
     })
 
     expect(screen.queryByText('Recent media')).toBeNull()
-
+    expect(screen.getByRole('button', { name: 'What we do: House washing' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'What we do: Driveway lane' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Generate and swap' })).toBeTruthy()
     expect(screen.getByText(/Targeting/)).toBeTruthy()
-    expect(screen.getByText(/Driveway lane/)).toBeTruthy()
+    expect(screen.getAllByText(/Driveway lane/).length).toBeGreaterThan(0)
 
     fireEvent.click(screen.getByRole('button', { name: 'Use media 901 for What we do: Driveway lane' }))
 
@@ -581,7 +583,7 @@ describe('PageComposer shell integration', () => {
     })
 
     expect(screen.getByText(/Targeting/)).toBeTruthy()
-    expect(screen.getByText(/Driveway lane/)).toBeTruthy()
+    expect(screen.getAllByText(/Driveway lane/).length).toBeGreaterThan(0)
 
     window.removeEventListener(PAGE_COMPOSER_TOOLBAR_EVENT, handleToolbarChange as EventListener)
   })

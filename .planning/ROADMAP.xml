@@ -141,7 +141,7 @@
     <goal>Simplify the composer around page-local blocks, code-owned app blocks, and future dynamic data blocks; remove shared-section authoring, and finish the page-local copy and media editing model so each page owns its content while still pulling approved media and system data from first-party sources.</goal>
     <requirements>REQ-03</requirements>
     <depends>15,16,17</depends>
-    <status>in-progress</status>
+    <status>complete</status>
     <plans>.planning/phases/18-shared-sections-and-constrained-reuse/</plans>
   </phase>
   <doc-flow>

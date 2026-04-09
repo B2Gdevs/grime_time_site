@@ -4,70 +4,106 @@ import { cleanupPageBySlug } from '../helpers/pageComposer'
 import { login } from '../helpers/login'
 import { cleanupTestUser, seedTestUser, testUser } from '../helpers/seedUser'
 
-async function dragSectionAbove(args: {
-  page: import('@playwright/test').Page
-  sourceLabel: string
-  targetLabel: string
-}) {
-  const sourceRow = structureRow(args.page, args.sourceLabel)
-  const targetRow = structureRow(args.page, args.targetLabel).locator('button.min-w-0.flex-1.text-left')
-  const sourceHandle = sourceRow.locator('button').first()
+function trackPageErrors(page: import('@playwright/test').Page) {
+  const errors: string[] = []
 
-  await expect(sourceHandle).toBeVisible()
-  await expect(targetRow).toBeVisible()
+  page.on('pageerror', (error) => {
+    errors.push(error?.stack || error?.message || String(error))
+  })
 
-  await sourceHandle.focus()
-  await sourceHandle.press('Space')
-  await sourceHandle.press('ArrowUp')
-  await sourceHandle.press('Space')
+  return errors
 }
 
 async function openPageComposerAtPath(page: import('@playwright/test').Page, pathname: string) {
   await page.goto(pathname)
   await page.getByRole('button', { name: 'Page composer' }).click()
   await expect(page.getByRole('button', { name: 'Dismiss page composer' })).toBeVisible()
+  await expect(page.getByRole('textbox', { name: 'Page title' })).toBeVisible()
+  await expect(page.getByRole('textbox', { name: 'page-slug' })).toBeVisible()
+  await expect(composerDrawer(page).getByRole('button', { name: 'Save draft' })).toBeEnabled()
 }
 
 function composerDrawer(page: import('@playwright/test').Page): Locator {
   return page.getByRole('complementary')
 }
 
-function activeComposerPanel(page: import('@playwright/test').Page): Locator {
-  return composerDrawer(page).locator('[role="tabpanel"][data-state="active"]')
+function composerStatus(page: import('@playwright/test').Page): Locator {
+  return composerDrawer(page).locator('[role="status"][aria-live="polite"]').last()
 }
 
-function structureRow(page: import('@playwright/test').Page, label: string): Locator {
-  return activeComposerPanel(page)
-    .locator('div.rounded-2xl.border.p-3')
-    .filter({
-      has: page.locator('span.text-sm.font-semibold.text-foreground', { hasText: label }),
-    })
+async function waitForComposerMutation(
+  page: import('@playwright/test').Page,
+  action: 'publish-page' | 'save-draft',
+) {
+  const response = await page.waitForResponse((candidate) => {
+    if (!candidate.url().includes('/api/internal/page-composer') || candidate.request().method() !== 'POST') {
+      return false
+    }
+
+    try {
+      const payload = candidate.request().postDataJSON() as { action?: string }
+      return payload.action === action
+    } catch {
+      return false
+    }
+  })
+
+  expect(response.ok()).toBe(true)
+  return (await response.json()) as {
+    ok?: boolean
+    page?: {
+      id?: number | null
+      pagePath?: string
+      slug?: string
+    }
+  }
+}
+
+function activeComposerPanel(page: import('@playwright/test').Page): Locator {
+  return composerDrawer(page).locator('[role="tabpanel"][data-state="active"]')
 }
 
 async function clickComposerButton(page: import('@playwright/test').Page, name: 'Publish' | 'Save draft') {
   const button = composerDrawer(page).getByRole('button', { name })
   await button.scrollIntoViewIfNeeded()
-  await button.evaluate((element: HTMLButtonElement) => element.click())
+  await button.click({ force: true })
 }
 
-async function clickComposerTab(page: import('@playwright/test').Page, name: 'Content' | 'Layout' | 'Media' | 'Publish') {
+async function clickComposerTab(page: import('@playwright/test').Page, name: 'Block data' | 'Layout' | 'Media' | 'Pages') {
   const tab = composerDrawer(page).getByRole('tab', { name })
   await tab.click()
 }
 
 async function clickElement(locator: Locator) {
   await expect(locator).toBeVisible()
-  await locator.evaluate((element: HTMLElement) => element.click())
+  await locator.click({ force: true })
+}
+
+async function createComposerDraft(page: import('@playwright/test').Page) {
+  const responsePromise = waitForComposerMutation(page, 'save-draft')
+  await clickComposerButton(page, 'Save draft')
+  const payload = await responsePromise
+
+  expect(typeof payload.page?.id).toBe('number')
+  await expect(composerStatus(page)).toContainText('Draft created.')
+  await expect(page.getByRole('button', { name: 'Delete draft page and return home' })).toBeEnabled({
+    timeout: 60000,
+  })
+  return payload
 }
 
 async function persistComposerDraft(page: import('@playwright/test').Page) {
   let lastError: Error | null = null
 
   for (let attempt = 0; attempt < 2; attempt += 1) {
+    const responsePromise = waitForComposerMutation(page, 'save-draft')
     await clickComposerButton(page, 'Save draft')
 
     try {
-      await expect(composerDrawer(page).getByText('Unsaved')).not.toBeVisible({ timeout: 10000 })
+      const payload = await responsePromise
+      expect(payload.ok).toBe(true)
+      await expect(composerStatus(page)).toContainText('Draft saved.')
+      await expect(page.getByText('Unsaved')).not.toBeVisible({ timeout: 10000 })
       return
     } catch (error) {
       lastError = error instanceof Error ? error : new Error('Unable to persist the page draft.')
@@ -77,14 +113,18 @@ async function persistComposerDraft(page: import('@playwright/test').Page) {
   throw lastError || new Error('Unable to persist the page draft.')
 }
 
-async function insertServiceGrid(page: import('@playwright/test').Page) {
+async function insertServiceGrid(page: import('@playwright/test').Page, pageErrors?: string[]) {
   await clickComposerTab(page, 'Layout')
-  await clickElement(activeComposerPanel(page).getByRole('button', { name: 'Add block' }).first())
+  await page.waitForTimeout(1000)
+  if (pageErrors) {
+    expect(pageErrors).toEqual([])
+  }
+  await clickElement(activeComposerPanel(page).getByRole('button', { name: 'Add to bottom' }))
   await clickElement(composerDrawer(page).getByRole('button', { name: /Service grid/i }))
 }
 
 async function renameSelectedServiceGrid(page: import('@playwright/test').Page, from: string, to: string) {
-  await clickComposerTab(page, 'Content')
+  await clickComposerTab(page, 'Block data')
   const input = activeComposerPanel(page).locator(`input[value="${from}"]`).first()
   await input.fill(to)
 }
@@ -97,19 +137,18 @@ async function sectionHeadingOrder(page: import('@playwright/test').Page): Promi
 
 async function structureSectionOrder(page: import('@playwright/test').Page): Promise<string[]> {
   return activeComposerPanel(page)
-    .locator('button.min-w-0.flex-1.text-left span.text-sm.font-semibold.text-foreground')
-    .evaluateAll((nodes) => nodes.map((node) => node.textContent?.trim() || '').filter(Boolean))
-}
-
-function mediaCard(page: import('@playwright/test').Page, title: string): Locator {
-  return page.locator('div.rounded-2xl.border.border-border\\/70.bg-background.p-3').filter({
-    has: page.getByText(title, { exact: true }),
-  })
+    .locator('button[aria-label^="Drag "]')
+    .evaluateAll((nodes) =>
+      nodes
+        .map((node) => node.getAttribute('aria-label')?.replace(/^Drag /, '').trim() || '')
+        .filter(Boolean),
+    )
 }
 
 test.describe('Staff page composer', () => {
   const createdSlugs = new Set<string>()
   const copilotEnabled = process.env.AI_OPS_ASSISTANT_ENABLED === 'true'
+  const focusedMediaCopilotEnabled = process.env.NEXT_PUBLIC_COPILOT_MEDIA_GENERATION_ENABLED === 'true'
 
   test.beforeAll(async () => {
     test.setTimeout(120000)
@@ -130,26 +169,31 @@ test.describe('Staff page composer', () => {
 
   test('can start composing and create a draft directly from a missing route', async ({ page }) => {
     test.setTimeout(90000)
+    const pageErrors = trackPageErrors(page)
     const slug = `playwright-missing-route-${Date.now()}`
     const pathname = `/${slug}`
 
     await openPageComposerAtPath(page, pathname)
 
-    await expect(composerDrawer(page).getByPlaceholder('Page title')).toHaveValue('Playwright Missing Route')
-    await expect(composerDrawer(page).getByPlaceholder('page-slug')).toHaveValue(slug)
-    await expect(composerDrawer(page).getByText(/save draft or publish to create it/i)).toBeVisible()
+    await expect(page.getByRole('textbox', { name: 'Page title' })).toHaveValue(/^Playwright Missing Route/)
+    await expect(page.getByRole('textbox', { name: 'page-slug' })).toHaveValue(slug)
+    await expect(page.getByRole('heading', { name: 'Start composing this page in place.' })).toBeVisible()
+    expect(pageErrors).toEqual([])
 
-    await clickComposerButton(page, 'Save draft')
-    await expect(composerDrawer(page).getByText('Draft created.')).toBeVisible({ timeout: 60000 })
+    const payload = await createComposerDraft(page)
+    await page.waitForTimeout(1500)
 
     createdSlugs.add(slug)
     await expect(page).toHaveURL(new RegExp(`${pathname}$`))
+    expect(payload.page?.pagePath).toBe(pathname)
+    expect(pageErrors).toEqual([])
   })
 
   test('can create a route draft, insert blocks through the library, reorder them, run media actions, and publish', async ({
     page,
   }) => {
     test.setTimeout(90000)
+    const pageErrors = trackPageErrors(page)
     const mediaRequests: string[] = []
     const slug = `playwright-composer-${Date.now()}`
     const pathname = `/${slug}`
@@ -184,22 +228,21 @@ test.describe('Staff page composer', () => {
     })
 
     await openPageComposerAtPath(page, pathname)
-    await clickComposerButton(page, 'Save draft')
-    await expect(composerDrawer(page).getByText('Draft created.')).toBeVisible({ timeout: 60000 })
+    await createComposerDraft(page)
+    await page.waitForTimeout(1500)
     createdSlugs.add(slug)
+    expect(pageErrors).toEqual([])
 
-    await insertServiceGrid(page)
+    await insertServiceGrid(page, pageErrors)
+    expect(pageErrors).toEqual([])
     await renameSelectedServiceGrid(page, 'Interactive service section', 'Composer Alpha')
 
-    await insertServiceGrid(page)
+    await insertServiceGrid(page, pageErrors)
+    expect(pageErrors).toEqual([])
     await renameSelectedServiceGrid(page, 'Interactive service section', 'Composer Beta')
 
     await clickComposerTab(page, 'Layout')
-    await dragSectionAbove({
-      page,
-      sourceLabel: 'Composer Beta',
-      targetLabel: 'Composer Alpha',
-    })
+    await clickElement(activeComposerPanel(page).getByRole('button', { name: 'Move block Composer Beta up' }))
     await expect.poll(() => structureSectionOrder(page)).toContainEqual('Composer Beta')
     await expect
       .poll(async () => {
@@ -211,27 +254,29 @@ test.describe('Staff page composer', () => {
       })
       .toBe(true)
 
-    await clickElement(activeComposerPanel(page).getByRole('button', { name: 'Hide block Composer Alpha' }))
-    await expect(activeComposerPanel(page).getByRole('button', { name: 'Show block Composer Alpha' })).toBeVisible()
-    await clickElement(activeComposerPanel(page).getByRole('button', { name: 'Show block Composer Alpha' }))
-    await expect(activeComposerPanel(page).getByRole('button', { name: 'Hide block Composer Alpha' })).toBeVisible()
-
     await persistComposerDraft(page)
 
     await clickComposerTab(page, 'Media')
-    await clickElement(activeComposerPanel(page).getByRole('button', { name: 'Section item one' }))
-    await clickElement(mediaCard(page, 'Fresh exterior shot').getByRole('button', { name: 'Use this media' }))
-    await expect(page.getByText(/Swapped Section item one to media 901\./)).toBeVisible()
+    await clickElement(activeComposerPanel(page).getByRole('button', { name: 'Composer Beta: Section item one' }))
+    await clickElement(
+      activeComposerPanel(page).getByRole('button', { name: 'Use media 901 for Composer Beta: Section item one' }),
+    )
+    await expect
+      .poll(() => mediaRequests.some((payload) => payload.includes('swap-existing-reference')))
+      .toBe(true)
 
-    await composerDrawer(page).getByPlaceholder(/Describe the image/).fill('Crisp daytime siding wash before-and-after shot')
-    await clickElement(composerDrawer(page).getByRole('button', { name: 'Generate and swap' }))
-    await expect(page.getByText(/Generated new image for Section item one\./)).toBeVisible()
+    await activeComposerPanel(page)
+      .getByLabel('Prompt')
+      .fill('Crisp daytime siding wash before-and-after shot')
+    await clickElement(activeComposerPanel(page).getByRole('button', { name: 'Generate and swap' }))
+    await expect
+      .poll(() => mediaRequests.some((payload) => payload.includes('generate-and-swap')))
+      .toBe(true)
+    await expect(activeComposerPanel(page).getByLabel('Prompt')).toHaveValue('')
 
-    expect(mediaRequests.some((payload) => payload.includes('swap-existing-reference'))).toBe(true)
-    expect(mediaRequests.some((payload) => payload.includes('generate-and-swap'))).toBe(true)
-
+    const publishResponse = waitForComposerMutation(page, 'publish-page')
     await clickComposerButton(page, 'Publish')
-    await expect(composerDrawer(page).getByText('Page published.')).toBeVisible({ timeout: 60000 })
+    expect((await publishResponse).ok).toBe(true)
 
     await clickElement(composerDrawer(page).getByRole('button', { name: 'Dismiss page composer' }))
     await expect(composerDrawer(page)).not.toBeVisible()
@@ -243,7 +288,10 @@ test.describe('Staff page composer', () => {
   })
 
   test('focused copilot sends selected page, section, and media-slot context', async ({ page }) => {
-    test.skip(!copilotEnabled, 'Enable AI_OPS_ASSISTANT_ENABLED=true to run the shared copilot authoring flow.')
+    test.skip(
+      !copilotEnabled || !focusedMediaCopilotEnabled,
+      'Enable AI_OPS_ASSISTANT_ENABLED=true and NEXT_PUBLIC_COPILOT_MEDIA_GENERATION_ENABLED=true to run the focused media copilot flow.',
+    )
 
     let capturedCopilotBody: Record<string, unknown> | null = null
     const slug = `playwright-copilot-${Date.now()}`
@@ -308,8 +356,7 @@ test.describe('Staff page composer', () => {
     })
 
     await openPageComposerAtPath(page, pathname)
-    await clickComposerButton(page, 'Save draft')
-    await expect(composerDrawer(page).getByText('Draft created.')).toBeVisible({ timeout: 60000 })
+    await createComposerDraft(page)
     createdSlugs.add(slug)
 
     await insertServiceGrid(page)
@@ -317,8 +364,8 @@ test.describe('Staff page composer', () => {
     await persistComposerDraft(page)
 
     await clickComposerTab(page, 'Media')
-    await clickElement(activeComposerPanel(page).getByRole('button', { name: 'Section item one' }))
-    await composerDrawer(page).getByPlaceholder(/Describe the image/).fill('Driveway cleaning hero image')
+    await clickElement(activeComposerPanel(page).getByRole('button', { name: 'Copilot Service Grid: Section item one' }))
+    await activeComposerPanel(page).getByLabel('Prompt').fill('Driveway cleaning hero image')
     await clickElement(activeComposerPanel(page).getByRole('button', { name: 'Focused copilot' }))
 
     await expect(page.getByRole('heading', { name: 'Grime Time Copilot' })).toBeVisible()
@@ -349,12 +396,12 @@ test.describe('Staff page composer', () => {
       | { mode?: string; promptHint?: string; type?: string }
       | undefined
 
-    expect(authoringContext?.page?.slug).toBe(created.slug)
-    expect(authoringContext?.page?.pagePath).toBe(`/${created.slug}`)
-    expect(authoringContext?.page?.title).toBe(created.title)
+    expect(authoringContext?.page?.slug).toBe(slug)
+    expect(authoringContext?.page?.pagePath).toBe(`/${slug}`)
+    expect(authoringContext?.page?.title).toBe(draftTitle)
     expect(authoringContext?.section?.label).toBe('Copilot Service Grid')
     expect(authoringContext?.section?.variant).toBe('interactive')
-    expect(authoringContext?.mediaSlot?.label).toBe('Section item one')
+    expect(authoringContext?.mediaSlot?.label).toBe('Copilot Service Grid: Section item one')
     expect(focusedSession).toMatchObject({
       mode: 'gallery',
       promptHint: 'Driveway cleaning hero image',

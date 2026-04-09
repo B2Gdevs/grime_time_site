@@ -3,6 +3,8 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import {
+  ArrowDownIcon,
+  ArrowUpIcon,
   CopyPlusIcon,
   EyeIcon,
   EyeOffIcon,
@@ -19,18 +21,26 @@ import type { PageComposerSectionSummary } from '@/lib/pages/pageComposer'
 
 export function PageComposerDrawerSortableSectionRow({
   active,
+  canMoveDown = false,
+  canMoveUp = false,
   disableSorting = false,
   onClick,
   onDuplicate,
+  onMoveDown,
+  onMoveUp,
   onRemove,
   onReplace,
   onToggleHidden,
   summary,
 }: {
   active: boolean
+  canMoveDown?: boolean
+  canMoveUp?: boolean
   disableSorting?: boolean
   onClick: () => void
   onDuplicate: () => void
+  onMoveDown?: () => void
+  onMoveUp?: () => void
   onRemove: () => void
   onReplace: () => void
   onToggleHidden: () => void
@@ -76,6 +86,26 @@ export function PageComposerDrawerSortableSectionRow({
           <div className="mt-1 text-xs text-muted-foreground">{summary.description}</div>
         </button>
         <div className="flex shrink-0 flex-wrap items-center justify-end gap-1">
+          <Button
+            aria-label={`Move block ${summary.label} up`}
+            disabled={!canMoveUp}
+            onClick={onMoveUp}
+            size="icon"
+            type="button"
+            variant="ghost"
+          >
+            <ArrowUpIcon className="h-4 w-4" />
+          </Button>
+          <Button
+            aria-label={`Move block ${summary.label} down`}
+            disabled={!canMoveDown}
+            onClick={onMoveDown}
+            size="icon"
+            type="button"
+            variant="ghost"
+          >
+            <ArrowDownIcon className="h-4 w-4" />
+          </Button>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button aria-label={`Block help for ${summary.label}`} size="icon" type="button" variant="ghost">

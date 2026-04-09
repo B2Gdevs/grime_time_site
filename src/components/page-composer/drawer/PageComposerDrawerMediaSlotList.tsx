@@ -19,6 +19,7 @@ export function PageComposerDrawerMediaSlotList({
     <div className="grid gap-3">
       {mediaSlots.map((slot) => (
         <button
+          aria-label={slot.label}
           key={slot.relationPath}
           className={`rounded-2xl border p-3 text-left transition ${
             selectedMediaSlot?.relationPath === slot.relationPath

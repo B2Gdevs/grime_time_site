@@ -63,6 +63,7 @@ function LayoutTabHarness({
         heroSummary={sectionSummaries[0]}
         layoutSectionSummaries={sectionSummaries}
         loading={false}
+        moveBlock={vi.fn()}
         openBlockLibrary={openBlockLibrary}
         removeBlock={vi.fn()}
         sectionSummaries={sectionSummaries}
@@ -87,6 +88,7 @@ describe('PageComposerDrawerStructureTab', () => {
     expect(screen.getByText('Layout')).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Add to bottom' })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Block help for Hero' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Move block What we do up' })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Replace block What we do' })).toBeTruthy()
     expect(screen.getByText(/drag blocks to reorder the page/i)).toBeTruthy()
   })
