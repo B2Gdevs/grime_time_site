@@ -19,6 +19,9 @@ function PagesTabHarness() {
 
   return (
     <>
+      <button onClick={() => composer.setActiveTab('media')} type="button">
+        Open media tab
+      </button>
       <button onClick={() => composer.setActiveTab('pages')} type="button">
         Open pages tab
       </button>
@@ -584,6 +587,138 @@ describe('PageComposer shell integration', () => {
 
     expect(screen.getByText(/Targeting/)).toBeTruthy()
     expect(screen.getAllByText(/Driveway lane/).length).toBeGreaterThan(0)
+
+    window.removeEventListener(PAGE_COMPOSER_TOOLBAR_EVENT, handleToolbarChange as EventListener)
+  })
+
+  it('syncs the drawer media selection immediately when canvas drag-drop stages a slot update', async () => {
+    let toolbarDetail: null | Record<string, unknown> = null
+    const handleToolbarChange = (event: Event) => {
+      toolbarDetail = (event as CustomEvent).detail as Record<string, unknown>
+    }
+
+    window.addEventListener(PAGE_COMPOSER_TOOLBAR_EVENT, handleToolbarChange as EventListener)
+
+    global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input)
+      const method = init?.method || 'GET'
+
+      if (url === '/api/internal/page-composer?pagePath=%2F') {
+        return {
+          json: async () => ({
+            ok: true,
+            page: {
+              _status: 'draft',
+              hero: { type: 'lowImpact' },
+              id: 7,
+              layout: [
+                {
+                  blockType: 'heroBlock',
+                  type: 'lowImpact',
+                },
+                {
+                  blockType: 'serviceGrid',
+                  heading: 'What we do',
+                  intro: 'Exterior cleaning lanes.',
+                  services: [
+                    {
+                      media: null,
+                      name: 'House washing',
+                      summary: 'Wash siding.',
+                    },
+                    {
+                      media: null,
+                      name: 'Driveway lane',
+                      summary: 'Clean flatwork.',
+                    },
+                  ],
+                },
+              ],
+              pagePath: '/',
+              publishedAt: null,
+              slug: 'home',
+              title: 'Home',
+              updatedAt: '2026-04-05T00:00:00.000Z',
+              visibility: 'public',
+            },
+            pages: [],
+            versions: [],
+          }),
+          ok: true,
+        } as Response
+      }
+
+      if (url === '/api/internal/page-composer/media' && method === 'GET') {
+        return {
+          json: async () => ({
+            items: [
+              {
+                alt: 'Fresh exterior shot',
+                filename: 'fresh-exterior.jpg',
+                id: 901,
+                media: {
+                  alt: 'Fresh exterior shot',
+                  createdAt: '2026-04-05T00:00:00.000Z',
+                  filename: 'fresh-exterior.jpg',
+                  height: 900,
+                  id: 901,
+                  mimeType: 'image/jpeg',
+                  updatedAt: '2026-04-05T00:00:00.000Z',
+                  url: '/media/fresh-exterior.jpg',
+                  width: 1600,
+                },
+                mimeType: 'image/jpeg',
+                previewUrl: '/media/fresh-exterior.jpg',
+                updatedAt: '2026-04-05T00:00:00.000Z',
+              },
+            ],
+          }),
+          ok: true,
+        } as Response
+      }
+
+      throw new Error(`Unexpected fetch: ${url} (${method})`)
+    }) as typeof fetch
+
+    render(
+      <PageComposerProvider>
+        <PagesTabHarness />
+        <PageComposerDrawer enabled />
+      </PageComposerProvider>,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /page composer/i }))
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith('/api/internal/page-composer?pagePath=%2F')
+      expect(toolbarDetail && typeof toolbarDetail.onStageMediaSlot).toBe('function')
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open media tab' }))
+
+    act(() => {
+      ;(
+        toolbarDetail?.onStageMediaSlot as (media: Record<string, unknown>, relationPath: string) => void
+      )(
+        {
+          alt: 'Fresh exterior shot',
+          filename: 'fresh-exterior.jpg',
+          id: 901,
+          mimeType: 'image/jpeg',
+          updatedAt: '2026-04-05T00:00:00.000Z',
+          url: '/media/fresh-exterior.jpg',
+        },
+        'layout.1.services.0.media',
+      )
+    })
+
+    await waitFor(() => {
+      expect(toolbarDetail?.selectedMediaRelationPath).toBe('layout.1.services.0.media')
+      expect(screen.getByText(/Targeting/)).toBeTruthy()
+      expect(screen.getByRole('button', { name: 'What we do: House washing' })).toBeTruthy()
+      expect(screen.getAllByAltText('Fresh exterior shot').length).toBeGreaterThan(0)
+      expect(screen.getAllByText(/fresh-exterior\.jpg/).length).toBeGreaterThan(0)
+    })
 
     window.removeEventListener(PAGE_COMPOSER_TOOLBAR_EVENT, handleToolbarChange as EventListener)
   })

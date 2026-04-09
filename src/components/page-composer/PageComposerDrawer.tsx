@@ -848,7 +848,20 @@ export function PageComposerDrawer({
     update()
   }, [])
 
+  const selectMediaSlotForRelationPath = useCallback(
+    (relationPath: string) => {
+      const targetIndex = resolveSelectedIndexFromMediaRelationPath(relationPath)
+      if (typeof targetIndex === 'number') {
+        setSelectedIndex(targetIndex)
+      }
+      setSelectedMediaPath(relationPath)
+    },
+    [setSelectedIndex],
+  )
+
   const stageMediaSlot = useCallback((media: Media, relationPath: string) => {
+    selectMediaSlotForRelationPath(relationPath)
+
     setDraftPage((current) => {
       if (!current) {
         return current
@@ -861,7 +874,7 @@ export function PageComposerDrawer({
         relationPath,
       })
     })
-  }, [markDraftDirty])
+  }, [markDraftDirty, selectMediaSlotForRelationPath])
 
   const replaceSelectedBlock = useCallback((block: NonNullable<PageComposerDocument['layout']>[number]) => {
     mutatePage((page) => ({
@@ -1297,14 +1310,10 @@ export function PageComposerDrawer({
 
   const openMediaSlotForRelationPath = useCallback(
     (relationPath: string) => {
-      const targetIndex = resolveSelectedIndexFromMediaRelationPath(relationPath)
-      if (typeof targetIndex === 'number') {
-        setSelectedIndex(targetIndex)
-      }
-      setSelectedMediaPath(relationPath)
+      selectMediaSlotForRelationPath(relationPath)
       setActiveTab('media')
     },
-    [setActiveTab, setSelectedIndex],
+    [selectMediaSlotForRelationPath, setActiveTab],
   )
 
   useEffect(() => {
