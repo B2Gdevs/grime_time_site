@@ -1063,4 +1063,16 @@
       <file path="src/lib/auth/domainEvents.ts" />
     </references>
   </decision>
+  <decision id="D-content-028">
+    <title>Inbound email media stages into admin-only ingestion records before promotion into the shared media library</title>
+    <summary>Phase 19 should not write provider-delivered attachments straight into public-facing `media` records. The app first persists an admin-only `inbound-media-ingestions` record with sender metadata, idempotency keys, attachment audit JSON, replay state, and payload snapshot fields. Provider adapters like Resend can then promote accepted attachments into normal `media` records as a second step.</summary>
+    <impact>This keeps the first-party ingestion contract provider-agnostic, gives ops a durable audit trail before promotion, and keeps future replay or approval logic separate from the public media library. It also reduces schema and migration churn for the contract phase by storing attachment audit state as JSON until the later promotion workflow is wired.</impact>
+    <references>
+      <file path=".planning/TASK-REGISTRY.xml" />
+      <file path="src/collections/InboundMediaIngestions.ts" />
+      <file path="src/lib/media/inboundMediaIngestion.ts" />
+      <file path="src/lib/media/inboundMediaIngestionWorkspace.ts" />
+      <file path="src/migrations/20260410_023500_add_inbound_media_ingestions.ts" />
+    </references>
+  </decision>
 </decisions>

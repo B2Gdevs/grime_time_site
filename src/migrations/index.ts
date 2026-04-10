@@ -35,6 +35,7 @@ import * as migration_20260406_202500_add_page_hero_authoring_fields from './202
 import * as migration_20260408_110000_add_page_layout_hero_and_estimator_blocks from './20260408_110000_add_page_layout_hero_and_estimator_blocks';
 import * as migration_20260408_150000_add_page_features_block from './20260408_150000_add_page_features_block';
 import * as migration_20260409_210000_staff_entitlement_locks from './20260409_210000_staff_entitlement_locks';
+import * as migration_20260410_023500_add_inbound_media_ingestions from './20260410_023500_add_inbound_media_ingestions';
 
 export const migrations = [
   {
@@ -221,5 +222,10 @@ export const migrations = [
     up: migration_20260409_210000_staff_entitlement_locks.up,
     down: migration_20260409_210000_staff_entitlement_locks.down,
     name: '20260409_210000_staff_entitlement_locks',
+  },
+  {
+    up: migration_20260410_023500_add_inbound_media_ingestions.up,
+    down: migration_20260410_023500_add_inbound_media_ingestions.down,
+    name: '20260410_023500_add_inbound_media_ingestions',
   },
 ];

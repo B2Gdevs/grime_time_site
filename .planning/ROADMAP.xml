@@ -149,7 +149,7 @@
     <goal>Finish the next media-operations lane by making composer replacement flows reliable in the new page-local media tab and adding a first-party inbound email attachment ingestion path that turns Resend-delivered attachments into Grime Time media records with auditability and replay-safe processing.</goal>
     <requirements>REQ-03, REQ-05</requirements>
     <depends>11,12,18</depends>
-    <status>planned</status>
+    <status>in-progress</status>
     <plans>.planning/phases/19-inbound-media-intake-and-composer-ops/</plans>
   </phase>
   <doc-flow>

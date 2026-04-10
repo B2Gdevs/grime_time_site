@@ -380,4 +380,16 @@
       <command>cmd /c npm.cmd run build</command>
     </verification>
   </attempt>
+  <attempt id="19-01-a1" phase="19" task="19-01" status="resolved">
+    <title>`payload migrate:create` drifted into unrelated enum rename prompts instead of generating a bounded phase-19 migration</title>
+    <symptom>While adding the inbound-media-ingestion contract, `npm.cmd run payload -- migrate:create add_inbound_media_ingestions --skipEmpty` opened interactive enum rename questions like `enum_pages_blocks_hero_block_links_link_type`, even though the phase only added one new collection and no hero-link schema changes.</symptom>
+    <cause>The local Payload schema snapshot had enough unrelated historic drift that the migration generator tried to reconcile old enum differences at the same time as the new collection. That made the generator output unsafe for a narrow `19-01` change because one wrong interactive answer could pull unrelated schema churn into the migration.</cause>
+    <attempted-fix>Simplify the ingestion record to a single collection with JSON audit fields instead of nested relationship tables, hand-write `src/migrations/20260410_023500_add_inbound_media_ingestions.ts`, update `src/migrations/index.ts` manually, and verify the migration by applying it locally plus rerunning `tsc` and `next build`. Capture the pattern in `.planning/skills/payload-manual-migration-when-generator-drifts.md`.</attempted-fix>
+    <verification>
+      <command>cmd /c npm.cmd run generate:types</command>
+      <command>cmd /c npm.cmd exec -- tsc --noEmit</command>
+      <command>cmd /c npm.cmd run payload -- migrate</command>
+      <command>cmd /c npm.cmd run build</command>
+    </verification>
+  </attempt>
 </errors-and-attempts>

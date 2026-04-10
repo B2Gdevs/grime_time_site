@@ -14,6 +14,7 @@ import { CrmActivities } from './collections/CrmActivities'
 import { CrmSequences } from './collections/CrmSequences'
 import { CrmTasks } from './collections/CrmTasks'
 import { GrowthMilestones } from './collections/GrowthMilestones'
+import { InboundMediaIngestions } from './collections/InboundMediaIngestions'
 import { Invoices } from './collections/Invoices'
 import { InstantQuoteRequestAttachments } from './collections/InstantQuoteRequestAttachments'
 import { Leads } from './collections/Leads'
@@ -138,6 +139,7 @@ export default buildConfig({
     BillingEvents,
     Contacts,
     Leads,
+    InboundMediaIngestions,
     InstantQuoteRequestAttachments,
     Opportunities,
     CrmActivities,

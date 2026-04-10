@@ -81,6 +81,7 @@ export interface Config {
     'billing-events': BillingEvent;
     contacts: Contact;
     leads: Lead;
+    'inbound-media-ingestions': InboundMediaIngestion;
     'instant-quote-request-attachments': InstantQuoteRequestAttachment;
     opportunities: Opportunity;
     'crm-activities': CrmActivity;
@@ -125,6 +126,7 @@ export interface Config {
     'billing-events': BillingEventsSelect<false> | BillingEventsSelect<true>;
     contacts: ContactsSelect<false> | ContactsSelect<true>;
     leads: LeadsSelect<false> | LeadsSelect<true>;
+    'inbound-media-ingestions': InboundMediaIngestionsSelect<false> | InboundMediaIngestionsSelect<true>;
     'instant-quote-request-attachments': InstantQuoteRequestAttachmentsSelect<false> | InstantQuoteRequestAttachmentsSelect<true>;
     opportunities: OpportunitiesSelect<false> | OpportunitiesSelect<true>;
     'crm-activities': CrmActivitiesSelect<false> | CrmActivitiesSelect<true>;
@@ -1652,6 +1654,18 @@ export interface OrganizationMembership {
     | 'customer-admin'
     | 'customer-member';
   status: 'active' | 'suspended' | 'revoked';
+  /**
+   * Baseline entitlements explicitly locked for this membership.
+   */
+  entitlementLocks?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   syncSource: 'app' | 'clerk' | 'webhook' | 'bootstrap';
   clerkMembershipID?: string | null;
   lastSyncedAt?: string | null;
@@ -1863,6 +1877,74 @@ export interface Lead {
   account?: (number | null) | Account;
   contact?: (number | null) | Contact;
   notes?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Admin-only audit trail for inbound media deliveries before attachments become first-party media records.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "inbound-media-ingestions".
+ */
+export interface InboundMediaIngestion {
+  id: number;
+  ingestionLabel: string;
+  status:
+    | 'received'
+    | 'processing'
+    | 'ingested'
+    | 'partial'
+    | 'failed_validation'
+    | 'failed_processing'
+    | 'replay_requested'
+    | 'replayed';
+  provider: 'resend' | 'manual' | 'other';
+  receivedAt: string;
+  providerEventID?: string | null;
+  providerMessageID?: string | null;
+  idempotencyKey: string;
+  senderEmail?: string | null;
+  senderName?: string | null;
+  recipientEmail?: string | null;
+  subject?: string | null;
+  replayCount: number;
+  replayRequestedAt?: string | null;
+  processedAt?: string | null;
+  /**
+   * Attachment-level audit rows. Future adapters can populate these before or after individual media records are created.
+   */
+  attachmentAudit?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Media record ids created from this ingestion once the provider adapter promotes accepted attachments into the main library.
+   */
+  createdMediaIDs?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  latestError?: string | null;
+  notes?: string | null;
+  payloadSnapshot?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -2590,6 +2672,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'leads';
         value: number | Lead;
+      } | null)
+    | ({
+        relationTo: 'inbound-media-ingestions';
+        value: number | InboundMediaIngestion;
       } | null)
     | ({
         relationTo: 'instant-quote-request-attachments';
@@ -3395,6 +3481,7 @@ export interface OrganizationMembershipsSelect<T extends boolean = true> {
   user?: T;
   roleTemplate?: T;
   status?: T;
+  entitlementLocks?: T;
   syncSource?: T;
   clerkMembershipID?: T;
   lastSyncedAt?: T;
@@ -3534,6 +3621,33 @@ export interface LeadsSelect<T extends boolean = true> {
   account?: T;
   contact?: T;
   notes?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "inbound-media-ingestions_select".
+ */
+export interface InboundMediaIngestionsSelect<T extends boolean = true> {
+  ingestionLabel?: T;
+  status?: T;
+  provider?: T;
+  receivedAt?: T;
+  providerEventID?: T;
+  providerMessageID?: T;
+  idempotencyKey?: T;
+  senderEmail?: T;
+  senderName?: T;
+  recipientEmail?: T;
+  subject?: T;
+  replayCount?: T;
+  replayRequestedAt?: T;
+  processedAt?: T;
+  attachmentAudit?: T;
+  createdMediaIDs?: T;
+  latestError?: T;
+  notes?: T;
+  payloadSnapshot?: T;
   updatedAt?: T;
   createdAt?: T;
 }

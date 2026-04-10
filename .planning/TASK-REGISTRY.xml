@@ -608,11 +608,15 @@
     </task>
   </phase>
   <phase id="19">
-    <task id="19-01" agent-id="" status="planned">
+    <task id="19-01" agent-id="" status="done">
       <goal>Define the first-party inbound media ingestion contract: dedicated inbox, sender and attachment validation, ingestion logging, replay-safe processing, storage handoff, and the relationship between inbound email artifacts and Payload media records.</goal>
       <keywords>media,resend,inbound,attachments,ingestion</keywords>
       <commands>
         <command>Use Resend inbound webhooks plus first-party ingestion records; do not treat Resend as the media source of truth.</command>
+        <command>Shipped: `src/collections/InboundMediaIngestions.ts` defines the admin-only first-party ingestion record, `src/lib/media/inboundMediaIngestion.ts` defines validation, audit, and idempotency helpers, and `src/lib/media/inboundMediaIngestionWorkspace.ts` exposes review and replay-request behavior without hard-wiring Resend into the business contract.</command>
+        <command>Shipped: `/api/internal/ops/inbound-media` and `/api/internal/ops/inbound-media/[id]` provide the first admin-only workspace surface for listing ingestion records and flagging replay requests before the later provider adapter and media-promotion step land.</command>
+        <command>Schema: `src/migrations/20260410_023500_add_inbound_media_ingestions.ts` creates the new collection table, enums, indexes, and Payload locked-document relation; `src/payload.config.ts` and `src/payload-types.ts` now include `inbound-media-ingestions`.</command>
+        <command>Verification: `npm.cmd exec -- vitest run tests/int/lib/media/inbound-media-ingestion.int.spec.ts tests/int/app/ops-inbound-media-route.int.spec.ts tests/int/app/ops-inbound-media-item-route.int.spec.ts --config ./vitest.config.mts`, `npm.cmd exec -- eslint src/lib/media/inboundMediaIngestion.ts src/collections/InboundMediaIngestions.ts src/lib/media/inboundMediaIngestionWorkspace.ts src/app/api/internal/ops/inbound-media/route.ts src/app/api/internal/ops/inbound-media/[id]/route.ts src/migrations/20260410_023500_add_inbound_media_ingestions.ts src/migrations/index.ts tests/int/lib/media/inbound-media-ingestion.int.spec.ts tests/int/app/ops-inbound-media-route.int.spec.ts tests/int/app/ops-inbound-media-item-route.int.spec.ts src/payload.config.ts`, `npm.cmd exec -- tsc --noEmit`, `npm.cmd run payload -- migrate`, and `npm.cmd run build`.</command>
       </commands>
     </task>
     <task id="19-02" agent-id="" status="planned">
