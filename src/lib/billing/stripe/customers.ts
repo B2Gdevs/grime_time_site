@@ -5,6 +5,7 @@ import type { Account, User } from '@/payload-types'
 
 type EnsureStripeCustomerArgs = {
   account: Account
+  ignoreAccountCustomerID?: boolean
   payload: Payload
   user?: null | User
 }
@@ -29,10 +30,11 @@ function addressGroupToStripeAddress(address: Account['billingAddress'] | Accoun
 }
 
 export async function ensureStripeCustomer(args: EnsureStripeCustomerArgs) {
-  const { account, payload, user } = args
+  const { account, ignoreAccountCustomerID, payload, user } = args
   const stripe = getStripeOrThrow()
   const existingCustomerID =
-    account.stripeCustomerID?.trim() || (await findLinkedStripeCustomerID(payload, account.id))
+    (ignoreAccountCustomerID ? null : account.stripeCustomerID?.trim()) ||
+    (await findLinkedStripeCustomerID(payload, account.id))
 
   if (existingCustomerID) {
     if (existingCustomerID !== account.stripeCustomerID?.trim()) {

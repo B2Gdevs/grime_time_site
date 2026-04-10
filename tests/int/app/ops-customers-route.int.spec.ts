@@ -116,4 +116,41 @@ describe('ops customers route', () => {
       targetAccountId: 41,
     })
   })
+
+  it('accepts Stripe resync customer actions with an optional linked user id', async () => {
+    const payload = {}
+
+    requireRequestAuth.mockResolvedValue({
+      isRealAdmin: true,
+      payload,
+      realUser: { id: 19 },
+    })
+    performOpsCustomerAdminAction.mockResolvedValue({
+      message: 'Stripe customer resynced as cus_invoice_123.',
+    })
+
+    const { POST } = await import('@/app/api/internal/ops/customers/[id]/route')
+    const response = await POST(new Request('http://localhost/api/internal/ops/customers/41', {
+      body: JSON.stringify({
+        action: 'resync_stripe_customer',
+        userId: 9,
+      }),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      method: 'POST',
+    }), {
+      params: Promise.resolve({ id: '41' }),
+    })
+
+    expect(response.status).toBe(200)
+    expect(performOpsCustomerAdminAction).toHaveBeenCalledWith({
+      action: {
+        action: 'resync_stripe_customer',
+        userId: 9,
+      },
+      payload,
+      targetAccountId: 41,
+    })
+  })
 })

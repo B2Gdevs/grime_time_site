@@ -188,12 +188,55 @@ describe('customerAdmin', () => {
       account: expect.objectContaining({
         id: 41,
       }),
+      ignoreAccountCustomerID: false,
       payload,
       user: expect.objectContaining({
         id: 9,
       }),
     })
     expect(result).toEqual({ message: 'Stripe customer linked as cus_123.' })
+  })
+
+  it('resyncs the Stripe customer link while bypassing a stale account-level id', async () => {
+    const payload = {
+      findByID: vi.fn().mockImplementation(async ({ collection, id }) => {
+        if (collection === 'accounts') {
+          return { id, name: 'North Dock', customerUser: null, stripeCustomerID: 'cus_stale' }
+        }
+
+        return {
+          id,
+          account: 41,
+          email: 'owner@northdock.com',
+          name: 'North Dock Owner',
+          portalInviteState: 'active',
+        }
+      }),
+    }
+    ensureStripeCustomer.mockResolvedValue('cus_invoice_123')
+
+    const { performOpsCustomerAdminAction } = await import('@/lib/ops/customerAdmin')
+    const result = await performOpsCustomerAdminAction({
+      action: {
+        action: 'resync_stripe_customer',
+        userId: 9,
+      },
+      payload: payload as never,
+      targetAccountId: 41,
+    })
+
+    expect(ensureStripeCustomer).toHaveBeenCalledWith({
+      account: expect.objectContaining({
+        id: 41,
+        stripeCustomerID: 'cus_stale',
+      }),
+      ignoreAccountCustomerID: true,
+      payload,
+      user: expect.objectContaining({
+        id: 9,
+      }),
+    })
+    expect(result).toEqual({ message: 'Stripe customer resynced as cus_invoice_123.' })
   })
 
   it('clears the stored Stripe linkage from the account before any later repair pass', async () => {

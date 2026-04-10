@@ -27,6 +27,10 @@ const customerActionSchema = z.discriminatedUnion('action', [
     userId: z.number().int().positive().optional(),
   }),
   z.object({
+    action: z.literal('resync_stripe_customer'),
+    userId: z.number().int().positive().optional(),
+  }),
+  z.object({
     action: z.literal('send_portal_access'),
     userId: z.number().int().positive(),
   }),

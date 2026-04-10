@@ -73,6 +73,38 @@ describe('ensureStripeCustomer', () => {
     expect(customersCreate).not.toHaveBeenCalled()
   })
 
+  it('can ignore a stale account stripe customer id and relink from billing documents instead', async () => {
+    const payload = {
+      find: vi
+        .fn()
+        .mockResolvedValueOnce({
+          docs: [{ stripeCustomerID: 'cus_invoice_123' }],
+        }),
+      update: vi.fn().mockResolvedValue({}),
+    }
+
+    const { ensureStripeCustomer } = await import('@/lib/billing/stripe/customers')
+    const result = await ensureStripeCustomer({
+      account: {
+        id: 42,
+        stripeCustomerID: 'cus_stale_123',
+      } as never,
+      ignoreAccountCustomerID: true,
+      payload: payload as never,
+    })
+
+    expect(result).toBe('cus_invoice_123')
+    expect(payload.find).toHaveBeenCalled()
+    expect(payload.update).toHaveBeenCalledWith({
+      collection: 'accounts',
+      data: {
+        stripeCustomerID: 'cus_invoice_123',
+      },
+      id: 42,
+    })
+    expect(customersCreate).not.toHaveBeenCalled()
+  })
+
   it('creates and stores a Stripe customer when no linked id exists yet', async () => {
     const payload = {
       find: vi

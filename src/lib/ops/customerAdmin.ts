@@ -10,6 +10,7 @@ export type OpsCustomerAdminAction =
   | { action: 'clear_primary_customer' }
   | { action: 'clear_stripe_customer' }
   | { action: 'repair_stripe_customer'; userId?: number }
+  | { action: 'resync_stripe_customer'; userId?: number }
   | { action: 'send_portal_access'; userId: number }
   | { action: 'set_primary_customer'; userId: number }
 
@@ -172,9 +173,15 @@ export async function performOpsCustomerAdminAction(args: {
 
   const stripeCustomerID = await ensureStripeCustomer({
     account,
+    ignoreAccountCustomerID: args.action.action === 'resync_stripe_customer',
     payload: args.payload,
     user: fallbackUser,
   })
 
-  return { message: `Stripe customer linked as ${stripeCustomerID}.` }
+  return {
+    message:
+      args.action.action === 'resync_stripe_customer'
+        ? `Stripe customer resynced as ${stripeCustomerID}.`
+        : `Stripe customer linked as ${stripeCustomerID}.`,
+  }
 }

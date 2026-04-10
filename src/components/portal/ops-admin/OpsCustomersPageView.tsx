@@ -118,7 +118,7 @@ export function OpsCustomersPageView({ data }: { data: OpsCustomersPageData }) {
     mutationFn: async (
       action:
         | { action: 'clear_primary_customer' | 'clear_stripe_customer' }
-        | { action: 'repair_stripe_customer'; userId?: number }
+        | { action: 'repair_stripe_customer' | 'resync_stripe_customer'; userId?: number }
         | { action: 'clear_portal_access' | 'send_portal_access' | 'set_primary_customer'; userId: number }
     ) => {
       if (!selectedAccount?.id) {
@@ -634,7 +634,7 @@ export function OpsCustomersPageView({ data }: { data: OpsCustomersPageData }) {
                           Clear portal access
                         </Button>
                       </div>
-                      <div className="grid gap-3 sm:grid-cols-2">
+                      <div className="grid gap-3 sm:grid-cols-3">
                         <Button
                           className="justify-start border-emerald-900/12 text-slate-900 hover:bg-emerald-50"
                           disabled={customerActionMutation.isPending}
@@ -653,6 +653,25 @@ export function OpsCustomersPageView({ data }: { data: OpsCustomersPageData }) {
                             <RefreshCcwIcon data-icon="inline-start" />
                           )}
                           Repair Stripe link
+                        </Button>
+                        <Button
+                          className="justify-start border-emerald-900/12 text-slate-900 hover:bg-emerald-50"
+                          disabled={customerActionMutation.isPending}
+                          onClick={() =>
+                            customerActionMutation.mutate({
+                              action: 'resync_stripe_customer',
+                              userId: selectedLinkedUser ? Number(selectedLinkedUser.id) : undefined,
+                            })
+                          }
+                          type="button"
+                          variant="outline"
+                        >
+                          {customerActionMutation.isPending ? (
+                            <LoaderCircleIcon className="animate-spin" data-icon="inline-start" />
+                          ) : (
+                            <RefreshCcwIcon data-icon="inline-start" />
+                          )}
+                          Resync Stripe id
                         </Button>
                         <Button
                           className="justify-start border-emerald-900/12 text-slate-900 hover:bg-emerald-50"
