@@ -1075,4 +1075,14 @@
       <file path="src/migrations/20260410_023500_add_inbound_media_ingestions.ts" />
     </references>
   </decision>
+  <decision id="D-process-029" status="proposed">
+    <title>Declare intentional composer UI removals before autonomous regression passes</title>
+    <summary>When a human changes page-composer UX by removing surfaces (e.g. inline block media slots, upload/generate on the media tab, or canvas lane selection for service grid), those choices must be written into planning before or at the start of a long agent loop—task updates, a short `STATE.xml` next-action note, or `.planning/notes/`—so agents do not interpret failing tests as accidental regressions and spend cycles restoring the old contract.</summary>
+    <impact>Reduces thrash between &quot;rigorous tests&quot; and author intent. Open design question (not decided here): whether to narrow or split tests when the product direction intentionally diverges from the hybrid slot surface, versus always extending tests to match the new model—either way requires an explicit human signal so automation does not default to the last encoded behavior.</impact>
+    <references>
+      <file path=".planning/ERRORS-AND-ATTEMPTS.xml" />
+      <file path=".planning/notes/2026-04-10-composer-authoring-vs-agents.md" />
+      <file path=".planning/skills/page-composer-media-slot-surface.md" />
+    </references>
+  </decision>
 </decisions>

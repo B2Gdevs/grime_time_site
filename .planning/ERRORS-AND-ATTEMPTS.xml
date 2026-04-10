@@ -392,4 +392,13 @@
       <command>cmd /c npm.cmd run build</command>
     </verification>
   </attempt>
+  <attempt id="19-02-a2" phase="19" task="19-02" status="open">
+    <title>Agent session reversed intentional composer subtractions after treating them as regressions</title>
+    <symptom>During a Codex-driven pass on phase `19-02`, most effort went to restoring prior behavior: current-block media slots plus upload/generate (hybrid media tab) and canvas interactive lane selection for the service grid, favoring a popup-modal style flow. The author had intentionally removed or simplified some of that UX; additions from the same period were largely preserved, but subtractions were effectively undone.</symptom>
+    <cause>Integration tests, browser specs, and prior planning (including attempt `18-06-a2` and skill `page-composer-media-slot-surface.md`) encode the hybrid slot surface and stable labels as the contract. That contract was not reconciled with undocumented human-authored UI removals, so the agent correctly &quot;fixed&quot; failing tests by restoring the old surface. Separately, service-grid drag-and-drop still only behaves on the first service lane, not subsequent lanes.</cause>
+    <attempted-fix>Record author intent explicitly before long agent loops (see decision `D-process-029`). For drag-drop, treat multi-lane behavior as an open product bug under `19-02` / follow-on tasks and add coverage once the interaction model is settled.</attempted-fix>
+    <verification>
+      <command>cmd /c echo Narrative handoff: .planning/notes/2026-04-10-composer-authoring-vs-agents.md</command>
+    </verification>
+  </attempt>
 </errors-and-attempts>
