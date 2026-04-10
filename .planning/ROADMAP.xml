@@ -90,7 +90,7 @@
   </phase>
   <phase id="12">
     <title>Staff admin, users, customers, and provider sync</title>
-    <goal>Build the first-party staff administration layer on top of the new organization model: `/ops/users` and `/ops/customers`, role-template and entitlement controls, invite management, and adapter-based sync so Clerk remains an identity provider instead of the long-term business-authorization source of truth.</goal>
+    <goal>Build the first-party staff administration layer on top of the new organization model: `/portal/ops/users` and `/portal/ops/customers`, role-template and entitlement controls, invite management, and adapter-based sync so Clerk remains an identity provider instead of the long-term business-authorization source of truth.</goal>
     <requirements>REQ-04, REQ-05, REQ-06</requirements>
     <depends>04,07,11</depends>
     <status>in-progress</status>

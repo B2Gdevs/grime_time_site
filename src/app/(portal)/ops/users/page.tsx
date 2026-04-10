@@ -1,30 +1,6 @@
-import Link from 'next/link'
-
-import { OpsUsersPageView } from '@/components/portal/ops-admin/OpsUsersPageView'
-import { SiteHeader } from '@/components/site-header'
-import { Button } from '@/components/ui/button'
-import { loadOpsUsersPageData } from '@/lib/ops/loaders/loadOpsUsersPageData'
+import { redirect } from 'next/navigation'
+import { OPS_USERS_PATH } from '@/lib/navigation/portalPaths'
 
 export default async function OpsUsersPage() {
-  const data = await loadOpsUsersPageData()
-
-  return (
-    <>
-      <SiteHeader
-        title="Users"
-        description="Staff access, customer portal linkage, and role-template review in one first-party surface."
-        actions={
-          <>
-            <Button variant="outline" size="sm" className="h-8 text-xs" asChild>
-              <Link href="/admin/collections/users">Payload users</Link>
-            </Button>
-            <Button variant="outline" size="sm" className="h-8 text-xs" asChild>
-              <Link href="/admin/collections/organization-memberships">Memberships</Link>
-            </Button>
-          </>
-        }
-      />
-      <OpsUsersPageView data={data} />
-    </>
-  )
+  redirect(OPS_USERS_PATH)
 }

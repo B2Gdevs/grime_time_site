@@ -14,8 +14,8 @@
   </intent>
 
   <tasks>
-    <task ref="12-02.1">Build `/ops/users` with searchable user rows, staff filters, invite actions, membership summaries, and role-template assignment.</task>
-    <task ref="12-02.2">Build `/ops/customers` with first-party account and customer views that do not assume Clerk or Stripe are the source of truth.</task>
+    <task ref="12-02.1">Build `/portal/ops/users` with searchable user rows, staff filters, invite actions, membership summaries, and role-template assignment.</task>
+    <task ref="12-02.2">Build `/portal/ops/customers` with first-party account and customer views that do not assume Clerk or Stripe are the source of truth.</task>
     <task ref="12-02.3">Add entitlement lock/unlock controls, sync status metadata, and manual resync affordances for staff admins.</task>
     <task ref="12-03.1">Implement inbound Clerk webhook reconciliation plus outbound first-party domain events for users, organizations, and memberships.</task>
     <task ref="12-03.2">Keep provider-specific fields behind an adapter layer so identity or billing providers can change without rewriting app authorization.</task>

@@ -15,5 +15,7 @@ describe('composerPagePathForPathname', () => {
     expect(composerPagePathForPathname('/docs/bar')).toBe('/')
     expect(composerPagePathForPathname('/ops')).toBe('/')
     expect(composerPagePathForPathname('/ops/baz')).toBe('/')
+    expect(composerPagePathForPathname('/portal/ops/dashboard')).toBe('/')
+    expect(composerPagePathForPathname('/portal/ops/workspace')).toBe('/')
   })
 })

@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { parseOpsTabQuery } from '@/lib/ops/opsCommandCenterTabs'
-import { OPS_DASHBOARD_PATH } from '@/lib/navigation/portalPaths'
+import { OPS_DASHBOARD_PATH, OPS_WORKSPACE_PATH, isOpsWorkspacePath } from '@/lib/navigation/portalPaths'
 import type { OpsSectionId } from '@/lib/ops/uiMeta'
 import { listToursByAudience, portalTourRegistry, type PortalTourId } from '@/lib/tours/registry'
 
@@ -43,11 +43,11 @@ export function TourLauncher({ isRealAdmin }: { isRealAdmin: boolean }) {
 
     if (def.opsTab) {
       const normalized = effectiveOpsTab(searchParams)
-      if (pathname === '/ops/workspace' && normalized === def.opsTab) {
+      if (isOpsWorkspacePath(pathname) && normalized === def.opsTab) {
         startTour(id)
         return
       }
-      router.push(`/ops/workspace?tab=${def.opsTab}&tour=${id}`)
+      router.push(`${OPS_WORKSPACE_PATH}?tab=${def.opsTab}&tour=${id}`)
       return
     }
 

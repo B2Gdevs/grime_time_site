@@ -424,11 +424,13 @@
   </decision>
   <decision id="D-ux-006">
     <title>Ops information architecture splits dense modules into dedicated routes</title>
-    <summary>The ops experience should use a conventional app shell with a clear split: `/ops` is the KPI-first dashboard, and `/ops/workspace` is the primary live-work surface for queues, billing follow-up, today board, scorecard, milestones, and assets. Legacy `/ops/*` section routes remain only as compatibility redirects into workspace tabs.</summary>
-    <impact>Reduces overflow and overlap issues, removes duplicated billing and launcher panels, keeps sidebar navigation simpler, and avoids full-page route churn when staff switch between live work sections. It also requires the shared tab/query helpers to remain stable so redirects and deep links stay predictable.</impact>
+    <summary>The ops experience should use a conventional app shell with a clear split: `/portal/ops/dashboard` is the KPI-first staff landing page, and `/portal/ops/workspace` is the primary live-work surface for queues, billing follow-up, today board, scorecard, milestones, and assets. Legacy `/ops/*` section routes remain only as compatibility redirects into the canonical `/portal/ops/*` tree.</summary>
+    <impact>Reduces overflow and overlap issues, makes the staff portal contract explicit in the URL, removes duplicated billing and launcher panels, keeps sidebar navigation simpler, and avoids full-page route churn when staff switch between live work sections. It also requires the shared tab/query helpers to remain stable so redirects and deep links stay predictable.</impact>
     <references>
       <file path="src/app/(portal)/ops/page.tsx" />
+      <file path="src/app/(portal)/portal/ops/dashboard/page.tsx" />
       <file path="src/app/(portal)/ops/workspace/page.tsx" />
+      <file path="src/app/(portal)/portal/ops/workspace/page.tsx" />
       <file path="src/components/portal/command-center/ops-command-center.tsx" />
       <file path="src/app/(portal)/layout.tsx" />
       <file path="src/components/app-sidebar.tsx" />
@@ -997,9 +999,9 @@
     </references>
   </decision>
   <decision id="D-auth-008">
-    <title>Portal dashboards use explicit `/customer/dashboard` and `/ops/dashboard` routes</title>
-    <summary>Grime Time should stop overloading `/dashboard` and `/ops` as both the public contract and the implementation detail. The canonical customer landing route is `/customer/dashboard`, and the canonical internal landing route is `/ops/dashboard`. The old `/dashboard` and `/ops` paths remain compatibility redirects so deployed links, emails, and bookmarks keep working while the app moves over.</summary>
-    <impact>This makes route ownership clearer for auth redirects, onboarding, and future subpages under each area. It also removes ambiguity when building invite and welcome flows, because “customer dashboard” and “ops dashboard” become explicit destinations rather than inferred meanings attached to generic root paths.</impact>
+    <title>Portal dashboards use explicit `/customer/dashboard` and `/portal/ops/dashboard` routes</title>
+    <summary>Grime Time should stop overloading `/dashboard` and `/ops` as both the public contract and the implementation detail. The canonical customer landing route is `/customer/dashboard`, and the canonical staff landing route is `/portal/ops/dashboard`. The old `/dashboard` and `/ops` paths remain compatibility redirects so deployed links, emails, and bookmarks keep working while the app moves over.</summary>
+    <impact>This makes route ownership clearer for auth redirects, onboarding, and future subpages under each area. It also removes ambiguity when building invite and welcome flows, because “customer dashboard” and “staff portal dashboard” become explicit destinations rather than inferred meanings attached to generic root paths.</impact>
     <references>
       <file path=".planning/ROADMAP.xml" />
       <file path=".planning/TASK-REGISTRY.xml" />
@@ -1008,8 +1010,8 @@
     </references>
   </decision>
   <decision id="D-auth-009">
-    <title>Staff administration lives in `/ops/users` and `/ops/customers`, with staff as a filtered user slice</title>
-    <summary>The ops admin area should not grow separate top-level pages for staff, users, and customers when the underlying entities overlap. `/ops/users` is the identity and membership management surface, including staff invites, role templates, and entitlement controls. `/ops/customers` is the first-party customer and account-management surface. “Staff” is treated as a filtered subset or view within users, not a third standalone page.</summary>
+    <title>Staff administration lives in `/portal/ops/users` and `/portal/ops/customers`, with staff as a filtered user slice</title>
+    <summary>The ops admin area should not grow separate top-level pages for staff, users, and customers when the underlying entities overlap. `/portal/ops/users` is the identity and membership management surface, including staff invites, role templates, and entitlement controls. `/portal/ops/customers` is the first-party customer and account-management surface. “Staff” is treated as a filtered subset or view within users, not a third standalone page.</summary>
     <impact>This keeps the ops IA compact, aligns with the first-party authorization model, and avoids hard-coding Clerk or Stripe concepts as the main admin information architecture. It also keeps future provider swaps easier because Grime Time's own user and customer surfaces stay the primary operational contract.</impact>
     <references>
       <file path=".planning/ROADMAP.xml" />
@@ -1030,7 +1032,7 @@
   </decision>
   <decision id="D-auth-012">
     <title>Ops welcome dismissal state stays first-party in Payload preferences</title>
-    <summary>The first-run welcome gate for invited staff on `/ops/dashboard` should not depend on Clerk user metadata or provider-specific flags. Grime Time stores the dismissed state as a first-party `payload-preferences` record keyed to the local Payload user, and the ops dashboard reads that state server-side before rendering the modal.</summary>
+    <summary>The first-run welcome gate for invited staff on `/portal/ops/dashboard` should not depend on Clerk user metadata or provider-specific flags. Grime Time stores the dismissed state as a first-party `payload-preferences` record keyed to the local Payload user, and the ops dashboard reads that state server-side before rendering the modal.</summary>
     <impact>This keeps onboarding state portable across identity providers, avoids coupling staff UX to Clerk metadata shape, and lets the app preserve one-time ops onboarding behavior even when the same staff identity is rebound, mirrored, or reconciled later. It also keeps the welcome contract close to the app-owned user record that already backs impersonation and portal authorization.</impact>
     <references>
       <file path=".planning/TASK-REGISTRY.xml" />

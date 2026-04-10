@@ -1,10 +1,12 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { OPS_DASHBOARD_PATH, OPS_WORKSPACE_PATH } from '@/lib/navigation/portalPaths'
+
 const push = vi.fn()
 
 vi.mock('next/navigation', () => ({
-  usePathname: vi.fn(() => '/ops'),
+  usePathname: vi.fn(() => OPS_DASHBOARD_PATH),
   useRouter: vi.fn(() => ({
     push,
   })),
@@ -28,9 +30,9 @@ describe('Portal copilot panels', () => {
         id: 'staff-crm-workspace',
         label: 'Ops workspace',
         opsTab: 'crm',
-        path: '/ops/workspace',
+        path: OPS_WORKSPACE_PATH,
       }),
-    ).toBe('/ops/workspace?tab=crm&tour=staff-crm-workspace')
+    ).toBe(`${OPS_WORKSPACE_PATH}?tab=crm&tour=staff-crm-workspace`)
   })
 
   it('renders task, follow-up, source, and tour cards and launches the recommended tour target', async () => {
@@ -78,7 +80,7 @@ describe('Portal copilot panels', () => {
               id: 'staff-crm-workspace',
               label: 'Ops workspace',
               opsTab: 'crm',
-              path: '/ops/workspace',
+              path: OPS_WORKSPACE_PATH,
             },
           ]}
         />
@@ -108,6 +110,6 @@ describe('Portal copilot panels', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Ops workspace/i }))
 
-    expect(push).toHaveBeenCalledWith('/ops/workspace?tab=crm&tour=staff-crm-workspace')
+    expect(push).toHaveBeenCalledWith(`${OPS_WORKSPACE_PATH}?tab=crm&tour=staff-crm-workspace`)
   })
 })

@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 
+import { OPS_WORKSPACE_PATH } from '@/lib/navigation/portalPaths'
+
 vi.mock('@/lib/crm/workspace', () => ({
   loadCrmWorkspace: vi.fn(async () => ({
     generatedAt: new Date().toISOString(),
@@ -51,7 +53,7 @@ describe('AI ops insight shaping', () => {
     const { buildCopilotInsights } = await import('@/lib/ai/ops-context')
 
     const insights = await buildCopilotInsights({
-      currentPath: '/ops/workspace',
+      currentPath: OPS_WORKSPACE_PATH,
       isRealAdmin: true,
       payload: {} as never,
       query: 'Who should I follow up with in CRM?',

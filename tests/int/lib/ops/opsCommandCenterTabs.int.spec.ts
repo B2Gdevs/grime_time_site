@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { buildOpsTabUrl, parseOpsTabQuery } from '@/lib/ops/opsCommandCenterTabs'
+import { OPS_WORKSPACE_PATH } from '@/lib/navigation/portalPaths'
 
 describe('opsCommandCenterTabs', () => {
   it('parseOpsTabQuery accepts known tab ids', () => {
@@ -11,10 +12,10 @@ describe('opsCommandCenterTabs', () => {
 
   it('buildOpsTabUrl sets tab and keeps other query params', () => {
     const base = new URLSearchParams('foo=1&tab=today')
-    expect(buildOpsTabUrl(base, 'scorecard')).toBe('/ops?foo=1&tab=scorecard')
+    expect(buildOpsTabUrl(base, 'scorecard')).toBe(`${OPS_WORKSPACE_PATH}?foo=1&tab=scorecard`)
   })
 
   it('buildOpsTabUrl works with empty search string', () => {
-    expect(buildOpsTabUrl('', 'milestones')).toBe('/ops?tab=milestones')
+    expect(buildOpsTabUrl('', 'milestones')).toBe(`${OPS_WORKSPACE_PATH}?tab=milestones`)
   })
 })

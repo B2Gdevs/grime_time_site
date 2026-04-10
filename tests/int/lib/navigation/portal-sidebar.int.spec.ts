@@ -6,6 +6,7 @@ import {
   OPS_CUSTOMERS_PATH,
   OPS_DASHBOARD_PATH,
   OPS_USERS_PATH,
+  OPS_WORKSPACE_PATH,
 } from '@/lib/navigation/portalPaths'
 
 describe('portalSidebar', () => {
@@ -24,7 +25,7 @@ describe('portalSidebar', () => {
     ])
     expect(items.map((item) => item.url)).toEqual([
       OPS_DASHBOARD_PATH,
-      '/ops/workspace',
+      OPS_WORKSPACE_PATH,
       OPS_USERS_PATH,
       OPS_CUSTOMERS_PATH,
     ])

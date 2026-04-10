@@ -20,13 +20,14 @@ import { Input } from '@/components/ui/input'
 import {
   CUSTOMER_DASHBOARD_PATH,
   OPS_DASHBOARD_PATH,
+  isOpsPortalPath,
 } from '@/lib/navigation/portalPaths'
 import { parseResponseJson } from '@/utilities/parseResponseJson'
 
 import { adminPanelChrome } from './adminPanelChrome'
 
 function isSecuredAdminPath(pathname: string): boolean {
-  return pathname.startsWith('/admin') || pathname.startsWith('/docs') || pathname.startsWith('/ops')
+  return pathname.startsWith('/admin') || pathname.startsWith('/docs') || isOpsPortalPath(pathname)
 }
 
 function shortLabel(user: AdminPreviewUser) {

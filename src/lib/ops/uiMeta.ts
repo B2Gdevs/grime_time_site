@@ -8,6 +8,8 @@ import {
   WrenchIcon,
 } from 'lucide-react'
 
+import { OPS_WORKSPACE_PATH } from '@/lib/navigation/portalPaths'
+
 export const OPS_SECTION_IDS = ['today', 'crm', 'billing', 'scorecard', 'milestones', 'assets'] as const
 
 export type OpsSectionId = (typeof OPS_SECTION_IDS)[number]
@@ -28,7 +30,7 @@ export const OPS_SECTION_META: Record<OpsSectionId, OpsSectionMeta> = {
     defaultDetailBody:
       'Asset details, current status, and ops notes stay visible here so the live equipment inventory can be managed without leaving the workspace.',
     defaultDetailDescription: 'Asset inventory detail',
-    href: '/ops/workspace?tab=assets',
+    href: `${OPS_WORKSPACE_PATH}?tab=assets`,
     icon: WrenchIcon,
     label: 'assets.stack',
     pageDescription: 'Track and manage the equipment the business actually owns and plans to add next.',
@@ -39,7 +41,7 @@ export const OPS_SECTION_META: Record<OpsSectionId, OpsSectionMeta> = {
     defaultDetailBody:
       'Billing follow-up keeps invoice sends, overdue cleanup, recurring-plan sync, and monthly commercial batches inside the same ops workspace so staff do not bounce between duplicate cards and admin lists.',
     defaultDetailDescription: 'Billing follow-up context',
-    href: '/ops/workspace?tab=billing',
+    href: `${OPS_WORKSPACE_PATH}?tab=billing`,
     icon: ReceiptTextIcon,
     label: 'billing.followup',
     pageDescription: 'Invoice follow-up, recurring-plan sync, and monthly commercial billing.',
@@ -50,7 +52,7 @@ export const OPS_SECTION_META: Record<OpsSectionId, OpsSectionMeta> = {
     defaultDetailBody:
       'Customer pipeline detail stays visible here while the queue remains stable on the page. Use the ops workspace to sort stale follow-up, review company context, and log the next action without overlaying the rest of the screen.',
     defaultDetailDescription: 'Ops workspace detail rail',
-    href: '/ops/workspace?tab=crm',
+    href: `${OPS_WORKSPACE_PATH}?tab=crm`,
     icon: Building2Icon,
     label: 'ops.workspace',
     pageDescription: 'Customer pipeline, companies, contacts, and first-party follow-up queues.',
@@ -61,7 +63,7 @@ export const OPS_SECTION_META: Record<OpsSectionId, OpsSectionMeta> = {
     defaultDetailBody:
       'Growth unlocks, trigger notes, and win conditions show here so the team can compare milestone standards against the current operating load.',
     defaultDetailDescription: 'Growth milestones and standards',
-    href: '/ops/workspace?tab=milestones',
+    href: `${OPS_WORKSPACE_PATH}?tab=milestones`,
     icon: FolderTreeIcon,
     label: 'milestones.plan',
     pageDescription: 'Growth unlocks and next-stage operating standards.',
@@ -72,7 +74,7 @@ export const OPS_SECTION_META: Record<OpsSectionId, OpsSectionMeta> = {
     defaultDetailBody:
       'Scorecard definitions and liability notes open here so KPI logic, manual values, and business drag stay readable without stacking drawers on top of the dashboard.',
     defaultDetailDescription: 'Scorecard detail rail',
-    href: '/ops/workspace?tab=scorecard',
+    href: `${OPS_WORKSPACE_PATH}?tab=scorecard`,
     icon: FileBarChart2Icon,
     label: 'scorecard.metrics',
     pageDescription: 'Scorecard definitions, current values, and business drag.',
@@ -83,7 +85,7 @@ export const OPS_SECTION_META: Record<OpsSectionId, OpsSectionMeta> = {
     defaultDetailBody:
       'The day board keeps route load, scheduled jobs, and current workload decisions in one place. Pick a date or drill into jobs and the selected context stays pinned here.',
     defaultDetailDescription: 'Daily route and schedule context',
-    href: '/ops/workspace?tab=today',
+    href: `${OPS_WORKSPACE_PATH}?tab=today`,
     icon: TimerResetIcon,
     label: 'today.board',
     pageDescription: 'Daily route, confirmed jobs, follow-up, and job-flow priorities.',

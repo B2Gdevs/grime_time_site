@@ -19,6 +19,7 @@ import {
   OPS_CUSTOMERS_PATH,
   OPS_DASHBOARD_PATH,
   OPS_USERS_PATH,
+  OPS_WORKSPACE_PATH,
 } from '@/lib/navigation/portalPaths'
 
 export type PortalSidebarItem = {
@@ -59,7 +60,7 @@ export function buildPortalMainNav(args: {
       {
         icon: ReceiptTextIcon,
         title: 'Ops workspace',
-        url: '/ops/workspace',
+        url: OPS_WORKSPACE_PATH,
       },
       {
         icon: UsersIcon,

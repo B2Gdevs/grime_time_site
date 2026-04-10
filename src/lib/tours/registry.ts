@@ -3,6 +3,7 @@ import type { Step } from 'react-joyride'
 import {
   CUSTOMER_DASHBOARD_PATH,
   OPS_DASHBOARD_PATH,
+  OPS_WORKSPACE_PATH,
 } from '@/lib/navigation/portalPaths'
 import type { OpsSectionId } from '@/lib/ops/uiMeta'
 
@@ -17,7 +18,7 @@ export type PortalTourPath =
   | '/estimates'
   | '/invoices'
   | typeof OPS_DASHBOARD_PATH
-  | '/ops/workspace'
+  | typeof OPS_WORKSPACE_PATH
   | '/service-schedule'
 
 export const PORTAL_TOUR_IDS = [
@@ -247,7 +248,7 @@ export const portalTourRegistry: Record<PortalTourId, PortalTourDefinition> = {
     audience: 'staff',
     label: 'Ops workspace',
     blurb: 'Queues, search, and field leads',
-    path: '/ops/workspace',
+    path: OPS_WORKSPACE_PATH,
     opsTab: 'crm',
     steps: staffCrmSteps,
   },

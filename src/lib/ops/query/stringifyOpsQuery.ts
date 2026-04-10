@@ -1,4 +1,5 @@
 import type { OpsSectionId } from '@/lib/ops/uiMeta'
+import { OPS_WORKSPACE_PATH } from '@/lib/navigation/portalPaths'
 
 /** Preserve existing workspace query params; set or replace `tab`. */
 export function buildOpsTabUrl(
@@ -10,5 +11,5 @@ export function buildOpsTabUrl(
   )
 
   params.set('tab', tab)
-  return `/ops/workspace?${params.toString()}`
+  return `${OPS_WORKSPACE_PATH}?${params.toString()}`
 }

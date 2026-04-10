@@ -1,5 +1,6 @@
 import { portalTourRegistry, type PortalTourId } from '@/lib/tours/registry'
 import { loadCrmWorkspace } from '@/lib/crm/workspace'
+import { isOpsPortalPath, isOpsWorkspacePath } from '@/lib/navigation/portalPaths'
 import type { User } from '@/payload-types'
 import type { Payload } from 'payload'
 
@@ -22,9 +23,9 @@ function recommendedTourIds(args: { currentPath?: string; query: string }): Port
   const query = args.query.toLowerCase()
   const ids: PortalTourId[] = []
 
-  if (args.currentPath?.startsWith('/ops/workspace')) {
+  if (isOpsWorkspacePath(args.currentPath)) {
     ids.push('staff-crm-workspace')
-  } else if (args.currentPath?.startsWith('/ops')) {
+  } else if (isOpsPortalPath(args.currentPath)) {
     ids.push('ops-dashboard')
   } else if (args.currentPath?.startsWith('/docs')) {
     ids.push('staff-portal-docs')

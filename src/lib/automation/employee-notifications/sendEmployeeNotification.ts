@@ -4,6 +4,7 @@ import { EMPLOYEE_NOTIFICATION_TYPES, type EmployeeNotificationType } from '@/li
 import { DEFAULT_STAFF_EMAILS } from '@/lib/brand/emailDefaults'
 import { numericRelationId } from '@/lib/crm/internal/relationship'
 import { buildEmployeeLeadNotificationEmail } from '@/lib/email/employeeNotifications'
+import { OPS_WORKSPACE_PATH } from '@/lib/navigation/portalPaths'
 import { getServerSideURL } from '@/utilities/getURL'
 import type { Lead } from '@/payload-types'
 
@@ -94,7 +95,7 @@ function buildWorkspaceUrl(lead: Lead) {
   const search = encodeURIComponent(
     lead.customerEmail?.trim() || lead.customerPhone?.trim() || lead.customerName?.trim() || lead.title,
   )
-  return `${base}/ops/workspace?owner=all&q=${search}`
+  return `${base}${OPS_WORKSPACE_PATH}?owner=all&q=${search}`
 }
 
 async function logNotificationActivity(args: {

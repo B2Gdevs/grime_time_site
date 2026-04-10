@@ -1,9 +1,5 @@
 import { redirect } from 'next/navigation'
-
-import { AdminDashboardView } from '@/components/portal/AdminDashboardView'
-import { OpsWelcomeDialog } from '@/components/portal/OpsWelcomeDialog'
-import { loadOpsRouteData } from '@/lib/ops/loaders/loadOpsRouteData'
-import { parseOpsTabQuery } from '@/lib/ops/opsCommandCenterTabs'
+import { OPS_DASHBOARD_PATH } from '@/lib/navigation/portalPaths'
 
 type OpsDashboardPageProps = {
   searchParams: Promise<{ tab?: string }>
@@ -11,28 +7,11 @@ type OpsDashboardPageProps = {
 
 export default async function OpsDashboardPage({ searchParams }: OpsDashboardPageProps) {
   const sp = await searchParams
-  const initialCommandCenterTab = parseOpsTabQuery(sp.tab)
+  const params = new URLSearchParams()
 
-  if (initialCommandCenterTab) {
-    redirect(`/ops/workspace?tab=${initialCommandCenterTab}`)
+  if (sp.tab) {
+    params.set('tab', sp.tab)
   }
 
-  const { data, showWelcomeModal, user } = await loadOpsRouteData()
-
-  return (
-    <AdminDashboardView
-      cards={data.cards}
-      chartDisclaimer={data.chartDisclaimer}
-      chartMetricSummaries={data.chartMetricSummaries}
-      chartTrend={data.chartTrend}
-      chartTrendIsLive={data.chartTrendIsLive}
-      pipelineSnapshotLabel={data.pipelineSnapshotLabel}
-      pipelineSnapshotValue={data.pipelineSnapshotValue}
-    >
-      <OpsWelcomeDialog
-        openInitially={showWelcomeModal}
-        userName={user?.name?.trim() || user?.email || 'team'}
-      />
-    </AdminDashboardView>
-  )
+  redirect(params.size > 0 ? `${OPS_DASHBOARD_PATH}?${params.toString()}` : OPS_DASHBOARD_PATH)
 }
