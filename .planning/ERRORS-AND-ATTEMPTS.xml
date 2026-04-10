@@ -361,4 +361,23 @@
       <command>powershell -NoProfile -Command "$env:PLAYWRIGHT_BASE_URL='http://localhost:3101'; npm.cmd exec -- playwright test tests/e2e/page-composer.e2e.spec.ts --config=playwright.local.config.ts --reporter=line"</command>
     </verification>
   </attempt>
+  <attempt id="12-03-a1" phase="12" task="12-03" status="resolved">
+    <title>Phase-12 closeout was blocked by overly narrow inference in mutable page-composer test fixtures</title>
+    <symptom>After the Clerk webhook slice shipped, `npm.cmd exec -- tsc --noEmit` still failed during phase-12 closeout in `tests/int/blocks/service-grid-inline-editing.int.spec.tsx` and `tests/int/components/admin-impersonation/inline-page-media-editor.int.spec.tsx`, which made the provider-sync verification look incomplete even though the feature work itself was green.</symptom>
+    <cause>Both specs relied on mutable mock fixtures without explicit contract types. TypeScript inferred the initial literals too narrowly, so later valid assignments for service-grid interactivity, media rows, draft-page blocks, and media-registry mutations collapsed to invalid or `never` targets.</cause>
+    <attempted-fix>Type the mutable fixtures against the real composer and Payload contracts used by the editor surfaces, then rerun the affected specs and the full project typecheck before closing phase `12`.</attempted-fix>
+    <verification>
+      <command>cmd /c npm.cmd exec -- vitest run tests/int/blocks/service-grid-inline-editing.int.spec.tsx tests/int/components/admin-impersonation/inline-page-media-editor.int.spec.tsx --config ./vitest.config.mts</command>
+      <command>cmd /c npm.cmd exec -- tsc --noEmit</command>
+    </verification>
+  </attempt>
+  <attempt id="12-03-a2" phase="12" task="12-03" status="resolved">
+    <title>The reported `Collecting build traces ...` stall was a perceived hang, not a reproducible phase-12 build blocker</title>
+    <symptom>Phase-12 closeout carried forward an unresolved note that local `npm.cmd run build` had stalled at `Collecting build traces ...` after cache cleanup, so build verification for the provider-sync slice was being treated as incomplete.</symptom>
+    <cause>No reproducible deadlock was found in the current repository state. The strongest supported explanation is that Next.js trace collection is silent and materially long on this project, while prior local stale `next dev` or `next start` process noise had already created build-status confusion in earlier sessions.</cause>
+    <attempted-fix>Re-run production builds in the current workspace, let the trace phase complete, inspect `.next/trace-build`, and downgrade the issue from a code blocker to an operational note: if it resurfaces, first clear stale Next processes and check the trace artifact before classifying the build as hung.</attempted-fix>
+    <verification>
+      <command>cmd /c npm.cmd run build</command>
+    </verification>
+  </attempt>
 </errors-and-attempts>

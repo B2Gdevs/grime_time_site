@@ -1052,4 +1052,15 @@
       <file path="src/lib/billing/stripe/customers.ts" />
     </references>
   </decision>
+  <decision id="D-auth-014">
+    <title>Clerk webhook changes reconcile into first-party auth records before emitting app-owned events</title>
+    <summary>Inbound Clerk user, organization, and organizationMembership webhooks should land on a dedicated signed route, reconcile Grime Time&apos;s first-party `users`, `organizations`, and `organization-memberships` records, and then emit app-owned auth domain events. Clerk remains the identity transport, but webhook payloads do not directly become the business-authorization surface.</summary>
+    <impact>This keeps provider sync reversible, gives external subscribers a first-party event contract instead of a Clerk-only dependency, and ensures role or membership changes continue to flow through app-owned reconciliation logic before downstream systems react.</impact>
+    <references>
+      <file path=".planning/TASK-REGISTRY.xml" />
+      <file path="src/app/api/clerk/webhook/route.ts" />
+      <file path="src/lib/auth/clerkWebhookSync.ts" />
+      <file path="src/lib/auth/domainEvents.ts" />
+    </references>
+  </decision>
 </decisions>

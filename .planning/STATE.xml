@@ -2,9 +2,9 @@
 <state>
   <agent-registry>
   </agent-registry>
-  <current-phase>12</current-phase>
-  <current-plan>12-03</current-plan>
+  <current-phase>19</current-phase>
+  <current-plan>19-01</current-plan>
   <status>in-progress</status>
-  <next-action>`12-02` is complete and `12-03` is underway. The first provider-sync slice is now in place: app-owned staff-admin actions emit first-party auth domain events through a shared helper instead of letting Clerk become the only event surface. Continue `12-03` by wiring inbound Clerk webhooks and reconciliation to the same app-owned contract, then broaden the event sink beyond staff-admin actions as needed. Verification note: focused tests and eslint passed for the domain-event helper slice; local `next build` previously stalled in `Collecting build traces ...` after cache cleanup, so do not treat local build verification as clean until that trace step is resolved.</next-action>
-  <sink-compiled sink="apps/portfolio/content/docs/grime-time/planning/" at="2026-04-07T20:06:41.163Z" />
+  <next-action>Phase `12` is complete. `12-03` shipped the inbound Clerk webhook route at `src/app/api/clerk/webhook/route.ts`, Svix verification with `CLERK_WEBHOOK_SIGNING_SECRET`, reconciliation in `src/lib/auth/clerkWebhookSync.ts`, and app-owned auth domain events in `src/lib/auth/domainEvents.ts`, so provider sync now lands in first-party users, organizations, and memberships before downstream consumers react. Closeout verification now passes: focused Vitest and eslint for the provider-sync slice, `npm.cmd exec -- tsc --noEmit` after typing the mutable composer test fixtures, and local `npm.cmd run build`, which completed `Collecting build traces ...` plus `postbuild` with only the previously seen non-blocking GLib warnings. Next action: activate phase `19` and start `19-01` by defining the inbound media ingestion contract around Resend inbound delivery, attachment validation, replay-safe logging, and Payload media handoff.</next-action>
+  <sink-compiled sink="apps/portfolio/content/docs/grime-time/planning/" at="2026-04-10T06:43:10.927Z" />
 </state>

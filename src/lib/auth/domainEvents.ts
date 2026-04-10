@@ -1,6 +1,8 @@
 import type { Payload, PayloadRequest } from 'payload'
 
 type AuthDomainEventType =
+  | 'organization_status_changed'
+  | 'organization_synced'
   | 'membership_entitlement_locked'
   | 'membership_entitlement_unlocked'
   | 'membership_invite_revoked'
@@ -9,6 +11,8 @@ type AuthDomainEventType =
   | 'membership_role_changed'
   | 'membership_status_changed'
   | 'membership_synced'
+  | 'user_provider_unlinked'
+  | 'user_synced'
 
 type CreateAuthDomainEventArgs = {
   actorId?: null | number
