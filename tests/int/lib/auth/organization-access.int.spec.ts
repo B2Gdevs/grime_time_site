@@ -345,4 +345,94 @@ describe('organizationAccess', () => {
       }
     },
   )
+
+  it(
+    'preserves a suspended first-party staff membership when Clerk sync refreshes provider linkage',
+    { timeout: 15000 },
+    async () => {
+      const user = await createUser({
+        email: `${runKey}.suspended@example.com`,
+        name: 'Suspended Operator',
+        password: 'test-password',
+        roles: ['customer'],
+      })
+
+      const existingOrgResult = await payload.find({
+        collection: 'organizations',
+        depth: 0,
+        limit: 1,
+        overrideAccess: true,
+        pagination: false,
+        where: {
+          clerkOrgID: {
+            equals: DEFAULT_GRIME_TIME_CLERK_ORG_ID,
+          },
+        },
+      })
+      const hadDefaultOrganization = Boolean(existingOrgResult.docs[0])
+      const { ensureDefaultStaffOrganization, ensureBootstrapOrganizationMembership } = await import(
+        '@/lib/auth/organizationSync'
+      )
+      const { createLocalReq } = await import('payload')
+      const req = await createLocalReq({ user }, payload)
+      const organization = await ensureDefaultStaffOrganization(payload, req)
+
+      await createMembership({
+        organization: organization.id,
+        roleTemplate: 'staff-admin',
+        status: 'suspended',
+        syncSource: 'app',
+        user: user.id,
+      })
+
+      const syncedMembership = await ensureBootstrapOrganizationMembership(payload, user, {
+        clerkMemberships: [
+          {
+            clerkMembershipID: `${runKey}-mem-suspended`,
+            clerkOrgID: DEFAULT_GRIME_TIME_CLERK_ORG_ID,
+            role: 'org:admin',
+          },
+        ],
+      })
+      const { resolveUserOrganizationAccess, syncUserLegacyRolesFromMemberships } = await import(
+        '@/lib/auth/organizationAccess'
+      )
+
+      await syncUserLegacyRolesFromMemberships(payload, Number(user.id), {
+        pendingMembership: syncedMembership ?? null,
+      })
+
+      const reloadedUser = (await payload.findByID({
+        collection: 'users',
+        depth: 0,
+        id: user.id,
+        overrideAccess: true,
+      })) as User
+      const access = await resolveUserOrganizationAccess(payload, reloadedUser)
+
+      expect(syncedMembership?.status).toBe('suspended')
+      expect(syncedMembership?.roleTemplate).toBe('staff-admin')
+      expect(syncedMembership?.clerkMembershipID).toBe(`${runKey}-mem-suspended`)
+      expect(access.hasPayloadAdminAccess).toBe(false)
+      expect(access.entitlements).not.toContain('admin:payload')
+      expect(reloadedUser.roles).toEqual(expect.not.arrayContaining(['admin']))
+
+      const defaultOrganization = (await payload.find({
+        collection: 'organizations',
+        depth: 0,
+        limit: 1,
+        overrideAccess: true,
+        pagination: false,
+        where: {
+          clerkOrgID: {
+            equals: DEFAULT_GRIME_TIME_CLERK_ORG_ID,
+          },
+        },
+      })) as { docs: Organization[] }
+
+      if (!hadDefaultOrganization && defaultOrganization.docs[0]?.id) {
+        created.push({ collection: 'organizations', id: defaultOrganization.docs[0].id })
+      }
+    },
+  )
 })

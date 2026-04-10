@@ -121,6 +121,32 @@ function scopeLabel(scope: OpsUserDirectoryRow['scope']) {
   }
 }
 
+function describeMembershipStatus(status: null | string | undefined) {
+  switch (status) {
+    case 'active':
+      return 'Active'
+    case 'revoked':
+      return 'Revoked'
+    case 'suspended':
+      return 'Suspended'
+    default:
+      return 'Not attached'
+  }
+}
+
+function membershipStatusTone(status: null | string | undefined): 'default' | 'destructive' | 'outline' | 'secondary' {
+  switch (status) {
+    case 'active':
+      return 'default'
+    case 'suspended':
+      return 'secondary'
+    case 'revoked':
+      return 'destructive'
+    default:
+      return 'outline'
+  }
+}
+
 export function OpsUsersPageView({ data }: { data: OpsUsersPageData }) {
   const router = useRouter()
   const [query, setQuery] = React.useState('')
@@ -138,14 +164,15 @@ export function OpsUsersPageView({ data }: { data: OpsUsersPageData }) {
   )
   const selectedUser =
     filteredRows.find((row) => row.id === selectedUserId) ?? filteredRows[0] ?? null
+  const selectedStaffMembership =
+    selectedUser?.memberships.find((membership) => membership.kind === 'staff') ?? null
   const currentStaffRoleTemplate =
-    selectedUser?.memberships.find((membership) => membership.kind === 'staff')?.roleTemplate ??
-    'staff-operator'
+    selectedStaffMembership?.roleTemplate ?? 'staff-operator'
   const [staffRoleTemplate, setStaffRoleTemplate] = React.useState(currentStaffRoleTemplate)
 
   const actionMutation = useMutation({
     mutationFn: async (action: {
-      action: 'resync_provider' | 'revoke_staff_invite'
+      action: 'reactivate_staff_access' | 'resync_provider' | 'revoke_staff_invite' | 'suspend_staff_access'
     } | {
       action: 'send_staff_invite' | 'update_staff_role'
       roleTemplate: string
@@ -193,6 +220,11 @@ export function OpsUsersPageView({ data }: { data: OpsUsersPageData }) {
       : 'Send invite'
   const canRevokeInvite = selectedUser?.portalInviteState === 'invite_pending'
   const canResyncProvider = Boolean(selectedUser?.hasClerkLink)
+  const canSuspendStaffAccess =
+    Boolean(selectedStaffMembership) && selectedStaffMembership?.status === 'active'
+  const canReactivateStaffAccess =
+    Boolean(selectedStaffMembership) &&
+    (selectedStaffMembership?.status === 'suspended' || selectedStaffMembership?.status === 'revoked')
 
   return (
     <div className="@container/main flex flex-col gap-6 py-4 md:py-6">
@@ -408,6 +440,11 @@ export function OpsUsersPageView({ data }: { data: OpsUsersPageData }) {
                     label="Portal login"
                     value={selectedUser.lastPortalLoginAt ? 'Seen before' : 'Not yet'}
                   />
+                  <DetailStat
+                    icon={ShieldCheckIcon}
+                    label="Staff access"
+                    value={describeMembershipStatus(selectedStaffMembership?.status)}
+                  />
                 </div>
 
                 <div className="grid gap-2 rounded-2xl border border-border/70 bg-muted/30 p-4">
@@ -453,6 +490,12 @@ export function OpsUsersPageView({ data }: { data: OpsUsersPageData }) {
                             <div className="font-medium">{membership.organizationName}</div>
                             <Badge variant="outline" className="rounded-full">
                               {describeOrganizationKind(membership.kind)}
+                            </Badge>
+                            <Badge
+                              variant={membershipStatusTone(membership.status)}
+                              className="rounded-full"
+                            >
+                              {describeMembershipStatus(membership.status)}
                             </Badge>
                             <Badge variant="secondary" className="rounded-full">
                               {describeRoleTemplate(membership.roleTemplate)}
@@ -569,9 +612,9 @@ export function OpsUsersPageView({ data }: { data: OpsUsersPageData }) {
 
                     <div className="grid gap-3 rounded-3xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
                       <div className="grid gap-3 sm:grid-cols-2">
-                        <Button
-                          className="justify-start"
-                          disabled={actionMutation.isPending || !selectedUser}
+                      <Button
+                        className="justify-start"
+                        disabled={actionMutation.isPending || !selectedUser}
                           onClick={() =>
                             actionMutation.mutate({
                               action: 'send_staff_invite',
@@ -590,6 +633,20 @@ export function OpsUsersPageView({ data }: { data: OpsUsersPageData }) {
                         </Button>
                         <Button
                           className="justify-start border-white/12 text-slate-100 hover:bg-white/10"
+                          disabled={actionMutation.isPending || !canSuspendStaffAccess}
+                          onClick={() => actionMutation.mutate({ action: 'suspend_staff_access' })}
+                          type="button"
+                          variant="outline"
+                        >
+                          {actionMutation.isPending ? (
+                            <LoaderCircleIcon className="animate-spin" data-icon="inline-start" />
+                          ) : (
+                            <ShieldIcon data-icon="inline-start" />
+                          )}
+                          Suspend staff access
+                        </Button>
+                        <Button
+                          className="justify-start border-white/12 text-slate-100 hover:bg-white/10"
                           disabled={actionMutation.isPending || !canResyncProvider}
                           onClick={() => actionMutation.mutate({ action: 'resync_provider' })}
                           type="button"
@@ -603,6 +660,20 @@ export function OpsUsersPageView({ data }: { data: OpsUsersPageData }) {
                           Resync from Clerk
                         </Button>
                       </div>
+                      <Button
+                        className="justify-start border-white/12 text-slate-100 hover:bg-white/10"
+                        disabled={actionMutation.isPending || !canReactivateStaffAccess}
+                        onClick={() => actionMutation.mutate({ action: 'reactivate_staff_access' })}
+                        type="button"
+                        variant="outline"
+                      >
+                        {actionMutation.isPending ? (
+                          <LoaderCircleIcon className="animate-spin" data-icon="inline-start" />
+                        ) : (
+                          <ShieldCheckIcon data-icon="inline-start" />
+                        )}
+                        Restore staff access
+                      </Button>
                       <Button
                         className="justify-start border-white/12 text-slate-100 hover:bg-white/10"
                         disabled={actionMutation.isPending || !canRevokeInvite}
@@ -626,6 +697,12 @@ export function OpsUsersPageView({ data }: { data: OpsUsersPageData }) {
                         </div>
                         <div>
                           Invite state: <span className="text-slate-100">{describeInviteState(selectedUser.portalInviteState)}</span>
+                        </div>
+                        <div>
+                          Staff access state:{' '}
+                          <span className="text-slate-100">
+                            {describeMembershipStatus(selectedStaffMembership?.status)}
+                          </span>
                         </div>
                       </div>
                     </div>

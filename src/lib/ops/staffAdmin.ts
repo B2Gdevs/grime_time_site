@@ -21,7 +21,9 @@ const DEFAULT_INVITE_EXPIRY_DAYS = 7
 export type OpsUserAdminAction =
   | { action: 'resync_provider' }
   | { action: 'revoke_staff_invite' }
+  | { action: 'reactivate_staff_access' }
   | { action: 'send_staff_invite'; roleTemplate: OrganizationMembershipRoleTemplate }
+  | { action: 'suspend_staff_access' }
   | { action: 'update_staff_role'; roleTemplate: OrganizationMembershipRoleTemplate }
 
 export class OpsStaffAdminError extends Error {
@@ -88,6 +90,7 @@ async function updateUserInviteState(args: {
 }
 
 async function upsertLocalStaffMembership(args: {
+  status?: 'active' | 'revoked' | 'suspended'
   clerkMembershipID?: null | string
   payload: Payload
   req: PayloadRequest
@@ -101,6 +104,7 @@ async function upsertLocalStaffMembership(args: {
     userId: Number(args.targetUser.id),
   })
   const syncSource = args.clerkMembershipID ? 'clerk' : existingMembership?.syncSource || 'app'
+  const nextStatus = args.status ?? 'active'
 
   if (existingMembership) {
     const updatedMembership = (await args.payload.update({
@@ -110,7 +114,7 @@ async function upsertLocalStaffMembership(args: {
         clerkMembershipID: args.clerkMembershipID ?? existingMembership.clerkMembershipID,
         lastSyncedAt: new Date().toISOString(),
         roleTemplate: args.roleTemplate,
-        status: 'active',
+        status: nextStatus,
         syncSource,
       },
       overrideAccess: true,
@@ -126,16 +130,16 @@ async function upsertLocalStaffMembership(args: {
 
   const membership = (await args.payload.create({
     collection: ORGANIZATION_MEMBERSHIPS_COLLECTION_SLUG,
-    data: {
-      clerkMembershipID: args.clerkMembershipID,
-      lastSyncedAt: new Date().toISOString(),
-      organization: organization.id,
-      roleTemplate: args.roleTemplate,
-      status: 'active',
-      syncSource,
-      user: args.targetUser.id,
-    },
-    overrideAccess: true,
+      data: {
+        clerkMembershipID: args.clerkMembershipID,
+        lastSyncedAt: new Date().toISOString(),
+        organization: organization.id,
+        roleTemplate: args.roleTemplate,
+        status: nextStatus,
+        syncSource,
+        user: args.targetUser.id,
+      },
+      overrideAccess: true,
     req: args.req,
   })) as OrganizationMembership
 
@@ -170,6 +174,45 @@ async function revokePendingInvitationByEmail(args: {
   })
 
   return true
+}
+
+async function updateLocalStaffMembershipStatus(args: {
+  payload: Payload
+  req: PayloadRequest
+  status: 'active' | 'suspended'
+  targetUser: User
+}): Promise<OrganizationMembership> {
+  const organization = await ensureDefaultStaffOrganization(args.payload, args.req)
+  const existingMembership = await getUserOrganizationMembership(args.payload, {
+    organizationId: Number(organization.id),
+    req: args.req,
+    userId: Number(args.targetUser.id),
+  })
+
+  if (!existingMembership || !existingMembership.roleTemplate?.startsWith('staff-')) {
+    throw new OpsStaffAdminError('No staff membership exists for that user yet.', 409)
+  }
+
+  if (existingMembership.status === args.status) {
+    return existingMembership
+  }
+
+  const updatedMembership = (await args.payload.update({
+    collection: ORGANIZATION_MEMBERSHIPS_COLLECTION_SLUG,
+    id: existingMembership.id,
+    data: {
+      lastSyncedAt: new Date().toISOString(),
+      status: args.status,
+    },
+    overrideAccess: true,
+    req: args.req,
+  })) as OrganizationMembership
+
+  await syncUserLegacyRolesFromMemberships(args.payload, Number(args.targetUser.id), {
+    pendingMembership: updatedMembership,
+  })
+
+  return updatedMembership
 }
 
 async function createOrUpdateClerkStaffAccess(args: {
@@ -295,6 +338,38 @@ export async function performOpsUserAdminAction(args: {
       message: revoked
         ? 'Pending staff invite revoked.'
         : 'No pending Clerk invite was found, but the local invite state was cleared.',
+    }
+  }
+
+  if (args.action.action === 'suspend_staff_access') {
+    const membership = await updateLocalStaffMembershipStatus({
+      payload: args.payload,
+      req,
+      status: 'suspended',
+      targetUser,
+    })
+
+    return {
+      message:
+        membership.status === 'suspended'
+          ? 'Staff access suspended. App-owned entitlements are now locked.'
+          : 'Staff membership was already suspended.',
+    }
+  }
+
+  if (args.action.action === 'reactivate_staff_access') {
+    const membership = await updateLocalStaffMembershipStatus({
+      payload: args.payload,
+      req,
+      status: 'active',
+      targetUser,
+    })
+
+    return {
+      message:
+        membership.status === 'active'
+          ? 'Staff access restored from the app-owned membership.'
+          : 'Staff membership was already active.',
     }
   }
 

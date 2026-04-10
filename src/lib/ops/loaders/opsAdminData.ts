@@ -83,6 +83,7 @@ export type OpsUserMembershipSummary = {
   organizationStatus: string
   provider: string
   roleTemplate: string
+  status: string
   syncSource: string
 }
 
@@ -266,6 +267,7 @@ function buildUserMembershipSummary(membership: MembershipLike): OpsUserMembersh
     organizationStatus: organization?.status ?? 'active',
     provider: organization?.provider ?? 'app',
     roleTemplate: membership.roleTemplate ?? 'customer-member',
+    status: membership.status ?? 'active',
     syncSource: membership.syncSource ?? 'app',
   }
 }
@@ -299,8 +301,9 @@ export function buildOpsUsersPageData(args: {
       const memberships = [...(membershipsByUserId.get(String(user.id ?? email)) ?? [])].sort((left, right) =>
         left.organizationName.localeCompare(right.organizationName),
       )
+      const effectiveMemberships = memberships.filter((membership) => membership.status === 'active')
       const entitlements = Array.from(
-        new Set(memberships.flatMap((membership) => deriveOrganizationEntitlements(membership.roleTemplate))),
+        new Set(effectiveMemberships.flatMap((membership) => deriveOrganizationEntitlements(membership.roleTemplate))),
       ).sort()
       const payloadRoles = normalizeRoleList(user.roles).sort()
       const row: OpsUserDirectoryRow = {

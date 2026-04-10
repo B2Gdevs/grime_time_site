@@ -124,6 +124,8 @@ export async function ensureDefaultStaffOrganization(
   const existing = await findDefaultOrganization(payload, req)
 
   if (existing) {
+    const nextStatus = existing.status && existing.status !== 'active' ? existing.status : 'active'
+
     return (await payload.update({
       collection: ORGANIZATIONS_COLLECTION_SLUG,
       id: existing.id,
@@ -135,7 +137,7 @@ export async function ensureDefaultStaffOrganization(
         slug: DEFAULT_GRIME_TIME_ORGANIZATION.slug,
         syncSource: DEFAULT_GRIME_TIME_ORGANIZATION.syncSource,
         lastSyncedAt: new Date().toISOString(),
-        status: 'active',
+        status: nextStatus,
       },
       overrideAccess: true,
       req,
@@ -189,11 +191,15 @@ export async function ensureBootstrapOrganizationMembership(
     roleTemplate.startsWith('staff-')
       ? existingMembership.roleTemplate
       : roleTemplate
+  const nextStatus =
+    existingMembership && existingMembership.status && existingMembership.status !== 'active'
+      ? existingMembership.status
+      : 'active'
 
   if (existingMembership) {
     const shouldUpdate =
       existingMembership.roleTemplate !== nextRoleTemplate ||
-      existingMembership.status !== 'active' ||
+      existingMembership.status !== nextStatus ||
       existingMembership.clerkMembershipID !== (clerkMembership?.clerkMembershipID || undefined) ||
       existingMembership.syncSource !== (clerkMembership ? 'clerk' : 'bootstrap')
 
@@ -205,7 +211,7 @@ export async function ensureBootstrapOrganizationMembership(
           clerkMembershipID: clerkMembership?.clerkMembershipID,
           lastSyncedAt: new Date().toISOString(),
           roleTemplate: nextRoleTemplate,
-          status: 'active',
+          status: nextStatus,
           syncSource: clerkMembership ? 'clerk' : 'bootstrap',
         },
         overrideAccess: true,

@@ -26,8 +26,14 @@ const userActionSchema = z.discriminatedUnion('action', [
     action: z.literal('revoke_staff_invite'),
   }),
   z.object({
+    action: z.literal('reactivate_staff_access'),
+  }),
+  z.object({
     action: z.literal('send_staff_invite'),
     roleTemplate: z.enum(staffRoleTemplates),
+  }),
+  z.object({
+    action: z.literal('suspend_staff_access'),
   }),
   z.object({
     action: z.literal('update_staff_role'),

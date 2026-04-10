@@ -85,4 +85,41 @@ describe('ops users route', () => {
       message: 'Staff invite sent through Clerk.',
     })
   })
+
+  it('accepts suspend and reactivate staff actions without extra payload fields', async () => {
+    const payload = {}
+    const realUser = { id: 19 }
+
+    requireRequestAuth.mockResolvedValue({
+      isRealAdmin: true,
+      payload,
+      realUser,
+    })
+    performOpsUserAdminAction.mockResolvedValue({
+      message: 'Staff access suspended. App-owned entitlements are now locked.',
+    })
+
+    const { POST } = await import('@/app/api/internal/ops/users/[id]/route')
+    const response = await POST(new Request('http://localhost/api/internal/ops/users/41', {
+      body: JSON.stringify({
+        action: 'suspend_staff_access',
+      }),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      method: 'POST',
+    }), {
+      params: Promise.resolve({ id: '41' }),
+    })
+
+    expect(response.status).toBe(200)
+    expect(performOpsUserAdminAction).toHaveBeenCalledWith({
+      action: {
+        action: 'suspend_staff_access',
+      },
+      actor: realUser,
+      payload,
+      targetUserId: 41,
+    })
+  })
 })
