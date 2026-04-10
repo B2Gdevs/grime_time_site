@@ -596,10 +596,11 @@
       </commands>
     </task>
     <task id="12-03" agent-id="" status="in-progress">
-      <goal>Implement the provider-adapter layer and outbound domain events: ingest Clerk webhooks into reconciliation workers, emit first-party user/org/membership change events for external apps, and keep route, invite, and membership behavior behind app-owned contracts so Grime Time can swap identity or billing providers later without rewriting authorization or customer-management rules.</goal>
+      <goal>Implement the provider-adapter layer and outbound domain events: ingest Clerk webhooks into reconciliation workers, emit first-party user/org/membership change events for external apps, and keep route, invite, and membership behavior behind app-owned contracts so Grime Time can swap identity or billing providers later without rewriting authorization or customer-management rules. Current checkpoint: app-owned staff-admin actions now emit first-party auth domain events through `src/lib/auth/domainEvents.ts`, using the internal CRM activity sink as the initial durable event surface. The next slice is inbound Clerk webhook reconciliation flowing into the same app-owned contract rather than mutating authorization state directly from Clerk payloads.</goal>
       <keywords>webhooks,events,reconciliation,provider-sync,external-apps</keywords>
       <commands>
         <command>See .planning/workflows/orgs-rbac-and-provider-sync.md</command>
+        <command>Checkpoint: `npm.cmd exec vitest run tests/int/lib/ops/staff-admin.int.spec.ts tests/int/lib/auth/domain-events.int.spec.ts` plus `npm.cmd exec eslint -- src/lib/auth/domainEvents.ts src/lib/ops/staffAdmin.ts tests/int/lib/ops/staff-admin.int.spec.ts tests/int/lib/auth/domain-events.int.spec.ts`.</command>
       </commands>
     </task>
   </phase>

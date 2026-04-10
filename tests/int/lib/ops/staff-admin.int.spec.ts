@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const createLocalReq = vi.fn()
+const createAuthDomainEvent = vi.fn()
 const ensureBootstrapOrganizationMembership = vi.fn()
 const ensureDefaultStaffOrganization = vi.fn()
 const getUserOrganizationMembership = vi.fn()
@@ -13,6 +14,10 @@ vi.mock('payload', () => ({
 vi.mock('@/lib/auth/organizationAccess', () => ({
   getUserOrganizationMembership,
   syncUserLegacyRolesFromMemberships,
+}))
+
+vi.mock('@/lib/auth/domainEvents', () => ({
+  createAuthDomainEvent,
 }))
 
 vi.mock('@/lib/auth/organizationSync', () => ({
@@ -74,6 +79,11 @@ describe('staffAdmin', () => {
       overrideAccess: true,
     }))
     expect(syncUserLegacyRolesFromMemberships).toHaveBeenCalled()
+    expect(createAuthDomainEvent).toHaveBeenCalledWith(expect.objectContaining({
+      actorId: 7,
+      eventType: 'membership_entitlement_locked',
+      targetUserId: 41,
+    }))
     expect(result).toEqual({ message: 'Locked content:write for this staff membership.' })
   })
 
@@ -120,6 +130,11 @@ describe('staffAdmin', () => {
       overrideAccess: true,
     }))
     expect(syncUserLegacyRolesFromMemberships).toHaveBeenCalled()
+    expect(createAuthDomainEvent).toHaveBeenCalledWith(expect.objectContaining({
+      actorId: 7,
+      eventType: 'membership_entitlement_unlocked',
+      targetUserId: 41,
+    }))
     expect(result).toEqual({ message: 'Unlocked content:write for this staff membership.' })
   })
 })

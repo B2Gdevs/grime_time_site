@@ -3,6 +3,7 @@ import { createLocalReq, type Payload, type PayloadRequest } from 'payload'
 
 import { USERS_COLLECTION_SLUG } from '@/collections/Users'
 import { getUserOrganizationMembership, syncUserLegacyRolesFromMemberships } from '@/lib/auth/organizationAccess'
+import { createAuthDomainEvent } from '@/lib/auth/domainEvents'
 import {
   DEFAULT_GRIME_TIME_CLERK_ORG_ID,
   ORGANIZATION_MEMBERSHIPS_COLLECTION_SLUG,
@@ -387,6 +388,19 @@ export async function performOpsUserAdminAction(args: {
       })),
     })
 
+    await createAuthDomainEvent({
+      actorId: Number(args.actor.id),
+      details: {
+        clerkUserID: targetUser.clerkUserID || '',
+      },
+      eventLabel: `Provider membership resynced for ${targetUser.email}`,
+      eventType: 'membership_provider_resynced',
+      payload: args.payload,
+      req,
+      sourceSystem: 'reconciliation',
+      targetUserId: Number(targetUser.id),
+    })
+
     return { message: 'Provider membership data refreshed from Clerk.' }
   }
 
@@ -401,6 +415,18 @@ export async function performOpsUserAdminAction(args: {
       req,
       state: 'none',
       targetUserId: args.targetUserId,
+    })
+
+    await createAuthDomainEvent({
+      actorId: Number(args.actor.id),
+      details: {
+        revokedInClerk: revoked,
+      },
+      eventLabel: `Staff invite revoked for ${targetUser.email}`,
+      eventType: 'membership_invite_revoked',
+      payload: args.payload,
+      req,
+      targetUserId: Number(targetUser.id),
     })
 
     return {
@@ -418,6 +444,20 @@ export async function performOpsUserAdminAction(args: {
       targetUser,
     })
 
+    await createAuthDomainEvent({
+      actorId: Number(args.actor.id),
+      eventLabel: `Staff access suspended for ${targetUser.email}`,
+      eventType: 'membership_status_changed',
+      membershipId: Number(membership.id),
+      organizationId: relationNumericIdSafe(membership.organization),
+      payload: args.payload,
+      req,
+      targetUserId: Number(targetUser.id),
+      details: {
+        nextStatus: membership.status,
+      },
+    })
+
     return {
       message:
         membership.status === 'suspended'
@@ -432,6 +472,20 @@ export async function performOpsUserAdminAction(args: {
       req,
       status: 'active',
       targetUser,
+    })
+
+    await createAuthDomainEvent({
+      actorId: Number(args.actor.id),
+      eventLabel: `Staff access restored for ${targetUser.email}`,
+      eventType: 'membership_status_changed',
+      membershipId: Number(membership.id),
+      organizationId: relationNumericIdSafe(membership.organization),
+      payload: args.payload,
+      req,
+      targetUserId: Number(targetUser.id),
+      details: {
+        nextStatus: membership.status,
+      },
     })
 
     return {
@@ -452,6 +506,24 @@ export async function performOpsUserAdminAction(args: {
       payload: args.payload,
       req,
       targetUser,
+    })
+
+    await createAuthDomainEvent({
+      actorId: Number(args.actor.id),
+      details: {
+        entitlement: args.action.entitlement,
+      },
+      eventLabel:
+        args.action.action === 'lock_staff_entitlement'
+          ? `Locked ${args.action.entitlement} for ${targetUser.email}`
+          : `Unlocked ${args.action.entitlement} for ${targetUser.email}`,
+      eventType:
+        args.action.action === 'lock_staff_entitlement'
+          ? 'membership_entitlement_locked'
+          : 'membership_entitlement_unlocked',
+      payload: args.payload,
+      req,
+      targetUserId: Number(targetUser.id),
     })
 
     return {
@@ -479,6 +551,19 @@ export async function performOpsUserAdminAction(args: {
         userId: targetUser.clerkUserID,
       })
     }
+
+    await createAuthDomainEvent({
+      actorId: Number(args.actor.id),
+      details: {
+        nextRoleTemplate: roleTemplate,
+      },
+      eventLabel: `Staff role updated for ${targetUser.email}`,
+      eventType: 'membership_role_changed',
+      membershipId: Number(membership.id),
+      payload: args.payload,
+      req,
+      targetUserId: Number(targetUser.id),
+    })
 
     return { message: 'Staff role template updated.' }
   }
@@ -508,6 +593,20 @@ export async function performOpsUserAdminAction(args: {
       targetUserId: args.targetUserId,
     })
 
+    await createAuthDomainEvent({
+      actorId: Number(args.actor.id),
+      details: {
+        clerkMembershipID: result.clerkMembershipID,
+        roleTemplate,
+      },
+      eventLabel: `Staff membership synced for ${targetUser.email}`,
+      eventType: 'membership_synced',
+      payload: args.payload,
+      req,
+      sourceSystem: 'clerk',
+      targetUserId: Number(targetUser.id),
+    })
+
     return { message: 'Staff membership granted and synced with Clerk.' }
   }
 
@@ -519,5 +618,36 @@ export async function performOpsUserAdminAction(args: {
     targetUserId: args.targetUserId,
   })
 
+  await createAuthDomainEvent({
+    actorId: Number(args.actor.id),
+    details: {
+      roleTemplate,
+    },
+    eventLabel: `Staff invite sent for ${targetUser.email}`,
+    eventType: 'membership_invite_sent',
+    payload: args.payload,
+    req,
+    sourceSystem: 'clerk',
+    targetUserId: Number(targetUser.id),
+  })
+
   return { message: 'Staff invite sent through Clerk.' }
+}
+
+function relationNumericIdSafe(
+  value: null | number | string | { id?: null | number | string } | undefined,
+) {
+  if (typeof value === 'number') {
+    return value
+  }
+
+  if (typeof value === 'string' && value.trim()) {
+    return Number(value)
+  }
+
+  if (value && typeof value === 'object' && value.id != null) {
+    return Number(value.id)
+  }
+
+  return undefined
 }
