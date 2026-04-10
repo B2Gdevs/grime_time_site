@@ -10,7 +10,10 @@ import {
   ORGANIZATIONS_COLLECTION_SLUG,
 } from '@/lib/auth/organizationConstants'
 import { numericRelationId, relationId } from '@/lib/crm/internal/relationship'
-import { ORGANIZATION_MEMBERSHIP_ROLE_OPTIONS } from '@/lib/auth/organizationRoles'
+import {
+  ORGANIZATION_ENTITLEMENT_OPTIONS,
+  ORGANIZATION_MEMBERSHIP_ROLE_OPTIONS,
+} from '@/lib/auth/organizationRoles'
 
 const ensureUniqueOrganizationMembership: CollectionBeforeValidateHook = async ({
   data,
@@ -105,6 +108,29 @@ export const OrganizationMemberships: CollectionConfig = {
         { label: 'Revoked', value: 'revoked' },
       ],
       required: true,
+    },
+    {
+      name: 'entitlementLocks',
+      type: 'json',
+      admin: {
+        description: 'Baseline entitlements explicitly locked for this membership.',
+        position: 'sidebar',
+      },
+      defaultValue: [],
+      validate: (value) => {
+        if (value == null) {
+          return true
+        }
+
+        if (!Array.isArray(value)) {
+          return 'Entitlement locks must be stored as an array.'
+        }
+
+        const allowed = new Set<string>(ORGANIZATION_ENTITLEMENT_OPTIONS.map((option) => option.value))
+        const invalid = value.find((entry) => typeof entry !== 'string' || !allowed.has(entry))
+
+        return invalid ? 'Entitlement locks must use known organization entitlements.' : true
+      },
     },
     {
       name: 'syncSource',

@@ -3,8 +3,8 @@
   <agent-registry>
   </agent-registry>
   <current-phase>12</current-phase>
-  <current-plan>12-02</current-plan>
+  <current-plan>12-03</current-plan>
   <status>in-progress</status>
-  <next-action>`12-02` now uses `/portal/ops/*` as the canonical staff route family while legacy `/ops/*` paths remain compatibility redirects. `/portal/ops/users` covers role-template assignment, Clerk invite send or reissue, pending-invite revoke, provider resync, and app-owned suspend or restore actions while preserving first-party staff roles and non-active status during Clerk reconciliation. `/portal/ops/customers` now covers set or clear primary customer, send or clear portal access for a linked user, and clear, repair, or true stale-id Stripe resync flows through `/api/internal/ops/customers/[id]`. Continue the phase by deciding whether explicit entitlement locks still need a first-party model beyond role-template and suspension controls; if not, close `12-02` and advance to the provider-adapter/webhook work in `12-03`.</next-action>
+  <next-action>`12-02` is now complete. `/portal/ops/users` and `/portal/ops/customers` both ship as app-owned staff and customer administration surfaces, the staff portal route family is canonical under `/portal/ops/*`, customer admin covers primary-customer, portal-access, and Stripe repair or resync actions, and staff admin now includes first-party entitlement locks per membership in addition to role-template, invite, suspend, restore, and provider-resync controls. Advance to `12-03`: implement provider adapters and reconciliation so Clerk webhooks, membership sync, and outbound first-party domain events stay behind app-owned contracts. Verification note: focused tests and eslint passed for the entitlement-lock slice; local `next build` reached `Collecting build traces ...` and did not finish within the available window after cache cleanup.</next-action>
   <sink-compiled sink="apps/portfolio/content/docs/grime-time/planning/" at="2026-04-07T20:06:41.163Z" />
 </state>

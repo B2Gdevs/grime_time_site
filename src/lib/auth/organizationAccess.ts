@@ -3,7 +3,10 @@ import type { Access, Payload, PayloadRequest } from 'payload'
 import type { OrganizationMembership, User } from '@/payload-types'
 import { isDemoEmail } from '@/lib/demo/constants'
 import { ORGANIZATION_MEMBERSHIPS_COLLECTION_SLUG } from '@/lib/auth/organizationConstants'
-import { deriveOrganizationEntitlements, roleTemplateCanManageMemberships, roleTemplateCanManageOrganizations, roleTemplateHasPayloadAdminAccess, type OrganizationEntitlement } from '@/lib/auth/organizationRoles'
+import {
+  resolveOrganizationEntitlements,
+  type OrganizationEntitlement,
+} from '@/lib/auth/organizationRoles'
 import { numericRelationId } from '@/lib/crm/internal/relationship'
 
 type RoleCarrier =
@@ -14,6 +17,10 @@ type RoleCarrier =
     }
   | null
   | undefined
+
+type MembershipWithEntitlementLocks = OrganizationMembership & {
+  entitlementLocks?: unknown
+}
 
 export type ResolvedOrganizationAccess = {
   canManageMemberships: boolean
@@ -36,19 +43,23 @@ function hasLegacyAdminRole(user: RoleCarrier): boolean {
 }
 
 function buildOrganizationAccess(user: RoleCarrier, memberships: OrganizationMembership[]) {
-  const entitlements = Array.from(
-    new Set(memberships.flatMap((membership) => deriveOrganizationEntitlements(membership.roleTemplate))),
+  const membershipEntitlements = memberships.map((membership) =>
+    resolveOrganizationEntitlements({
+      entitlementLocks: (membership as MembershipWithEntitlementLocks).entitlementLocks,
+      roleTemplate: membership.roleTemplate,
+    }),
   )
+  const entitlements = Array.from(new Set(membershipEntitlements.flat()))
   const legacyAdmin = hasLegacyAdminRole(user)
 
   return {
     canManageMemberships:
-      legacyAdmin || memberships.some((membership) => roleTemplateCanManageMemberships(membership.roleTemplate)),
+      legacyAdmin || membershipEntitlements.some((entry) => entry.includes('org:manage-members')),
     canManageOrganizations:
-      legacyAdmin || memberships.some((membership) => roleTemplateCanManageOrganizations(membership.roleTemplate)),
+      legacyAdmin || membershipEntitlements.some((entry) => entry.includes('org:manage')),
     entitlements,
     hasPayloadAdminAccess:
-      legacyAdmin || memberships.some((membership) => roleTemplateHasPayloadAdminAccess(membership.roleTemplate)),
+      legacyAdmin || membershipEntitlements.some((entry) => entry.includes('admin:payload')),
     memberships,
   }
 }

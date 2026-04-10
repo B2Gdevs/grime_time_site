@@ -6,6 +6,8 @@ import {
   BadgeCheckIcon,
   Building2Icon,
   KeyRoundIcon,
+  LockIcon,
+  LockOpenIcon,
   LoaderCircleIcon,
   Link2Icon,
   MailPlusIcon,
@@ -172,11 +174,15 @@ export function OpsUsersPageView({ data }: { data: OpsUsersPageData }) {
 
   const actionMutation = useMutation({
     mutationFn: async (action: {
-      action: 'reactivate_staff_access' | 'resync_provider' | 'revoke_staff_invite' | 'suspend_staff_access'
-    } | {
-      action: 'send_staff_invite' | 'update_staff_role'
-      roleTemplate: string
-    }) => {
+      action:
+        | 'lock_staff_entitlement'
+        | 'reactivate_staff_access'
+        | 'resync_provider'
+        | 'revoke_staff_invite'
+        | 'suspend_staff_access'
+        | 'unlock_staff_entitlement'
+      entitlement?: string
+    } | { action: 'send_staff_invite' | 'update_staff_role'; roleTemplate: string }) => {
       if (!selectedUser?.id) {
         throw new Error('Pick a user first.')
       }
@@ -225,6 +231,8 @@ export function OpsUsersPageView({ data }: { data: OpsUsersPageData }) {
   const canReactivateStaffAccess =
     Boolean(selectedStaffMembership) &&
     (selectedStaffMembership?.status === 'suspended' || selectedStaffMembership?.status === 'revoked')
+  const canManageEntitlementLocks =
+    Boolean(selectedStaffMembership) && selectedStaffMembership?.status === 'active'
 
   return (
     <div className="@container/main flex flex-col gap-6 py-4 md:py-6">
@@ -537,6 +545,24 @@ export function OpsUsersPageView({ data }: { data: OpsUsersPageData }) {
                       </span>
                     )}
                   </div>
+                  {selectedStaffMembership?.entitlementLocks.length ? (
+                    <div className="grid gap-2 rounded-2xl border border-amber-200/70 bg-amber-50/70 p-3">
+                      <div className="text-xs font-medium uppercase tracking-[0.18em] text-amber-900/80">
+                        Locked on this staff membership
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedStaffMembership.entitlementLocks.map((entitlement) => (
+                          <Badge
+                            key={entitlement}
+                            variant="outline"
+                            className="rounded-full border-amber-300/80 bg-amber-100/70 text-amber-950"
+                          >
+                            {entitlement}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
 
                 <div className="grid gap-4 rounded-[1.75rem] border border-slate-800/80 bg-[radial-gradient(circle_at_top_left,rgba(14,116,144,0.22),transparent_46%),linear-gradient(135deg,rgba(2,6,23,0.98),rgba(15,23,42,0.95))] p-4 text-slate-50 shadow-[0_24px_90px_-56px_rgba(2,132,199,0.9)]">
@@ -608,13 +634,70 @@ export function OpsUsersPageView({ data }: { data: OpsUsersPageData }) {
                         ) : null}
                         Save role template
                       </Button>
+
+                      <div className="grid gap-3 rounded-3xl border border-white/10 bg-slate-950/35 p-4">
+                        <div className="space-y-1">
+                          <div className="text-sm font-medium">Entitlement locks</div>
+                          <p className="text-sm leading-6 text-slate-300/75">
+                            Narrow one staff membership without changing the shared role template.
+                          </p>
+                        </div>
+                        {selectedStaffMembership?.baselineEntitlements.length ? (
+                          <div className="grid gap-2">
+                            {selectedStaffMembership.baselineEntitlements.map((entitlement) => {
+                              const locked = selectedStaffMembership.entitlementLocks.includes(entitlement)
+
+                              return (
+                                <Button
+                                  key={entitlement}
+                                  className="justify-between border-white/12 text-slate-100 hover:bg-white/10"
+                                  disabled={actionMutation.isPending || !canManageEntitlementLocks}
+                                  onClick={() =>
+                                    actionMutation.mutate({
+                                      action: locked
+                                        ? 'unlock_staff_entitlement'
+                                        : 'lock_staff_entitlement',
+                                      entitlement,
+                                    })
+                                  }
+                                  type="button"
+                                  variant="outline"
+                                >
+                                  <span className="inline-flex items-center gap-2">
+                                    {locked ? (
+                                      <LockIcon className="size-4" />
+                                    ) : (
+                                      <LockOpenIcon className="size-4" />
+                                    )}
+                                    {entitlement}
+                                  </span>
+                                  <Badge
+                                    variant="secondary"
+                                    className={
+                                      locked
+                                        ? 'rounded-full border border-amber-300/25 bg-amber-300/12 text-amber-100'
+                                        : 'rounded-full border border-emerald-300/20 bg-emerald-300/10 text-emerald-100'
+                                    }
+                                  >
+                                    {locked ? 'Locked' : 'Active'}
+                                  </Badge>
+                                </Button>
+                              )
+                            })}
+                          </div>
+                        ) : (
+                          <div className="rounded-2xl border border-dashed border-white/14 p-3 text-sm text-slate-300/70">
+                            Assign or restore a staff membership before managing entitlement locks.
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     <div className="grid gap-3 rounded-3xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
                       <div className="grid gap-3 sm:grid-cols-2">
-                      <Button
-                        className="justify-start"
-                        disabled={actionMutation.isPending || !selectedUser}
+                        <Button
+                          className="justify-start"
+                          disabled={actionMutation.isPending || !selectedUser}
                           onClick={() =>
                             actionMutation.mutate({
                               action: 'send_staff_invite',
@@ -659,41 +742,51 @@ export function OpsUsersPageView({ data }: { data: OpsUsersPageData }) {
                           )}
                           Resync from Clerk
                         </Button>
+                        <Button
+                          className="justify-start border-white/12 text-slate-100 hover:bg-white/10"
+                          disabled={actionMutation.isPending || !canReactivateStaffAccess}
+                          onClick={() => actionMutation.mutate({ action: 'reactivate_staff_access' })}
+                          type="button"
+                          variant="outline"
+                        >
+                          {actionMutation.isPending ? (
+                            <LoaderCircleIcon className="animate-spin" data-icon="inline-start" />
+                          ) : (
+                            <ShieldCheckIcon data-icon="inline-start" />
+                          )}
+                          Restore staff access
+                        </Button>
                       </div>
-                      <Button
-                        className="justify-start border-white/12 text-slate-100 hover:bg-white/10"
-                        disabled={actionMutation.isPending || !canReactivateStaffAccess}
-                        onClick={() => actionMutation.mutate({ action: 'reactivate_staff_access' })}
-                        type="button"
-                        variant="outline"
-                      >
-                        {actionMutation.isPending ? (
-                          <LoaderCircleIcon className="animate-spin" data-icon="inline-start" />
-                        ) : (
-                          <ShieldCheckIcon data-icon="inline-start" />
-                        )}
-                        Restore staff access
-                      </Button>
-                      <Button
-                        className="justify-start border-white/12 text-slate-100 hover:bg-white/10"
-                        disabled={actionMutation.isPending || !canRevokeInvite}
-                        onClick={() => actionMutation.mutate({ action: 'revoke_staff_invite' })}
-                        type="button"
-                        variant="outline"
-                      >
-                        {actionMutation.isPending ? (
-                          <LoaderCircleIcon className="animate-spin" data-icon="inline-start" />
-                        ) : (
-                          <MailPlusIcon data-icon="inline-start" />
-                        )}
-                        Revoke pending invite
-                      </Button>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <Button
+                          className="justify-start border-white/12 text-slate-100 hover:bg-white/10"
+                          disabled={actionMutation.isPending || !canRevokeInvite}
+                          onClick={() => actionMutation.mutate({ action: 'revoke_staff_invite' })}
+                          type="button"
+                          variant="outline"
+                        >
+                          {actionMutation.isPending ? (
+                            <LoaderCircleIcon className="animate-spin" data-icon="inline-start" />
+                          ) : (
+                            <MailPlusIcon data-icon="inline-start" />
+                          )}
+                          Revoke pending invite
+                        </Button>
+                      </div>
                       <div className="grid gap-2 rounded-2xl border border-white/10 bg-slate-950/35 p-3 text-sm text-slate-300/78">
                         <div className="font-medium text-slate-100">Current sync posture</div>
                         <div>
                           {selectedUser.hasClerkLink
                             ? 'This user already has a Clerk identity, so Grime Time can grant or resync staff membership immediately.'
                             : 'This user still needs a Clerk invitation email before they can complete staff onboarding.'}
+                        </div>
+                        <div>
+                          Entitlement locks:{' '}
+                          <span className="text-slate-100">
+                            {selectedStaffMembership?.entitlementLocks.length
+                              ? `${selectedStaffMembership.entitlementLocks.length} active`
+                              : 'No per-user locks'}
+                          </span>
                         </div>
                         <div>
                           Invite state: <span className="text-slate-100">{describeInviteState(selectedUser.portalInviteState)}</span>

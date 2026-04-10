@@ -86,7 +86,7 @@ describe('ops users route', () => {
     })
   })
 
-  it('accepts suspend and reactivate staff actions without extra payload fields', async () => {
+  it('accepts entitlement lock actions with a validated entitlement payload', async () => {
     const payload = {}
     const realUser = { id: 19 }
 
@@ -96,13 +96,14 @@ describe('ops users route', () => {
       realUser,
     })
     performOpsUserAdminAction.mockResolvedValue({
-      message: 'Staff access suspended. App-owned entitlements are now locked.',
+      message: 'Locked content:write for this staff membership.',
     })
 
     const { POST } = await import('@/app/api/internal/ops/users/[id]/route')
     const response = await POST(new Request('http://localhost/api/internal/ops/users/41', {
       body: JSON.stringify({
-        action: 'suspend_staff_access',
+        action: 'lock_staff_entitlement',
+        entitlement: 'content:write',
       }),
       headers: {
         'Content-Type': 'application/json',
@@ -115,7 +116,8 @@ describe('ops users route', () => {
     expect(response.status).toBe(200)
     expect(performOpsUserAdminAction).toHaveBeenCalledWith({
       action: {
-        action: 'suspend_staff_access',
+        action: 'lock_staff_entitlement',
+        entitlement: 'content:write',
       },
       actor: realUser,
       payload,

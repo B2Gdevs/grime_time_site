@@ -11,7 +11,12 @@ import {
   ensureBootstrapOrganizationMembership,
   ensureDefaultStaffOrganization,
 } from '@/lib/auth/organizationSync'
-import type { OrganizationMembershipRoleTemplate } from '@/lib/auth/organizationRoles'
+import {
+  deriveOrganizationEntitlements,
+  normalizeOrganizationEntitlementList,
+  type OrganizationEntitlement,
+  type OrganizationMembershipRoleTemplate,
+} from '@/lib/auth/organizationRoles'
 import { OPS_DASHBOARD_PATH } from '@/lib/navigation/portalPaths'
 import type { OrganizationMembership, User } from '@/payload-types'
 import { getServerSideURL } from '@/utilities/getURL'
@@ -19,11 +24,13 @@ import { getServerSideURL } from '@/utilities/getURL'
 const DEFAULT_INVITE_EXPIRY_DAYS = 7
 
 export type OpsUserAdminAction =
+  | { action: 'lock_staff_entitlement'; entitlement: OrganizationEntitlement }
   | { action: 'resync_provider' }
   | { action: 'revoke_staff_invite' }
   | { action: 'reactivate_staff_access' }
   | { action: 'send_staff_invite'; roleTemplate: OrganizationMembershipRoleTemplate }
   | { action: 'suspend_staff_access' }
+  | { action: 'unlock_staff_entitlement'; entitlement: OrganizationEntitlement }
   | { action: 'update_staff_role'; roleTemplate: OrganizationMembershipRoleTemplate }
 
 export class OpsStaffAdminError extends Error {
@@ -46,6 +53,10 @@ function mapRoleTemplateToClerkRole(roleTemplate: OrganizationMembershipRoleTemp
   }
 
   return 'org:member'
+}
+
+type MembershipWithEntitlementLocks = OrganizationMembership & {
+  entitlementLocks?: unknown
 }
 
 async function loadTargetUser(payload: Payload, userId: number): Promise<User> {
@@ -215,6 +226,64 @@ async function updateLocalStaffMembershipStatus(args: {
   return updatedMembership
 }
 
+async function updateLocalStaffMembershipEntitlementLock(args: {
+  entitlement: OrganizationEntitlement
+  lock: boolean
+  payload: Payload
+  req: PayloadRequest
+  targetUser: User
+}): Promise<MembershipWithEntitlementLocks> {
+  const organization = await ensureDefaultStaffOrganization(args.payload, args.req)
+  const existingMembership = (await getUserOrganizationMembership(args.payload, {
+    organizationId: Number(organization.id),
+    req: args.req,
+    userId: Number(args.targetUser.id),
+  })) as MembershipWithEntitlementLocks | null
+
+  if (!existingMembership || !existingMembership.roleTemplate?.startsWith('staff-')) {
+    throw new OpsStaffAdminError('No staff membership exists for that user yet.', 409)
+  }
+
+  if (existingMembership.status !== 'active') {
+    throw new OpsStaffAdminError('Restore staff access before changing entitlement locks.', 409)
+  }
+
+  const baselineEntitlements = deriveOrganizationEntitlements(existingMembership.roleTemplate)
+
+  if (!baselineEntitlements.includes(args.entitlement)) {
+    throw new OpsStaffAdminError(
+      'That entitlement is not granted by the current staff role template.',
+      409,
+    )
+  }
+
+  const existingLocks = normalizeOrganizationEntitlementList(existingMembership.entitlementLocks)
+  const nextLocks = args.lock
+    ? Array.from(new Set([...existingLocks, args.entitlement]))
+    : existingLocks.filter((entry) => entry !== args.entitlement)
+
+  if (existingLocks.join('|') === nextLocks.join('|')) {
+    return existingMembership
+  }
+
+  const updatedMembership = (await args.payload.update({
+    collection: ORGANIZATION_MEMBERSHIPS_COLLECTION_SLUG,
+    id: existingMembership.id,
+    data: {
+      entitlementLocks: nextLocks,
+      lastSyncedAt: new Date().toISOString(),
+    },
+    overrideAccess: true,
+    req: args.req,
+  } as never)) as unknown as MembershipWithEntitlementLocks
+
+  await syncUserLegacyRolesFromMemberships(args.payload, Number(args.targetUser.id), {
+    pendingMembership: updatedMembership,
+  })
+
+  return updatedMembership
+}
+
 async function createOrUpdateClerkStaffAccess(args: {
   actingClerkUserId?: null | string
   email: string
@@ -370,6 +439,26 @@ export async function performOpsUserAdminAction(args: {
         membership.status === 'active'
           ? 'Staff access restored from the app-owned membership.'
           : 'Staff membership was already active.',
+    }
+  }
+
+  if (
+    args.action.action === 'lock_staff_entitlement' ||
+    args.action.action === 'unlock_staff_entitlement'
+  ) {
+    await updateLocalStaffMembershipEntitlementLock({
+      entitlement: args.action.entitlement,
+      lock: args.action.action === 'lock_staff_entitlement',
+      payload: args.payload,
+      req,
+      targetUser,
+    })
+
+    return {
+      message:
+        args.action.action === 'lock_staff_entitlement'
+          ? `Locked ${args.action.entitlement} for this staff membership.`
+          : `Unlocked ${args.action.entitlement} for this staff membership.`,
     }
   }
 

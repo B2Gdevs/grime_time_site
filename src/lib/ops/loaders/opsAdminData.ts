@@ -7,6 +7,8 @@ import {
   ORGANIZATION_KIND_OPTIONS,
   ORGANIZATION_MEMBERSHIP_ROLE_OPTIONS,
   deriveOrganizationEntitlements,
+  normalizeOrganizationEntitlementList,
+  resolveOrganizationEntitlements,
 } from '@/lib/auth/organizationRoles'
 import { CRM_ACCOUNT_STATUS_OPTIONS, CRM_ACCOUNT_TYPE_OPTIONS } from '@/lib/crm/schema'
 import { relationId } from '@/lib/crm/internal/relationship'
@@ -29,6 +31,7 @@ type AccountLike = {
 }
 
 type MembershipLike = {
+  entitlementLocks?: unknown
   clerkMembershipID?: null | string
   id?: null | number | string
   lastSyncedAt?: null | string
@@ -73,7 +76,10 @@ export type OpsAdminMetricCard = {
 }
 
 export type OpsUserMembershipSummary = {
+  baselineEntitlements: string[]
   clerkMembershipLinked: boolean
+  effectiveEntitlements: string[]
+  entitlementLocks: string[]
   id: string
   kind: string
   lastSyncedAt: null | string
@@ -256,9 +262,18 @@ function deriveUserScope(row: {
 
 function buildUserMembershipSummary(membership: MembershipLike): OpsUserMembershipSummary {
   const organization = resolveOrganization(membership.organization)
+  const baselineEntitlements = deriveOrganizationEntitlements(membership.roleTemplate)
+  const entitlementLocks = normalizeOrganizationEntitlementList(membership.entitlementLocks)
+  const effectiveEntitlements = resolveOrganizationEntitlements({
+    entitlementLocks,
+    roleTemplate: membership.roleTemplate,
+  })
 
   return {
+    baselineEntitlements,
     clerkMembershipLinked: Boolean(membership.clerkMembershipID?.trim()),
+    effectiveEntitlements,
+    entitlementLocks,
     id: String(membership.id ?? `${relationId(membership.user) ?? 'user'}-${relationId(membership.organization) ?? 'org'}`),
     kind: organization?.kind ?? 'customer',
     lastSyncedAt: membership.lastSyncedAt ?? null,
@@ -304,7 +319,7 @@ export function buildOpsUsersPageData(args: {
       )
       const effectiveMemberships = memberships.filter((membership) => membership.status === 'active')
       const entitlements = Array.from(
-        new Set(effectiveMemberships.flatMap((membership) => deriveOrganizationEntitlements(membership.roleTemplate))),
+        new Set(effectiveMemberships.flatMap((membership) => membership.effectiveEntitlements)),
       ).sort()
       const payloadRoles = normalizeRoleList(user.roles).sort()
       const row: OpsUserDirectoryRow = {

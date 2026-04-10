@@ -1,5 +1,6 @@
 import { z } from 'zod'
 
+import { ORGANIZATION_ENTITLEMENT_OPTIONS } from '@/lib/auth/organizationRoles'
 import { requireRequestAuth } from '@/lib/auth/requirePayloadUser'
 import {
   OpsStaffAdminError,
@@ -18,7 +19,15 @@ const staffRoleTemplates = [
   'staff-operator',
 ] as const
 
+const organizationEntitlements = ORGANIZATION_ENTITLEMENT_OPTIONS.map(
+  (option) => option.value,
+) as [string, ...string[]]
+
 const userActionSchema = z.discriminatedUnion('action', [
+  z.object({
+    action: z.literal('lock_staff_entitlement'),
+    entitlement: z.enum(organizationEntitlements),
+  }),
   z.object({
     action: z.literal('resync_provider'),
   }),
@@ -34,6 +43,10 @@ const userActionSchema = z.discriminatedUnion('action', [
   }),
   z.object({
     action: z.literal('suspend_staff_access'),
+  }),
+  z.object({
+    action: z.literal('unlock_staff_entitlement'),
+    entitlement: z.enum(organizationEntitlements),
   }),
   z.object({
     action: z.literal('update_staff_role'),

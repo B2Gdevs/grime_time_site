@@ -10,6 +10,7 @@ describe('opsAdminData', () => {
     const data = buildOpsUsersPageData({
       memberships: [
         {
+          entitlementLocks: ['content:write'],
           id: 101,
           organization: {
             id: 201,
@@ -83,6 +84,9 @@ describe('opsAdminData', () => {
     expect(opsLead?.memberships).toHaveLength(2)
     expect(opsLead?.entitlements).toContain('admin:payload')
     expect(opsLead?.entitlements).toContain('portal:access')
+    expect(opsLead?.entitlements).not.toContain('content:write')
+    expect(opsLead?.memberships[0]?.entitlementLocks).toContain('content:write')
+    expect(opsLead?.memberships[0]?.effectiveEntitlements).not.toContain('content:write')
 
     const customerUser = data.rows.find((row) => row.id === '2')
     expect(customerUser?.scope).toBe('unassigned')

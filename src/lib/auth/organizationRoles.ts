@@ -39,6 +39,10 @@ export const ORGANIZATION_ENTITLEMENT_OPTIONS = [
 
 export type OrganizationEntitlement = (typeof ORGANIZATION_ENTITLEMENT_OPTIONS)[number]['value']
 
+const organizationEntitlementValues = new Set(
+  ORGANIZATION_ENTITLEMENT_OPTIONS.map((option) => option.value),
+)
+
 const membershipEntitlements: Record<
   OrganizationMembershipRoleTemplate,
   OrganizationEntitlement[]
@@ -79,6 +83,32 @@ export function deriveOrganizationEntitlements(
   }
 
   return membershipEntitlements[roleTemplate as OrganizationMembershipRoleTemplate]
+}
+
+export function normalizeOrganizationEntitlementList(value: unknown): OrganizationEntitlement[] {
+  if (!Array.isArray(value)) {
+    return []
+  }
+
+  return Array.from(
+    new Set(
+      value.filter(
+        (entry): entry is OrganizationEntitlement =>
+          typeof entry === 'string' && organizationEntitlementValues.has(entry as OrganizationEntitlement),
+      ),
+    ),
+  )
+}
+
+export function resolveOrganizationEntitlements(args: {
+  entitlementLocks?: unknown
+  roleTemplate: null | OrganizationMembershipRoleTemplate | string | undefined
+}): OrganizationEntitlement[] {
+  const lockedEntitlements = new Set(normalizeOrganizationEntitlementList(args.entitlementLocks))
+
+  return deriveOrganizationEntitlements(args.roleTemplate).filter(
+    (entitlement) => !lockedEntitlements.has(entitlement),
+  )
 }
 
 export function roleTemplateHasPayloadAdminAccess(

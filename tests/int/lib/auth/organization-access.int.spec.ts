@@ -435,4 +435,61 @@ describe('organizationAccess', () => {
       }
     },
   )
+
+  it(
+    'removes locked entitlements from effective staff access without deleting the membership',
+    { timeout: 15000 },
+    async () => {
+      const user = await createUser({
+        email: `${runKey}.locked@example.com`,
+        name: 'Locked Admin',
+        password: 'test-password',
+        roles: ['customer'],
+      })
+
+      const organization = await createOrganization({
+        clerkOrgID: `${runKey}-clerk-org-locked`,
+        kind: 'staff',
+        name: `Locked Ops ${runKey}`,
+        provider: 'app',
+        slug: `locked-ops-${runKey}`,
+        status: 'active',
+        syncSource: 'app',
+      })
+
+      const membership = await createMembership({
+        entitlementLocks: ['admin:payload'],
+        organization: organization.id,
+        roleTemplate: 'staff-admin',
+        status: 'active',
+        syncSource: 'app',
+        user: user.id,
+      })
+
+      const {
+        hasPayloadAdminAccess,
+        resolveUserOrganizationAccess,
+        syncUserLegacyRolesFromMemberships,
+      } = await import('@/lib/auth/organizationAccess')
+
+      await syncUserLegacyRolesFromMemberships(payload, Number(user.id), {
+        pendingMembership: membership,
+      })
+
+      const reloadedUser = (await payload.findByID({
+        collection: 'users',
+        depth: 0,
+        id: user.id,
+        overrideAccess: true,
+      })) as User
+      const access = await resolveUserOrganizationAccess(payload, reloadedUser)
+
+      expect(access.hasPayloadAdminAccess).toBe(false)
+      expect(access.canManageMemberships).toBe(true)
+      expect(access.entitlements).not.toContain('admin:payload')
+      expect(access.entitlements).toContain('crm:write')
+      expect(await hasPayloadAdminAccess(payload, reloadedUser)).toBe(false)
+      expect(reloadedUser.roles).toEqual(expect.not.arrayContaining(['admin']))
+    },
+  )
 })
