@@ -6,10 +6,12 @@ vi.mock('@/constants/copilotFeatures', () => ({
 }))
 
 import { InlinePageMediaEditor } from '@/components/admin-impersonation/InlinePageMediaEditor'
+import type { CurrentPageMediaRegistry } from '@/components/admin-impersonation/PageMediaDevtoolsContext'
 import {
   PAGE_COMPOSER_MEDIA_DRAG_MIME,
   PAGE_COMPOSER_MEDIA_DRAG_PAYLOAD_MIME,
 } from '@/lib/pages/pageComposerMediaDrag'
+import type { PageComposerDocument, PageComposerSectionSummary } from '@/lib/pages/pageComposer'
 
 const refresh = vi.fn()
 const onOpenMediaSlot = vi.fn()
@@ -17,7 +19,10 @@ const onStageMediaSlot = vi.fn()
 const openFocusedMediaSession = vi.fn()
 const setAuthoringContext = vi.fn()
 
-const mediaContextState = {
+const mediaContextState: {
+  currentPage: CurrentPageMediaRegistry
+  enabled: boolean
+} = {
   currentPage: {
     entries: [],
     pageId: 7,
@@ -28,36 +33,47 @@ const mediaContextState = {
   enabled: true,
 }
 
-const toolbarState = {
-  draftPage: {
-    _status: 'draft' as const,
-    hero: { type: 'lowImpact' as const },
-    id: 9,
-    layout: [
-      {
-        blockType: 'serviceGrid' as const,
-        heading: 'What we do',
-        services: [
-          {
-            media: null,
-            name: 'House washing',
-            summary: 'Exterior cleaning.',
-          },
-        ],
-      },
-    ],
-    pagePath: '/',
-    slug: 'home',
-    title: 'Home',
-    visibility: 'public' as const,
-  },
+type DraftServiceGridBlock = Extract<NonNullable<PageComposerDocument['layout']>[number], { blockType: 'serviceGrid' }>
+
+const draftServiceGridBlock: DraftServiceGridBlock = {
+  blockType: 'serviceGrid',
+  heading: 'What we do',
+  services: [
+    {
+      media: null,
+      name: 'House washing',
+      summary: 'Exterior cleaning.',
+    },
+  ],
+}
+
+const draftPage: PageComposerDocument = {
+  _status: 'draft',
+  hero: { type: 'lowImpact' },
+  id: 9,
+  layout: [draftServiceGridBlock],
+  pagePath: '/',
+  publishedAt: null,
+  slug: 'home',
+  title: 'Home',
+  updatedAt: null,
+  visibility: 'public',
+}
+
+const toolbarState: {
+  draftPage: PageComposerDocument
+  onOpenMediaSlot: typeof onOpenMediaSlot
+  onStageMediaSlot: typeof onStageMediaSlot
+  sectionSummaries: PageComposerSectionSummary[]
+} = {
+  draftPage,
   onOpenMediaSlot,
   onStageMediaSlot,
   sectionSummaries: [
     {
       badges: [],
       blockType: 'serviceGrid',
-      category: 'reusable',
+      category: 'static',
       description: 'Interactive service lane',
       hidden: false,
       identity: 'id:service-grid',
@@ -97,7 +113,7 @@ describe('InlinePageMediaEditor', () => {
     openFocusedMediaSession.mockReset()
     setAuthoringContext.mockReset()
     mediaContextState.currentPage.entries = []
-    toolbarState.draftPage.layout[0]!.services[0]!.media = null
+    draftServiceGridBlock.services![0]!.media = null
 
     global.fetch = vi.fn().mockResolvedValue({
       json: async () => ({ ok: true }),
@@ -218,7 +234,7 @@ describe('InlinePageMediaEditor', () => {
         relationPath: 'layout.0.services.0.media',
       },
     ]
-    toolbarState.draftPage.layout[0]!.services[0]!.media = {
+    draftServiceGridBlock.services![0]!.media = {
       alt: 'Draft media alt',
       createdAt: '2026-04-07T00:00:00.000Z',
       filename: 'draft.jpg',
@@ -228,7 +244,7 @@ describe('InlinePageMediaEditor', () => {
       updatedAt: '2026-04-07T00:00:00.000Z',
       url: '/media/draft.jpg',
       width: 1600,
-    } as never
+    }
 
     render(
       <InlinePageMediaEditor relationPath="layout.0.services.0.media">

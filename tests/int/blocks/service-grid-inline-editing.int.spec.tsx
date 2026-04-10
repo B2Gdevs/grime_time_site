@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { ServiceGridBlock } from '@/blocks/ServiceGrid/Component'
+import type { ServiceGridBlock as ServiceGridBlockData } from '@/payload-types'
 
 const composerState = {
   isOpen: true,
@@ -30,7 +31,29 @@ const mediaResource = {
   url: '/media/freshly-cleaned.jpg',
 }
 
-const toolbarState = {
+type ServiceGridEditorState = {
+  block: ServiceGridBlockData
+  updateBlockField: typeof updateBlockField
+  updateHighlightText: typeof updateHighlightText
+  updateServiceField: typeof updateServiceField
+}
+
+const toolbarState: {
+  sectionSummaries: Array<{
+    badges: string[]
+    blockType: 'serviceGrid'
+    category: 'reusable'
+    description: string
+    hidden: boolean
+    identity: string
+    index: number
+    label: string
+    variant: 'featureCards'
+  }>
+  selectedIndex: number
+  selectedMediaRelationPath: null | string
+  serviceGridEditor: ServiceGridEditorState
+} = {
   selectedIndex: 0,
   selectedMediaRelationPath: null as null | string,
   sectionSummaries: [
@@ -48,8 +71,8 @@ const toolbarState = {
   ],
   serviceGridEditor: {
     block: {
-      blockType: 'serviceGrid' as const,
-      displayVariant: 'featureCards' as const,
+      blockType: 'serviceGrid',
+      displayVariant: 'featureCards',
       heading: 'What we do',
       intro: 'Visible intro copy.',
       services: [
@@ -103,8 +126,8 @@ describe('ServiceGridBlock inline editing', () => {
     toolbarState.selectedIndex = 0
     toolbarState.selectedMediaRelationPath = null
     toolbarState.serviceGridEditor.block = {
-      blockType: 'serviceGrid' as const,
-      displayVariant: 'featureCards' as const,
+      blockType: 'serviceGrid',
+      displayVariant: 'featureCards',
       heading: 'What we do',
       intro: 'Visible intro copy.',
       services: [
@@ -165,15 +188,15 @@ describe('ServiceGridBlock inline editing', () => {
 
   it('renders service-grid media from the live draft block instead of stale props', () => {
     toolbarState.serviceGridEditor.block = {
-      blockType: 'serviceGrid' as const,
-      displayVariant: 'interactive' as const,
+      blockType: 'serviceGrid',
+      displayVariant: 'interactive',
       heading: 'Services',
       intro: 'Draft intro copy.',
       services: [
         {
           eyebrow: 'Soft wash',
           highlights: [{ text: 'Highlight proof point.' }],
-          media: mediaResource as never,
+          media: mediaResource,
           name: 'Draft lane',
           pricingHint: 'Home size and buildup',
           summary: 'Draft summary copy.',
@@ -207,8 +230,8 @@ describe('ServiceGridBlock inline editing', () => {
 
   it('syncs the visible lane to the selected media relation path while targeting service media', () => {
     toolbarState.serviceGridEditor.block = {
-      blockType: 'serviceGrid' as const,
-      displayVariant: 'interactive' as const,
+      blockType: 'serviceGrid',
+      displayVariant: 'interactive',
       heading: 'How our pricing works',
       intro: 'Draft intro copy.',
       services: [
@@ -223,7 +246,7 @@ describe('ServiceGridBlock inline editing', () => {
         {
           eyebrow: 'Flatwork',
           highlights: [{ text: 'Driveway proof point.' }],
-          media: mediaResource as never,
+          media: mediaResource,
           name: 'Driveway lane',
           pricingHint: 'Soil and square footage',
           summary: 'Second lane summary.',
