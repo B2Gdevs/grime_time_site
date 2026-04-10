@@ -1,20 +1,28 @@
 'use client'
 
 import * as React from 'react'
+import { useMutation } from '@tanstack/react-query'
 import {
   BadgeDollarSignIcon,
   Building2Icon,
   CreditCardIcon,
+  LoaderCircleIcon,
   MailIcon,
   MapPinnedIcon,
+  RefreshCcwIcon,
+  ShieldCheckIcon,
   UserRoundIcon,
   UsersIcon,
 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 
 import { SectionCards } from '@/components/section-cards'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { Separator } from '@/components/ui/separator'
 import {
   Select,
   SelectContent,
@@ -37,6 +45,7 @@ import {
   describeBillingMode,
   describePortalAccessMode,
 } from '@/lib/ops/loaders/opsAdminData'
+import { requestJson } from '@/lib/query/request'
 
 function filterCustomerRows(args: {
   accountType: string
@@ -83,6 +92,7 @@ function filterCustomerRows(args: {
 }
 
 export function OpsCustomersPageView({ data }: { data: OpsCustomersPageData }) {
+  const router = useRouter()
   const [query, setQuery] = React.useState('')
   const [status, setStatus] = React.useState('all')
   const [accountType, setAccountType] = React.useState('all')
@@ -100,6 +110,36 @@ export function OpsCustomersPageView({ data }: { data: OpsCustomersPageData }) {
   )
   const selectedAccount =
     filteredRows.find((row) => row.id === selectedAccountId) ?? filteredRows[0] ?? null
+  const [selectedLinkedUserId, setSelectedLinkedUserId] = React.useState<string | null>(
+    selectedAccount?.primaryCustomerUserId ?? selectedAccount?.linkedUsers[0]?.id ?? null,
+  )
+
+  const customerActionMutation = useMutation({
+    mutationFn: async (
+      action:
+        | { action: 'repair_stripe_customer'; userId?: number }
+        | { action: 'send_portal_access' | 'set_primary_customer'; userId: number },
+    ) => {
+      if (!selectedAccount?.id) {
+        throw new Error('Pick an account first.')
+      }
+
+      return requestJson<{ message: string }>(`/api/internal/ops/customers/${selectedAccount.id}`, {
+        body: JSON.stringify(action),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        method: 'POST',
+      })
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : 'Unable to update the customer account.')
+    },
+    onSuccess: async (body) => {
+      toast.success(body.message)
+      router.refresh()
+    },
+  })
 
   React.useEffect(() => {
     if (!filteredRows.length) {
@@ -111,6 +151,26 @@ export function OpsCustomersPageView({ data }: { data: OpsCustomersPageData }) {
       setSelectedAccountId(filteredRows[0]?.id ?? null)
     }
   }, [filteredRows, selectedAccountId])
+
+  React.useEffect(() => {
+    if (!selectedAccount) {
+      setSelectedLinkedUserId(null)
+      return
+    }
+
+    const nextSelectedUserId =
+      selectedAccount.primaryCustomerUserId ?? selectedAccount.linkedUsers[0]?.id ?? null
+
+    if (
+      !selectedLinkedUserId ||
+      !selectedAccount.linkedUsers.some((user) => user.id === selectedLinkedUserId)
+    ) {
+      setSelectedLinkedUserId(nextSelectedUserId)
+    }
+  }, [selectedAccount, selectedLinkedUserId])
+
+  const selectedLinkedUser =
+    selectedAccount?.linkedUsers.find((user) => user.id === selectedLinkedUserId) ?? null
 
   return (
     <div className="@container/main flex flex-col gap-6 py-4 md:py-6">
@@ -434,6 +494,152 @@ export function OpsCustomersPageView({ data }: { data: OpsCustomersPageData }) {
                       No linked users are attached to this account yet.
                     </div>
                   )}
+                </div>
+
+                <div className="grid gap-4 rounded-[1.75rem] border border-emerald-900/15 bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.18),transparent_48%),linear-gradient(145deg,rgba(255,255,255,0.98),rgba(236,253,245,0.98))] p-4 text-slate-950 shadow-[0_24px_90px_-56px_rgba(5,150,105,0.45)]">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="space-y-1">
+                      <div className="text-xs font-medium uppercase tracking-[0.22em] text-emerald-800/80">
+                        Customer controls
+                      </div>
+                      <div className="text-base font-semibold">
+                        Keep the account record authoritative, then repair access around it.
+                      </div>
+                      <p className="max-w-xl text-sm leading-6 text-slate-700/82">
+                        These actions keep account ownership, portal access, and Stripe linkage in
+                        Grime Time&apos;s own contract instead of sending staff into provider dashboards.
+                      </p>
+                    </div>
+                    <Badge className="rounded-full border border-emerald-300/60 bg-white/80 text-emerald-900 hover:bg-white/80">
+                      {selectedLinkedUser ? 'Linked user selected' : 'Needs linked user'}
+                    </Badge>
+                  </div>
+
+                  <Separator className="bg-emerald-900/10" />
+
+                  <div className="grid gap-4 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+                    <div className="grid gap-3 rounded-3xl border border-emerald-900/10 bg-white/70 p-4">
+                      <div className="space-y-1">
+                        <div className="text-sm font-medium">Selected linked user</div>
+                        <p className="text-sm leading-6 text-slate-700/78">
+                          Promote a linked user to primary customer or resend portal access without
+                          leaving the ops surface.
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        <label
+                          htmlFor="ops-customers-linked-user"
+                          className="text-xs font-medium uppercase tracking-[0.18em] text-slate-700/72"
+                        >
+                          Linked user
+                        </label>
+                        <Select
+                          value={selectedLinkedUserId ?? undefined}
+                          onValueChange={setSelectedLinkedUserId}
+                        >
+                          <SelectTrigger
+                            id="ops-customers-linked-user"
+                            className="border-emerald-900/10 bg-white text-slate-950"
+                          >
+                            <SelectValue placeholder="Choose a linked user" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {selectedAccount.linkedUsers.map((user) => (
+                              <SelectItem key={user.id} value={user.id}>
+                                {user.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <Button
+                        className="justify-start bg-emerald-500 text-emerald-950 hover:bg-emerald-400"
+                        disabled={customerActionMutation.isPending || !selectedLinkedUser}
+                        onClick={() =>
+                          selectedLinkedUser
+                            ? customerActionMutation.mutate({
+                                action: 'set_primary_customer',
+                                userId: Number(selectedLinkedUser.id),
+                              })
+                            : null
+                        }
+                        type="button"
+                      >
+                        {customerActionMutation.isPending ? (
+                          <LoaderCircleIcon className="animate-spin" data-icon="inline-start" />
+                        ) : (
+                          <ShieldCheckIcon data-icon="inline-start" />
+                        )}
+                        Set as primary customer
+                      </Button>
+                    </div>
+
+                    <div className="grid gap-3 rounded-3xl border border-emerald-900/10 bg-white/70 p-4">
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <Button
+                          className="justify-start"
+                          disabled={customerActionMutation.isPending || !selectedLinkedUser}
+                          onClick={() =>
+                            selectedLinkedUser
+                              ? customerActionMutation.mutate({
+                                  action: 'send_portal_access',
+                                  userId: Number(selectedLinkedUser.id),
+                                })
+                              : null
+                          }
+                          type="button"
+                          variant="secondary"
+                        >
+                          {customerActionMutation.isPending ? (
+                            <LoaderCircleIcon className="animate-spin" data-icon="inline-start" />
+                          ) : (
+                            <MailIcon data-icon="inline-start" />
+                          )}
+                          Send portal access
+                        </Button>
+                        <Button
+                          className="justify-start border-emerald-900/12 text-slate-900 hover:bg-emerald-50"
+                          disabled={customerActionMutation.isPending}
+                          onClick={() =>
+                            customerActionMutation.mutate({
+                              action: 'repair_stripe_customer',
+                              userId: selectedLinkedUser ? Number(selectedLinkedUser.id) : undefined,
+                            })
+                          }
+                          type="button"
+                          variant="outline"
+                        >
+                          {customerActionMutation.isPending ? (
+                            <LoaderCircleIcon className="animate-spin" data-icon="inline-start" />
+                          ) : (
+                            <RefreshCcwIcon data-icon="inline-start" />
+                          )}
+                          Repair Stripe link
+                        </Button>
+                      </div>
+                      <div className="grid gap-2 rounded-2xl border border-emerald-900/10 bg-emerald-50/70 p-3 text-sm text-slate-700/82">
+                        <div className="font-medium text-slate-950">Current customer posture</div>
+                        <div>
+                          Primary customer:{' '}
+                          <span className="text-slate-950">
+                            {selectedAccount.primaryCustomerName || 'Not assigned'}
+                          </span>
+                        </div>
+                        <div>
+                          Selected linked user:{' '}
+                          <span className="text-slate-950">
+                            {selectedLinkedUser ? selectedLinkedUser.name : 'None selected'}
+                          </span>
+                        </div>
+                        <div>
+                          Stripe status:{' '}
+                          <span className="text-slate-950">
+                            {selectedAccount.stripeCustomerLinked ? 'Already linked' : 'Needs repair'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </>
             ) : (

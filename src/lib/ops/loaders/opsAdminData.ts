@@ -129,6 +129,7 @@ export type OpsCustomerDirectoryRow = {
   name: string
   ownerName: null | string
   portalAccessMode: string
+  primaryCustomerUserId: null | string
   primaryCustomerEmail: null | string
   primaryCustomerName: null | string
   status: string
@@ -428,6 +429,7 @@ export function buildOpsCustomersPageData(args: {
         name: normalizeName(account.name, 'Account'),
         ownerName: owner?.name?.trim() || owner?.email?.trim().toLowerCase() || null,
         portalAccessMode: account.portalAccessMode ?? 'none',
+        primaryCustomerUserId: toStringId(account.customerUser),
         primaryCustomerEmail: primaryCustomer?.email?.trim().toLowerCase() || null,
         primaryCustomerName:
           primaryCustomer?.name?.trim() ||
