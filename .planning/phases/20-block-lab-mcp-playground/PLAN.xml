@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plan>
+  <phase>20</phase>
+  <title>Block lab: staff playground and MCP App Studio shell</title>
+  <kickoff>
+    <goal>Ship a safe iteration surface for WIP blocks: staff-only Next lab route (optional) + MCP App Studio package for interactive host previews and tool-driven block switching.</goal>
+  </kickoff>
+  <tasks>
+    <task id="20-01" status="planned">
+      <title>Scaffold MCP App Studio package</title>
+      <detail>From `vendor/grime-time-site/tools/`, run `npx mcp-app-studio grime-block-lab`, complete interactive prompts, commit generated app. Document `npm` scripts for dev and export. Link README to https://www.assistant-ui.com/mcp-app-studio .</detail>
+    </task>
+    <task id="20-02" status="planned">
+      <title>Block registry + fixture contract</title>
+      <detail>Define a typed map of `blockType` → default props JSON (fixtures). Add one pilot block renderer in the lab that uses fixtures only (no Payload fetch). Plan migration path for `@/` imports (thin preview vs extract shared UI).</detail>
+    </task>
+    <task id="20-03" status="planned">
+      <title>MCP tools for preview control</title>
+      <detail>Expose tools: list blocks, set active block, apply fixture variant / custom JSON. Verify in MCP App Studio mock panel and document expected host capability matrix.</detail>
+    </task>
+    <task id="20-04" status="planned">
+      <title>Staff-only Next route (optional complement)</title>
+      <detail>Add membership-gated route that lists the same registry and renders selected block with fixtures; `noindex`, omit from sitemap and public nav.</detail>
+    </task>
+  </tasks>
+</plan>

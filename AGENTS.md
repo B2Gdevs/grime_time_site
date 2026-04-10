@@ -34,6 +34,8 @@ gad snapshot --projectid grime-time
 | `.planning/TASK-REGISTRY.xml` | All tasks by phase with status |
 | `.planning/DECISIONS.xml` | Architectural decisions |
 
+**Phase 20 — block lab (WIP blocks, MCP App Studio):** `.planning/workflows/block-lab-mcp-playground.md`, `tools/grime-block-lab/README.md`, decision `D-devtools-001`. GAD project id is **`grime-time`** (not `grime-time-site`).
+
 ## Docs sink
 
 Run from the **monorepo root** (`custom_portfolio`), where `gad-config.toml` lives:

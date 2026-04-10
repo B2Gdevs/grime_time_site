@@ -1075,6 +1075,16 @@
       <file path="src/migrations/20260410_023500_add_inbound_media_ingestions.ts" />
     </references>
   </decision>
+  <decision id="D-devtools-001" status="proposed">
+    <title>Block iteration uses a dedicated lab (MCP App Studio + optional staff Next route)</title>
+    <summary>WIP Payload layout blocks should be developed in a first-party **block lab** rather than on live pages: a sibling **MCP App Studio** app under `tools/grime-block-lab` (see [MCP App Studio](https://www.assistant-ui.com/mcp-app-studio)) for host-accurate widget preview, mock tool responses, and export; optionally a **staff-only Next route** with fixture-driven renders for fast local iteration. Sharing code with `src/blocks` proceeds via thin preview wrappers or extracted presentational modules so server-only imports never enter the MCP export bundle.</summary>
+    <impact>Reduces risk of shipping half-built blocks through the CMS; gives a structured place to test tool/keyword triggers for block selection; keeps public sitemap and visitor experience clean.</impact>
+    <references>
+      <file path=".planning/workflows/block-lab-mcp-playground.md" />
+      <file path=".planning/phases/20-block-lab-mcp-playground/PLAN.xml" />
+      <file path=".planning/ROADMAP.xml" />
+    </references>
+  </decision>
   <decision id="D-process-029" status="proposed">
     <title>Declare intentional composer UI removals before autonomous regression passes</title>
     <summary>When a human changes page-composer UX by removing surfaces (e.g. inline block media slots, upload/generate on the media tab, or canvas lane selection for service grid), those choices must be written into planning before or at the start of a long agent loop—task updates, a short `STATE.xml` next-action note, or `.planning/notes/`—so agents do not interpret failing tests as accidental regressions and spend cycles restoring the old contract.</summary>
