@@ -6,6 +6,9 @@ import { relationId } from '@/lib/crm/internal/relationship'
 import type { Account, User } from '@/payload-types'
 
 export type OpsCustomerAdminAction =
+  | { action: 'clear_portal_access'; userId: number }
+  | { action: 'clear_primary_customer' }
+  | { action: 'clear_stripe_customer' }
   | { action: 'repair_stripe_customer'; userId?: number }
   | { action: 'send_portal_access'; userId: number }
   | { action: 'set_primary_customer'; userId: number }
@@ -80,6 +83,19 @@ export async function performOpsCustomerAdminAction(args: {
 }) {
   const account = await loadTargetAccount(args.payload, args.targetAccountId)
 
+  if (args.action.action === 'clear_primary_customer') {
+    await args.payload.update({
+      collection: 'accounts',
+      id: account.id,
+      data: {
+        customerUser: null,
+      },
+      overrideAccess: true,
+    })
+
+    return { message: 'Primary customer cleared for this account.' }
+  }
+
   if (args.action.action === 'set_primary_customer') {
     const user = await loadTargetUser(args.payload, args.action.userId)
     assertUserLinkedToAccount(user, args.targetAccountId)
@@ -96,6 +112,26 @@ export async function performOpsCustomerAdminAction(args: {
     return { message: 'Primary customer updated for this account.' }
   }
 
+  if (args.action.action === 'clear_portal_access') {
+    const user = await loadTargetUser(args.payload, args.action.userId)
+    assertUserLinkedToAccount(user, args.targetAccountId)
+
+    await args.payload.update({
+      collection: 'users',
+      id: user.id,
+      data: {
+        lastPortalLoginAt: null,
+        portalInviteExpiresAt: null,
+        portalInviteSentAt: null,
+        portalInviteState: 'none',
+        portalInviteTokenHash: null,
+      },
+      overrideAccess: true,
+    })
+
+    return { message: 'Portal access state cleared for the selected linked user.' }
+  }
+
   if (args.action.action === 'send_portal_access') {
     const user = await loadTargetUser(args.payload, args.action.userId)
     assertUserLinkedToAccount(user, args.targetAccountId)
@@ -108,6 +144,21 @@ export async function performOpsCustomerAdminAction(args: {
     })
 
     return { message: 'Portal access email queued for the selected linked user.' }
+  }
+
+  if (args.action.action === 'clear_stripe_customer') {
+    await args.payload.update({
+      collection: 'accounts',
+      id: account.id,
+      data: {
+        billingPortalLastSharedAt: null,
+        stripeCustomerID: null,
+        stripeDefaultPaymentMethodID: null,
+      },
+      overrideAccess: true,
+    })
+
+    return { message: 'Stripe customer linkage cleared for this account.' }
   }
 
   const fallbackUser =

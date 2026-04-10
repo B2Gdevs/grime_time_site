@@ -81,4 +81,39 @@ describe('ops customers route', () => {
       targetAccountId: 41,
     })
   })
+
+  it('accepts cleanup customer actions without extra payload fields', async () => {
+    const payload = {}
+
+    requireRequestAuth.mockResolvedValue({
+      isRealAdmin: true,
+      payload,
+      realUser: { id: 19 },
+    })
+    performOpsCustomerAdminAction.mockResolvedValue({
+      message: 'Stripe customer linkage cleared for this account.',
+    })
+
+    const { POST } = await import('@/app/api/internal/ops/customers/[id]/route')
+    const response = await POST(new Request('http://localhost/api/internal/ops/customers/41', {
+      body: JSON.stringify({
+        action: 'clear_stripe_customer',
+      }),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      method: 'POST',
+    }), {
+      params: Promise.resolve({ id: '41' }),
+    })
+
+    expect(response.status).toBe(200)
+    expect(performOpsCustomerAdminAction).toHaveBeenCalledWith({
+      action: {
+        action: 'clear_stripe_customer',
+      },
+      payload,
+      targetAccountId: 41,
+    })
+  })
 })

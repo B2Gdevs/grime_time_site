@@ -117,8 +117,9 @@ export function OpsCustomersPageView({ data }: { data: OpsCustomersPageData }) {
   const customerActionMutation = useMutation({
     mutationFn: async (
       action:
+        | { action: 'clear_primary_customer' | 'clear_stripe_customer' }
         | { action: 'repair_stripe_customer'; userId?: number }
-        | { action: 'send_portal_access' | 'set_primary_customer'; userId: number },
+        | { action: 'clear_portal_access' | 'send_portal_access' | 'set_primary_customer'; userId: number }
     ) => {
       if (!selectedAccount?.id) {
         throw new Error('Pick an account first.')
@@ -572,6 +573,20 @@ export function OpsCustomersPageView({ data }: { data: OpsCustomersPageData }) {
                         )}
                         Set as primary customer
                       </Button>
+                      <Button
+                        className="justify-start border-emerald-900/12 text-slate-900 hover:bg-emerald-50"
+                        disabled={customerActionMutation.isPending || !selectedAccount.primaryCustomerUserId}
+                        onClick={() => customerActionMutation.mutate({ action: 'clear_primary_customer' })}
+                        type="button"
+                        variant="outline"
+                      >
+                        {customerActionMutation.isPending ? (
+                          <LoaderCircleIcon className="animate-spin" data-icon="inline-start" />
+                        ) : (
+                          <UserRoundIcon data-icon="inline-start" />
+                        )}
+                        Clear primary customer
+                      </Button>
                     </div>
 
                     <div className="grid gap-3 rounded-3xl border border-emerald-900/10 bg-white/70 p-4">
@@ -599,6 +614,29 @@ export function OpsCustomersPageView({ data }: { data: OpsCustomersPageData }) {
                         </Button>
                         <Button
                           className="justify-start border-emerald-900/12 text-slate-900 hover:bg-emerald-50"
+                          disabled={customerActionMutation.isPending || !selectedLinkedUser}
+                          onClick={() =>
+                            selectedLinkedUser
+                              ? customerActionMutation.mutate({
+                                  action: 'clear_portal_access',
+                                  userId: Number(selectedLinkedUser.id),
+                                })
+                              : null
+                          }
+                          type="button"
+                          variant="outline"
+                        >
+                          {customerActionMutation.isPending ? (
+                            <LoaderCircleIcon className="animate-spin" data-icon="inline-start" />
+                          ) : (
+                            <MailIcon data-icon="inline-start" />
+                          )}
+                          Clear portal access
+                        </Button>
+                      </div>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <Button
+                          className="justify-start border-emerald-900/12 text-slate-900 hover:bg-emerald-50"
                           disabled={customerActionMutation.isPending}
                           onClick={() =>
                             customerActionMutation.mutate({
@@ -615,6 +653,20 @@ export function OpsCustomersPageView({ data }: { data: OpsCustomersPageData }) {
                             <RefreshCcwIcon data-icon="inline-start" />
                           )}
                           Repair Stripe link
+                        </Button>
+                        <Button
+                          className="justify-start border-emerald-900/12 text-slate-900 hover:bg-emerald-50"
+                          disabled={customerActionMutation.isPending || !selectedAccount.stripeCustomerLinked}
+                          onClick={() => customerActionMutation.mutate({ action: 'clear_stripe_customer' })}
+                          type="button"
+                          variant="outline"
+                        >
+                          {customerActionMutation.isPending ? (
+                            <LoaderCircleIcon className="animate-spin" data-icon="inline-start" />
+                          ) : (
+                            <CreditCardIcon data-icon="inline-start" />
+                          )}
+                          Clear Stripe link
                         </Button>
                       </div>
                       <div className="grid gap-2 rounded-2xl border border-emerald-900/10 bg-emerald-50/70 p-3 text-sm text-slate-700/82">

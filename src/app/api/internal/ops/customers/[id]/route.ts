@@ -13,6 +13,16 @@ type RouteContext = {
 
 const customerActionSchema = z.discriminatedUnion('action', [
   z.object({
+    action: z.literal('clear_portal_access'),
+    userId: z.number().int().positive(),
+  }),
+  z.object({
+    action: z.literal('clear_primary_customer'),
+  }),
+  z.object({
+    action: z.literal('clear_stripe_customer'),
+  }),
+  z.object({
     action: z.literal('repair_stripe_customer'),
     userId: z.number().int().positive().optional(),
   }),
