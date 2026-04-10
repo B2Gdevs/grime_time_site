@@ -859,8 +859,23 @@ export function PageComposerDrawer({
     [setSelectedIndex],
   )
 
+  const closeBlockLibrary = useCallback(() => {
+    setIsBlockLibraryOpen(false)
+    setBlockLibraryTargetIndex(null)
+  }, [])
+
+  const openMediaSlotForRelationPath = useCallback(
+    (relationPath: string) => {
+      composer?.open()
+      closeBlockLibrary()
+      selectMediaSlotForRelationPath(relationPath)
+      setActiveTab('media')
+    },
+    [closeBlockLibrary, composer, selectMediaSlotForRelationPath, setActiveTab],
+  )
+
   const stageMediaSlot = useCallback((media: Media, relationPath: string) => {
-    selectMediaSlotForRelationPath(relationPath)
+    openMediaSlotForRelationPath(relationPath)
 
     setDraftPage((current) => {
       if (!current) {
@@ -874,7 +889,7 @@ export function PageComposerDrawer({
         relationPath,
       })
     })
-  }, [markDraftDirty, selectMediaSlotForRelationPath])
+  }, [markDraftDirty, openMediaSlotForRelationPath])
 
   const replaceSelectedBlock = useCallback((block: NonNullable<PageComposerDocument['layout']>[number]) => {
     mutatePage((page) => ({
@@ -1044,11 +1059,6 @@ export function PageComposerDrawer({
     setBlockLibraryQuery('')
     setIsBlockLibraryOpen(true)
   }
-
-  const closeBlockLibrary = useCallback(() => {
-    setIsBlockLibraryOpen(false)
-    setBlockLibraryTargetIndex(null)
-  }, [])
 
   function applyBlockLibrarySelection(nextBlock: NonNullable<PageComposerDocument['layout']>[number]) {
     if (blockLibraryTargetIndex === null) {
@@ -1308,12 +1318,13 @@ export function PageComposerDrawer({
     setSelectedIndex(index)
   }, [mutatePage, setSelectedIndex])
 
-  const openMediaSlotForRelationPath = useCallback(
-    (relationPath: string) => {
-      selectMediaSlotForRelationPath(relationPath)
-      setActiveTab('media')
+  const refreshMediaSlotForRelationPath = useCallback(
+    async (relationPath: string) => {
+      openMediaSlotForRelationPath(relationPath)
+      await loadPage()
+      await loadMediaLibrary()
     },
-    [selectMediaSlotForRelationPath, setActiveTab],
+    [loadMediaLibrary, loadPage, openMediaSlotForRelationPath],
   )
 
   useEffect(() => {
@@ -1346,6 +1357,7 @@ export function PageComposerDrawer({
               stageMediaSlot(media, relationPath)
             },
             onOpenMediaSlot: openMediaSlotForRelationPath,
+            onRefreshMediaSlot: refreshMediaSlotForRelationPath,
             onSetSlugDraft: (value) => {
               markDraftDirty()
               setSlugDraft(value)
@@ -1669,6 +1681,7 @@ export function PageComposerDrawer({
     mutateSelectedContentBlock,
     mutateSelectedTestimonialsBlock,
     openMediaSlotForRelationPath,
+    refreshMediaSlotForRelationPath,
   ])
 
   function updateBlockAtIndex(index: number, block: NonNullable<PageComposerDocument['layout']>[number]) {
@@ -1789,6 +1802,9 @@ export function PageComposerDrawer({
         args.action === 'generate-only' ||
         args.action === 'replace-existing'
       ) {
+        if (args.action === 'replace-existing') {
+          await loadPage()
+        }
         await loadMediaLibrary()
       } else {
         await loadPage()

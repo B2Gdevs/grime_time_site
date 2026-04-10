@@ -200,6 +200,7 @@ describe('PageComposer canvas integration', () => {
             onMoveDown,
             onMoveUp,
             onOpenMediaSlot: vi.fn(),
+            onRefreshMediaSlot: vi.fn(async () => {}),
             onResetDraft: vi.fn(),
             onSetSlugDraft: vi.fn(),
             onSetTitleDraft: vi.fn(),

@@ -15,6 +15,7 @@ import type { PageComposerDocument, PageComposerSectionSummary } from '@/lib/pag
 
 const refresh = vi.fn()
 const onOpenMediaSlot = vi.fn()
+const onRefreshMediaSlot = vi.fn(async () => {})
 const onStageMediaSlot = vi.fn()
 const openFocusedMediaSession = vi.fn()
 const setAuthoringContext = vi.fn()
@@ -63,11 +64,13 @@ const draftPage: PageComposerDocument = {
 const toolbarState: {
   draftPage: PageComposerDocument
   onOpenMediaSlot: typeof onOpenMediaSlot
+  onRefreshMediaSlot: typeof onRefreshMediaSlot
   onStageMediaSlot: typeof onStageMediaSlot
   sectionSummaries: PageComposerSectionSummary[]
 } = {
   draftPage,
   onOpenMediaSlot,
+  onRefreshMediaSlot,
   onStageMediaSlot,
   sectionSummaries: [
     {
@@ -109,6 +112,7 @@ describe('InlinePageMediaEditor', () => {
   beforeEach(() => {
     refresh.mockReset()
     onOpenMediaSlot.mockReset()
+    onRefreshMediaSlot.mockReset()
     onStageMediaSlot.mockReset()
     openFocusedMediaSession.mockReset()
     setAuthoringContext.mockReset()
@@ -347,5 +351,35 @@ describe('InlinePageMediaEditor', () => {
 
     expect(global.fetch).not.toHaveBeenCalled()
     expect(screen.getByText('Media staged for this draft. Autosave will persist it.')).toBeTruthy()
+  })
+
+  it('refreshes the composer slot after falling back to id-only library assignment', async () => {
+    render(
+      <InlinePageMediaEditor relationPath="layout.0.services.0.media">
+        <div>Drop zone</div>
+      </InlinePageMediaEditor>,
+    )
+
+    fireEvent.drop(screen.getByText('Drop zone').parentElement as HTMLElement, {
+      dataTransfer: {
+        files: [],
+        getData: (type: string) => {
+          if (type === PAGE_COMPOSER_MEDIA_DRAG_PAYLOAD_MIME || type === 'text/plain') {
+            return ''
+          }
+          if (type === PAGE_COMPOSER_MEDIA_DRAG_MIME) {
+            return '44'
+          }
+
+          return ''
+        },
+      },
+    })
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledTimes(1)
+      expect(onRefreshMediaSlot).toHaveBeenCalledWith('layout.0.services.0.media')
+      expect(refresh).toHaveBeenCalled()
+    })
   })
 })

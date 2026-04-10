@@ -559,9 +559,10 @@ describe('PageComposer shell integration', () => {
 
     await waitFor(() => {
       expect(toolbarDetail?.selectedMediaRelationPath).toBe('layout.1.services.1.media')
+      expect(screen.getByText(/Targeting/)).toBeTruthy()
+      expect(screen.getByText('Current file:')).toBeTruthy()
+      expect(screen.getByText('None')).toBeTruthy()
     })
-
-    fireEvent.click(screen.getByRole('tab', { name: 'Media' }))
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Use media 901 for What we do: Driveway lane' })).toBeTruthy()
@@ -585,13 +586,24 @@ describe('PageComposer shell integration', () => {
       )
     })
 
+    const mediaRequest = (global.fetch as ReturnType<typeof vi.fn>).mock.calls.find(
+      ([url, init]) => url === '/api/internal/page-composer/media' && init?.method === 'POST',
+    )
+    const mediaFormData = mediaRequest?.[1]?.body as FormData
+
+    expect(mediaFormData.get('action')).toBe('swap-existing-reference')
+    expect(mediaFormData.get('pageId')).toBe('7')
+    expect(mediaFormData.get('relationPath')).toBe('layout.1.services.1.media')
+    expect(mediaFormData.get('mediaId')).toBe('901')
+
     expect(screen.getByText(/Targeting/)).toBeTruthy()
     expect(screen.getAllByText(/Driveway lane/).length).toBeGreaterThan(0)
+    expect(screen.getByText('Current file:')).toBeTruthy()
 
     window.removeEventListener(PAGE_COMPOSER_TOOLBAR_EVENT, handleToolbarChange as EventListener)
   })
 
-  it('syncs the drawer media selection immediately when canvas drag-drop stages a slot update', async () => {
+  it('reopens the media tab immediately when canvas drag-drop stages a slot update', async () => {
     let toolbarDetail: null | Record<string, unknown> = null
     const handleToolbarChange = (event: Event) => {
       toolbarDetail = (event as CustomEvent).detail as Record<string, unknown>
@@ -694,7 +706,7 @@ describe('PageComposer shell integration', () => {
       expect(toolbarDetail && typeof toolbarDetail.onStageMediaSlot).toBe('function')
     })
 
-    fireEvent.click(screen.getByRole('button', { name: 'Open media tab' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Open pages tab' }))
 
     act(() => {
       ;(
@@ -715,9 +727,163 @@ describe('PageComposer shell integration', () => {
     await waitFor(() => {
       expect(toolbarDetail?.selectedMediaRelationPath).toBe('layout.1.services.0.media')
       expect(screen.getByText(/Targeting/)).toBeTruthy()
+      expect(screen.getByText('Current file:')).toBeTruthy()
       expect(screen.getByRole('button', { name: 'What we do: House washing' })).toBeTruthy()
       expect(screen.getAllByAltText('Fresh exterior shot').length).toBeGreaterThan(0)
       expect(screen.getAllByText(/fresh-exterior\.jpg/).length).toBeGreaterThan(0)
+    })
+
+    window.removeEventListener(PAGE_COMPOSER_TOOLBAR_EVENT, handleToolbarChange as EventListener)
+  })
+
+  it('refreshes the selected slot surface after replacing the backing media record', async () => {
+    let toolbarDetail: null | Record<string, unknown> = null
+    let replaced = false
+    const handleToolbarChange = (event: Event) => {
+      toolbarDetail = (event as CustomEvent).detail as Record<string, unknown>
+    }
+
+    window.addEventListener(PAGE_COMPOSER_TOOLBAR_EVENT, handleToolbarChange as EventListener)
+
+    global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input)
+      const method = init?.method || 'GET'
+
+      if (url === '/api/internal/page-composer?pagePath=%2F') {
+        return {
+          json: async () => ({
+            ok: true,
+            page: {
+              _status: 'draft',
+              hero: { type: 'lowImpact' },
+              id: 7,
+              layout: [
+                {
+                  blockType: 'serviceGrid',
+                  heading: 'What we do',
+                  intro: 'Exterior cleaning lanes.',
+                  services: [
+                    {
+                      media: {
+                        alt: replaced ? 'Fresh exterior shot updated' : 'Fresh exterior shot',
+                        filename: replaced ? 'fresh-exterior-updated.jpg' : 'fresh-exterior.jpg',
+                        id: 901,
+                        mimeType: 'image/jpeg',
+                        updatedAt: replaced ? '2026-04-06T00:00:00.000Z' : '2026-04-05T00:00:00.000Z',
+                        url: replaced ? '/media/fresh-exterior-updated.jpg' : '/media/fresh-exterior.jpg',
+                      },
+                      name: 'House washing',
+                      summary: 'Wash siding.',
+                    },
+                  ],
+                },
+              ],
+              pagePath: '/',
+              publishedAt: null,
+              slug: 'home',
+              title: 'Home',
+              updatedAt: replaced ? '2026-04-06T00:00:00.000Z' : '2026-04-05T00:00:00.000Z',
+              visibility: 'public',
+            },
+            pages: [],
+            versions: [],
+          }),
+          ok: true,
+        } as Response
+      }
+
+      if (url === '/api/internal/page-composer/media' && method === 'GET') {
+        return {
+          json: async () => ({
+            items: [
+              {
+                alt: replaced ? 'Fresh exterior shot updated' : 'Fresh exterior shot',
+                filename: replaced ? 'fresh-exterior-updated.jpg' : 'fresh-exterior.jpg',
+                id: 901,
+                media: {
+                  alt: replaced ? 'Fresh exterior shot updated' : 'Fresh exterior shot',
+                  createdAt: '2026-04-05T00:00:00.000Z',
+                  filename: replaced ? 'fresh-exterior-updated.jpg' : 'fresh-exterior.jpg',
+                  height: 900,
+                  id: 901,
+                  mimeType: 'image/jpeg',
+                  updatedAt: replaced ? '2026-04-06T00:00:00.000Z' : '2026-04-05T00:00:00.000Z',
+                  url: replaced ? '/media/fresh-exterior-updated.jpg' : '/media/fresh-exterior.jpg',
+                  width: 1600,
+                },
+                mimeType: 'image/jpeg',
+                previewUrl: replaced ? '/media/fresh-exterior-updated.jpg' : '/media/fresh-exterior.jpg',
+                updatedAt: replaced ? '2026-04-06T00:00:00.000Z' : '2026-04-05T00:00:00.000Z',
+              },
+            ],
+          }),
+          ok: true,
+        } as Response
+      }
+
+      if (url === '/api/internal/page-composer/media' && method === 'POST') {
+        replaced = true
+        return {
+          json: async () => ({
+            media: {
+              alt: 'Fresh exterior shot updated',
+              id: 901,
+            },
+            mediaId: 901,
+            ok: true,
+            pageId: 7,
+          }),
+          ok: true,
+        } as Response
+      }
+
+      throw new Error(`Unexpected fetch: ${url} (${method})`)
+    }) as typeof fetch
+
+    const { container } = render(
+      <PageComposerProvider>
+        <PagesTabHarness />
+        <PageComposerDrawer enabled />
+      </PageComposerProvider>,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /page composer/i }))
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith('/api/internal/page-composer?pagePath=%2F')
+      expect(toolbarDetail && typeof toolbarDetail.onOpenMediaSlot).toBe('function')
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open pages tab' }))
+
+    act(() => {
+      ;(toolbarDetail?.onOpenMediaSlot as (relationPath: string) => void)('layout.0.services.0.media')
+    })
+
+    await waitFor(() => {
+      expect(screen.getByText('Current file:')).toBeTruthy()
+      expect(screen.getAllByText(/fresh-exterior\.jpg/).length).toBeGreaterThan(0)
+    })
+
+    fireEvent.click(screen.getByLabelText('Replace file for Fresh exterior shot'))
+
+    const replaceInput = container.querySelector('input[accept="image/*,video/*"]') as HTMLInputElement | null
+    expect(replaceInput).toBeTruthy()
+    fireEvent.change(replaceInput!, {
+      target: {
+        files: [new File(['updated'], 'fresh-exterior-updated.jpg', { type: 'image/jpeg' })],
+      },
+    })
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith(
+        '/api/internal/page-composer/media',
+        expect.objectContaining({
+          method: 'POST',
+        }),
+      )
+      expect(screen.getAllByText(/fresh-exterior-updated\.jpg/).length).toBeGreaterThan(0)
+      expect(screen.getAllByAltText('Fresh exterior shot updated').length).toBeGreaterThan(0)
     })
 
     window.removeEventListener(PAGE_COMPOSER_TOOLBAR_EVENT, handleToolbarChange as EventListener)

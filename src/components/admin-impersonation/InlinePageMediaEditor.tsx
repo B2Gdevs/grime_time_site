@@ -233,6 +233,8 @@ export function InlinePageMediaEditor({ children, relationPath }: InlinePageMedi
   }, [context?.currentPage?.pageId, context?.currentPage?.pagePath, context?.currentPage?.pageSlug, context?.currentPage?.pageTitle, copilot, resolvedEntry, sectionSummary, toolbarState])
 
   async function submitFormData(formData: FormData, action: SubmitAction) {
+    const relationPathToRefresh = resolvedEntry?.relationPath ?? null
+    const currentMediaId = resolvedEntry?.mediaId ?? null
     setSubmitting(action)
     setStatus(null)
 
@@ -249,9 +251,12 @@ export function InlinePageMediaEditor({ children, relationPath }: InlinePageMedi
 
       setStatus(
         action === 'replace-existing'
-          ? `Updated media record ${resolvedEntry?.mediaId ?? ''}.`
+          ? `Updated media record ${currentMediaId ?? ''}.`
           : `Created media record ${payload?.mediaId ?? ''} and swapped the page reference.`,
       )
+      if (toolbarState && relationPathToRefresh) {
+        await toolbarState.onRefreshMediaSlot(relationPathToRefresh)
+      }
       router.refresh()
     } catch (error) {
       setStatus(error instanceof Error ? error.message : 'Unable to update page media.')
@@ -295,6 +300,7 @@ export function InlinePageMediaEditor({ children, relationPath }: InlinePageMedi
       return
     }
 
+    const relationPathToRefresh = resolvedEntry.relationPath
     const pageId = Number(toolbarState?.draftPage?.id || context?.currentPage?.pageId || resolvedEntry.pageId)
     if (!pageId) {
       setStatus('Save this page as a draft before assigning media.')
@@ -323,6 +329,9 @@ export function InlinePageMediaEditor({ children, relationPath }: InlinePageMedi
       }
 
       setStatus('Media assigned to this slot.')
+      if (toolbarState) {
+        await toolbarState.onRefreshMediaSlot(relationPathToRefresh)
+      }
       router.refresh()
     } catch (error) {
       setStatus(error instanceof Error ? error.message : 'Unable to assign media.')

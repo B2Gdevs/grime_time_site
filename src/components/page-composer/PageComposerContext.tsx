@@ -34,6 +34,8 @@ export type PageComposerToolbarState = {
   /** Stage a slot media change in the current draft so autosave can persist it without blocking editing. */
   onStageMediaSlot: (media: Media, relationPath: string) => void
   onOpenMediaSlot: (relationPath: string) => void
+  /** Reopen the media surface for a slot and refetch composer-local page/media state after backend-backed mutations. */
+  onRefreshMediaSlot: (relationPath: string) => Promise<void>
   onSetSlugDraft: (value: string) => void
   onSetTitleDraft: (value: string) => void
   onSetVisibilityDraft: (value: PageComposerVisibilityMode) => void

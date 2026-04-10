@@ -175,6 +175,12 @@ export function PageComposerDrawerMediaTab({
 
       {selectedMediaSlot ? (
         <div className="grid gap-4">
+          <PageComposerDrawerMediaSelectedSlotDetails
+            mediaKind={mediaKind}
+            selectedMediaSlot={selectedMediaSlot}
+            setMediaKind={setMediaKind}
+          />
+          <PageComposerDrawerMediaSelectedSlotPreview selectedMediaSlot={selectedMediaSlot} />
           <PageComposerDrawerMediaUploadGenerateCard
             copilot={copilot}
             loadMediaLibrary={loadMediaLibrary}
