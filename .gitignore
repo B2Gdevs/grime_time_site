@@ -33,3 +33,6 @@ node_modules/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+# Local Playwright dev logs
+.tmp-playwright-dev/
