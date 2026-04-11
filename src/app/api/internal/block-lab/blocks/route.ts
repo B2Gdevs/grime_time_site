@@ -1,7 +1,10 @@
 import config from '@payload-config'
 import { getPayload } from 'payload'
 
-import { loadBlockLabCatalog } from '@/lib/block-lab/liveBlockCatalog'
+import {
+  DEFAULT_BLOCK_LAB_PAGE_SLUG,
+  loadBlockLabCatalog,
+} from '@/lib/block-lab/liveBlockCatalog'
 
 export async function GET(): Promise<Response> {
   if (process.env.NODE_ENV !== 'development') {
@@ -15,7 +18,10 @@ export async function GET(): Promise<Response> {
 
   try {
     const payload = await getPayload({ config })
-    const catalog = await loadBlockLabCatalog(payload)
+    const catalog = await loadBlockLabCatalog(payload, {
+      pageSlug:
+        process.env.GRIME_TIME_BLOCK_LAB_PAGE_SLUG || DEFAULT_BLOCK_LAB_PAGE_SLUG,
+    })
 
     return Response.json(catalog)
   } catch (error) {

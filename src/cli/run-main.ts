@@ -12,6 +12,7 @@ import {
   collectionsRootCommand,
   printCollectionsQuickHelp,
 } from './collections/collections-commands'
+import { mediaRootCommand, printMediaQuickHelp } from './media/media-commands'
 import { formatSeedDomainsCatalog, printSeedQuickHelp, seedRootCommand } from './seed/seed-commands'
 
 async function resolveValue<T>(input: T | (() => T) | (() => Promise<T>)): Promise<T> {
@@ -123,6 +124,10 @@ const helpCommand = defineCommand({
       await printCollectionsQuickHelp(mainRef)
       return
     }
+    if (topic === 'media') {
+      await printMediaQuickHelp(mainRef)
+      return
+    }
     console.log((await renderUsage(sub, mainRef)) + '\n')
   },
 })
@@ -137,6 +142,7 @@ mainRef = defineCommand({
     collections: collectionsRootCommand,
     doctor: doctorCommand,
     help: helpCommand,
+    media: mediaRootCommand,
     seed: seedRootCommand,
   },
 })
@@ -153,6 +159,12 @@ export async function runGrimetimeMain(): Promise<void> {
   if (rawArgs.length === 1 && rawArgs[0] === 'collections') {
     console.log(await formatBanner())
     await printCollectionsQuickHelp(mainRef)
+    process.exit(0)
+  }
+
+  if (rawArgs.length === 1 && rawArgs[0] === 'media') {
+    console.log(await formatBanner())
+    await printMediaQuickHelp(mainRef)
     process.exit(0)
   }
 

@@ -1,13 +1,12 @@
 import type { Payload } from 'payload'
 
 import { getPageComposerInsertableBlocks } from '@/lib/pages/pageComposerBlockRegistry'
-import {
-  isMarketingComposerPagePath,
-  pageSlugToFrontendPath,
-} from '@/lib/pages/pageComposer'
+import { pageSlugToFrontendPath } from '@/lib/pages/pageComposer'
 import type { Page } from '@/payload-types'
 
 import { summarizeServiceGridBlock } from './serviceGridLivePreview'
+
+export const DEFAULT_BLOCK_LAB_PAGE_SLUG = 'block-lab'
 
 export type BlockLabDefinitionSummary = {
   category: string
@@ -156,36 +155,49 @@ function summarizeLiveBlock(args: {
 
 export async function loadBlockLabCatalog(
   payload: Payload,
+  options?: {
+    pageSlug?: string
+  },
 ): Promise<BlockLabCatalogResponse> {
+  const pageSlug = options?.pageSlug?.trim() || DEFAULT_BLOCK_LAB_PAGE_SLUG
+
   const pageResult = await payload.find({
     collection: 'pages',
     depth: 2,
     draft: true,
-    limit: 100,
+    limit: 1,
     overrideAccess: true,
     pagination: false,
-    sort: 'title',
+    where: {
+      slug: {
+        equals: pageSlug,
+      },
+    },
   })
 
-  const pages = (pageResult.docs as Page[])
-    .map((page) => summarizePage(page))
-    .filter((page) => isMarketingComposerPagePath(page.pagePath))
-
-  const liveBlocks = (pageResult.docs as Page[])
-    .map((page) => ({
-      page,
-      summary: summarizePage(page),
-    }))
-    .filter(({ summary }) => isMarketingComposerPagePath(summary.pagePath))
-    .flatMap(({ page, summary }) =>
-      (page.layout || []).map((block, blockIndex) =>
-        summarizeLiveBlock({
-          block,
-          blockIndex,
-          page: summary,
-        }),
-      ),
+  const page = (pageResult.docs as Page[])[0]
+  if (!page) {
+    throw new Error(
+      `No Grime Time block-lab page was found for slug "${pageSlug}". Create one private page with that slug and add the blocks you want to review there.`,
     )
+  }
+
+  if (page.visibility !== 'private') {
+    throw new Error(
+      `The Grime Time block-lab page "${pageSlug}" must stay private. Update that page's visibility to private and try again.`,
+    )
+  }
+
+  const summarizedPage = summarizePage(page)
+  const pages = [summarizedPage]
+
+  const liveBlocks = (page.layout || []).map((block, blockIndex) =>
+    summarizeLiveBlock({
+      block,
+      blockIndex,
+      page: summarizedPage,
+    }),
+  )
 
   const definitions = getPageComposerInsertableBlocks().map((definition) => ({
     category: definition.category,

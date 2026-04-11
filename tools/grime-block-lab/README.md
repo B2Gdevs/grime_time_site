@@ -14,8 +14,9 @@ registry of block previews. We are not standing up an MCP server in this slice.
 - Drives previews from a typed fixture registry under `lib/fixtures/`.
 - Seeds preview-control tools into the mock panel on first load:
   `list_blocks`, `set_preview_block`, and `apply_preview_overrides`.
-- Adds a `Live` tab that can refresh real Grime Time page blocks through the
-  local Payload app and load supported block instances into the preview.
+- Adds a `Live` tab that can refresh one private Grime Time block-lab page
+  through the local Payload app and load supported block instances into the
+  preview.
 - Keeps preview code local to the lab instead of importing the full
   `src/blocks/ServiceGrid/Component.tsx` authoring stack.
 
@@ -38,6 +39,8 @@ npm run block-lab:dev
 
 If you want the `Live` tab to connect, also run the main Grime Time app locally
 and point `GRIME_TIME_APP_ORIGIN` at it if you are not using `http://127.0.0.1:3000`.
+The Grime Time app should contain one private page with slug `block-lab` unless
+you override it with `GRIME_TIME_BLOCK_LAB_PAGE_SLUG`.
 
 ## How to use the workbench
 
@@ -46,8 +49,9 @@ and point `GRIME_TIME_APP_ORIGIN` at it if you are not using `http://127.0.0.1:3
   or apply a sample override through the same `callTool()` path the studio
   already exposes.
 - Open the `Live` tab in the left panel to refresh real page blocks from the
-  local Payload app. Supported blocks can be loaded directly into the preview
-  as the new base `toolInput`.
+  local Payload app. The live catalog reads one private page intended to hold
+  every block variant you want to review. Supported blocks can be loaded
+  directly into the preview as the new base `toolInput`.
 - Change `fixtureId` in the JSON editor to `interactive`, `featureCards`, or
   `pricingSteps` when you want the base preview state to move with your manual
   fixture edits.
@@ -140,6 +144,19 @@ The current lab only depends on a small subset of App Studio host behavior:
 | Theme / display mode | Optional | Cosmetic parity with the host shell only. |
 | Real MCP server | No | The current slice is mock-first and stays in no-server mode. |
 | Running Grime Time app | Required for `Live` tab only | The live catalog proxies the main app's local Payload-backed route. |
+
+## Live page contract
+
+The `Live` tab expects one private Payload page in Grime Time that acts as the
+source of truth for reviewable blocks.
+
+- Default page slug: `block-lab`
+- Required visibility: `private`
+- Suggested usage: add one instance of each block you want to inspect in the
+  lab, then refresh the live tab to pull that page's `layout`
+
+If you want a different slug in your local environment, set
+`GRIME_TIME_BLOCK_LAB_PAGE_SLUG` in the main Grime Time app env.
 
 ## Planning links
 

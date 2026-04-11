@@ -25,6 +25,7 @@ declare global {
       SUPABASE_S3_ENDPOINT?: string
       SUPABASE_S3_REGION?: string
       RESEND_API_KEY?: string
+      RESEND_WEBHOOK_SECRET?: string
       EMPLOYEE_NOTIFICATION_EMAILS?: string
       STRIPE_SECRET_KEY?: string
       STRIPE_ACCOUNT_ID?: string

@@ -1028,6 +1028,8 @@
       <file path=".planning/ROADMAP.xml" />
       <file path=".planning/TASK-REGISTRY.xml" />
       <file path=".planning/workflows/customer-auth-and-portal-access.md" />
+      <file path="src/app/api/resend/webhook/route.ts" />
+      <file path="src/lib/media/resendInboundMedia.ts" />
     </references>
   </decision>
   <decision id="D-auth-012">
@@ -1089,13 +1091,14 @@
   </decision>
   <decision id="D-devtools-005" status="accepted">
     <title>Live studio data flows through a Grime Time dev route and lab proxy, not direct Payload boot inside the lab bundle</title>
-    <summary>The block lab should stay a focused MCP App Studio package, even when it needs live Payload-backed data. For local debugging, Grime Time exposes a dev-only internal block-lab route from the main app, and the studio package proxies that route through its own API before rendering a `Live` tab. This keeps the actual Payload config, auth assumptions, and Postgres adapter ownership inside the main app while still letting the lab refresh live page blocks on demand.</summary>
-    <impact>Preserves the lab as a lightweight review shell, avoids duplicating Payload boot logic or database wiring inside `tools/grime-block-lab`, and keeps the live-data contract aligned with page-composer metadata such as page paths, block indices, block variants, and media-slot summaries. The lab can now help debug composer issues like `19-02` with real page blocks while remaining mock-first when the main app is not running.</impact>
+    <summary>The block lab should stay a focused MCP App Studio package, even when it needs live Payload-backed data. For local debugging, Grime Time exposes a dev-only internal block-lab route from the main app, and the studio package proxies that route through its own API before rendering a `Live` tab. This keeps the actual Payload config, auth assumptions, and Postgres adapter ownership inside the main app while still letting the lab refresh live block data on demand. The live source should be one dedicated private Payload page, default slug `block-lab`, whose layout acts as the review registry for every block the team wants to inspect.</summary>
+    <impact>Preserves the lab as a lightweight review shell, avoids duplicating Payload boot logic or database wiring inside `tools/grime-block-lab`, and simplifies the live-data contract to one explicit review page rather than scanning multiple marketing pages. The lab can now help debug composer issues like `19-02` with real page-local block data while remaining mock-first when the main app is not running.</impact>
     <references>
       <file path="src/app/api/internal/block-lab/blocks/route.ts" />
       <file path="src/lib/block-lab/liveBlockCatalog.ts" />
       <file path="tools/grime-block-lab/app/api/grime-time/blocks/route.ts" />
       <file path="tools/grime-block-lab/components/workbench/live-block-catalog-panel.tsx" />
+      <file path="tools/grime-block-lab/README.md" />
     </references>
   </decision>
   <decision id="D-process-029" status="proposed">

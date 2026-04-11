@@ -13,7 +13,7 @@ function WorkbenchLoading() {
 
 export default function HomePage() {
   return (
-    <div className="flex h-screen w-screen overflow-hidden">
+    <div className="flex min-h-0 flex-1 overflow-hidden">
       <Suspense fallback={<WorkbenchLoading />}>
         <WorkbenchShell />
       </Suspense>

@@ -13,6 +13,7 @@ models
 
 # grimetime seed pull snapshots
 .grimetime-seed-pull/
+.grimetime-media-drop/
 
 # Payload default media upload directory
 public/media/

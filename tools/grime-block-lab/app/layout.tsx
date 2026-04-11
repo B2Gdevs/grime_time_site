@@ -3,6 +3,7 @@ import { GeistSans } from "geist/font/sans";
 import type { Metadata, Viewport } from "next";
 import { QueryProvider } from "@/app/components/query/query-provider";
 import { ThemeProvider } from "@/app/components/theme/theme-provider";
+import { LabNav } from "@/components/app-shell/lab-nav";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -35,6 +36,7 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
+            <LabNav />
             {children}
           </ThemeProvider>
         </QueryProvider>

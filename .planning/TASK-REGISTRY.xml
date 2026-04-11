@@ -626,11 +626,14 @@
         <command>Use the page-local media tab and selected-slot state in `src/components/page-composer/PageComposerDrawer.tsx` plus related drawer surfaces.</command>
       </commands>
     </task>
-    <task id="19-03" agent-id="" status="planned">
+    <task id="19-03" agent-id="" status="done">
       <goal>Implement email-attachment-to-media ingestion through Resend inbound: receive `email.received`, list and download attachments, validate content, create Grime Time media records, and expose success or failure state for replay and ops review.</goal>
       <keywords>resend,webhooks,attachments,media,ops</keywords>
       <commands>
         <command>Keep attachment processing provider-agnostic behind an app-owned ingestion service even if Resend is the first adapter.</command>
+        <command>Shipped: `src/app/api/resend/webhook/route.ts` verifies Resend webhook deliveries with `resend.webhooks.verify()`, forwards `email.received` events into the app-owned ingestion service, and returns duplicate / ingestion status summaries for ops-safe retries.</command>
+        <command>Shipped: `src/lib/media/resendInboundMedia.ts` lists receiving attachments from Resend, validates files against the first-party ingestion contract, downloads accepted binaries, creates real `media` documents through Payload, and updates `inbound-media-ingestions` with attachment audit rows, created media ids, and final status.</command>
+        <command>Env and verification: `RESEND_WEBHOOK_SECRET` is now documented in `.env.example` and typed in `src/environment.d.ts`; coverage lives in `tests/int/app/resend-webhook-route.int.spec.ts` and `tests/int/lib/media/resend-inbound-media.int.spec.ts`.</command>
       </commands>
     </task>
   </phase>
