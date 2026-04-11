@@ -1,0 +1,147 @@
+import fs from "node:fs";
+import path from "node:path";
+import { type NextRequest, NextResponse } from "next/server";
+import type { ExportConfig } from "@/lib/export";
+import { createDefaultExportConfig, exportWidget } from "@/lib/export";
+
+export const runtime = "nodejs";
+
+function isPathWithinProjectRoot(
+  projectRoot: string,
+  userPath: string,
+): boolean {
+  const absolutePath = path.resolve(projectRoot, userPath);
+  const relative = path.relative(projectRoot, absolutePath);
+  return !(relative.startsWith("..") || path.isAbsolute(relative));
+}
+
+function readPackageDescription(projectRoot: string): string | undefined {
+  try {
+    const pkgPath = path.join(projectRoot, "package.json");
+    if (!fs.existsSync(pkgPath)) return undefined;
+    const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf-8")) as {
+      description?: unknown;
+    };
+    const desc =
+      typeof pkg.description === "string" ? pkg.description.trim() : "";
+    return desc.length > 0 ? desc : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+interface ExportRequestBody {
+  widgetEntryPoint?: string;
+  widgetExportName?: string;
+  widgetName?: string;
+  outputDir?: string;
+  inline?: boolean;
+  manifest?: {
+    name?: string;
+    description?: string;
+    version?: string;
+    author?: string;
+  };
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    if (process.env.NODE_ENV !== "development") {
+      return NextResponse.json(
+        {
+          success: false,
+          errors: [
+            "This endpoint is only available in development. Use `npm run export` locally to generate production files.",
+          ],
+        },
+        { status: 403 },
+      );
+    }
+
+    const body: ExportRequestBody = await request.json();
+
+    const widgetEntryPoint =
+      body.widgetEntryPoint ?? "lib/workbench/wrappers/service-grid-sdk.tsx";
+    const widgetExportName = body.widgetExportName ?? "ServiceGridSDK";
+    const widgetName = body.widgetName ?? "Grime Time Block Lab";
+    const outputDir = body.outputDir ?? "export";
+
+    const projectRoot = process.cwd();
+    if (!isPathWithinProjectRoot(projectRoot, widgetEntryPoint)) {
+      return NextResponse.json(
+        { success: false, errors: ["Invalid widgetEntryPoint path"] },
+        { status: 400 },
+      );
+    }
+    if (!isPathWithinProjectRoot(projectRoot, outputDir)) {
+      return NextResponse.json(
+        { success: false, errors: ["Invalid outputDir path"] },
+        { status: 400 },
+      );
+    }
+
+    const config: ExportConfig = {
+      ...createDefaultExportConfig(widgetEntryPoint, widgetName),
+      widget: {
+        entryPoint: widgetEntryPoint,
+        exportName: widgetExportName,
+        name: widgetName,
+      },
+      output: {
+        dir: outputDir,
+        inline: body.inline ?? false,
+      },
+    };
+
+    if (body.manifest) {
+      config.manifest = {
+        ...config.manifest,
+        ...body.manifest,
+      };
+    }
+
+    const packageDescription = readPackageDescription(projectRoot);
+    if (packageDescription && !config.manifest?.description) {
+      config.manifest = {
+        ...config.manifest,
+        description: packageDescription,
+      };
+    }
+
+    const result = await exportWidget({
+      config,
+      projectRoot,
+    });
+
+    if (!result.success) {
+      return NextResponse.json(
+        {
+          success: false,
+          errors: result.errors,
+          warnings: result.warnings,
+        },
+        { status: 500 },
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      outputDir: result.outputDir,
+      files: result.files.map((f) => ({
+        relativePath: f.relativePath,
+        size: f.size,
+      })),
+      warnings: result.warnings,
+    });
+  } catch (error) {
+    console.error("Export error:", error);
+    const message = error instanceof Error ? error.message : String(error);
+    return NextResponse.json(
+      {
+        success: false,
+        errors: [message],
+      },
+      { status: 500 },
+    );
+  }
+}

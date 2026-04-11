@@ -157,7 +157,7 @@
     <goal>Give builders an isolated place to iterate Payload layout blocks with mock data before blocks appear in composer or public pages: an optional staff-gated Next route plus a sibling MCP App Studio package under `tools/grime-block-lab` for host previews, tool mocks, and keyword or tool-trigger experiments, with a documented path to share code with `src/blocks` without pulling server-only imports into the widget bundle.</goal>
     <requirements>REQ-03</requirements>
     <depends>15,18</depends>
-    <status>planned</status>
+    <status>active</status>
     <plans>.planning/workflows/block-lab-mcp-playground.md</plans>
   </phase>
   <doc-flow>

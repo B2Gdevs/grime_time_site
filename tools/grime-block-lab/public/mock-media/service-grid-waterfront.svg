@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" fill="none">
+  <defs>
+    <linearGradient id="sky" x1="180" x2="1420" y1="60" y2="900" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8FD9FF"/>
+      <stop offset=".42" stop-color="#2D648F"/>
+      <stop offset="1" stop-color="#09111D"/>
+    </linearGradient>
+    <linearGradient id="water" x1="800" x2="800" y1="462" y2="900" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6AB8E7"/>
+      <stop offset="1" stop-color="#153751"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#sky)"/>
+  <circle cx="1180" cy="146" r="124" fill="#DFF5FF" fill-opacity=".16"/>
+  <path d="M0 520c210-56 426-84 648-84 202 0 404 28 606 84 128 36 244 82 346 138v242H0V520Z" fill="url(#water)"/>
+  <path d="M184 476h1060c18 0 32 14 32 32v22H152v-22c0-18 14-32 32-32Z" fill="#EEE8DB"/>
+  <path d="M230 530h968l118 278H112l118-278Z" fill="#2E495E"/>
+  <path d="M310 530h48v278h-48zM566 530h48v278h-48zM822 530h48v278h-48zM1078 530h48v278h-48z" fill="#0E1B27"/>
+  <path d="M146 690c96 18 194 28 294 28 128 0 256-14 384-42 120-26 242-40 366-40 94 0 188 8 282 24" stroke="#CDEEFF" stroke-linecap="round" stroke-width="14"/>
+  <path d="M84 760c132 36 266 54 402 54 154 0 308-24 462-72 156-48 312-72 468-72 62 0 124 4 184 12" stroke="#F8FCFF" stroke-linecap="round" stroke-opacity=".55" stroke-width="10"/>
+</svg>

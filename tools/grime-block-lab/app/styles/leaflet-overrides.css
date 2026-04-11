@@ -1,0 +1,53 @@
+/* Leaflet overrides for theme integration */
+
+.leaflet-container {
+  background: var(--muted);
+  /* Isolate Leaflet's high z-indices to prevent them from escaping the container */
+  isolation: isolate;
+}
+
+[data-theme="dark"] .leaflet-container {
+  background: hsl(240 0 10%);
+}
+
+/* Keep tile-loading gaps dark to prevent white flashing during pan/zoom. */
+[data-theme="dark"] .leaflet-container,
+.dark .leaflet-container {
+  background: oklch(0.145 0 0);
+}
+
+[data-theme="dark"] .leaflet-tile-pane,
+.dark .leaflet-tile-pane {
+  background: oklch(0.145 0 0);
+}
+
+[data-theme="dark"] .leaflet-tile,
+.dark .leaflet-tile {
+  background-color: oklch(0.145 0 0);
+}
+
+.leaflet-control-attribution {
+  background: oklch(from var(--background) l c h / 0.8) !important;
+  color: var(--muted-foreground);
+}
+
+[data-theme="dark"] .leaflet-control-attribution {
+  background: hsl(240 10% 3.9% / 0.8) !important;
+  color: hsl(240 5% 64.9%);
+}
+
+.leaflet-control-attribution a {
+  color: var(--muted-foreground);
+}
+
+[data-theme="dark"] .leaflet-control-attribution a {
+  color: hsl(240 5% 64.9%);
+}
+
+.leaflet-control-attribution a:hover {
+  color: var(--foreground);
+}
+
+[data-theme="dark"] .leaflet-control-attribution a:hover {
+  color: hsl(0 0% 98%);
+}

@@ -635,21 +635,21 @@
     </task>
   </phase>
   <phase id="20">
-    <task id="20-01" agent-id="" status="planned">
+    <task id="20-01" agent-id="" status="done">
       <goal>Scaffold `tools/grime-block-lab` with MCP App Studio (`npx mcp-app-studio grime-block-lab` from `tools/`), wire npm scripts for dev and production export, and document the interactive CLI + links to assistant-ui MCP App Studio docs.</goal>
       <keywords>mcp,assistant-ui,playground,blocks,devtools</keywords>
       <commands>
         <command>See `.planning/workflows/block-lab-mcp-playground.md` and https://www.assistant-ui.com/mcp-app-studio</command>
       </commands>
     </task>
-    <task id="20-02" agent-id="" status="planned">
+    <task id="20-02" agent-id="" status="done">
       <goal>Introduce a typed block fixture registry (`blockType` → mock props) and render one pilot block inside the lab using fixtures only; document how to share code with `src/blocks` without importing server-only Next/Payload paths into the MCP bundle.</goal>
       <keywords>blocks,fixtures,payload-types,preview</keywords>
       <commands>
         <command>Entry reference: `src/blocks/RenderBlocks.tsx`</command>
       </commands>
     </task>
-    <task id="20-03" agent-id="" status="planned">
+    <task id="20-03" agent-id="" status="done">
       <goal>Add MCP tools to list blocks, set the active preview block, and apply fixture variants or custom JSON; validate in App Studio mock tooling and capture host capability expectations.</goal>
       <keywords>mcp,tools,preview,keywords</keywords>
       <commands>
@@ -661,6 +661,14 @@
       <keywords>next,staff,internal,blocks</keywords>
       <commands>
         <command>Reuse membership-aware staff checks from portal/ops patterns.</command>
+      </commands>
+    </task>
+    <task id="20-05" agent-id="" status="done">
+      <goal>Add a Payload-backed live catalog tab to the block lab: expose a dev-only Grime Time route that lists composer-aware page blocks from the local database, proxy it through the studio, and allow supported blocks to load into the preview as the new base input for debugging.</goal>
+      <keywords>payload,blocks,studio,live,composer,debug</keywords>
+      <commands>
+        <command>Main app route: `src/app/api/internal/block-lab/blocks/route.ts`</command>
+        <command>Lab proxy + UI: `tools/grime-block-lab/app/api/grime-time/blocks/route.ts` and `tools/grime-block-lab/components/workbench/live-block-catalog-panel.tsx`</command>
       </commands>
     </task>
   </phase>

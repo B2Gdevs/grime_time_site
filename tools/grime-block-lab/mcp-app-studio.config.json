@@ -1,0 +1,7 @@
+{
+  "widget": {
+    "entryPoint": "lib/workbench/wrappers/service-grid-sdk.tsx",
+    "exportName": "ServiceGridSDK",
+    "name": "grime-block-lab"
+  }
+}
